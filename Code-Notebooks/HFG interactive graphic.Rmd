@@ -33,7 +33,7 @@ ui <- fluidPage(
     sidebarPanel(
       selectInput(inputId = "Plant", label = ("Plant"),
                   choices = unique(HFGDFrame$Plant),
-                  multiple=F,
+                  multiple=T,
                   selected="Madison"
       ),
       selectInput(inputId = "Line", label = ("Line Method"),
@@ -51,13 +51,17 @@ ui <- fluidPage(
       selectInput(inputId = "scale", label = ("y scale"),
                   choices = c("None","log y scale"),
                   selected="log y scale"
-      )
+      ),
+      sliderInput("Rows", "# of Rows",min = 1, max = 10,step=1,value=1)
     ),
     #creates panel
     mainPanel(plotOutput("plot2"))
   )
 )
+```
 
+
+```{r}
 #create graphic                                       
 server <- function(input, output) {
   #reduces data to only Plant selected
@@ -75,9 +79,12 @@ server <- function(input, output) {
       summarize(Mean.N1GC=mean(N1GC))
   })
   
-  output$plot2<-renderPlot({
+  output$plot2<-renderPlot(
+        width = function() 100+300*ceiling(length(input$Plant)/min(c(input$Rows,length(input$Plant)))),
+        height = function() 200+350*min(c(input$Rows,length(input$Plant))),
+    {
       HFGDPlot=ggplot()+aes(x=Date)+
-        geom_jitter(data=filtered_data(),aes(y=N1GC,shape=Plant,color=Filter),alpha=.7,height=0,width=.1,size=3)
+        geom_jitter(data=filtered_data(),aes(y=N1GC,color=Filter),alpha=.7,height=0,width=.1,size=3)
       #add line if the button is right
       if(input$Line=="mean value"){
         HFGDPlot=HFGDPlot+geom_line(data=Data_mean(),aes(y=Mean.N1GC),size=1)
@@ -92,10 +99,11 @@ server <- function(input, output) {
       #scales it if button is on
       if(input$scale=="log y scale")
         HFGDPlot = HFGDPlot + scale_y_log10(limits = c(min(HFGDFrame$N1GC),max(HFGDFrame$N1GC)))
-        
+        HFGDPlot = HFGDPlot+facet_wrap(~Plant, nrow = input$Rows, ncol = ceiling(length(input$Plant)/input$Rows))
     return(HFGDPlot)
-      },height = 600,width = 800)
+      })
 }
 
 shinyApp(ui = ui, server = server)
+
 ```
