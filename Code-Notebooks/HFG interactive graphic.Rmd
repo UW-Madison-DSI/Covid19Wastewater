@@ -1,0 +1,81 @@
+---
+title: "HFG interactive graphic"
+author: "Marlin"
+date: "4/3/2021"
+output: html_document
+---
+```{r}
+
+source("../Scripts/DataProccess.R")
+
+
+HFGData="../data/HFG data for stats preliminary 3-18-21.xlsx"
+
+HFGFrame=HFGInfo(HFGData)%>%
+  mutate(Filter=as.character(Filter),Well=as.character(Well))
+
+
+HFGFrame.Filtered=HFGFrame%>%
+  filter(N1GC<100000000)%>%
+  filter(!is.na(N1GC),!is.na(Date))
+
+
+HFGDFrame=HFGFrame.Filtered
+```
+
+```{r}
+library(shiny)
+
+#Creates buttons for Plant location,Line, and scale
+ui <- fluidPage(
+  titlePanel("Dashboard"),
+  sidebarLayout(
+    sidebarPanel(
+      selectInput(inputId = "Plant", label = ("Plant"),
+                  choices = unique(HFGDFrame$Plant),
+                  multiple=F,
+                  selected="Madison"
+      ),
+      selectInput(inputId = "Line", label = ("Line Method"),
+                  choices = c("None","mean value"),
+                  selected="None"
+      ),
+      selectInput(inputId = "scale", label = ("y scale"),
+                  choices = c("None","log y scale"),
+                  selected="log y scale"),
+    ),
+    #creates panel
+    mainPanel(plotOutput("plot2"))
+  )
+)
+
+#create graphic                                       
+server <- function(input, output) {
+  #reduces data to only Plant selected
+  filtered_data<- reactive({
+    filter(HFGDFrame, HFGDFrame$Plant %in%  input$Plant)})
+  #Data of the means of each day
+  Filtered_mean = reactive({
+    filtered_data()%>%
+      group_by(Date,Filter,Plant)%>%
+      summarize(Mean.N1GC=mean(N1GC))
+  })
+  
+  output$plot2<-renderPlot({
+      HFGDPlot=ggplot()+aes(x=Date,color=Filter)+
+        geom_jitter(data=filtered_data(),aes(y=N1GC,shape=Plant,fill=Filter),height=0,width=.1,size=3)
+      #add line if the button is right
+      if(input$Line=="mean value"){
+        HFGDPlot=HFGDPlot+geom_line(data=Filtered_mean(),aes(y=Mean.N1GC),size=1)
+      }
+      HFGDPlot=HFGDPlot+scale_y_continuous(limits = c(min(HFGDFrame$N1GC),max(HFGDFrame$N1GC)))
+      #scales it if button is on
+      if(input$scale=="log y scale")
+        HFGDPlot = HFGDPlot + scale_y_log10(limits = c(min(HFGDFrame$N1GC),max(HFGDFrame$N1GC)))
+        
+    return(HFGDPlot)
+      },height = 600,width = 800)
+}
+
+shinyApp(ui = ui, server = server)
+```
