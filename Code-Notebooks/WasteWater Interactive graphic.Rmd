@@ -1,0 +1,70 @@
+---
+title: "WasteWater Interactive graphic"
+author: "Marlin"
+date: "4/3/2021"
+---
+
+```{r setup, include=FALSE}
+library(shiny)
+source("../Scripts/DataProccess.R")
+
+
+Waterfilename <- "../data/WW SARS-COV-2 Data V5.xlsx"
+CovidFileName = "../data/MMSD_Cases.csv"
+
+water=WasteWater(Waterfilename)%>%
+  filter(Site!="UW-Sellery",Site!="UW-LakeShore")%>%
+  mutate(Date=as.Date(Date))
+
+
+covidData=CovidData(CovidFileName)
+FullData=full_join(water,covidData,by=c("Date","Site"))
+```
+
+```{r}
+ui <- fluidPage(
+  titlePanel("Dashboard"),
+  
+  # Sidebar with a slider input for number of bins 
+  sidebarLayout(
+    sidebarPanel(
+      selectInput(inputId = "Site", label = ("Site"),
+                  choices = unique(FullData$Site)
+      ),
+      sliderInput("Offset", "Offset",min = -10, max = 10,step=1,value=0)
+      ),
+    mainPanel(plotOutput("plot2"))
+  )
+)
+
+
+# Define server logic required to draw a histogram
+server <- function(input, output) {
+  
+  water_shifted=reactive({
+    mutate(water,Date=Date+input$Offset)
+    
+  })
+  FullData=reactive({
+    full_join(water_shifted(),covidData,by=c("Date","Site"))%>%
+      filter(Site==input$Site)
+  })
+  LM=reactive({
+      lm(roll ~ log(N1)+log(PMMoV)+log(Pct_BCoV),data=FullData(),na.action = na.exclude)
+  })
+  
+  LMFData<- reactive({
+    mutate(FullData(),Fitted=fitted(LM()))
+  })
+  
+  output$plot2<-renderPlot({
+    ggplot(data=LMFData())+geom_point(aes(x=Date,y=roll))+
+      geom_point(aes(x=Date,y=Fitted),color="red")+
+      annotate("text", x = max(covidData$Date)-10, y = .001, label = round(summary(LM())$r.squared,3))
+    
+    },height = 400,width = 600)
+}
+
+#use tests close in times as a proxy for varience
+shinyApp(ui = ui, server = server)
+```
