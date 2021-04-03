@@ -9,7 +9,7 @@ output: html_document
 source("../Scripts/DataProccess.R")
 
 
-HFGData="../data/HFG data for stats preliminary 3-18-21.xlsx"
+HFGData="../../UntrackedData/HFG data for stats preliminary 3-18-21.xlsx"
 
 HFGFrame=HFGInfo(HFGData)%>%
   mutate(Filter=as.character(Filter),Well=as.character(Well))
@@ -57,13 +57,13 @@ server <- function(input, output) {
   #Data of the means of each day
   Filtered_mean = reactive({
     filtered_data()%>%
-      group_by(Date,Filter,Plant)%>%
+      group_by(Date,Plant)%>%
       summarize(Mean.N1GC=mean(N1GC))
   })
   
   output$plot2<-renderPlot({
-      HFGDPlot=ggplot()+aes(x=Date,color=Filter)+
-        geom_jitter(data=filtered_data(),aes(y=N1GC,shape=Plant,fill=Filter),height=0,width=.1,size=3)
+      HFGDPlot=ggplot()+aes(x=Date)+
+        geom_jitter(data=filtered_data(),aes(y=N1GC,shape=Plant,fill=Filter,color=Filter),height=0,width=.1,size=3)
       #add line if the button is right
       if(input$Line=="mean value"){
         HFGDPlot=HFGDPlot+geom_line(data=Filtered_mean(),aes(y=Mean.N1GC),size=1)

@@ -9,8 +9,8 @@ library(shiny)
 source("../Scripts/DataProccess.R")
 
 
-Waterfilename <- "../data/WW SARS-COV-2 Data V5.xlsx"
-CovidFileName = "../data/MMSD_Cases.csv"
+Waterfilename <- "../../UntrackedData/WW SARS-COV-2 Data V5.xlsx"
+CovidFileName = "../../UntrackedData/MMSD_Cases.csv"
 
 water=WasteWater(Waterfilename)%>%
   filter(Site!="UW-Sellery",Site!="UW-LakeShore")%>%
@@ -60,6 +60,7 @@ server <- function(input, output) {
   output$plot2<-renderPlot({
     ggplot(data=LMFData())+geom_point(aes(x=Date,y=roll))+
       geom_point(aes(x=Date,y=Fitted),color="red")+
+      ylab("% of test positive")+
       annotate("text", x = max(covidData$Date)-10, y = .001, label = round(summary(LM())$r.squared,3))
     
     },height = 400,width = 600)
