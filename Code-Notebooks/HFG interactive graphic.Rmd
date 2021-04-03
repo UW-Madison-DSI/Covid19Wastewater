@@ -40,9 +40,18 @@ ui <- fluidPage(
                   choices = c("None","mean value"),
                   selected="None"
       ),
+      selectInput(inputId = "Means", label = ("Mean of Filters"),
+                  choices = c("None","On"),
+                  selected="None"
+      ),
+            selectInput(inputId = "EB", label = ("Error Bar"),
+                  choices = c("None","On"),
+                  selected="None"
+      ),
       selectInput(inputId = "scale", label = ("y scale"),
                   choices = c("None","log y scale"),
-                  selected="log y scale"),
+                  selected="log y scale"
+      )
     ),
     #creates panel
     mainPanel(plotOutput("plot2"))
@@ -57,16 +66,27 @@ server <- function(input, output) {
   #Data of the means of each day
   Filtered_mean = reactive({
     filtered_data()%>%
+      group_by(Date,Plant,Filter)%>%
+      summarize(Mean.N1GC=mean(N1GC),SD.N1GC=sd(N1GC))
+  })
+  Data_mean = reactive({
+    filtered_data()%>%
       group_by(Date,Plant)%>%
       summarize(Mean.N1GC=mean(N1GC))
   })
   
   output$plot2<-renderPlot({
       HFGDPlot=ggplot()+aes(x=Date)+
-        geom_jitter(data=filtered_data(),aes(y=N1GC,shape=Plant,fill=Filter,color=Filter),height=0,width=.1,size=3)
+        geom_jitter(data=filtered_data(),aes(y=N1GC,shape=Plant,color=Filter),alpha=.7,height=0,width=.1,size=3)
       #add line if the button is right
       if(input$Line=="mean value"){
-        HFGDPlot=HFGDPlot+geom_line(data=Filtered_mean(),aes(y=Mean.N1GC),size=1)
+        HFGDPlot=HFGDPlot+geom_line(data=Data_mean(),aes(y=Mean.N1GC),size=1)
+      }
+      if(input$Means=="On"){
+        HFGDPlot=HFGDPlot+geom_point(shape=23,aes(y=Mean.N1GC,fill=Filter),size=5,data=Filtered_mean())
+        if(input$EB=="On"){
+          HFGDPlot=HFGDPlot+geom_linerange(aes(ymin=Mean.N1GC-SD.N1GC, ymax=Mean.N1GC+SD.N1GC,color=Filter),alpha=.7,size=2,data=Filtered_mean())
+        }
       }
       HFGDPlot=HFGDPlot+scale_y_continuous(limits = c(min(HFGDFrame$N1GC),max(HFGDFrame$N1GC)))
       #scales it if button is on
