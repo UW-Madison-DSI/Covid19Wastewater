@@ -80,7 +80,7 @@ server <- function(input, output) {
   })
   
   output$plot2<-renderPlot(
-        width = function() 100+300*ceiling(length(input$Plant)/min(c(input$Rows,length(input$Plant)))),
+        width = function() 200+600*ceiling(length(input$Plant)/min(c(input$Rows,length(input$Plant)))),
         height = function() 200+350*min(c(input$Rows,length(input$Plant))),
     {
       HFGDPlot=ggplot()+aes(x=Date)+
