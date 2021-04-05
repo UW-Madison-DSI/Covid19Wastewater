@@ -1,3 +1,8 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
 	echo = FALSE,
@@ -10,10 +15,10 @@ knitr::opts_chunk$set(
 
 ```{r}
 library(ggformula)
+library(ggpubr)
 ```
 
 ```{r}
-
 source("../Scripts/DataProccess.R")
 
 
