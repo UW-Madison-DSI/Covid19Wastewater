@@ -1,10 +1,3 @@
----
-title: "HFG varience analysis"
-author: "Marlin"
-date: "3/23/2021"
-output: html_document
----
-
 ```{r warning = FALSE, message = FALSE,echo = FALSE}
 source("../Scripts/DataProccess.R")
 
@@ -22,7 +15,7 @@ HFGSumarized=HFGFrame%>%
 ```
 
 
-```{r fig.width=8, fig.height=8}
+```{r fig.width=8, fig.height=8,echo = FALSE}
 HFGSumarized%>%
   ggplot()+geom_point(aes(x=between,y=within))+
   geom_abline(intercept = 0, slope = 1)+
@@ -30,7 +23,7 @@ HFGSumarized%>%
   scale_x_log10()
 
 HFGSumarized%>%
-  ggplot()+geom_histogram(aes(x=between/within))+
+  ggplot()+geom_histogram(aes(x=between/within),bins = 30)+
   geom_vline(xintercept = 1,color="red")+
   scale_x_log10()+
   xlab("F Score")
@@ -41,7 +34,7 @@ HFGSumarized%>%
 #Then between*8=within*6
 #IE between<within
 ```
-
+```{r,echo = FALSE}
 #just do the calc code
 #look into package
 #F-stat=sum^sq or sum abs()
@@ -51,4 +44,4 @@ HFGSumarized%>%
 #chai squared
 #once we know variance we can look for outliers
 #var from one day to the next
-
+```
