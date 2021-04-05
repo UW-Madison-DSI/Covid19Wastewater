@@ -1,17 +1,6 @@
-#---
-#title: "Data.Proccess"
-#author: "Marlin"
-#date: "3/13/2021"
-#output: html_document
-#---
-
 library(tidyverse)
 library(lubridate)
 library(readxl)
-library(broom)
-library(zoo)
-library(RcppRoll)
-library(ggpubr)
 
 #Creates WastewaterData
 
