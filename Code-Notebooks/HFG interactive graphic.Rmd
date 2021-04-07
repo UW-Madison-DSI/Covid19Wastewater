@@ -79,12 +79,12 @@ server <- function(input, output) {
     Filtered_mean = reactive({
         filtered_data()%>%
             group_by(Date,Plant,`Filter replicates`)%>%
-            summarize(Mean.N1GC=mean(N1GC),SD.N1GC=sd(N1GC))
+            summarize(Mean.N1GC=exp(mean(log(N1GC))),SD.N1GC=sd(N1GC))
     })
     Data_mean = reactive({
         filtered_data()%>%
             group_by(Date,Plant)%>%
-            summarize(Mean.N1GC=mean(N1GC))
+            summarize(Mean.N1GC=exp(mean(log(N1GC))))
     })
     output$plot2<-renderPlot(
         width = function() 200+600*ifelse(input$Plant=="All",3,1),
