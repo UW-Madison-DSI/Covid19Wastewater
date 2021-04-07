@@ -22,7 +22,8 @@ HFGFrame.Filtered=HFGFrame%>%
   filter(!is.na(N1GC),!is.na(Date))
 
 
-HFGDFrame=HFGFrame.Filtered
+HFGDFrame=HFGFrame.Filtered%>%
+  rename(`Filter replicates`=Filter)
 myseed=1234567890
 library(shiny)
 ```
@@ -40,24 +41,24 @@ ui <- fluidPage(
                         multiple=F,
                         selected="Madison"
             ),
-            checkboxInput(inputId = "Line", label = ("Daily mean"),
+            checkboxInput(inputId = "Line", label = ("Daily mean of 9 replicates"),
                           value=F
             ),
-            checkboxInput(inputId = "Means", label = ("mean of qPCR"),
+            checkboxInput(inputId = "Means", label = ("Mean of qPCR replicates"),
                           value=F
             ),
             #selectInput(inputId = "EB", label = ("Error Bar"),
             #            choices = c("None","On"),
             #            selected="None"
             #),
-            selectInput(inputId = "scale", label = ("y scale"),
-                        choices = c("None","log y scale"),
-                        selected="log y scale"
-            ),
+            #selectInput(inputId = "scale", label = ("y scale"),
+            #            choices = c("None","log y scale"),
+            #            selected="log y scale"
+            #),
             #sliderInput("Rows", "# of Rows",min = 1, max = 10,step=1,value=1)
         ),
         #creates panel
-        mainPanel(div("Info About Data"),plotOutput("plot2",inline=TRUE), br(),div("Discription Of Data"))
+        mainPanel(plotOutput("plot2",inline=TRUE), br(),div("Data source: HFG data for stats preliminary 3-18-21.xlsx from 3/18/2021 jocelyn.hemming@slh.wisc.edu email."),div("Questions? Contact Marlin Lee mrlee6@wisc.edu or Steve Goldstein sgoldstein@wisc.edu"))
     )
 )
 ```
@@ -77,7 +78,7 @@ server <- function(input, output) {
     #Data of the means of each day
     Filtered_mean = reactive({
         filtered_data()%>%
-            group_by(Date,Plant,Filter)%>%
+            group_by(Date,Plant,`Filter replicates`)%>%
             summarize(Mean.N1GC=mean(N1GC),SD.N1GC=sd(N1GC))
     })
     Data_mean = reactive({
@@ -91,28 +92,27 @@ server <- function(input, output) {
         {
             set.seed(myseed)
             HFGDPlot=ggplot()+aes(x=Date)+
-                geom_jitter(data=filtered_data(),aes(y=N1GC,color=Filter),alpha=.7,height=0,width=.1,size=3)
+                geom_jitter(data=filtered_data(),aes(y=N1GC,color=`Filter replicates`),alpha=.7,height=0,width=.1,size=3)+
+              ylab("N1 GC/L")
             #add line if the button is right
             if(input$Line==T){
                 HFGDPlot=HFGDPlot+geom_line(data=Data_mean(),aes(y=Mean.N1GC),size=1)
             }
             if(input$Means==T){
                 set.seed(myseed)
-                HFGDPlot=HFGDPlot+geom_jitter(shape=23,aes(y=Mean.N1GC,fill=Filter),size=5,height=0,width=.1,data=Filtered_mean())
+                HFGDPlot=HFGDPlot+geom_jitter(shape=23,aes(y=Mean.N1GC,fill=`Filter replicates`),size=5,height=0,width=.1,data=Filtered_mean())
                 #if(input$EB=="On"){
                 #    HFGDPlot=HFGDPlot+geom_linerange(aes(ymin=Mean.N1GC-SD.N1GC, ymax=Mean.N1GC+SD.N1GC,color=Filter),alpha=.7,size=2,data=Filtered_mean())
                 #}
             }
             #scales it if button is on
-            if(input$scale=="log y scale")
-                HFGDPlot = HFGDPlot + scale_y_log10(limits = c(min(HFGDFrame$N1GC),max(HFGDFrame$N1GC)))
-            else
-                HFGDPlot=HFGDPlot+scale_y_continuous(limits = c(min(HFGDFrame$N1GC),max(HFGDFrame$N1GC)))
+            #if(input$scale=="log y scale")
+            HFGDPlot = HFGDPlot + scale_y_log10(limits = c(min(HFGDFrame$N1GC),max(HFGDFrame$N1GC)))
+            #else
+            #HFGDPlot=HFGDPlot+scale_y_continuous(limits = c(min(HFGDFrame$N1GC),max(HFGDFrame$N1GC)))
             HFGDPlot = HFGDPlot+facet_wrap(~Plant, nrow = 4)
             return(HFGDPlot)
         })
 }
-
 shinyApp(ui = ui, server = server)
-
 ```
