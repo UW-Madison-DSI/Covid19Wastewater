@@ -23,42 +23,42 @@ HFGFrame.Filtered=HFGFrame%>%
 
 
 HFGDFrame=HFGFrame.Filtered
+myseed=1234567890
+library(shiny)
 ```
 
 ```{r}
-library(shiny)
+
 
 #Creates buttons for Plant location,Line, and scale
 ui <- fluidPage(
-  titlePanel("Dashboard"),
-  sidebarLayout(
-    sidebarPanel(
-      selectInput(inputId = "Plant", label = ("Plant"),
-                  choices = unique(HFGDFrame$Plant),
-                  multiple=T,
-                  selected="Madison"
-      ),
-      selectInput(inputId = "Line", label = ("Line Method"),
-                  choices = c("None","mean value"),
-                  selected="None"
-      ),
-      selectInput(inputId = "Means", label = ("Mean of Filters"),
-                  choices = c("None","On"),
-                  selected="None"
-      ),
-            selectInput(inputId = "EB", label = ("Error Bar"),
-                  choices = c("None","On"),
-                  selected="None"
-      ),
-      selectInput(inputId = "scale", label = ("y scale"),
-                  choices = c("None","log y scale"),
-                  selected="log y scale"
-      ),
-      sliderInput("Rows", "# of Rows",min = 1, max = 10,step=1,value=1)
-    ),
-    #creates panel
-    mainPanel(plotOutput("plot2"))
-  )
+    titlePanel("HFG Interactive graphic"),
+    sidebarLayout(
+        sidebarPanel(
+            selectInput(inputId = "Plant", label = ("Plant"),
+                        choices = c("All",unique(HFGDFrame$Plant)),
+                        multiple=F,
+                        selected="Madison"
+            ),
+            checkboxInput(inputId = "Line", label = ("Daily mean"),
+                          value=F
+            ),
+            checkboxInput(inputId = "Means", label = ("mean of qPCR"),
+                          value=F
+            ),
+            #selectInput(inputId = "EB", label = ("Error Bar"),
+            #            choices = c("None","On"),
+            #            selected="None"
+            #),
+            selectInput(inputId = "scale", label = ("y scale"),
+                        choices = c("None","log y scale"),
+                        selected="log y scale"
+            ),
+            #sliderInput("Rows", "# of Rows",min = 1, max = 10,step=1,value=1)
+        ),
+        #creates panel
+        mainPanel(div("Info About Data"),plotOutput("plot2",inline=TRUE), br(),div("Discription Of Data"))
+    )
 )
 ```
 
@@ -66,44 +66,51 @@ ui <- fluidPage(
 ```{r}
 #create graphic                                       
 server <- function(input, output) {
-  #reduces data to only Plant selected
-  filtered_data<- reactive({
-    filter(HFGDFrame, HFGDFrame$Plant %in%  input$Plant)})
-  #Data of the means of each day
-  Filtered_mean = reactive({
-    filtered_data()%>%
-      group_by(Date,Plant,Filter)%>%
-      summarize(Mean.N1GC=mean(N1GC),SD.N1GC=sd(N1GC))
-  })
-  Data_mean = reactive({
-    filtered_data()%>%
-      group_by(Date,Plant)%>%
-      summarize(Mean.N1GC=mean(N1GC))
-  })
-  
-  output$plot2<-renderPlot(
-        width = function() 200+600*ceiling(length(input$Plant)/min(c(input$Rows,length(input$Plant)))),
-        height = function() 200+350*min(c(input$Rows,length(input$Plant))),
-    {
-      HFGDPlot=ggplot()+aes(x=Date)+
-        geom_jitter(data=filtered_data(),aes(y=N1GC,color=Filter),alpha=.7,height=0,width=.1,size=3)
-      #add line if the button is right
-      if(input$Line=="mean value"){
-        HFGDPlot=HFGDPlot+geom_line(data=Data_mean(),aes(y=Mean.N1GC),size=1)
-      }
-      if(input$Means=="On"){
-        HFGDPlot=HFGDPlot+geom_point(shape=23,aes(y=Mean.N1GC,fill=Filter),size=5,data=Filtered_mean())
-        if(input$EB=="On"){
-          HFGDPlot=HFGDPlot+geom_linerange(aes(ymin=Mean.N1GC-SD.N1GC, ymax=Mean.N1GC+SD.N1GC,color=Filter),alpha=.7,size=2,data=Filtered_mean())
-        }
-      }
-      HFGDPlot=HFGDPlot+scale_y_continuous(limits = c(min(HFGDFrame$N1GC),max(HFGDFrame$N1GC)))
-      #scales it if button is on
-      if(input$scale=="log y scale")
-        HFGDPlot = HFGDPlot + scale_y_log10(limits = c(min(HFGDFrame$N1GC),max(HFGDFrame$N1GC)))
-        HFGDPlot = HFGDPlot+facet_wrap(~Plant, nrow = input$Rows, ncol = ceiling(length(input$Plant)/input$Rows))
-    return(HFGDPlot)
-      })
+    
+    
+    #reduces data to only Plant selected
+    filtered_data<- reactive({
+        if(input$Plant!="All")
+            return(filter(HFGDFrame, HFGDFrame$Plant %in%  input$Plant))
+        return(HFGDFrame)
+        })
+    #Data of the means of each day
+    Filtered_mean = reactive({
+        filtered_data()%>%
+            group_by(Date,Plant,Filter)%>%
+            summarize(Mean.N1GC=mean(N1GC),SD.N1GC=sd(N1GC))
+    })
+    Data_mean = reactive({
+        filtered_data()%>%
+            group_by(Date,Plant)%>%
+            summarize(Mean.N1GC=mean(N1GC))
+    })
+    output$plot2<-renderPlot(
+        width = function() 200+600*ifelse(input$Plant=="All",3,1),
+        height = function() 200+350*ifelse(input$Plant=="All",4,1),
+        {
+            set.seed(myseed)
+            HFGDPlot=ggplot()+aes(x=Date)+
+                geom_jitter(data=filtered_data(),aes(y=N1GC,color=Filter),alpha=.7,height=0,width=.1,size=3)
+            #add line if the button is right
+            if(input$Line==T){
+                HFGDPlot=HFGDPlot+geom_line(data=Data_mean(),aes(y=Mean.N1GC),size=1)
+            }
+            if(input$Means==T){
+                set.seed(myseed)
+                HFGDPlot=HFGDPlot+geom_jitter(shape=23,aes(y=Mean.N1GC,fill=Filter),size=5,height=0,width=.1,data=Filtered_mean())
+                #if(input$EB=="On"){
+                #    HFGDPlot=HFGDPlot+geom_linerange(aes(ymin=Mean.N1GC-SD.N1GC, ymax=Mean.N1GC+SD.N1GC,color=Filter),alpha=.7,size=2,data=Filtered_mean())
+                #}
+            }
+            #scales it if button is on
+            if(input$scale=="log y scale")
+                HFGDPlot = HFGDPlot + scale_y_log10(limits = c(min(HFGDFrame$N1GC),max(HFGDFrame$N1GC)))
+            else
+                HFGDPlot=HFGDPlot+scale_y_continuous(limits = c(min(HFGDFrame$N1GC),max(HFGDFrame$N1GC)))
+            HFGDPlot = HFGDPlot+facet_wrap(~Plant, nrow = 4)
+            return(HFGDPlot)
+        })
 }
 
 shinyApp(ui = ui, server = server)

@@ -6,6 +6,7 @@ date: "4/3/2021"
 
 ```{r setup, include=FALSE}
 library(shiny)
+library(plotly)
 source("../Scripts/DataProccess.R")
 
 
@@ -56,12 +57,15 @@ server <- function(input, output) {
   LMFData<- reactive({
     mutate(FullData(),Fitted=fitted(LM()))
   })
-  
+  MinDate=reactive({min(LMFData()$Date, na.rm=T)})
+  MaxDate=reactive({max(LMFData()$Date, na.rm=T)})
   output$plot2<-renderPlot({
     ggplot(data=LMFData())+geom_point(aes(x=Date,y=roll))+
       geom_point(aes(x=Date,y=Fitted),color="red")+
       ylab("% of test positive")+
-      annotate("text", x = max(covidData$Date)-10, y = .001, label = round(summary(LM())$r.squared,3))
+      annotate("label", x = max(MaxDate())-10, y = .001, label = paste("R^2:",round(summary(LM())$r.squared,3)),color="red")+
+      scale_x_date(limits =c(MinDate(),MaxDate()))
+      
     
     },height = 400,width = 600)
 }
