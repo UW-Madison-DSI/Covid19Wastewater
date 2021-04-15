@@ -108,10 +108,10 @@ HFGInfo = function(data){
                      "Inhibited-to be re-ran", "#DIV/0!",
                      "Undetermined", "LA")
   
-  HFGInfo.PreHack <- read_excel(data,
+  HFGInfo.PreHack <- suppressMessages(read_excel(data,
                                 na = missing_codes,
                                 col_types = c("text","text", "date", rep("numeric", 4),"text",rep("numeric", 2),"text",rep("numeric", 3)),
-                                sheet = 1)%>%
+                                sheet = 1))%>%
     rename(repName="...2",
            Date="Collection Date",
            N1Ct="N1 CT",

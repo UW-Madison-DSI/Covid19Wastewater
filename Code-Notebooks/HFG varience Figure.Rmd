@@ -64,6 +64,52 @@ HFGSumarized%>%
   scale_x_log10()+
   xlab("F Score")
 ```
+```{r}
+library(VCA)
+
+HFGFrame=HFGInfo(HFGData)%>%
+  filter(Plant=="Madison")%>%
+  filter(!is.na(N1GC),!is.na(Filter),!is.na(Well),!is.na(Date),!is.na(Plant))%>%
+  mutate(N1GC=as.numeric(N1GC),Filter=factor(Filter),Well=factor(Well),Date=factor(Date),Plant=factor(Plant))%>%
+  select(N1GC,Plant,Date,Filter,Well)
+levels(HFGFrame$Filter)
 
 
+HFGFrame
+varPlot(form=N1GC~Filter, Data=HFGFrame)
 
+
+#20 9 madison
+
+form=N1GC~Filter
+form <- terms(form, simplify = TRUE)
+
+
+temp=terms(form, simplify = TRUE)
+
+nest=attr(temp, "term.labels")
+
+nest <- sapply(nest, function(x) {
+        x <- unlist(strsplit(x, ":"))
+        return(x[length(x)])
+})
+ tab <- table(nest)
+resp <- rownames(attr(form, "factors"))[1]
+
+nest[1] != "1"
+
+
+VCA:::buildList
+unique(as.character(Data[, Current]))
+```
+
+```{r}
+Data = HFGFrame
+Nesting = nest
+Current = nest[1]
+resp = resp
+keep.order = TRUE
+useVarNam = FALSE 
+Points = list(pch = 16, cex = 0.5, col = "black")
+VCA:::buildList(Data,Nesting,Current,resp,keep.order,useVarNam,Points)
+```

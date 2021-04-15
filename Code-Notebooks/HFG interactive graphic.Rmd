@@ -18,19 +18,37 @@ HFGFrame=HFGInfo(HFGData)%>%
 
 
 HFGFrame.Filtered=HFGFrame%>%
-  filter(N1GC<100000000)%>%
-  filter(!is.na(N1GC),!is.na(Date))
+  filter(!is.na(N1GC),!is.na(Date))%>%
+  group_by(Plant,Date)%>%
+  mutate(n=n())%>%
+  filter(n==9)%>%
+  ungroup()%>%
+  select(-n)
 
+DateRange=data.frame(Date=seq(min(HFGFrame$Date), max(HFGFrame$Date), "days"))%>%
+  mutate(Days=weekdays(Date))%>%
+  filter(Days %in% c("Sunday","Monday"))
+if (DateRange$Days[1]=="Monday"){
+  DateRange=DateRange[-1,]}
+if (tail(DateRange$Days, n=1)=="Sunday"){
+  DateRange=head(DateRange, -1)}
+MRan=filter(DateRange,Days=="Sunday")%>%
+  rename(Left=Date)
+SRan=filter(DateRange,Days=="Monday")%>%
+  rename(Right=Date)
+
+DateRangeD=cbind(MRan,SRan)%>%
+  select(Left,Right)
 
 HFGDFrame=HFGFrame.Filtered%>%
-  rename(`Filter replicates`=Filter)
+  rename(`Filter replicates`=Filter)%>%
+  mutate(Is_W_end=weekdays(Date) %in% c("Sunday","Monday"))
 myseed=1234567890
 library(shiny)
+library(ggpubr)
 ```
 
 ```{r}
-
-
 #Creates buttons for Plant location,Line, and scale
 ui <- fluidPage(
     titlePanel("HFG Interactive graphic"),
@@ -39,26 +57,23 @@ ui <- fluidPage(
             selectInput(inputId = "Plant", label = ("Plant"),
                         choices = c("All",unique(HFGDFrame$Plant)),
                         multiple=F,
-                        selected="Madison"
-            ),
+                        selected="Madison"),
+            selectInput(inputId = "Vars", label = ("Varibles"),
+                        choices = c("N1GC","N2GC","PMMOVGC"),
+                        multiple=T,
+                        selected="N1GC"),
             checkboxInput(inputId = "Line", label = ("Daily mean of 9 replicates"),
-                          value=F
-            ),
+                          value=F),
             checkboxInput(inputId = "Means", label = ("Mean of qPCR replicates"),
-                          value=F
-            ),
-            #selectInput(inputId = "EB", label = ("Error Bar"),
-            #            choices = c("None","On"),
-            #            selected="None"
-            #),
-            #selectInput(inputId = "scale", label = ("y scale"),
-            #            choices = c("None","log y scale"),
-            #            selected="log y scale"
-            #),
-            #sliderInput("Rows", "# of Rows",min = 1, max = 10,step=1,value=1)
+                          value=F),
+            checkboxInput(inputId = "scale", label = ("y scale"),
+                        value=T),
+            checkboxInput(inputId = "W_E", label = ("Weekend marker"),
+                        value=T),
+            sliderInput(inputId = "YLim", label = "Shown Y Quintile",min = .9, max = 1,step=.005,value=1)
         ),
         #creates panel
-        mainPanel(plotOutput("plot2",inline=TRUE), br(),div("Data source: HFG data for stats preliminary 3-18-21.xlsx from 3/18/2021 jocelyn.hemming@slh.wisc.edu email."),div("Questions? Contact Marlin Lee mrlee6@wisc.edu or Steve Goldstein sgoldstein@wisc.edu"))
+        mainPanel(div("Test Version of interactive"),br(),plotOutput("plot1",inline=TRUE), br(),div("Data source: HFG data for stats preliminary 3-18-21.xlsx from 3/18/2021 jocelyn.hemming@slh.wisc.edu email."),div("Questions? Contact Marlin Lee mrlee6@wisc.edu or Steve Goldstein sgoldstein@wisc.edu"))
     )
 )
 ```
@@ -67,51 +82,73 @@ ui <- fluidPage(
 ```{r}
 #create graphic                                       
 server <- function(input, output) {
-    
-    
     #reduces data to only Plant selected
-    filtered_data<- reactive({
+    filtered_data_Q<- reactive({
+        filter(HFGDFrame, N1GC<quantile(HFGDFrame$N1GC, input$YLim))
+        })
+    filtered_data_P<- reactive({
         if(input$Plant!="All")
-            return(filter(HFGDFrame, HFGDFrame$Plant %in%  input$Plant))
-        return(HFGDFrame)
+            return(filter(filtered_data_Q(), filtered_data_Q()$Plant %in% input$Plant))
+        return(filtered_data_Q())
         })
     #Data of the means of each day
-    Filtered_mean = reactive({
-        filtered_data()%>%
-            group_by(Date,Plant,`Filter replicates`)%>%
-            summarize(Mean.N1GC=exp(mean(log(N1GC))),SD.N1GC=sd(N1GC))
+    Data_mean_var = reactive({
+      DF_mean=filtered_data_P()%>%
+            group_by(Date,Plant)
+      for (var in input$Vars){
+        DF_mean=DF_mean%>%
+          mutate(!!paste0("Mean",var) := exp(mean(log(!!sym(var)))))
+      }
+      DF_mean=DF_mean%>%
+        distinct(Date,Plant,`Filter replicates`,.keep_all=T)%>%
+        ungroup()
+      return(DF_mean)
     })
-    Data_mean = reactive({
-        filtered_data()%>%
-            group_by(Date,Plant)%>%
-            summarize(Mean.N1GC=exp(mean(log(N1GC))))
+    Filter_mean_var = reactive({
+      DF_meanv=filtered_data_P()%>%
+            group_by(Date,Plant,`Filter replicates`)
+      for (var in input$Vars){
+        DF_meanv=DF_meanv%>%
+          mutate(!!paste0("Mean",var) := exp(mean(log(!!sym(var)))))
+      }
+      DF_meanv=DF_meanv%>%
+        distinct(Date,Plant,`Filter replicates`,.keep_all=T)%>%
+        ungroup()
+      return(DF_meanv)
     })
-    output$plot2<-renderPlot(
-        width = function() 200+600*ifelse(input$Plant=="All",3,1),
-        height = function() 200+350*ifelse(input$Plant=="All",4,1),
+      DF_Week = reactive({
+        
+      return(DF_Week)
+    })
+    buildplot = function(vari){
+      set.seed(myseed)
+      HFGDPlot=ggplot()+
+            geom_jitter(data=filtered_data_P(),aes(y=!!sym(vari),color=`Filter replicates`,x=Date),alpha=.7,height=0,width=.1,size=3)+ylab(vari)
+      if(input$Line==T){
+          HFGDPlot=HFGDPlot+geom_line(data=Data_mean_var(),aes(y=!!sym(paste0("Mean",vari)),x=Date),size=1)
+      }
+      if(input$Means==T){
+          set.seed(myseed)
+          HFGDPlot=HFGDPlot+geom_jitter(data=Filter_mean_var(),aes(y=!!sym(paste0("Mean",vari)),fill=`Filter replicates`,x=Date), shape=23, size=5, height=0, width=.1)
+      }
+      if(input$W_E==T){
+        print("check")
+          HFGDPlot=HFGDPlot+geom_rect(data=DateRangeD, aes(xmin=Left, xmax=Right, ymin=0, ymax=Inf), fill='pink', alpha=.2)
+      }
+      #scales it if button is on
+      if(input$scale==T)
+          HFGDPlot = HFGDPlot + scale_y_log10(limits = c(min(filtered_data_Q()[vari]),max(filtered_data_Q()[vari])))
+      else
+        HFGDPlot=HFGDPlot+scale_y_continuous(limits = c(min(filtered_data_Q()[vari]),max(filtered_data_Q()[vari])))
+      HFGDPlot = HFGDPlot+facet_wrap(~Plant, nrow = 1)
+      return(HFGDPlot)
+    }
+    #plots N1GC
+    output$plot1<-renderPlot(
+        width = function() 800*ifelse(input$Plant=="All",10,1),
+        height = function() 100+550*length(input$Vars),
         {
-            set.seed(myseed)
-            HFGDPlot=ggplot()+aes(x=Date)+
-                geom_jitter(data=filtered_data(),aes(y=N1GC,color=`Filter replicates`),alpha=.7,height=0,width=.1,size=3)+
-              ylab("N1 GC/L")
-            #add line if the button is right
-            if(input$Line==T){
-                HFGDPlot=HFGDPlot+geom_line(data=Data_mean(),aes(y=Mean.N1GC),size=1)
-            }
-            if(input$Means==T){
-                set.seed(myseed)
-                HFGDPlot=HFGDPlot+geom_jitter(shape=23,aes(y=Mean.N1GC,fill=`Filter replicates`),size=5,height=0,width=.1,data=Filtered_mean())
-                #if(input$EB=="On"){
-                #    HFGDPlot=HFGDPlot+geom_linerange(aes(ymin=Mean.N1GC-SD.N1GC, ymax=Mean.N1GC+SD.N1GC,color=Filter),alpha=.7,size=2,data=Filtered_mean())
-                #}
-            }
-            #scales it if button is on
-            #if(input$scale=="log y scale")
-            HFGDPlot = HFGDPlot + scale_y_log10(limits = c(min(HFGDFrame$N1GC),max(HFGDFrame$N1GC)))
-            #else
-            #HFGDPlot=HFGDPlot+scale_y_continuous(limits = c(min(HFGDFrame$N1GC),max(HFGDFrame$N1GC)))
-            HFGDPlot = HFGDPlot+facet_wrap(~Plant, nrow = 4)
-            return(HFGDPlot)
+          ggarrange(plotlist=lapply(input$Vars,buildplot),ncol =1)
         })
 }
 shinyApp(ui = ui, server = server)
