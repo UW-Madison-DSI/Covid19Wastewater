@@ -149,16 +149,5 @@ server <- function(input, output) {
 shinyApp(ui = ui, server = server)
 ```
 
-```{r}
-Vars=c("N1GC","N2GC","PMMOVGC")
-
-buildplot = function(vari){
-      set.seed(myseed)
-      HFGDPlot=ggplot()+
-            geom_jitter(data=HFGDFrame,aes(y=!!sym(vari),color=`Filter replicates`,x=Date),alpha=.7,height=0,width=.1,size=3)+ rremove("xlab")}
-plots=lapply(Vars,buildplot)
-plots[[2]]=plots[[2]] + theme(axis.title.x = element_text("Arial", "plain", "black", 20))
-plots
-```
 
 
