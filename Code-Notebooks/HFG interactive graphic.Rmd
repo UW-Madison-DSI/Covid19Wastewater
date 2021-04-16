@@ -16,7 +16,6 @@ HFGData="../../UntrackedData/HFG data for stats preliminary 3-18-21.xlsx"
 HFGFrame=HFGInfo(HFGData)%>%
   mutate(Filter=as.character(Filter),Well=as.character(Well))
 
-
 HFGFrame.Filtered=HFGFrame%>%
   filter(!is.na(N1GC),!is.na(Date))%>%
   group_by(Plant,Date)%>%
@@ -68,12 +67,10 @@ ui <- fluidPage(
                           value=F),
             checkboxInput(inputId = "scale", label = ("y scale"),
                         value=T),
-            checkboxInput(inputId = "W_E", label = ("Weekend marker"),
-                        value=T),
             sliderInput(inputId = "YLim", label = "Shown Y Quintile",min = .9, max = 1,step=.005,value=1)
         ),
         #creates panel
-        mainPanel(div("Test Version of interactive"),br(),plotOutput("plot1",inline=TRUE), br(),div("Data source: HFG data for stats preliminary 3-18-21.xlsx from 3/18/2021 jocelyn.hemming@slh.wisc.edu email."),div("Questions? Contact Marlin Lee mrlee6@wisc.edu or Steve Goldstein sgoldstein@wisc.edu"))
+        mainPanel(div("Pink sections are weekends"),br(),plotOutput("plot1",inline=TRUE), br(),div("Data source: HFG data for stats preliminary 3-18-21.xlsx from 3/18/2021 jocelyn.hemming@slh.wisc.edu email."),div("Questions? Contact Marlin Lee mrlee6@wisc.edu or Steve Goldstein sgoldstein@wisc.edu"))
     )
 )
 ```
@@ -83,13 +80,10 @@ ui <- fluidPage(
 #create graphic                                       
 server <- function(input, output) {
     #reduces data to only Plant selected
-    filtered_data_Q<- reactive({
-        filter(HFGDFrame, N1GC<quantile(HFGDFrame$N1GC, input$YLim))
-        })
     filtered_data_P<- reactive({
         if(input$Plant!="All")
-            return(filter(filtered_data_Q(), filtered_data_Q()$Plant %in% input$Plant))
-        return(filtered_data_Q())
+            return(filter(HFGDFrame, HFGDFrame$Plant %in% input$Plant))
+        return(HFGDFrame)
         })
     #Data of the means of each day
     Data_mean_var = reactive({
@@ -131,16 +125,14 @@ server <- function(input, output) {
           set.seed(myseed)
           HFGDPlot=HFGDPlot+geom_jitter(data=Filter_mean_var(),aes(y=!!sym(paste0("Mean",vari)),fill=`Filter replicates`,x=Date), shape=23, size=5, height=0, width=.1)
       }
-      if(input$W_E==T){
-        print("check")
-          HFGDPlot=HFGDPlot+geom_rect(data=DateRangeD, aes(xmin=Left, xmax=Right, ymin=0, ymax=Inf), fill='pink', alpha=.2)
-      }
+      quint=quantile(pull(HFGDFrame,vari),input$YLim,na.rm=T)[[1]]
       #scales it if button is on
       if(input$scale==T)
-          HFGDPlot = HFGDPlot + scale_y_log10(limits = c(min(filtered_data_Q()[vari]),max(filtered_data_Q()[vari])))
+          HFGDPlot = HFGDPlot + scale_y_log10(limits = c(min(HFGDFrame[vari]),quint))
       else
-        HFGDPlot=HFGDPlot+scale_y_continuous(limits = c(min(filtered_data_Q()[vari]),max(filtered_data_Q()[vari])))
-      HFGDPlot = HFGDPlot+facet_wrap(~Plant, nrow = 1)
+        HFGDPlot=HFGDPlot+scale_y_continuous(limits = c(min(HFGDFrame[vari]),quint))
+      HFGDPlot=HFGDPlot+geom_rect(data=DateRangeD, aes(xmin=Left, xmax=Right, ymin=0, ymax=Inf), fill='pink', alpha=.2)
+      HFGDPlot = HFGDPlot+facet_wrap(~Plant, nrow = 1)+theme(text = element_text(size=20),strip.text.x = element_blank(),axis.text.x = element_blank(),axis.text.y = element_text(size = 15, colour = "black"))+ rremove("xlab")
       return(HFGDPlot)
     }
     #plots N1GC
@@ -148,8 +140,25 @@ server <- function(input, output) {
         width = function() 800*ifelse(input$Plant=="All",10,1),
         height = function() 100+550*length(input$Vars),
         {
-          ggarrange(plotlist=lapply(input$Vars,buildplot),ncol =1)
+          plots=lapply(input$Vars,buildplot)
+          plots[[1]]=plots[[1]] + theme(strip.text.x = element_text(size = 20, colour = "black"))
+          plots[[length(plots)]]=plots[[length(plots)]] + theme(axis.title.x = element_text(size = 20, colour = "black"),axis.text.x = element_text(size = 15, colour = "black"))
+          ggarrange(plotlist=plots,ncol =1,common.legend = TRUE, legend = "right")
         })
 }
 shinyApp(ui = ui, server = server)
 ```
+
+```{r}
+Vars=c("N1GC","N2GC","PMMOVGC")
+
+buildplot = function(vari){
+      set.seed(myseed)
+      HFGDPlot=ggplot()+
+            geom_jitter(data=HFGDFrame,aes(y=!!sym(vari),color=`Filter replicates`,x=Date),alpha=.7,height=0,width=.1,size=3)+ rremove("xlab")}
+plots=lapply(Vars,buildplot)
+plots[[2]]=plots[[2]] + theme(axis.title.x = element_text("Arial", "plain", "black", 20))
+plots
+```
+
+
