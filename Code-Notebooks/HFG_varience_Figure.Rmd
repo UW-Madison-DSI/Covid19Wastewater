@@ -1,0 +1,68 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+editor_options: 
+  chunk_output_type: console
+---
+```{r warning = FALSE, message = FALSE,echo = FALSE}
+source("../Scripts/DataProccess.R")
+
+HFGData="../../UntrackedData/HFG data for stats preliminary 3-18-21.xlsx"
+
+HFGFrame=HFGInfo(HFGData)%>%
+  mutate(Filter=as.character(Filter),Well=as.character(Well))%>%
+  filter(!is.na(N1GC),!is.na(Filter),!is.na(Plant),!is.na(Date))%>%
+  mutate(DayPlace=paste(Plant,Date),DayPlaceFilter=paste(Plant,Date,Filter))%>%
+  select(DayPlace,DayPlaceFilter,N1GC)%>%
+  group_by(DayPlace)%>%
+  mutate(n=n())%>%
+  filter(n==9)
+
+HFGSumarized=HFGFrame%>%
+  group_by(DayPlace)%>%
+  mutate(N=n(),K=length(unique(DayPlaceFilter)))%>%
+  mutate(Y_mean_DP=mean(log(N1GC)))%>%
+  group_by(DayPlaceFilter)%>%
+  mutate(Y_mean_Filter=mean(log(N1GC)))%>%
+  group_by(DayPlace)%>%
+  summarize(between=sum((Y_mean_Filter-Y_mean_DP)^2)/(K-1),within=sum((log(N1GC)-Y_mean_Filter)^2)/(N-K))%>%
+  distinct()%>%
+  mutate(Plant=strsplit(DayPlace, " ")[[1]][1])
+
+#Example point={1,1,1,2,3,4,5,5,5}
+#sample means are ={1,3,5}
+#total mean = {3}
+#numerator = 3 * (1-3)^2 + 
+
+#OverallData=HFGFrame%>%
+#  mutate(Y_mean=mean(log(N1GC)),N=n(),K=length(unique(DayPlaceFilter)))%>%
+#  group_by(DayPlaceFilter)%>%
+#  mutate(Y_mean_Filter=mean(log(N1GC)))%>%
+#  ungroup()%>%
+#  summarize(between=sum((Y_mean_Filter-Y_mean)^2)/(K-1),within=sum((log(N1GC)-Y_mean_Filter)^2)/(N-K))%>%
+#  distinct()%>%
+#  mutate(FScore=between/within)
+#OverallData
+
+#DayPlace.aov <- aov(log(N1GC) ~ DayPlaceFilter, data = HFGFrame)
+#summary(DayPlace.aov)[1][[1]][4][1]
+
+
+```
+
+
+```{r fig.width=8, fig.height=8,echo = FALSE}
+
+HFGSumarized%>%
+  ggplot()+geom_point(aes(x=between,y=within,color=Plant))+
+  geom_abline(intercept = 0, slope = 1)+
+  scale_y_log10()+
+  scale_x_log10()
+
+HFGSumarized%>%
+  ggplot()+geom_histogram(aes(x=between/within),bins = 30)+
+  geom_vline(xintercept = 1,color="red")+
+  scale_x_log10()+
+  xlab("F Score")
+```
