@@ -1,0 +1,23 @@
+
+```{r cars}
+source("../Scripts/DataProccess.R")
+HFGData="../../UntrackedData/HFG data for stats preliminary 3-18-21.xlsx"
+HFGFrame=HFGInfo(HFGData)%>%
+  select(Date,Plant,Filter,Well,N1GC,N2GC,PMMOVGC)%>%
+  mutate(Type="Normal")
+HFGPlantMean=HFGFrame%>%
+  group_by(Date,Plant)%>%
+  mutate(N1GC=exp(mean(log(N1GC),na.rm = T)),N2GC=exp(mean(log(N2GC),na.rm = T)),PMMOVGC=exp(mean(log(PMMOVGC),na.rm = T)))%>%
+  mutate(Type="Plant Mean")%>%
+  distinct(Date,Plant,.keep_all=T)
+HFGFilterMean=HFGFrame%>%
+  group_by(Date,Plant,Filter)%>%
+  mutate(N1GC=exp(mean(log(N1GC),na.rm = T)),N2GC=exp(mean(log(N2GC),na.rm = T)),PMMOVGC=exp(mean(log(PMMOVGC),na.rm = T)))%>%
+  mutate(Type="Filter Mean")%>%
+  distinct(Date,Plant,Filter,.keep_all=T)
+
+HFG=rbind(HFGFrame,HFGPlantMean,HFGFilterMean)%>%
+  mutate(Filter=as.integer(Filter),Well=as.integer(Well))%>%
+  mutate(Date=as.character(Date))
+write.csv(HFG,file = "HFG_mean_data.csv")
+```
