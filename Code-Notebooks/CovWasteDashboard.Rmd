@@ -10,19 +10,21 @@ library(shiny)
 library(ggpubr)
 library(dplyr)
 library(shinydashboard)
+library(shinyjqui)
+library(RcppRoll)
 ```
 
 #tab1 Data
 ```{r}
 source("../Scripts/DataProccess.R")
 Waterfilename <- "../../UntrackedData/WW SARS-COV-2 Data V5.xlsx"
-CovidFileName = "../../UntrackedData/MMSD_Cases.csv"
 
-TCovDF=CovidData(CovidFileName)
 
 Spring="../../UntrackedData/SpringSemester_CasesByDorm.tsv"
 Fall="../../UntrackedData/Oct2020toEndFall_CasesByDorm.tsv"
-DCovDF=CovidDataDorms(Spring,Fall)
+DCovDF=CovidDataDorms(Spring,Fall)%>%
+  mutate(Per_pos=100*Cases/Tests)%>%
+  mutate(rollingPer_pos=roll_mean(Per_pos,n=7,fill=NA))
 
 #Reads Transformed HFG Data
 MWasteWater=WasteWater(Waterfilename)%>%
@@ -72,32 +74,32 @@ TopDisc=div("Pink sections are weekends")
 BotDisc=div("Data source: HFG data for stats preliminary 3-18-21.xlsx from 3/18/2021 jocelyn.hemming@slh.wisc.edu email.")
 BotDisc2=div("Questions? Contact Marlin Lee mrlee6@wisc.edu or Steve Goldstein sgoldstein@wisc.edu")
 #Creates buttons for Plant location,Line, and scale
-Tab2=tabItem(tabName = "dashboard",
-            # Boxes need to be put in a row (or column)
-    fluidRow(
-    box(
-        title = "Controls",
-        selectInput(inputId = "Plant", label = ("Plant"),
-                    choices = c("All",unique(HFGDFrame$Plant)),
-                    multiple=F,
-                    selected="Madison"),
-        selectInput(inputId = "Vars2", label = ("Varibles"),
-                    choices = c("N1GC","N2GC","PMMOVGC"),
-                    multiple=T,
-                    selected="N1GC"),
-        checkboxInput(inputId = "Line2", label = ("Daily mean of 9 replicates"),
-                      value=F),
-        checkboxInput(inputId = "Means", label = ("Mean of qPCR replicates"),
-                      value=F),
-        selectInput(inputId = "scale", label = ("y scales"),
-                    choices = c("log y scale","linear scale"),
-                    selected="log y scale"),
-        selectInput(inputId = "Outlier", label = ("Outlier"),
-                    choices = c("Remove Outliers"),
-                    multiple=T,
-                    selected="Remove Outliers")
-    ),
-    box(TopDisc,br(),div(plotOutput("plot2",inline=TRUE),style="overflow-x: scroll"), br(),BotDisc,BotDisc2)
+Tab2=tabItem(tabName = "HFGDash",
+             # Boxes need to be put in a row (or column)
+             fluidRow(
+               jqui_resizable(box(width=4,
+                 title = "Controls",
+                 selectInput(inputId = "Plant", label = ("Plant"),
+                             choices = c("All",unique(HFGDFrame$Plant)),
+                             multiple=F,
+                             selected="Madison"),
+                 selectInput(inputId = "Vars2", label = ("Varibles"),
+                             choices = c("N1GC","N2GC","PMMOVGC"),
+                             multiple=T,
+                             selected=c("N1GC","PMMOVGC")),
+                 checkboxInput(inputId = "Line2", label = ("Daily mean of 9 replicates"),
+                               value=F),
+                 checkboxInput(inputId = "Means", label = ("Mean of qPCR replicates"),
+                               value=F),
+                 selectInput(inputId = "scale2", label = ("y scale"),
+                             choices = c("log","linear"),
+                             selected="log"),
+                 selectInput(inputId = "Outlier", label = ("Outlier"),
+                             choices = c("Remove Outliers"),
+                             multiple=T,
+                             selected="Remove Outliers")
+               )),
+               jqui_resizable(box(title ="High frequency waste water analysis",TopDisc,br(),div(plotOutput("plot2",inline=TRUE,width="auto",height="auto"),style="overflow-x: scroll"), br(),BotDisc,BotDisc2))
 ))
 ```
 
@@ -107,31 +109,32 @@ maxShift=10
 
 #Parts Of Tab 1 defined outside for ease of use
 TopDisc=div("")
-BotDisc=div("Data source: DHS ------")
-BotDisc2=div("Questions? Contact Marlin Lee mrlee6@wisc.edu or Steve Goldstein sgoldstein@wisc.edu")
+BotDisc=div("Data source: Case Data from PnC Oct2020toEndFall_CasesByDorm and SpringSemester_CasesByDorm")
+BotDisc2=div("Wastewater data from the DHS: WW SARS-COV-2 Data V5")
+BotDisc3=div("Questions? Contact Marlin Lee mrlee6@wisc.edu or Steve Goldstein sgoldstein@wisc.edu")
 #Creates buttons for Plant location,Line, and scale
-Tab1=tabItem(tabName = "dashboardWIP",
-            # Boxes need to be put in a row (or column)
-    fluidRow(
-    box(
-        title = "Controls",
-        selectInput(inputId = "Site", label = ("Site"),
-                    choices = unique(DCovDF$Site),
-                    multiple=T,
-                    selected=c("UW-Sellery" ,"UW-LakeShore")),
-      selectInput(inputId = "Vars", label = ("Varibles"),
-                    choices = c("N1","N2","PMMoV","Cases"),
-                    multiple=T,
-                    selected=c("N1","Cases")),
-      checkboxInput(inputId="Line",label=("Smoothed Line of Data"),value=T),
-      selectInput(inputId = "scale", label = ("y scales"),
-                    choices = c("log y scale","linear scale"),
-                    selected="log y scale"),
-      sliderInput("Offset", "Offset",min = maxShifL, max = maxShift,step=1,value=0)
-      #sliderInput("Smoothed", "Data Smoothed",min = 0, max = 5,step=1,value=0)
-
-    ),
-    box(TopDisc,br(),div(plotOutput("plot1",inline=TRUE),style="overflow-x: scroll"), br(),BotDisc,BotDisc2)
+Tab1=tabItem(tabName = "MadDash",
+             # Boxes need to be put in a row (or column)
+             fluidRow(
+               jqui_resizable(box(width=4,
+                                  title = "Controls",
+                                  selectInput(inputId = "Site", label = ("Site"),
+                                              choices = unique(DCovDF$Site),
+                                              multiple=T,
+                                              selected=c("UW-Sellery" ,"UW-LakeShore")),
+                                  selectInput(inputId = "Vars", label = ("Varibles"),
+                                              choices = c("N1","N2","PMMoV","Pct_BCoV","Percent of tests positive"),
+                                              multiple=T,
+                                              selected=c("N1","Percent of tests positive")),
+                                  checkboxInput(inputId="Line",label=("loess curve of waste water"),value=T),
+                                  checkboxInput(inputId="7day",label=("7 day average of percent positive"),value=T),
+                                  selectInput(inputId = "scale", label = ("y scale"),
+                                              choices = c("log","linear"),
+                                              selected="log"),
+                                  sliderInput("Offset", "Shift percent positive Date",min = maxShifL, max = maxShift,step=1,value=0)
+               )),
+               #title = "UW dorms Covid Visualization"
+               jqui_resizable(box(width=7,TopDisc,br(),div(plotOutput("plot1",inline=TRUE),style="overflow-x: scroll"), br(),BotDisc,BotDisc2,BotDisc3))
 ))
 
 ```
@@ -139,166 +142,175 @@ Tab1=tabItem(tabName = "dashboardWIP",
 ```{r}
 #Creates UI for dashboard
 ui <- dashboardPage(
-    #top left descriptor
-    dashboardHeader(title = "HFG Interactive graphic"),
-    #left hand side tab selector
-    dashboardSidebar(sidebarMenu(
-        menuItem("DashboardWIP", tabName = "dashboardWIP", icon = icon("dashboard")),
-        menuItem("Dashboard", tabName = "dashboard", icon = icon("dashboard"))
-    )),
-    #Contents of different tabs defined above
-    dashboardBody(
-        tabItems(
-            Tab1,
-            Tab2
-            ))
+  #top left descriptor
+  dashboardHeader(title = "Waste Water interactive"),
+  #left hand side tab selector
+  dashboardSidebar(sidebarMenu(
+    menuItem("UW Dorms waste water", tabName = "MadDash", icon = icon("dashboard")),
+    menuItem("HFG high frequencey", tabName = "HFGDash", icon = icon("dashboard"))
+  )),
+  #Contents of different tabs defined above
+  dashboardBody(
+    tabItems(
+      Tab1,
+      Tab2
+    ))
 )
 ```
 
 ```{r}
 #create graphic                                       
 server <- function(input, output) {
-    #Required for tab 1
-    filtered_data_PWaste<- reactive({
-          return(filter(MWasteWater, MWasteWater$Site %in% input$Site))
-    })
-    filtered_data_PCov<- reactive({
-          return(filter(DCovDF, Site %in% input$Site))
-    })
-    
-    minC=reactive({
-      return(min(filtered_data_PWaste()$Date)+input$Offset)
-      })
-    
-    maxC=reactive({
-      return(max(filtered_data_PWaste()$Date)+input$Offset)
-      })
-    
-    buildplot1 = function(vari){
-      if(vari=="Cases"){
-        DormPlot=ggplot(data=filtered_data_PCov(),aes(y=Cases,x=Date))+
-          geom_jitter(alpha=.7,height=0,width=.1,size=2)+
-          facet_wrap(~Site, nrow = 1)+coord_cartesian(xlim=c(minC(), maxC()))+
-          theme(text = element_text(size=20),strip.text.x = element_blank(),axis.text.x = element_blank(),axis.text.y = element_text(size = 15, colour = "black"))+ rremove("xlab")
-        return(DormPlot)
-      }
-      #set.seed(myseed)
-      #!!sym() reads string as a variable of the data frame
-      DormPlot=ggplot(data=filtered_data_PWaste(),aes(y=!!sym(vari),x=Date))+geom_jitter(alpha=.7,height=0,width=.1,size=2)+ylab(vari)
-      #adds mean line
-      DormPlot = DormPlot+facet_wrap(~Site, nrow = 1)+theme(text = element_text(size=20),strip.text.x = element_blank(),axis.text.x = element_blank(),axis.text.y = element_text(size = 15, colour = "black"))+ rremove("xlab")
-      if(input$scale=="log y scale"){
-        DormPlot=DormPlot+scale_y_log10()
-      }
-      if(input$Line==TRUE){
-        DormPlot=DormPlot+geom_smooth()
-      }
-        return(DormPlot)
-    }
-    #Creates list of ggplots for ggarange
-    Make_Plots1 = reactive({
-        plots=lapply(input$Vars,buildplot1)
-        return(plots)
-    })
-    #plots N1GC
-    output$plot1<-renderPlot(
-        width = function() 245+400*length(input$Site),
-        height = function() 60+300*length(input$Vars),
-        {
 
-            plots=Make_Plots1()
-            #Add plant labels
-            plots[[1]]=plots[[1]] + theme(strip.text.x = element_text(size = 20, colour = "black"))
-            #add x axis labels
-            plots[[length(plots)]]=plots[[length(plots)]] + theme(axis.title.x = element_text(size = 20, colour = "black"),axis.text.x = element_text(size = 15, colour = "black"))
-            return(ggarrange(plotlist=plots,ncol =1))
-        })
-    #-------------------------
-    #required for tab2
-    #Filters data for right plants and variables
-    filtered_data_P<- reactive({
-        if(input$Plant!="All")
-            return(filter(HFGDFrame, HFGDFrame$Plant %in% input$Plant))
-        return(HFGDFrame)
-    })
-    #creates data with original values
-    filtered_data_N<- reactive({
-        filtered_data_P()%>%
-            filter(Type=="Normal")
-    })
-    
-    #Data of the means of each day
-    Data_mean_var = reactive({
-        filtered_data_P()%>%
-            filter(Type=="Plant Mean")
-    })
-    #Data of the means of each Filter
-    Filter_mean_var = reactive({
-        filtered_data_P()%>%
-            filter(Type=="Filter Mean")
-    })
-    #Putting data in reactive shell for possible additions
-    DF_Week = reactive({
-        return(DateRangeD)
-    })
-    #Function Creates ggplots that gets merged into final graphic
-    buildplot2 = function(vari){
-        set.seed(myseed)
-        #!!sym() reads string as a variable of the dataframe
-        HFGDPlot=ggplot()+
-            geom_jitter(data=filtered_data_N(),aes(y=!!sym(vari),x=Date,color=`Filter replicates`),alpha=.7,height=0,width=.1,size=3)+ylab(vari)
-        #adds mean line
-        if(input$Line2==T){
-            HFGDPlot=HFGDPlot+geom_line(data=Data_mean_var(),aes(y=!!sym(vari),x=Date),size=1)
-        }
-        #add filter means
-        if(input$Means==T){
-            set.seed(myseed)
-            HFGDPlot=HFGDPlot+geom_jitter(data=Filter_mean_var(),aes(y=!!sym(vari),x=Date,fill=`Filter replicates`), shape=23, size=5, height=0, width=.1)
-        }
-        #hides outliers
-        #Does this by setting y upper bounds for later cropping
-        if ("Remove Outliers" %in% input$Outlier){
-            if(input$scale=="log y scale"){
-                quint=quantile(pull(HFGDFrame,vari),.995)[[1]]}
-            else{
-                quint=quantile(pull(HFGDFrame,vari),.975)[[1]]}
-        }
-        else{
-            quint=max(pull(HFGDFrame,vari))}
-        minVal=min(HFGDFrame[vari],na.rm = T)
-        #sets appropriate scale
-        #also applies weekend indicators because logscale can not have -inf(or any negitive number) as the ymin
-        if(input$scale=="log y scale"){
-            HFGDPlot = HFGDPlot + scale_y_log10()+coord_cartesian(ylim=c(minVal, quint))
-            HFGDPlot=HFGDPlot+geom_rect(data=DF_Week(), aes(xmin=Left, xmax=Right, ymin=0, ymax=Inf), fill='pink', alpha=.2)}
-        else{
-            HFGDPlot=HFGDPlot+coord_cartesian(ylim=c(minVal, quint))
-            HFGDPlot=HFGDPlot+geom_rect(data=DF_Week(), aes(xmin=Left, xmax=Right, ymin=-Inf, ymax=Inf), fill='pink', alpha=.2)}
-        #faucet the data by Plant and remove hud elliments that dont need to be in all three varible strips
-        HFGDPlot = HFGDPlot+facet_wrap(~Plant, nrow = 1)+theme(text = element_text(size=20),strip.text.x = element_blank(),axis.text.x = element_blank(),axis.text.y = element_text(size = 15, colour = "black"))+ rremove("xlab")
-        return(HFGDPlot)
+  #Required for tab 1
+  filtered_data_PWaste<- reactive({
+    return(filter(MWasteWater, MWasteWater$Site %in% input$Site))
+  })
+  filtered_data_PCov<- reactive({
+    return(filter(DCovDF, Site %in% input$Site))
+  })
+  
+  minC=reactive({
+    return(min(filtered_data_PWaste()$Date)+input$Offset)
+  })
+  
+  maxC=reactive({
+    return(max(filtered_data_PWaste()$Date)+input$Offset)
+  })
+  
+  buildplot1 = function(vari){
+    #set.seed(myseed)
+    #!!sym() reads string as a variable of the data frame
+    DormPlot=ggplot(data=filtered_data_PWaste(),aes(y=!!sym(vari),x=Date))+geom_jitter(alpha=.7,height=0,width=.1,size=2)+ylab(vari)
+    #adds mean line
+    DormPlot = DormPlot+facet_wrap(~Site, nrow = 1)+theme(text = element_text(size=20),strip.text.x = element_blank(),axis.text.x = element_blank(),axis.text.y = element_text(size = 15, colour = "black"))+ rremove("xlab")
+    if(input$scale=="log"){
+      DormPlot=DormPlot+scale_y_log10()
     }
-    #Creates list of ggplots for ggarange
-    Make_Plots2 = reactive({
-        plots=lapply(input$Vars2,buildplot2)
-        return(plots)
+    if(input$Line==TRUE){
+      DormPlot=DormPlot+geom_smooth()
+    }
+    return(DormPlot)
+  }
+  #Creates list of ggplots for ggarange
+  Make_Plots1 = reactive({
+
+    plots=lapply(input$Vars[input$Vars!="Percent of tests positive"],buildplot1)
+    if("Percent of tests positive" %in% input$Vars){
+      if(input$'7day'){
+        DormPlot=ggplot(data=filtered_data_PCov(),aes(y=rollingPer_pos,x=Date))
+      } else{
+        DormPlot=ggplot(data=filtered_data_PCov(),aes(y=Per_pos,x=Date))
+      }
+      DormPlot=DormPlot+
+        geom_jitter(alpha=.7,height=0,width=.1,size=2)+ylab("Percent Positive")+
+        facet_wrap(~Site, nrow = 1)+coord_cartesian(xlim=c(minC(), maxC()))+
+        theme(text = element_text(size=20),axis.text.y = element_text(size = 15, colour = "black")) + theme(strip.text.x = element_text(size = 20, colour = "black"))+ rremove("xlab")
+        plots=c(list(DormPlot),plots)
+      }
+    return(plots)
+  })
+  #plots N1GC
+  output$plot1<-renderPlot(
+    width = function() 245+425*length(input$Site),
+    height = function() 60+300*length(input$Vars),
+    {
+      plots=Make_Plots1()
+      #Add plant labels
+      #add x axis labels
+      plots[[1]]=plots[[1]] + theme(strip.text.x = element_text(size = 20, colour = "black"))
+      plots[[length(plots)]]=plots[[length(plots)]] + theme(axis.title.x = element_text(size = 20, colour = "black"),axis.text.x = element_text(size = 15, colour = "black"))
+      return(annotate_figure(top=text_grob("UW dorms Covid Visualization",size=20),ggarrange(plotlist=plots,ncol =1,align="v")))
     })
-    #plots N1GC
-    output$plot2<-renderPlot(
-        width = function() 245+400*ifelse(input$Plant=="All",10,1),
-        height = function() 60+300*length(input$Vars),
-        {
-            plots=Make_Plots2()
-            #Add plant labels
-            plots[[1]]=plots[[1]] + theme(strip.text.x = element_text(size = 20, colour = "black"))
-            #add x axis labels
-            plots[[length(plots)]]=plots[[length(plots)]] + theme(axis.title.x = element_text(size = 20, colour = "black"),axis.text.x = element_text(size = 15, colour = "black"))
-            return(annotate_figure( left = text_grob("(GC/L)", rot = 90,size=20),ggarrange(plotlist=plots,ncol =1,common.legend = TRUE, legend = "right")))
-        })
-    
-    
-    
+  #-------------------------
+  #required for tab2
+  #Filters data for right plants and variables
+  filtered_data_P<- reactive({
+    if(input$Plant!="All")
+      return(filter(HFGDFrame, HFGDFrame$Plant %in% input$Plant))
+    return(HFGDFrame)
+  })
+  #creates data with original values
+  filtered_data_N<- reactive({
+    filtered_data_P()%>%
+      filter(Type=="Normal")
+  })
+  
+  #Data of the means of each day
+  Data_mean_var = reactive({
+    filtered_data_P()%>%
+      filter(Type=="Plant Mean")
+  })
+  #Data of the means of each Filter
+  Filter_mean_var = reactive({
+    filtered_data_P()%>%
+      filter(Type=="Filter Mean")
+  })
+  #Putting data in reactive shell for possible additions
+  DF_Week = reactive({
+    return(DateRangeD)
+  })
+  #Function Creates ggplots that gets merged into final graphic
+  buildplot2 = function(vari){
+    set.seed(myseed)
+    #!!sym() reads string as a variable of the dataframe
+    HFGDPlot=ggplot()+
+      geom_jitter(data=filtered_data_N(),aes(y=!!sym(vari),x=Date,color=`Filter replicates`),alpha=.7,height=0,width=.1,size=3)+ylab(vari)
+    #adds mean line
+    if(input$Line2==T){
+      HFGDPlot=HFGDPlot+geom_line(data=Data_mean_var(),aes(y=!!sym(vari),x=Date),size=1)
+    }
+    #add filter means
+    if(input$Means==T){
+      set.seed(myseed)
+      HFGDPlot=HFGDPlot+geom_jitter(data=Filter_mean_var(),aes(y=!!sym(vari),x=Date,fill=`Filter replicates`), shape=23, size=5, height=0, width=.1)
+    }
+    #hides outliers
+    #Does this by setting y upper bounds for later cropping
+    if ("Remove Outliers" %in% input$Outlier){
+      if(input$scale2=="log"){
+        quint=quantile(pull(HFGDFrame,vari),.995)[[1]]
+        }
+      else{
+        quint=quantile(pull(HFGDFrame,vari),.975)[[1]]
+        }
+    }
+    else{
+      quint=max(pull(HFGDFrame,vari))
+      }
+    minVal=min(HFGDFrame[vari],na.rm = T)
+    #sets appropriate scale
+    #also applies weekend indicators because logscale can not have -inf(or any negitive number) as the ymin
+    if(input$scale2=="log y scale"){
+      HFGDPlot = HFGDPlot + scale_y_log10()+coord_cartesian(ylim=c(minVal, quint))
+      HFGDPlot=HFGDPlot+geom_rect(data=DF_Week(), aes(xmin=Left, xmax=Right, ymin=0, ymax=Inf), fill='pink', alpha=.2)}
+    else{
+      HFGDPlot=HFGDPlot+coord_cartesian(ylim=c(minVal, quint))
+      HFGDPlot=HFGDPlot+geom_rect(data=DF_Week(), aes(xmin=Left, xmax=Right, ymin=-Inf, ymax=Inf), fill='pink', alpha=.2)}
+    #faucet the data by Plant and remove hud elements that dont need to be in all three varible strips
+    HFGDPlot = HFGDPlot+facet_wrap(~Plant, nrow = 1)+theme(text = element_text(size=20),strip.text.x = element_blank(),axis.text.x = element_blank(),axis.text.y = element_text(size = 15, colour = "black"))+ rremove("xlab")
+    return(HFGDPlot)
+  }
+  #Creates list of ggplots for ggarange
+  Make_Plots2 = reactive({
+    plots=lapply(input$Vars2,buildplot2)
+    return(plots)
+  })
+  #plots N1GC
+  output$plot2<-renderPlot(
+    width = function() 245+400*ifelse(input$Plant=="All",10,1),
+    height = function() 60+300*length(input$Vars2),
+    {
+      plots=Make_Plots2()
+      #Add plant labels
+      plots[[1]]=plots[[1]] + theme(strip.text.x = element_text(size = 20, colour = "black"))
+      #add x axis labels
+      plots[[length(plots)]]=plots[[length(plots)]] + theme(axis.title.x = element_text(size = 20, colour = "black"),axis.text.x = element_text(size = 15, colour = "black"))
+      return(annotate_figure( left = text_grob("(GC/L)", rot = 90,size=20),ggarrange(plotlist=plots,ncol =1,common.legend = TRUE, legend = "right",align="v")))
+    })
+#top = text_grob("High frequency waste water analysis",size=20),  
+  
+  
 }
 shinyApp(ui = ui, server = server)
 ```
