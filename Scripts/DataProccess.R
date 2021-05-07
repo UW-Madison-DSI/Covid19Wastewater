@@ -75,7 +75,7 @@ WasteWater = function(filename){
 #Creates  CovidNumberData
 
 CovidData = function(CovidFileName){
-  lag=7
+  lag=1
   covidData = read.csv(CovidFileName)%>%
     mutate(ServiceID = ifelse(ServiceID=="MMSD","Madison",paste("MMSD P",ServiceID,sep="")),Date = as.Date(Date))%>%
     rename(Site=ServiceID)%>%
@@ -84,6 +84,19 @@ CovidData = function(CovidFileName){
     mutate(roll=Cases/Tests)
   return(covidData)
 }
+CovidDataDorms= function(File1,File2){
+  CaseData1=read.csv(File1,sep = "",header = FALSE,col.names=c("Date","Site","negitive_tests","positive_tests"))
+  CaseData2=read.csv(File2,sep = "",header = FALSE,col.names=c("Date","Site","negitive_tests","positive_tests"))
+  returnedData=rbind(CaseData1,CaseData2)%>%
+    mutate(Tests=negitive_tests+positive_tests)%>%
+    mutate( Site = ifelse(Site == "UW_D", "UW-LakeShore", "UW-Sellery"))%>%
+    mutate(Date=mdy(Date))%>%
+    rename(Cases=positive_tests)
+  return(returnedData)
+}
+
+
+
 N2Fixer = function(data){
   N2Mod = lm(log(N2)~log(N1), data=data)
   data$temp=10^predict.lm(N2Mod,data,interval="none")
