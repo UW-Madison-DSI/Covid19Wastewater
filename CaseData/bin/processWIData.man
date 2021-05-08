@@ -1,0 +1,8 @@
+curl -o wiData.csv https://opendata.arcgis.com/datasets/89d7a90aafa24519847c89b249be96ca_13.csv?outSR=%7B%22latestWkid%22%3A3857%2C%22wkid%22%3A102100%7D
+cat wiData.csv |perl -F, -nale 'print join ",", @F[0,3..7]' > wiData.processed.csv
+
+
+cat wiData.processed.csv |perl -F, -nale 'next if (/^TRACT/); $F[2]=~s/-999/0/; push @{$cases{$F[0]}}, [@F[2,4]]; END{foreach $ct (sort keys %cases) { @c = @{$cases{$ct}}; map{ print join "," , $ct, @$_} (@c); }}'|less -S
+
+cat wiData.processed.csv |perl -F, -nale 'BEGIN{open SEW, "song/serviceareas_ct_merge.csv"; <SEW>; while(<SEW>) {chomp; @F=split /,/; $h{$F[1]} = $F[-1]; } close SEW } next unless (exists $h{$F[0]}); next if (/^TRACT/); $F[2]=~s/-999/0/; push @{$cases{$F[0]}}, [@F[2,4]]; END{foreach $ct (sort keys %cases) { @c = @{$cases{$ct}}; map{ print join "," , $ct, @$_} (@c); }}' > mmsdData.processed.csv
+
