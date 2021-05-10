@@ -24,13 +24,20 @@ Spring="../../UntrackedData/SpringSemester_CasesByDorm.tsv"
 Fall="../../UntrackedData/Oct2020toEndFall_CasesByDorm.tsv"
 DCovDF=CovidDataDorms(Spring,Fall)%>%
   mutate(Per_pos=100*Cases/Tests)%>%
-  mutate(rollingPer_pos=roll_mean(Per_pos,n=7,fill=NA))
+  group_by(Site)%>%
+  mutate(rollingPer_pos=roll_mean(Per_pos,n=7,fill=NA,na.rm=T))
 
 #Reads Transformed HFG Data
 MWasteWater=WasteWater(Waterfilename)%>%
   mutate(Date=as.Date(Date))%>%
   filter(!is.na(Date),!is.na(N1))%>%
   filter(Date<mdy("6/5/2021"))
+
+DCovDF%>%
+  ggplot()+aes(x=Date)+geom_point(aes(y=Cases))+geom_point(aes(y=Tests),color="red")
+
+DCovDF%>%
+  ggplot()+aes(x=Date)+geom_point(aes(y=Cases/Tests))
 ```
 
 
@@ -104,8 +111,8 @@ Tab2=tabItem(tabName = "HFGDash",
 ```
 
 ```{r}
-maxShifL=-10
-maxShift=10
+maxShifL=-14
+maxShift=14
 
 #Parts Of Tab 1 defined outside for ease of use
 TopDisc=div("")
@@ -131,7 +138,8 @@ Tab1=tabItem(tabName = "MadDash",
                                   selectInput(inputId = "scale", label = ("y scale"),
                                               choices = c("log","linear"),
                                               selected="log"),
-                                  sliderInput("Offset", "Shift percent positive Date",min = maxShifL, max = maxShift,step=1,value=0)
+                                  sliderInput("Offset", "Shift percent positive Date",min = maxShifL, max = maxShift,step=1,value=0),
+                                  sliderInput("span", "Span variable of loess smoothing",min = .15, max = .75,step=.01,value=.42)
                )),
                #title = "UW dorms Covid Visualization"
                jqui_resizable(box(width=7,TopDisc,br(),div(plotOutput("plot1",inline=TRUE),style="overflow-x: scroll"), br(),BotDisc,BotDisc2,BotDisc3))
@@ -146,7 +154,7 @@ ui <- dashboardPage(
   dashboardHeader(title = "Waste Water interactive"),
   #left hand side tab selector
   dashboardSidebar(sidebarMenu(
-    menuItem("UW Dorms waste water", tabName = "MadDash", icon = icon("dashboard")),
+    menuItem("UW Dorms WasteWater", tabName = "MadDash", icon = icon("dashboard")),
     menuItem("HFG high frequencey", tabName = "HFGDash", icon = icon("dashboard"))
   )),
   #Contents of different tabs defined above
@@ -188,24 +196,25 @@ server <- function(input, output) {
       DormPlot=DormPlot+scale_y_log10()
     }
     if(input$Line==TRUE){
-      DormPlot=DormPlot+geom_smooth()
+      DormPlot=DormPlot+geom_smooth(span=input$span)
     }
+    DormPlot=DormPlot+scale_x_date(position="top",date_breaks="24 days",date_labels="%b %d")
     return(DormPlot)
   }
   #Creates list of ggplots for ggarange
   Make_Plots1 = reactive({
-
     plots=lapply(input$Vars[input$Vars!="Percent of tests positive"],buildplot1)
     if("Percent of tests positive" %in% input$Vars){
+      DormPlot=ggplot(data=filtered_data_PCov())+
+        geom_jitter(aes(y=Per_pos,x=Date),alpha=.7,height=0,width=.1,size=2)
       if(input$'7day'){
-        DormPlot=ggplot(data=filtered_data_PCov(),aes(y=rollingPer_pos,x=Date))
-      } else{
-        DormPlot=ggplot(data=filtered_data_PCov(),aes(y=Per_pos,x=Date))
-      }
-      DormPlot=DormPlot+
-        geom_jitter(alpha=.7,height=0,width=.1,size=2)+ylab("Percent Positive")+
+        DormPlot=DormPlot+geom_line(aes(y=rollingPer_pos,x=Date),size=1,color="red")
+}
+      DormPlot=DormPlot+ylab("Percent Positive")+
         facet_wrap(~Site, nrow = 1)+coord_cartesian(xlim=c(minC(), maxC()))+
-        theme(text = element_text(size=20),axis.text.y = element_text(size = 15, colour = "black")) + theme(strip.text.x = element_text(size = 20, colour = "black"))+ rremove("xlab")
+        theme(plot.margin = unit(c(1,0,1,0), "cm"),text = element_text(size=20),axis.text.y = element_text(size = 20, colour = "black"),axis.text.x = element_text(size = 10, colour = "black")) + 
+        theme(strip.text.x = element_text(size = 20, colour = "black"))+ 
+        rremove("xlab")+scale_x_date(date_breaks="24 days",date_labels="%b %d")
         plots=c(list(DormPlot),plots)
       }
     return(plots)
@@ -218,9 +227,15 @@ server <- function(input, output) {
       plots=Make_Plots1()
       #Add plant labels
       #add x axis labels
+      if("Percent of tests positive" %in% input$Vars){
+        T=2
+      }else{
+        T=1
+      }
       plots[[1]]=plots[[1]] + theme(strip.text.x = element_text(size = 20, colour = "black"))
-      plots[[length(plots)]]=plots[[length(plots)]] + theme(axis.title.x = element_text(size = 20, colour = "black"),axis.text.x = element_text(size = 15, colour = "black"))
-      return(annotate_figure(top=text_grob("UW dorms Covid Visualization",size=20),ggarrange(plotlist=plots,ncol =1,align="v")))
+      plots[[T]]=plots[[T]] + theme(axis.text.x = element_text(size = 10, colour = "black"))
+      OvarLn=length(input$Vars[input$Vars!="Percent of tests positive"])
+      return(annotate_figure(top=text_grob("UW dorms Wastewater Surveillance",size=30),ggarrange(plotlist=plots,ncol =1,align="v",heights=c(1.2,rep(1,times = OvarLn)))))
     })
   #-------------------------
   #required for tab2
