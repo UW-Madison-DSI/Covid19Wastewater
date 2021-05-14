@@ -172,4 +172,24 @@ shinyApp(ui = ui, server = server)
 ```
 
 
-
+```{r}
+SevDayRollAvg = function(vectorT){
+  CurrNum = vector(mode="double", length=length(7))
+  SlideMeanVec=vector(mode="double", length=length(vectorT))
+    for (i in 1:length(vectorT)){
+      
+      CurrNum[(i-1)%%7+1]=vectorT[i]
+      print(mean(CurrNum,na.rm=T))
+      
+      SlideMeanVec[i]=mean(CurrNum,na.rm=T)
+    }
+  return(SlideMeanVec)
+}
+Fullday
+seq.Date(min(LatCaseDF$Date),max(LatCaseDF$Date),1)
+SevDayRollAvg(c(5,NA,5))
+LatCaseDF%>%
+  ggplot()+aes(x=Date,y=Per_pos)+geom_point()+geom_line(aes(y=rollingPer_pos),color="Red")+facet_wrap(~Site, nrow = 1)+
+  scale_x_date(limits = c(mdy("2/6/2021"),mdy("2/15/2021")))
+(1.7316017+3.5714286+0.4184100+1.2765957)/7
+```
