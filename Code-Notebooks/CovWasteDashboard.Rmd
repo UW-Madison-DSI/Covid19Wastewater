@@ -99,6 +99,8 @@ DateRangeCDF=cbind(MRan,SRan)%>%
 
 ```{r}
 #constants and presets
+maxLeftShift=-14
+maxRightShift=14
 XAxisLabSiz=10
 YAxisLabSiz=15
 GenFontSiz=20
@@ -158,7 +160,7 @@ Tab2=tabItem(tabName = "HFGDash",
                                   conditionalPanel(
                                     condition = "input.Vars2.includes('cases')",
                                     checkboxInput(inputId="7day2",label=("7 day average of cases"),value=T),
-                                    sliderInput("Offset2", "Shift cases Date",min = maxLeftShif, max = maxRightShift,step=1,value=0)
+                                    sliderInput("Offset2", "Shift cases Date",min = maxLeftShift, max = maxRightShift,step=1,value=0)
                                   ),
                                   conditionalPanel(
                                     condition = "(!input.Vars2.includes('cases')||1!=input.Vars2.length)&&0!=input.Vars2.length",
@@ -206,7 +208,7 @@ Tab1=tabItem(tabName = "MadDash",
                                   conditionalPanel(
                                     condition = "input.Vars.includes('Percent of tests positive')",
                                     checkboxInput(inputId="7day",label=("7 day average of percent positive"),value=T),
-                                    sliderInput("Offset", "Shift percent positive Date",min = maxLeftShif, max = maxRightShift,step=1,value=0)
+                                    sliderInput("Offset", "Shift percent positive Date",min = maxLeftShift, max = maxRightShift,step=1,value=0)
                                   ),
                                   conditionalPanel(
                                     condition = "(!input.Vars.includes('Percent of tests positive')||1!=input.Vars.length)&&0!=input.Vars.length",
