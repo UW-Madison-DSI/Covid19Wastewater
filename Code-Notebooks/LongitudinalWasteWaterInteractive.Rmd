@@ -170,3 +170,8 @@ shinyApp(ui = ui, server = server)
 
 
 ```
+```{r}
+LatCaseDF%>%
+  ggplot()+ifelse(F,aes(color=Site),aes())+geom_point(aes(x=Date,y=Tests))
+
+```

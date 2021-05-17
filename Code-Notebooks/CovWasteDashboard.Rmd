@@ -16,26 +16,19 @@ library(shinycssloaders)
 
 #Data Files and prepwork
 ```{r}
-source("../../UntrackedData/DataProccess.R")
+source("../Scripts/GenPlotMaking.R")
+source("../Scripts/WasteWaterDataProccess.R")
+source("../Scripts/CassesDataProccess.R")
+source("../Scripts/HelperFunctions.R")
 LatWasteFN <- "../../UntrackedData/WW SARS-COV-2 Data V5.xlsx"
 LatSpringCaseFN="../../UntrackedData/SpringSemester_CasesByDorm.tsv"
 LatFallCaseFN="../../UntrackedData/Oct2020toEndFall_CasesByDorm.tsv"
-
-HFGWasteFN = "../../UntrackedData/HFG_mean_data.csv"
+HFGWasteFN = "../../UntrackedData/HFG data for stats preliminary 3-18-21.xlsx"
 HFGCaseFN="../../UntrackedData/Madison_HighFreq_CaseData_20210507.csv"
 
-
-RollAvg = function(vectorT,Day=7){
-  CurrNum = rep(NA,7)
-  SlideMeanVec=vector(mode="double", length=length(vectorT))
-  for (i in 1:length(vectorT)){
-    
-    CurrNum[(i-1)%%Day+1]=vectorT[i]
-    SlideMeanVec[i]=mean(CurrNum,na.rm=T)
-  }
-  return(SlideMeanVec)
-}
 ```
+
+
 #tab1 data
 ```{r}
 LatCaseDF=CovidDataDorms(LatSpringCaseFN,LatFallCaseFN)%>%
@@ -45,10 +38,8 @@ Fullday=data.frame(Date=seq.Date(min(LatCaseDF$Date),max(LatCaseDF$Date),1))
 LatCaseDF=full_join(LatCaseDF,Fullday,by=c("Date"))%>%
   arrange(Site,Date)%>%
   group_by(Site)%>%
-  mutate(rollingPer_pos=RollAvg(Per_pos))%>%
+  mutate(rollingPer_pos=RollPerPos(Cases,Tests))%>%
   ungroup()
-
-
 
 LatWasteDF=WasteWater(LatWasteFN)%>%
   mutate(Date=as.Date(Date))%>%
@@ -63,8 +54,24 @@ LatWasteDF=WasteWater(LatWasteFN)%>%
 
 #Reads Transformed HFG Data
 
-HFGWasteDF=read.csv(HFGWasteFN, row.names = 1)%>%
-  mutate(Filter=as.character(Filter),Well=as.character(Well),Date=as.Date(Date))%>%
+HFGFrame=HFGInfo(HFGWasteFN)%>%
+  select(Date,Plant,Filter,Well,N1GC,N2GC,PMMOVGC)%>%
+  mutate(Type="Normal")%>%
+  pivot_longer(N1GC:PMMOVGC)
+HFGPlantMean=HFGFrame%>%
+  group_by(Date,Plant,name)%>%
+  mutate(value=exp(mean(log(value),na.rm = T)))%>%
+  mutate(Type="Plant Mean")%>%
+  distinct(Date,Plant,name,.keep_all=T)
+HFGFilterMean=HFGFrame%>%
+  group_by(Date,Plant,Filter,name)%>%
+  mutate(value=exp(mean(log(value),na.rm = T)))%>%
+  mutate(Type="Filter Mean")%>%
+  distinct(Date,Plant,Filter,name,.keep_all=T)
+HFGWasteDF=rbind(HFGFrame,HFGPlantMean,HFGFilterMean)%>%
+  pivot_wider(names_from="name",values_from="value")%>%
+  mutate(Filter=as.character(Filter),Well=as.character(Well))%>%
+  mutate(Date=as.Date(Date))%>%
   na.omit()%>%
   rename(`Filter replicates`=Filter)
 
@@ -93,7 +100,6 @@ SRan=filter(DateRangeDF,Days=="Monday")%>%
   rename(Right=Date)
 DateRangeCDF=cbind(MRan,SRan)%>%
   select(Left,Right)
-#
 
 ```
 
@@ -101,44 +107,13 @@ DateRangeCDF=cbind(MRan,SRan)%>%
 #constants and presets
 maxLeftShift=-14
 maxRightShift=14
-XAxisLabSiz=10
-YAxisLabSiz=15
-GenFontSiz=20
-alphaPoint=.7
-PointSize=2
-alphaWeek=.2
-
-Middle_theme = function(){
-  
-  theme_grey() %+replace%    #Theme for the plots in the middle
-    theme(
-      text = element_text(size=GenFontSiz),
-      axis.title.x = element_blank(),
-      strip.text.x = element_blank(),
-      axis.text.x = element_blank(),
-      axis.text.y = element_text(size = YAxisLabSiz, colour = "black"))
-}
-Header_theme = function(){
-  
-  theme_grey() %+replace%    #Theme for the top plots
-    theme(plot.margin = unit(c(1,0,1,0), "cm"),
-    text = element_text(size=GenFontSiz),
-    axis.title.x = element_blank(),
-    axis.text.y = element_text(size = YAxisLabSiz, colour = "black"),
-    axis.text.x = element_text(size = XAxisLabSiz, colour = "black"),
-    strip.text.x = element_text(size = GenFontSiz, colour = "black"))
-}
-Second_theme = function(){
-  Middle_theme() %+replace%    #Theme for the plots underneither the first plots
-  theme(axis.text.x = element_text(size = XAxisLabSiz, colour = "black"))
-}
-
-#Creates consistent jittering for data
-myseed=1234567890
-
 ```
 
 ```{r}
+maxLeftShift=-14
+maxRightShift=14
+
+
 #Parts Of Tab 2 defined outside for ease of use
 TopDisc=div("Pink sections are weekends")
 BotDisc=div("Data source: HFG data for stats preliminary 3-18-21.xlsx from 3/18/2021 jocelyn.hemming@slh.wisc.edu email.")
@@ -251,7 +226,17 @@ ui <- dashboardPage(
 ```{r}
 #create graphic                                       
 server <- function(input, output) {
-  
+  ConfigOption=reactive({
+    return(list(
+    myseed=1234567890,
+    XAxisLabSiz=10,
+    YAxisLabSiz=15,
+    GenFontSiz=20,
+    alphaPoint=.7,
+    PointSize=2,
+    alphaWeek=.2)
+    )
+  })
   #Required for tab 1
   filtered_data_PWaste<- reactive({
     return(filter(LatWasteDF, LatWasteDF$Site %in% input$Site))
@@ -268,37 +253,33 @@ server <- function(input, output) {
     return(max(filtered_data_PWaste()$Date)+input$Offset)
   })
   
-  buildplot1 = function(vari){
-    #set.seed(myseed)
-    #!!sym() reads string as a variable of the data frame
-    set.seed(myseed)
-    DormPlot=ggplot(data=filtered_data_PWaste(),aes(y=!!sym(vari),x=Date))+geom_jitter(alpha=alphaPoint,height=0,width=.1,size=PointSize)+ylab(vari)
-    #adds mean line
-    DormPlot = DormPlot+facet_wrap(~Site, nrow = 1)+Middle_theme()
-    if(input$scale=="log"){
-      DormPlot=DormPlot+scale_y_log10()
-    }
-    if(input$Line==TRUE){
-      DormPlot=DormPlot+geom_smooth(span=input$span)
-    }
-    DormPlot=DormPlot+scale_x_date(position="top",date_breaks="24 days",date_labels="%b %d")
-    return(DormPlot)
-  }
   #Creates list of ggplots for ggarange
   Make_Plots1 = reactive({
-    plots=lapply(input$Vars[input$Vars!="Percent of tests positive"],buildplot1)
+    Date_lim_long=c(min(filtered_data_PWaste()$Date),max(filtered_data_PWaste()$Date))
+    plots=lapply(X=input$Vars[input$Vars!="Percent of tests positive"],FUN=Buildplot_gen,
+                 MainDF=filtered_data_PWaste(),
+                 Loc="Site",
+                 spanN=input$span,
+                 log_scale=(input$scale=="log"),
+                 DateLimits=Date_lim_long,Standards=ConfigOption())
     if("Percent of tests positive" %in% input$Vars){
-      set.seed(myseed)
-      DormPlot=ggplot(data=filtered_data_PCov())+
-        geom_jitter(aes(y=Per_pos,x=Date),alpha=alphaPoint,height=0,width=.1,size=PointSize)
       if(input$'7day'){
-        DormPlot=DormPlot+geom_line(aes(y=rollingPer_pos,x=Date),size=1,color="red")
+        LineVariF="rollingPer_pos"
       }
-      DormPlot=DormPlot+ylab("Percent Positive")+
-      facet_wrap(~Site, nrow = 1)+coord_cartesian(xlim=c(minCDorms(), maxCDorms()))+
-      scale_x_date(date_breaks="24 days",date_labels="%b %d")
-      plots=c(list(DormPlot),plots)
+      else{
+        LineVariF=NA
+      }
+      CasePlot=Buildplot_gen(
+        "Per_pos",
+        MainDF=filtered_data_PCov(),
+        Loc="Site",
+        LineVari=LineVariF,
+        DateLimits=Date_lim_long+input$Offset,
+        Standards=ConfigOption(),
+        AxisPos="bottom")
+      plots=c(list(CasePlot),plots)
     }
+      #DormPlot=DormPlot+ylab("Percent Positive")+
     return(plots)
   })
   #plots N1GC
@@ -320,8 +301,8 @@ server <- function(input, output) {
       }else{
         T=1
       }
-      plots[[1]]=plots[[1]] + Header_theme()
-      plots[[T]]=plots[[T]] + Second_theme()
+      plots[[1]]=plots[[1]] + Header_theme(ConfigOption())
+      plots[[T]]=plots[[T]] + Second_theme(ConfigOption())
       OvarLn=length(input$Vars[input$Vars!="Percent of tests positive"])
       return(annotate_figure(top=text_grob("UW dorms Wastewater Surveillance",size=25),ggarrange(plotlist=plots,ncol =1,align="v",heights=c(1.2,rep(1,times = OvarLn)))))
     })
@@ -332,7 +313,6 @@ server <- function(input, output) {
     if(input$Plant!="All")
       return(filter(HFGCaseDF, HFGCaseDF$Plant %in% input$Plant))
     return(HFGCaseDF)
-    Plant
   })
   filtered_data_P<- reactive({
     if(input$Plant!="All")
@@ -366,60 +346,53 @@ server <- function(input, output) {
   maxCHFG=reactive({
     return(max(HFGCaseDF$Date))
   })
-  #Function Creates ggplots that gets merged into final graphic
-  buildplot2 = function(vari){
-    set.seed(myseed)
-    #!!sym() reads string as a variable of the dataframe
-    HFGDPlot=ggplot()+
-      geom_jitter(data=filtered_data_N(),aes(y=!!sym(vari),x=Date,color=`Filter replicates`),alpha=alphaPoint,height=0,width=.1,size=PointSize)+ylab(vari)
-    #adds mean line
-    if(input$Line2==T){
-      HFGDPlot=HFGDPlot+geom_line(data=Data_mean_var(),aes(y=!!sym(vari),x=Date),size=1)
-    }
-    #add filter means
-    if(input$Means==T){
-      set.seed(myseed)
-      HFGDPlot=HFGDPlot+geom_jitter(data=Filter_mean_var(),aes(y=!!sym(vari),x=Date,fill=`Filter replicates`), shape=23, size=2.5*PointSize, height=0, width=.1)
-    }
-    #hides outliers
-    #Does this by setting y upper bounds for later cropping
-    if ("Remove Outliers" %in% input$Outlier){
-      if(input$scale2=="log"){
-        quint=quantile(pull(HFGWasteDF,vari),.995)[[1]]
-      }
-      else{
-        quint=quantile(pull(HFGWasteDF,vari),.975)[[1]]
-      }
-    }
-    else{
-      quint=max(pull(HFGWasteDF,vari))
-    }
-    minVal=min(HFGWasteDF[vari],na.rm = T)
-    #sets appropriate scale
-    #also applies weekend indicators because logscale can not have -inf(or any negitive number) as the ymin
-    if(input$scale2=="log y scale"){
-      HFGDPlot = HFGDPlot + scale_y_log10()
-      HFGDPlot=HFGDPlot+geom_rect(data=DF_Week(), aes(xmin=Left, xmax=Right, ymin=0, ymax=Inf), fill='pink', alpha=alphaWeek)}
-    else{
-      HFGDPlot=HFGDPlot+
-        coord_cartesian(ylim=c(minVal, quint),xlim=c(minCHFG(), maxCHFG()))+
-      geom_rect(data=DF_Week(), aes(xmin=Left, xmax=Right, ymin=-Inf, ymax=Inf), fill='pink', alpha=alphaWeek)}
-    #faucet the data by Plant and remove hud elements that dont need to be in all three varible strips
-    HFGDPlot = HFGDPlot+scale_x_date(position="top")+facet_wrap(~Plant, nrow = 1)+Middle_theme()
-    return(HFGDPlot)
-  }
+
   #Creates list of ggplots for ggarange
   Make_Plots2 = reactive({
-    plots=lapply(input$Vars2[input$Vars2!="cases"],buildplot2)
+    if(input$Means==T){
+      MeanVDF=Filter_mean_var()
+    }else{
+      MeanVDF=NA
+    }
+    if(input$Line2==T){
+      LineVDF=Data_mean_var()
+    }
+    else{
+      LineVDF=NA
+    }
+    
+    
+    Date_lim_HFG=c(min(HFGCaseDataFil()$Date),max(HFGCaseDataFil()$Date))
+    plots=lapply(X=input$Vars2[input$Vars2!="cases"],FUN=Buildplot_gen,
+                 MainDF=filtered_data_N(),
+                 Loc="Plant",
+                 log_scale=(input$scale2=="log"),
+                 ColorType="Filter replicates",
+                 LineDF=LineVDF,
+                 MeanDF=MeanVDF,
+                 WeekDF=DF_Week(),
+                 DateLimits=Date_lim_HFG,
+                 RMOutliers=("Remove Outliers" %in% input$Outlier),
+                 Standards=ConfigOption(),
+                 Xfreq="14 days")
+    
     if("cases" %in% input$Vars2){
-      set.seed(myseed)
-      CasePlot=ggplot(data=HFGCaseDataFil())+
-        geom_jitter(aes(y=cases,x=Date),alpha=alphaPoint,height=0,width=.1,size=PointSize)
       if(input$'7day2'){
-        CasePlot=CasePlot+geom_line(aes(y=SevCases,x=Date),size=1,color="red")
+        LineVariF="SevCases"
       }
-      CasePlot=CasePlot+geom_rect(data=DF_Week(), aes(xmin=Left, xmax=Right, ymin=-Inf, ymax=Inf), fill='pink', alpha=alphaWeek)+ylab("Cases")+
-        facet_wrap(~Plant, nrow = 1)+coord_cartesian(xlim=c(minCHFG()+input$Offset2, maxCHFG()+input$Offset2))
+      else{
+        LineVariF=NA
+      }
+      CasePlot=Buildplot_gen(
+      "cases",
+      MainDF=HFGCaseDataFil(),
+      Loc="Plant",
+      LineVari=LineVariF,
+      WeekDF=DF_Week(),
+      DateLimits=Date_lim_HFG+input$Offset2,
+      Standards=ConfigOption(),
+      Xfreq="14 days",
+      AxisPos="bottom")
       plots=c(list(CasePlot),plots)
     }
     return(plots)
@@ -443,9 +416,9 @@ server <- function(input, output) {
       }else{
         T=1
       }
-      plots[[1]]=plots[[1]] + Header_theme()
-      plots[[T]]=plots[[T]] + Second_theme()
-      return(annotate_figure( left = text_grob("(GC/L)", rot = 90,size=GenFontSiz),ggarrange(plotlist=plots,ncol =1,common.legend = TRUE,legend = "right",align="v")))
+      plots[[1]]=plots[[1]] + Header_theme(ConfigOption())
+      plots[[T]]=plots[[T]] + Second_theme(ConfigOption())
+      return(annotate_figure( left = text_grob("(GC/L)", rot = 90,size=ConfigOption()$GenFontSiz),ggarrange(plotlist=plots,ncol =1,common.legend = TRUE,legend = "right",align="v")))
     })
   #top = text_grob("High frequency waste water analysis",size=20),  
   
@@ -453,3 +426,4 @@ server <- function(input, output) {
 }
 shinyApp(ui = ui, server = server)
 ```
+
