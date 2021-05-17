@@ -1,0 +1,40 @@
+---
+title: "Lat Model Work"
+author: "Marlin"
+date: "5/17/2021"
+output: html_document
+---
+
+```{r}
+
+library(ggpubr)
+library(dplyr)
+source("../Scripts/GenPlotMaking.R")
+source("../Scripts/WasteWaterDataProccess.R")
+source("../Scripts/CassesDataProccess.R")
+source("../Scripts/HelperFunctions.R")
+LatWasteFN <- "../../UntrackedData/WW SARS-COV-2 Data V5.xlsx"
+LatSpringCaseFN="../../UntrackedData/SpringSemester_CasesByDorm.tsv"
+LatFallCaseFN="../../UntrackedData/Oct2020toEndFall_CasesByDorm.tsv"
+```
+
+```{r}
+LatCaseDormsDF=CovidDataDorms(LatSpringCaseFN,LatFallCaseFN)%>%
+  mutate(Per_pos=100*Cases/Tests)
+LatCasesMadDF=
+
+
+
+Fullday=data.frame(Date=seq.Date(min(LatCaseDF$Date),max(LatCaseDF$Date),1))
+LatCaseDF=full_join(LatCaseDF,Fullday,by=c("Date"))%>%
+  arrange(Site,Date)%>%
+  group_by(Site)%>%
+  mutate(rollingPer_pos=RollPerPos(Cases,Tests))%>%
+  ungroup()
+
+LatWasteDF=WasteWater(LatWasteFN)%>%
+  mutate(Date=as.Date(Date))%>%
+  mutate(GeoMean=(N1*N2)^.5)%>%
+  filter(!is.na(Date),!is.na(N1))%>%
+  filter(Date<mdy("6/5/2021"))
+```
