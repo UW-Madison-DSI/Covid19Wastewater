@@ -16,14 +16,20 @@ source("../Scripts/HelperFunctions.R")
 LatWasteFN <- "../../UntrackedData/WW SARS-COV-2 Data V5.xlsx"
 LatSpringCaseFN="../../UntrackedData/SpringSemester_CasesByDorm.tsv"
 LatFallCaseFN="../../UntrackedData/Oct2020toEndFall_CasesByDorm.tsv"
+CovidFileName = "../../UntrackedData/MMSD_Cases.csv"
 ```
 
 ```{r}
 LatCaseDormsDF=CovidDataDorms(LatSpringCaseFN,LatFallCaseFN)%>%
-  mutate(Per_pos=100*Cases/Tests)
-LatCasesMadDF=
+  mutate(Per_pos=100*Cases/Tests)%>%
+  select(-negitive_tests)
 
 
+
+covidData=CovidData(CovidFileName)%>%
+  mutate(Per_pos=100*Cases/Tests)%>%
+  select(Date,Site,Cases,Tests,Per_pos)
+LatCaseDF=rbind(covidData,LatCaseDormsDF)
 
 Fullday=data.frame(Date=seq.Date(min(LatCaseDF$Date),max(LatCaseDF$Date),1))
 LatCaseDF=full_join(LatCaseDF,Fullday,by=c("Date"))%>%
@@ -37,4 +43,10 @@ LatWasteDF=WasteWater(LatWasteFN)%>%
   mutate(GeoMean=(N1*N2)^.5)%>%
   filter(!is.na(Date),!is.na(N1))%>%
   filter(Date<mdy("6/5/2021"))
+
+MMSDData=full_join(LatWasteDF,LatCaseDF,by=c("Site","Date"))%>%
+  filter(!is.na(Site),!is.na(Date))
+
+MMSDData%>%ggplot()+aes(x=GeoMean/(PMMoV))+
+  geom_point(aes(y=rollingPer_pos),color="Red")+facet_wrap(~Site,scales = "free_y")+scale_x_log10()
 ```
