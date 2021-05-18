@@ -48,5 +48,37 @@ MMSDData=full_join(LatWasteDF,LatCaseDF,by=c("Site","Date"))%>%
   filter(!is.na(Site),!is.na(Date))
 
 MMSDData%>%ggplot()+aes(x=GeoMean/(PMMoV))+
-  geom_point(aes(y=rollingPer_pos),color="Red")+facet_wrap(~Site,scales = "free_y")+scale_x_log10()
+  geom_point(aes(y=Cases),color="Red")+facet_wrap(~Site,scales = "free_y")+scale_x_log10()
+
+
+
+```
+
+```{r}
+cor.df=NA
+for (i in -14:14){
+  if(i!=-14){
+    cor.df=cor.df%>%
+      select(-Site)}
+  TempLatCaseDF=LatCaseDF%>%
+    mutate(Date=Date+i)
+  MMSDDF=full_join(LatWasteDF,TempLatCaseDF,by=c("Site","Date"))%>%
+   filter(!is.na(Site),!is.na(Date))
+  TVec=MMSDDF%>%
+    group_by(Site)%>%
+    summarize("{i}":= abs(cor(x = GeoMean, y = rollingPer_pos/PMMoV, use = "pairwise.complete.obs")))
+  
+  cor.df=cbind(cor.df,TVec)
+}
+cor.df=cor.df%>%
+  select(-cor.df)%>%
+  select(Site,!Site)%>%
+  pivot_longer('-14':'14')%>%
+  group_by(Site)%>%
+  mutate(bestCase=max(value))%>%
+  mutate(bestAlpha=ifelse(value==bestCase,1,0))
+cor.df$name=factor(cor.df$name, levels=c('-14':'14'))
+cor.df%>%
+  ggplot(aes(y=Site, x=name)) + 
+  geom_tile(aes(fill= value)) + geom_tile(aes(fill= bestCase,alpha=bestAlpha),fill = "red") + theme(axis.text.x = element_text(angle = 90))
 ```
