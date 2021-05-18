@@ -17,9 +17,14 @@ LatWasteFN <- "../../UntrackedData/WW SARS-COV-2 Data V5.xlsx"
 LatSpringCaseFN="../../UntrackedData/SpringSemester_CasesByDorm.tsv"
 LatFallCaseFN="../../UntrackedData/Oct2020toEndFall_CasesByDorm.tsv"
 CovidFileName = "../../UntrackedData/MMSD_Cases.csv"
+
+
 ```
 
 ```{r}
+
+knitr::opts_chunk$set(echo = TRUE,fig.width = 15,fig.height = 15)
+
 LatCaseDormsDF=CovidDataDorms(LatSpringCaseFN,LatFallCaseFN)%>%
   mutate(Per_pos=100*Cases/Tests)%>%
   select(-negitive_tests)
@@ -47,38 +52,48 @@ LatWasteDF=WasteWater(LatWasteFN)%>%
 MMSDData=full_join(LatWasteDF,LatCaseDF,by=c("Site","Date"))%>%
   filter(!is.na(Site),!is.na(Date))
 
-MMSDData%>%ggplot()+aes(x=GeoMean/(PMMoV))+
-  geom_point(aes(y=Cases),color="Red")+facet_wrap(~Site,scales = "free_y")+scale_x_log10()
 
-
+LatWasteDF%>%
+  mutate(Month=format(Date,"%B"))%>%
+  ggplot()+geom_boxplot(aes(x=Month,y=N1),fill="light blue")+geom_point(aes(x=Month,y=mean(N1)),shape = 4)+facet_wrap(~Site)#+scale_y_log10()
 
 ```
 
+ 
 ```{r}
-cor.df=NA
-for (i in -14:14){
-  if(i!=-14){
+SiteOffsetMatrix = function(CaseDF,WasteDF,seqminmax){
+  cor.df=NA
+  for (i in seqminmax){
+    if(i!=min(seqminmax)){
+      
     cor.df=cor.df%>%
-      select(-Site)}
-  TempLatCaseDF=LatCaseDF%>%
-    mutate(Date=Date+i)
-  MMSDDF=full_join(LatWasteDF,TempLatCaseDF,by=c("Site","Date"))%>%
-   filter(!is.na(Site),!is.na(Date))
-  TVec=MMSDDF%>%
+      select(-Site)
+    }
+    TempCaseDF=CaseDF%>%
+      mutate(Date=Date+i)
+    MMSDDF=full_join(TempCaseDF,WasteDF,by=c("Site","Date"))%>%
+    filter(!is.na(Site),!is.na(Date))
+    TVec=MMSDDF%>%
+      group_by(Site)%>%
+      summarize("{i}":= cor(x = N1/PMMoV, y = rollingPer_pos, use = "pairwise.complete.obs"))
+    cor.df=cbind(cor.df,TVec)
+  }
+  mincol=toString(min(seqminmax))
+  maxcol=toString(max(seqminmax))
+  cor.df=cor.df%>%
+    select(-cor.df)%>%
+    select(Site,!Site)%>%
+    pivot_longer(mincol:maxcol)%>%
     group_by(Site)%>%
-    summarize("{i}":= abs(cor(x = GeoMean, y = rollingPer_pos/PMMoV, use = "pairwise.complete.obs")))
-  
-  cor.df=cbind(cor.df,TVec)
+    mutate(bestCase=max(value))%>%
+    mutate(bestAlpha=ifelse(value==bestCase,1,0))
+  cor.df$name=factor(cor.df$name, levels=c(mincol:maxcol))
+    return(cor.df)
 }
-cor.df=cor.df%>%
-  select(-cor.df)%>%
-  select(Site,!Site)%>%
-  pivot_longer('-14':'14')%>%
-  group_by(Site)%>%
-  mutate(bestCase=max(value))%>%
-  mutate(bestAlpha=ifelse(value==bestCase,1,0))
-cor.df$name=factor(cor.df$name, levels=c('-14':'14'))
-cor.df%>%
+
+SiteOffsetMatrix(LatCaseDF,LatWasteDF,-14:14)%>%
   ggplot(aes(y=Site, x=name)) + 
-  geom_tile(aes(fill= value)) + geom_tile(aes(fill= bestCase,alpha=bestAlpha),fill = "red") + theme(axis.text.x = element_text(angle = 90))
+  geom_tile(aes(fill= value)) + geom_tile(aes(alpha=bestAlpha),fill="white",show.legend = FALSE)+theme(axis.text.x = element_text(angle = 90))+ scale_fill_continuous(type = "viridis")
+
+
 ```
