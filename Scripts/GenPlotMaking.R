@@ -82,3 +82,58 @@ Second_theme = function(ConfigOption){
     theme(plot.margin = unit(c(1.5,0,0,0), "cm"),
           axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"))
 }
+
+
+SiteLagHeatMap = function(CaseDF,WasteDF,seqminmax,Loc,Dat,Forma){
+  depenForm=formula(Forma)[3][[1]]
+  indepForm=formula(Forma)[2][[1]]
+  CaseFixDF=CaseDF%>%
+    mutate(location=!!sym(Loc),Date=!!sym(Dat))
+  WasteFixDF=WasteDF%>%
+    mutate(location=!!sym(Loc),Date=!!sym(Dat))
+  cor.df=NA
+  for (i in seqminmax){
+    if(i!=min(seqminmax)){
+      
+      cor.df=cor.df%>%
+        select(-location)
+    }
+    TempCaseDF=CaseFixDF%>%
+      mutate(Date=Date+i)
+    MMSDDF=full_join(TempCaseDF,WasteFixDF,by=c("location","Date"))%>%
+      filter(!is.na(location),!is.na(Date))
+    TVec=MMSDDF%>%
+      mutate( Val= !!depenForm,depVal=!!indepForm)%>%
+      group_by(location)%>%
+      summarize("{i}":= cor(x = Val, y = depVal, use = "pairwise.complete.obs"))
+    cor.df=cbind(cor.df,TVec)
+  }
+  mincol=toString(min(seqminmax))
+  maxcol=toString(max(seqminmax))
+  cor.df=cor.df%>%
+    select(-cor.df)%>%
+    select(location,!location)%>%
+    pivot_longer(mincol:maxcol,names_to="time lag",values_to = "Correlation")%>%
+    group_by(location)%>%
+    mutate(bestCase=max(Correlation))%>%
+    mutate(SiteBest=ifelse(Correlation==bestCase,location,NA))
+  cor.df$`time lag`=factor(cor.df$`time lag`, levels=c(mincol:maxcol))
+  plotedGraph=cor.df%>%
+    ggplot(aes(x=`time lag`)) + geom_tile(aes(y=location, fill= Correlation)) + geom_tile(aes(y=SiteBest),fill=NA,color="white",size=1,show.legend = FALSE)+
+    theme(axis.text.x = element_text(angle = 90))+ scale_fill_continuous(type = "viridis",limits=c(-1,1))+
+    geom_text(aes(y=SiteBest,label = round(Correlation, 2)))
+  return(plotedGraph)
+}
+
+BoxPlotProduction = function(wastewaterDF,Time,concentration,Loc,Log10B=T){
+  BoxGraphic=wastewaterDF%>%
+    mutate(Month=format(!!sym(Time),"%B"),Conc=!!sym(concentration),Site=!!sym(Loc))%>%
+    group_by(Month)%>%
+    mutate(meanC=mean(Conc))%>%
+    ggplot()+geom_boxplot(aes(x=Month,y=Conc),fill="light blue")+geom_point(aes(x=Month,y=meanC),shape = 4)+facet_wrap(~Site,ncol = 1)
+  if(Log10B){
+    BoxGraphic=BoxGraphic+scale_y_log10()
+  }
+  return(BoxGraphic)
+}
+

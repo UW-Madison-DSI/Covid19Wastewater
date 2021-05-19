@@ -9,6 +9,7 @@ output: html_document
 
 library(ggpubr)
 library(dplyr)
+library(formula.tools)
 source("../Scripts/GenPlotMaking.R")
 source("../Scripts/WasteWaterDataProccess.R")
 source("../Scripts/CassesDataProccess.R")
@@ -45,7 +46,6 @@ LatCaseDF=full_join(LatCaseDF,Fullday,by=c("Date"))%>%
 
 LatWasteDF=WasteWater(LatWasteFN)%>%
   mutate(Date=as.Date(Date))%>%
-  mutate(GeoMean=(N1*N2)^.5)%>%
   filter(!is.na(Date),!is.na(N1))%>%
   filter(Date<mdy("6/5/2021"))
 
@@ -59,41 +59,8 @@ LatWasteDF%>%
 
 ```
 
- 
 ```{r}
-SiteOffsetMatrix = function(CaseDF,WasteDF,seqminmax){
-  cor.df=NA
-  for (i in seqminmax){
-    if(i!=min(seqminmax)){
-      
-    cor.df=cor.df%>%
-      select(-Site)
-    }
-    TempCaseDF=CaseDF%>%
-      mutate(Date=Date+i)
-    MMSDDF=full_join(TempCaseDF,WasteDF,by=c("Site","Date"))%>%
-    filter(!is.na(Site),!is.na(Date))
-    TVec=MMSDDF%>%
-      group_by(Site)%>%
-      summarize("{i}":= cor(x = N1/PMMoV, y = rollingPer_pos, use = "pairwise.complete.obs"))
-    cor.df=cbind(cor.df,TVec)
-  }
-  mincol=toString(min(seqminmax))
-  maxcol=toString(max(seqminmax))
-  cor.df=cor.df%>%
-    select(-cor.df)%>%
-    select(Site,!Site)%>%
-    pivot_longer(mincol:maxcol)%>%
-    group_by(Site)%>%
-    mutate(bestCase=max(value))%>%
-    mutate(bestAlpha=ifelse(value==bestCase,1,0))
-  cor.df$name=factor(cor.df$name, levels=c(mincol:maxcol))
-    return(cor.df)
-}
-
-SiteOffsetMatrix(LatCaseDF,LatWasteDF,-14:14)%>%
-  ggplot(aes(y=Site, x=name)) + 
-  geom_tile(aes(fill= value)) + geom_tile(aes(alpha=bestAlpha),fill="white",show.legend = FALSE)+theme(axis.text.x = element_text(angle = 90))+ scale_fill_continuous(type = "viridis")
-
+source("../Scripts/GenPlotMaking.R")
+SiteOffsetMatrix(LatCaseDF,LatWasteDF,-14:14,"Site","Date","Cases~N1/PMMoV")
 
 ```
