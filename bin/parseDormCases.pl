@@ -1,5 +1,12 @@
 #!/usr/bin/perl -w
 
+## Parse testing data from "Aggregated Data for Leadership" Box folder and 
+##  combine the counts for the 5 dorms in the Lakeshore wastewater sampling
+##  stream;
+
+## Usage:  xlscat <xls file> | bin/parseDormCases.pl >   results/<date>/<tsv file>
+##    xls files: data/raw/UHS/SpringSemester_CasesByDorm.xlsx
+##               data/raw/UHS/FallSemester_CasesByDorm.xlsx
 
 use warnings;
 use strict;
@@ -11,8 +18,10 @@ use Getopt::Long;
 GetOptions (
 
             );
-
-## see docs/LakeshoreSampling 
+#####################################
+##  Set up
+#######################################################
+## see docs/LakeshoreSampling for source for this list
 my %dormsSampled = (
     'Phillips' => 1,
     'Dejope'   => 1,
@@ -22,7 +31,11 @@ my %dormsSampled = (
     'Sellery'  => 1,
     );
 
-####
+#### Header
+my @header = ("Date", "Site", "Negative", "Positive");
+print join("\t", @header), "\n";
+######################################################
+########### Parse input and print, line-by-line
 my @lakeShoreDormCols = ();
 my $selleryCols;
 my @orphanData;  ## hack to work-around excel formatting;
@@ -31,6 +44,7 @@ my @orphanData;  ## hack to work-around excel formatting;
 while(<>) {
 
     chomp;
+    ########## initial header parsing
     if (scalar @lakeShoreDormCols == 0) {
 	### find columns corresponding to UW_DORMS
 	next unless /^\s*Off campus/;
@@ -53,10 +67,11 @@ while(<>) {
 	next;
     } ## if
     
-    next if /^\s*Neg/;  ## skip additional header line;
+    next if (/^\s*Neg/ or /All/);  ## skip additional header line;
 
-    ## fix alignment of Date for first data row 
+    #################################
     my @testingData = split /\t/;
+    ## fix alignment of Date for first data row 
     if (/Date of Collection/) {
 	@orphanData = @testingData;
 	next;
@@ -69,10 +84,11 @@ while(<>) {
 	    @orphanData = ();  ## null out orphanData
 	} ##
     } ## if/else
-    
+
     my $date = $testingData[0];
     last if ($date =~ /Total/);
-    ## print Sellery;
+
+    ####### process Sellery
     my $selleryNeg = $testingData[$selleryCols->[1]];
     my $selleryPos = $testingData[$selleryCols->[2]];
     map {
@@ -84,6 +100,8 @@ while(<>) {
 	       $selleryNeg,
 	       $selleryPos,
 	), "\n";
+    
+    ####### sum the Lakeshore dorm results
     my $negatives = 0;
     my $positives = 0;
     foreach my $dormData (@lakeShoreDormCols) {
@@ -96,7 +114,8 @@ while(<>) {
 	$positives += $pos;
     }
     print join("\t", $date, "UW_D", $negatives, $positives), "\n";
-}
+} ## while
+
 __END__
 
 
