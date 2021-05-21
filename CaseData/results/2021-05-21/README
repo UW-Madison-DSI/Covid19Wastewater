@@ -1,0 +1,8 @@
+## git commit: 2fd3c3eb1ff3c34
+
+## cmds
+xlscat data/raw/UHS/FallSemester_CasesByDorm.xlsx | bin/parseDormCases.pl > results/2021-05-21/FallSemester_CasesByDorm.tsv 
+
+xlscat data/raw/UHS/SpringSemester_CasesByDorm.xlsx | bin/parseDormCases.pl > results/2021-05-21/SpringSemester_CasesByDorm.tsv
+
+
