@@ -1,8 +1,10 @@
-## git commit: 2fd3c3eb1ff3c34
+## git commit: [master 8eee6a4] fixed URL for DHS data
 
 ## cmds
 xlscat -s"\t" data/raw/UHS/FallSemester_CasesByDorm.xlsx | bin/parseDormCases.pl > results/2021-05-21/FallSemester_CasesByDorm.tsv 
 
 xlscat -s"\t" data/raw/UHS/SpringSemester_CasesByDorm.xlsx | bin/parseDormCases.pl > results/2021-05-21/SpringSemester_CasesByDorm.tsv
 
+#### New data for MMSD cases:
+ Rscript --vanilla bin/MMSD_Cases.R -outFile results/2021-05-21/MMSD_Cases.2021-05-21.csv
 
