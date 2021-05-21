@@ -19,7 +19,8 @@ args <- R.utils::commandArgs(trailingOnly = TRUE,
                              defaults = defaultArgs)
 
 #lag <- as.integer(args$lag)
-dhsURL <- 'https://opendata.arcgis.com/datasets/89d7a90aafa24519847c89b249be96ca_13.csv?outSR=%7B%22latestWkid%22%3A3857%2C%22wkid%22%3A102100%7D'
+dhsURL <- 'https://opendata.arcgis.com/datasets/81a5286520a44e2c8f3546c840265f63_13.csv?outSR=%7B%22latestWkid%22%3A3857%2C%22wkid%22%3A102100%7D'
+
 #censusURL <- "https://www2.census.gov/programs-surveys/popest/datasets/2010-2019/counties/totals/co-est2019-alldata.csv"
 censusURL <- 
   "http://www2.census.gov/programs-surveys/decennial/tables/time-series/tract-change-00-10/censustract-00-10.xlsx"
@@ -67,3 +68,4 @@ if (!is.null(args$outFile)) {
 }
 
 q()
+
