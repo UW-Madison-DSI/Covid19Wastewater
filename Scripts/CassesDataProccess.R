@@ -19,13 +19,13 @@ CovidData = function(CovidFileName){
 
 
 CovidDataDorms= function(File1,File2){
-  CaseData1=read.csv(File1,sep = "",header = FALSE,col.names=c("Date","Site","negitive_tests","positive_tests"))
-  CaseData2=read.csv(File2,sep = "",header = FALSE,col.names=c("Date","Site","negitive_tests","positive_tests"))
+  CaseData1=read.csv(File1,sep = "",header = T)
+  CaseData2=read.csv(File2,sep = "",header = T)
   returnedData=rbind(CaseData1,CaseData2)%>%
-    mutate(Tests=negitive_tests+positive_tests)%>%
+    mutate(Tests=Negative	+Positive)%>%
     mutate( Site = ifelse(Site == "UW_D", "UW-LakeShore", "UW-Sellery"))%>%
     mutate(Date=mdy(Date))%>%
-    rename(Cases=positive_tests)
+    rename(Cases=Positive)
   return(returnedData)
 }
 

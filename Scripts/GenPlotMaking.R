@@ -1,33 +1,33 @@
-Buildplot_gen = function(vari,MainDF=NA,Loc=NA,ColorType=NA,spanN=NA,LineDF=NA,
+Buildplot_gen = function(vari,MainDF=NA,Standards=NA,Loc=NA,ColorType=NA,spanN=NA,LineDF=NA,
                          LineVari=NA,MeanDF=NA ,DateLimits=NA,WeekDF=NA,
-                         AxisPos="top",Standards=NA,log_scale=F,RMOutliers=F,
-                         Xfreq="24 days",LineColor="red"){
+                         AxisPos="top",log_scale=F,RMOutliers=F,
+                         Xfreq="24 days",LineColor="red",YLabel=NA){
   set.seed(Standards$myseed)
   GPlot=ggplot(data=MainDF)
   if(!is.na(ColorType)){
     GPlot=GPlot+geom_jitter(data=MainDF,aes(y=!!sym(vari),x=Date,
-                            color=!!sym(ColorType)),alpha=Standards$alphaPoint,
-                            height=0,width=.1,size=Standards$PointSize)
+                                            color=!!sym(ColorType)),alpha=Standards$alphaPoint,
+                            height=0,width=.1,size=Standards$PointSize,na.rm=T)
   }else{
     GPlot=GPlot+geom_jitter(data=MainDF,aes(y=!!sym(vari),x=Date),
                             alpha=Standards$alphaPoint,height=0,width=.1,
-                            size=Standards$PointSize)
+                            size=Standards$PointSize,na.rm=T)
   }
   GPlot=GPlot+ylab(vari)
   if(!is.na(spanN)){
-    GPlot=GPlot+geom_smooth(aes(y=!!sym(vari),x=Date),span=spanN)
+    GPlot=GPlot+geom_smooth(aes(y=!!sym(vari),x=Date),span=spanN,na.rm=T)
   }
   if(!is.na(LineDF)){
-    GPlot=GPlot+geom_line(data=LineDF,aes(y=!!sym(vari),x=Date),size=1)
+    GPlot=GPlot+geom_line(data=LineDF,aes(y=!!sym(vari),x=Date),size=1,na.rm=T)
   }
   else if(!is.na(LineVari)){
     GPlot=GPlot+geom_line(data=MainDF,aes(y=!!sym(LineVari),x=Date),color=LineColor,
-                          size=1)
+                          size=1,na.rm=T)
   }
   if(!is.na(MeanDF)){
     GPlot=GPlot+geom_jitter(data=MeanDF,aes(y=!!sym(vari),x=Date,
-                          fill=!!sym(ColorType)), shape=23, 
-                          size=2.5*Standards$PointSize, height=0, width=.1)
+                                            fill=!!sym(ColorType)), shape=23, 
+                            size=2.5*Standards$PointSize, height=0, width=.1,na.rm=T)
   }
   rec_min=-Inf
   if(log_scale){
@@ -37,7 +37,7 @@ Buildplot_gen = function(vari,MainDF=NA,Loc=NA,ColorType=NA,spanN=NA,LineDF=NA,
   if(!is.na(WeekDF)){
     GPlot=GPlot+geom_rect(data=WeekDF, 
                           aes(xmin=Left, xmax=Right, ymin=rec_min, ymax=Inf),
-                          fill='pink', alpha=Standards$alphaWeek)
+                          fill='pink', alpha=Standards$alphaWeek,na.rm=T)
   }
   VarVec=pull(MainDF,vari)
   ValLimMin=min(VarVec)
@@ -51,6 +51,9 @@ Buildplot_gen = function(vari,MainDF=NA,Loc=NA,ColorType=NA,spanN=NA,LineDF=NA,
   }
   else{
     ValLimMax=max(VarVec)
+  }
+  if(!is.na(YLabel)){
+    GPlot=GPlot+ylab(YLabel)
   }
   ValLimits=c(ValLimMin,ValLimMax)
   GPlot=GPlot+coord_cartesian(ylim=ValLimits,xlim=DateLimits)
@@ -119,21 +122,23 @@ SiteLagHeatMap = function(CaseDF,WasteDF,seqminmax,Loc,Dat,Forma){
     mutate(SiteBest=ifelse(Correlation==bestCase,location,NA))
   cor.df$`time lag`=factor(cor.df$`time lag`, levels=c(mincol:maxcol))
   plotedGraph=cor.df%>%
-    ggplot(aes(x=`time lag`)) + geom_tile(aes(y=location, fill= Correlation)) + geom_tile(aes(y=SiteBest),fill=NA,color="white",size=1,show.legend = FALSE)+
+    ggplot(aes(x=`time lag`)) + geom_tile(aes(y=location, fill= Correlation),na.rm=T) + geom_tile(aes(y=SiteBest),fill=NA,color="white",size=1,show.legend = FALSE,na.rm=T)+
     theme(axis.text.x = element_text(angle = 90))+ scale_fill_continuous(type = "viridis",limits=c(-1,1))+
-    geom_text(aes(y=SiteBest,label = round(Correlation, 2)))
+    geom_text(aes(y=SiteBest,label = round(Correlation, 2)),na.rm=T)
   return(plotedGraph)
 }
-
-BoxPlotProduction = function(wastewaterDF,Time,concentration,Loc,Log10B=T){
+library(lubridate)
+BoxPlotProduction = function(wastewaterDF,Time,concentration,Loc,BinSiz=7,DateLimits=NA){
   BoxGraphic=wastewaterDF%>%
-    mutate(Month=format(!!sym(Time),"%B"),Conc=!!sym(concentration),Site=!!sym(Loc))%>%
-    group_by(Month)%>%
-    mutate(meanC=mean(Conc))%>%
-    ggplot()+geom_boxplot(aes(x=Month,y=Conc),fill="light blue")+geom_point(aes(x=Month,y=meanC),shape = 4)+facet_wrap(~Site,ncol = 1)
-  if(Log10B){
-    BoxGraphic=BoxGraphic+scale_y_log10()
-  }
+    mutate(Date=!!sym(Time),Conc=!!sym(concentration),Site=!!sym(Loc))%>%
+    mutate(arbataryBin = as.Date(BinSiz*((as.numeric(Date) %/% BinSiz) - (as.numeric(min(Date)) %/% BinSiz))+as.numeric(min(Date)),origin = as.Date("1970-01-01")))%>%
+    mutate(logN1=log(Conc))%>%
+    group_by(arbataryBin,Site)%>%
+    mutate(meanC=mean(logN1,na.rm=T))%>%
+    ggplot()+
+    geom_boxplot(aes(y=logN1,x=arbataryBin,group=arbataryBin),fill="light blue",na.rm=T)+
+    geom_point(aes(y=meanC,x=arbataryBin),shape = 4,color="red")+coord_cartesian(xlim=DateLimits)+
+    facet_wrap(~Site,nrow = 1)+scale_x_date(date_breaks="21 days",date_labels="%b %d")
   return(BoxGraphic)
 }
 

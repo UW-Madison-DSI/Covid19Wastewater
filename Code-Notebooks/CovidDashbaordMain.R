@@ -1,38 +1,28 @@
----
-title: "CovWasteDashboard"
-author: "Marlin"
-date: "5/7/2021"
-output: html_document
----
 
-```{r}
+  
 library(shiny)
 library(ggpubr)
 library(dplyr)
 library(shinydashboard)
 library(shinyjqui)
 library(shinycssloaders)
-```
 
 #Data Files and prepwork
-```{r}
 source("../Scripts/GenPlotMaking.R")
 source("../Scripts/WasteWaterDataProccess.R")
 source("../Scripts/CassesDataProccess.R")
 source("../Scripts/HelperFunctions.R")
 LatWasteFN <- "../../UntrackedData/WW SARS-COV-2 Data V5.xlsx"
 LatSpringCaseFN="../../UntrackedData/SpringSemester_CasesByDorm.tsv"
-LatFallCaseFN="../../UntrackedData/Oct2020toEndFall_CasesByDorm.tsv"
+LatFallCaseFN="../../UntrackedData/FallSemester_CasesByDorm.tsv"
 HFGWasteFN = "../../UntrackedData/HFG data for stats preliminary 3-18-21.xlsx"
 HFGCaseFN="../../UntrackedData/Madison_HighFreq_CaseData_20210507.csv"
-LatMMSDFN = "../../UntrackedData/MMSD_Cases.CSV"
+LatMMSDFN = "../../UntrackedData/MMSD_Cases.2021-05-21.csv"
 
-
-```
 
 
 #tab1 data
-```{r}
+
 LatCaseDormsDF=CovidDataDorms(LatSpringCaseFN,LatFallCaseFN)%>%
   mutate(Per_pos=100*Cases/Tests)
 
@@ -47,51 +37,55 @@ LatCaseDF=RollPerPos(LatCaseDF,"Cases","Tests",Fucet="Site")%>%
 
 
 
-
-
 LatWasteDF=WasteWater(LatWasteFN)%>%
   mutate(Date=as.Date(Date))%>%
-  filter(!is.na(Date),!is.na(N1))%>%
-  filter(!is.na(Site))%>%
-  filter(Date<mdy("6/5/2021"))
-
-```
+  filter(!is.na(Date),!is.na(N1),!is.na(Site))%>%
+  filter(Date<mdy("6/5/2021"))%>%
+  select(Date,Site,N1,N2,PMMoV,Pct_BCoV)
 
 
-```{r}
+
+
 #tab2 data
 
 #Reads Transformed HFG Data
 
 HFGFrame=HFGInfo(HFGWasteFN)%>%
-  select(Date,Plant,Filter,Well,N1GC,N2GC,PMMOVGC)%>%
+  select(Date,Site=Plant,Filter,Well,N1GC,N2GC,PMMOVGC)%>%
   mutate(Type="Normal")%>%
   pivot_longer(N1GC:PMMOVGC)
-HFGPlantMean=HFGFrame%>%
-  group_by(Date,Plant,name)%>%
+HFGSiteMean=HFGFrame%>%
+  group_by(Date,Site,name)%>%
   mutate(value=exp(mean(log(value),na.rm = T)))%>%
-  mutate(Type="Plant Mean")%>%
-  distinct(Date,Plant,name,.keep_all=T)
+  mutate(Type="Site Mean")%>%
+  distinct(Date,Site,name,.keep_all=T)
 HFGFilterMean=HFGFrame%>%
-  group_by(Date,Plant,Filter,name)%>%
+  group_by(Date,Site,Filter,name)%>%
   mutate(value=exp(mean(log(value),na.rm = T)))%>%
   mutate(Type="Filter Mean")%>%
-  distinct(Date,Plant,Filter,name,.keep_all=T)
-HFGWasteDF=rbind(HFGFrame,HFGPlantMean,HFGFilterMean)%>%
+  distinct(Date,Site,Filter,name,.keep_all=T)
+HFGWasteDF=rbind(HFGFrame,HFGSiteMean,HFGFilterMean)%>%
   pivot_wider(names_from="name",values_from="value")%>%
   mutate(Filter=as.character(Filter),Well=as.character(Well))%>%
   mutate(Date=as.Date(Date))%>%
   na.omit()%>%
   rename(`Filter replicates`=Filter)
 
+HFGWasteDFTab3=HFGInfo(HFGWasteFN)%>%
+  select(Date,Site=Plant,N1=N1GC,N2=N2GC,PMMoV=PMMOVGC,Pct_BCoV=BCoV)
 
-HFGCaseDF=full_join(HFGCasesPARSER(HFGCaseFN),filter(HFGWasteDF,Plant!="Madison"),by=c("Plant","Date"))
+HFGCaseDF=HFGCasesPARSER(HFGCaseFN)%>%
+  rename(Site=Plant,Cases=cases)%>%
+  full_join(filter(HFGWasteDFTab3,Site!="Madison"),by=c("Site","Date"))
+
 Fullday=data.frame(Date=seq.Date(min(HFGCaseDF$Date),max(HFGCaseDF$Date),1))
 HFGCaseDF=full_join(HFGCaseDF,Fullday,by=c("Date"))%>%
-  arrange(Plant,Date)%>%
-  group_by(Plant)%>%
-  mutate(SevCases=RollAvg(cases))%>%
+  arrange(Site,Date)%>%
+  group_by(Site)%>%
+  mutate(SevCases=RollAvg(Cases))%>%
   ungroup()
+
+
 
 #Generating the weekends starts and end dates
 #TO DO:Capture the weekend if the data intersects with it
@@ -108,40 +102,62 @@ SRan=filter(DateRangeDF,Days=="Monday")%>%
   rename(Right=Date)
 DateRangeCDF=cbind(MRan,SRan)%>%
   select(Left,Right)
-```
 
-```{r}
+
+
 #constants and presets
 maxLeftShift=-14
 maxRightShift=14
-```
 
-```{r}
+
+BotDisc=div("HFG Waste water data source: HFG data for stats preliminary 3-18-21.xlsx from 3/18/2021 jocelyn.hemming@slh.wisc.edu email.")
+BotDisc1.5=div("longitudinal Wastewater data from the DHS: WW SARS-COV-2 Data V5")
+BotDisc1.75=div("Dorm Case Data from PnC Oct2020toEndFall_CasesByDorm and SpringSemester_CasesByDorm")
+BotDisc2=div("Questions? Contact Marlin Lee mrlee6@wisc.edu or Steve Goldstein sgoldstein@wisc.edu")
+Plot3=div(withSpinner(plotOutput("plot3",inline=TRUE)),style="overflow-x: scroll")
+Tab3=tabItem(tabName = "BoxPlot",
+             # Boxes need to be put in a row (or column)
+             fluidRow(
+               jqui_resizable(box(width=4,
+                                  title = "Controls",
+                                  selectInput(inputId = "Site3", label = ("Site"),
+                                              choices = c("MMSDData","HFGData","DormData"),
+                                              multiple=F,
+                                              selected="MMSDData"),
+                                  sliderInput("BinSiz", label = "Bin Size", min = 1, 
+                                              max = 30, value = 30),
+                                  selectInput(inputId = "testComp",label = "Cases data",
+                                              choices=c("None","Number of positive tests"),
+                                              selected="None")
+               )),
+               jqui_resizable(box(width=7,title ="boxplot of concentrations",br(),Plot3, br(),BotDisc1.5,BotDisc,BotDisc1.75,BotDisc2))
+             ))
+
+
+
 #Parts Of Tab 2 defined outside for ease of use
 TopDisc=div("Pink sections are weekends")
-BotDisc=div("Data source: HFG data for stats preliminary 3-18-21.xlsx from 3/18/2021 jocelyn.hemming@slh.wisc.edu email.")
-BotDisc2=div("Questions? Contact Marlin Lee mrlee6@wisc.edu or Steve Goldstein sgoldstein@wisc.edu")
-#Creates buttons for Plant location,Line, and scale
+#Creates buttons for Site location,Line, and scale
 Tab2=tabItem(tabName = "HFGDash",
              # Boxes need to be put in a row (or column)
              fluidRow(
                jqui_resizable(box(width=4,
                                   title = "Controls",
-                                  selectInput(inputId = "Plant", label = ("Plant"),
-                                              choices = c("All",unique(HFGWasteDF$Plant)),
+                                  selectInput(inputId = "Site2", label = ("Site"),
+                                              choices = c("All",unique(HFGWasteDF$Site)),
                                               multiple=F,
                                               selected="Madison"),
                                   selectInput(inputId = "Vars2", label = ("Varibles"),
-                                              choices = c("N1GC","N2GC","PMMOVGC","cases"),
+                                              choices = c("N1GC","N2GC","PMMOVGC","Cases"),
                                               multiple=T,
-                                              selected=c("N1GC","cases")),
+                                              selected=c("N1GC","Cases")),
                                   conditionalPanel(
-                                    condition = "input.Vars2.includes('cases')",
+                                    condition = "input.Vars2.includes('Cases')",
                                     checkboxInput(inputId="7day2",label=("7 day average of cases"),value=T),
                                     sliderInput("Offset2", "Shift cases Date",min = maxLeftShift, max = maxRightShift,step=1,value=0)
                                   ),
                                   conditionalPanel(
-                                    condition = "(!input.Vars2.includes('cases')||1!=input.Vars2.length)&&0!=input.Vars2.length",
+                                    condition = "(!input.Vars2.includes('Cases')||1!=input.Vars2.length)&&0!=input.Vars2.length",
                                     checkboxInput(inputId = "Line2", label = ("Daily mean of 9 replicates"),
                                                   value=F),
                                     checkboxInput(inputId = "Means", label = ("Mean of qPCR replicates"),
@@ -154,21 +170,21 @@ Tab2=tabItem(tabName = "HFGDash",
                                                 multiple=T,
                                                 selected="Remove Outliers")
                                   ),
-
+                                  
                                   
                                   
                )),
                jqui_resizable(box(width=7,title ="High frequency waste water analysis",TopDisc,br(),div(withSpinner(plotOutput("plot2",inline=TRUE,width="auto",height="auto")),style="overflow-x: scroll"), br(),BotDisc,BotDisc2))
              ))
-```
 
-```{r}
+
+
 #Parts Of Tab 1 defined outside for ease of use
 TopDisc=div("")
 BotDisc=div("Data source: Case Data from PnC Oct2020toEndFall_CasesByDorm and SpringSemester_CasesByDorm")
 BotDisc2=div("Wastewater data from the DHS: WW SARS-COV-2 Data V5")
 BotDisc3=div("Questions? Contact Marlin Lee mrlee6@wisc.edu or Steve Goldstein sgoldstein@wisc.edu")
-#Creates buttons for Plant location,Line, and scale
+#Creates buttons for Site location,Line, and scale
 Tab1=tabItem(tabName = "MadDash",
              # Boxes need to be put in a row (or column)
              fluidRow(
@@ -183,10 +199,10 @@ Tab1=tabItem(tabName = "MadDash",
                                               multiple=T,
                                               selected=c("N1")),
                                   selectizeInput(inputId = "VarsTest", label = ("Tests varibles"),
-                                              choices = c("Per_pos","Cases"),
-                                              multiple=T,
-                                              options = list(maxItems = 1),
-                                              selected="Per_pos"),
+                                                 choices = c("Per_pos","Cases"),
+                                                 multiple=T,
+                                                 options = list(maxItems = 1),
+                                                 selected="Per_pos"),
                                   
                                   conditionalPanel(
                                     condition = "input.VarsTest.length!=0",
@@ -210,9 +226,9 @@ Tab1=tabItem(tabName = "MadDash",
                jqui_resizable(box(width=7,TopDisc,br(),div(withSpinner(plotOutput("plot1",inline=TRUE)),style="overflow-x: scroll"), br(),BotDisc,BotDisc2,BotDisc3))
              ))
 
-```
 
-```{r}
+
+
 #Creates UI for dashboard
 ui <- dashboardPage(
   #top left descriptor
@@ -220,30 +236,35 @@ ui <- dashboardPage(
   #left hand side tab selector
   dashboardSidebar(sidebarMenu(
     menuItem("UW Dorms WasteWater", tabName = "MadDash", icon = icon("dashboard")),
-    menuItem("HFG high frequencey", tabName = "HFGDash", icon = icon("dashboard"))
+    menuItem("HFG high frequencey", tabName = "HFGDash", icon = icon("dashboard")),
+    menuItem("BoxPlot Graphic", tabName = "BoxPlot", icon = icon("dashboard"))
   )),
   #Contents of different tabs defined above
   dashboardBody(
     tabItems(
       Tab1,
-      Tab2
+      Tab2,
+      Tab3
     ))
 )
-```
 
-```{r}
+
+
 #create graphic                                       
 server <- function(input, output) {
   ConfigOption=reactive({
     return(list(
-    myseed=1234567890,
-    XAxisLabSiz=10,
-    YAxisLabSiz=15,
-    GenFontSiz=20,
-    alphaPoint=.7,
-    PointSize=2,
-    alphaWeek=.2)
+      myseed=1234567890,
+      XAxisLabSiz=10,
+      YAxisLabSiz=15,
+      GenFontSiz=20,
+      alphaPoint=.7,
+      PointSize=2,
+      alphaWeek=.2)
     )
+  })
+  covidnameDer=reactive({
+    return(list())
   })
   #Required for tab 1
   filtered_data_PWaste<- reactive({
@@ -270,14 +291,14 @@ server <- function(input, output) {
                  log_scale=(input$scale=="log"),
                  DateLimits=Date_lim_long,Standards=ConfigOption())
     if(length(input$VarsTest)!=0){
-      if(input$'7day'){
-        if(input$VarsTest=="Per_pos"){
-          LineVariF="rollingPer_pos"
-        }else{
-          LineVariF="SevCases"
-        }
+      if(input$VarsTest=="Per_pos"){
+        LineVariF="rollingPer_pos"
+        ylab="% of tests positive"
+      }else{
+        LineVariF="SevCases"
+        ylab="number of positive tests"
       }
-      else{
+      if(!input$'7day'){
         LineVariF=NA
       }
       CasePlot=Buildplot_gen(
@@ -287,10 +308,11 @@ server <- function(input, output) {
         LineVari=LineVariF,
         DateLimits=Date_lim_long+input$Offset,
         Standards=ConfigOption(),
-        AxisPos="bottom")
+        AxisPos="bottom",
+        YLabel=ylab)
       plots=c(list(CasePlot),plots)
     }
-      #DormPlot=DormPlot+ylab("Percent Positive")+
+    #DormPlot=DormPlot+ylab("Percent Positive")+
     return(plots)
   })
   #plots N1GC
@@ -302,7 +324,7 @@ server <- function(input, output) {
         return()
       }
       plots=Make_Plots1()
-      #Add plant labels
+      #Add Site labels
       #add x axis labels
       if(length(input$VarsTest)!=0){
         T=2
@@ -319,15 +341,15 @@ server <- function(input, output) {
     })
   #-------------------------
   #required for tab2
-  #Filters data for right plants and variables
+  #Filters data for right Sites and variables
   HFGCaseDataFil = reactive({
-    if(input$Plant!="All")
-      return(filter(HFGCaseDF, HFGCaseDF$Plant %in% input$Plant))
+    if(input$Site2!="All")
+      return(filter(HFGCaseDF, HFGCaseDF$Site %in% input$Site2))
     return(HFGCaseDF)
   })
   filtered_data_P<- reactive({
-    if(input$Plant!="All")
-      return(filter(HFGWasteDF, HFGWasteDF$Plant %in% input$Plant))
+    if(input$Site2!="All")
+      return(filter(HFGWasteDF, HFGWasteDF$Site %in% input$Site2))
     return(HFGWasteDF)
   })
   #creates data with original values
@@ -339,7 +361,7 @@ server <- function(input, output) {
   #Data of the means of each day
   Data_mean_var = reactive({
     filtered_data_P()%>%
-      filter(Type=="Plant Mean")
+      filter(Type=="Site Mean")
   })
   #Data of the means of each Filter
   Filter_mean_var = reactive({
@@ -357,7 +379,7 @@ server <- function(input, output) {
   maxCHFG=reactive({
     return(max(HFGCaseDF$Date))
   })
-
+  
   #Creates list of ggplots for ggarange
   Make_Plots2 = reactive({
     if(input$Means==T){
@@ -374,9 +396,9 @@ server <- function(input, output) {
     
     
     Date_lim_HFG=c(min(HFGCaseDataFil()$Date),max(HFGCaseDataFil()$Date))
-    plots=lapply(X=input$Vars2[input$Vars2!="cases"],FUN=Buildplot_gen,
+    plots=lapply(X=input$Vars2[input$Vars2!="Cases"],FUN=Buildplot_gen,
                  MainDF=filtered_data_N(),
-                 Loc="Plant",
+                 Loc="Site",
                  log_scale=(input$scale2=="log"),
                  ColorType="Filter replicates",
                  LineDF=LineVDF,
@@ -387,7 +409,7 @@ server <- function(input, output) {
                  Standards=ConfigOption(),
                  Xfreq="14 days")
     
-    if("cases" %in% input$Vars2){
+    if("Cases" %in% input$Vars2){
       if(input$'7day2'){
         LineVariF="SevCases"
       }
@@ -395,31 +417,31 @@ server <- function(input, output) {
         LineVariF=NA
       }
       CasePlot=Buildplot_gen(
-      "cases",
-      MainDF=HFGCaseDataFil(),
-      Loc="Plant",
-      LineVari=LineVariF,
-      WeekDF=DF_Week(),
-      DateLimits=Date_lim_HFG+input$Offset2,
-      Standards=ConfigOption(),
-      Xfreq="14 days",
-      AxisPos="bottom")
+        "Cases",
+        MainDF=HFGCaseDataFil(),
+        Loc="Site",
+        LineVari=LineVariF,
+        WeekDF=DF_Week(),
+        DateLimits=Date_lim_HFG+input$Offset2,
+        Standards=ConfigOption(),
+        Xfreq="14 days",
+        AxisPos="bottom")
       plots=c(list(CasePlot),plots)
     }
     return(plots)
   })
   #plots N1GC
   output$plot2<-renderPlot(
-    width = function() 245+800*ifelse(input$Plant=="All",10,1),
+    width = function() 245+800*ifelse(input$Site2=="All",10,1),
     height = function() 60+300*length(input$Vars2),
     {
       if(length(input$Vars2)==0){
         return()
       }
       plots=Make_Plots2()
-      #Add plant labels
+      #Add Site labels
       #add x axis labels
-      if("cases" %in% input$Vars2){
+      if("Cases" %in% input$Vars2){
         T=2
         if(length(input$Vars)==1){
           T=1
@@ -432,39 +454,61 @@ server <- function(input, output) {
       return(annotate_figure( left = text_grob("(GC/L)", rot = 90,size=ConfigOption()$GenFontSiz),ggarrange(plotlist=plots,ncol =1,common.legend = TRUE,legend = "right",align="v")))
     })
   #top = text_grob("High frequency waste water analysis",size=20),  
+  #-------------------------
+  DormOptions=reactive({
+    return(c("UW-Sellery" ,"UW-LakeShore"))
+  })
+  #required for tab3
+  FullWasteData3 = reactive({
+    if ("HFGData" %in% input$Site3){
+      ReleventWasteData=HFGWasteDFTab3
+    }else if("DormData" %in% input$Site3){
+      ReleventWasteData=filter(LatWasteDF,Site %in% DormOptions())
+    }else{
+      ReleventWasteData=filter(LatWasteDF,!(Site %in% DormOptions()))
+    }
+    ReleventWasteData=ReleventWasteData%>%
+      filter(!is.na(Site))
+    return(ReleventWasteData)
+  })
+
+  FullCasesData3 = reactive({
+    if ("HFGData" %in% input$Site3){
+      ReleventCaseData=HFGCaseDF
+    }else if("DormData" %in% input$Site3){
+      ReleventCaseData=filter(LatCaseDF,Site %in% DormOptions())
+      }else{
+      ReleventCaseData=filter(LatCaseDF,!(Site %in% DormOptions()))
+    }
+    ReleventCaseData=ReleventCaseData%>%
+      filter(!is.na(Site))
+    return(ReleventCaseData)
+  })  
   
+  #unique(HFGWasteDFTab2$Site),unique(LatWasteDF$Site)
+  
+  output$plot3<-renderPlot(
+    width = function() 100+700*ifelse(input$Site3=="MMSDData",6,ifelse(input$Site3=="DormData",2,10)),
+    height = function() 800+500*0,{
+      xlims=c(min(FullCasesData3()$Date),max(FullCasesData3()$Date))
+      
+      boxGraphic=BoxPlotProduction(FullWasteData3(),"Date","N1","Site",
+                BinSiz=input$BinSiz, DateLimits=xlims)+Header_theme(ConfigOption())
+      
+      if(input$testComp=="Number of positive tests"){
+        TestType="Cases"
+        secTestType="SevCases"
+      }else{
+        return(boxGraphic)
+      }
+      
+      casePlot=Buildplot_gen(TestType,MainDF=FullCasesData3(),
+                             LineVari=secTestType,Standards=ConfigOption(),
+                             Loc="Site", DateLimits=xlims,
+                             AxisPos="bottom",Xfreq="21 days")+
+        Header_theme(ConfigOption())
+      boxGraphic=boxGraphic+Second_theme(ConfigOption())
+      return(ggarrange(plotlist=list(casePlot,boxGraphic),ncol =1,align="v"))
+    })
 }
 shinyApp(ui = ui, server = server)
-```
-```{r}
-LatCaseDFDorm=LatCaseDF%>%
-  filter(Site %in% c("UW-Sellery" ,"UW-LakeShore"))
-
-
-LatCaseDF%>%
-  ggplot(aes(x=Cases,y=Tests))+geom_point()#+geom_smooth()
-LatCaseDFDorm%>%
-  ggplot(aes(x=Cases,y=Per_pos))+geom_point()#+geom_smooth()
-
-LatCaseDF%>%
-  ggplot(aes(x=SevCases,y=Tests,color=Site))+geom_point()+facet_wrap(~Site)#+geom_smooth()
-LatCaseDFDorm%>%
-  ggplot(aes(x=SevCases,y=Tests,color=Site))+geom_point()+facet_wrap(~Site)#+geom_smooth()
-
-LatCaseDFDorm%>%
-  ggplot(aes(x=Date))+geom_point(aes(y=rollingPer_pos))+facet_wrap(~Site)
-LatCaseDFDorm%>%
-  ggplot(aes(x=Date))+geom_point(aes(y=Per_pos))+facet_wrap(~Site)
-LatCaseDFDorm%>%
-  ggplot(aes(x=Date))+geom_point(aes(y=Cases))+facet_wrap(~Site)
-
-cor(LatCaseDF$Cases,LatCaseDF$rollingPer_pos,use="pairwise.complete.obs")
-
-HFGCaseDF
-```
-
-
-
-
-
-
