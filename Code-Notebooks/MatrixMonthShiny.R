@@ -4,8 +4,6 @@ library(dplyr)
 library(shinydashboard)
 library(shinyjqui)
 library(shinycssloaders)
-
-
 source("../Scripts/GenPlotMaking.R")
 source("../Scripts/WasteWaterDataProccess.R")
 source("../Scripts/CassesDataProccess.R")
@@ -29,15 +27,9 @@ LatCaseMMSDData=CovidData(LatMMSDFN)%>%
   select(Date,Site,Cases,Tests,Per_pos)
 
 LatCaseDF=rbind(LatCaseMMSDData,LatCaseDormsDF)
-
-
-Fullday=data.frame(Date=seq.Date(min(LatCaseDF$Date),max(LatCaseDF$Date),1))
-LatCaseDF=full_join(LatCaseDF,Fullday,by=c("Date"))%>%
-  arrange(Site,Date)%>%
-  group_by(Site)%>%
-  mutate(rollingPer_pos=RollPerPos(Cases,Tests))%>%
-  ungroup()%>%
-  select(Date,Site,Cases,Tests,rollingPer_pos)
+LatCaseDF=RollPerPos(LatCaseDF,"Cases","Tests",Fucet="Site")%>%
+  filter(!is.na(Site))%>%
+  select(Date,Site,Cases,Tests,Per_pos,rollingPer_pos,SevCases)
 
 
 LatWasteDF=WasteWater(LatWasteFN)%>%
@@ -52,20 +44,19 @@ LatWasteDF=WasteWater(LatWasteFN)%>%
 #Reads Transformed HFG Data
 HFGWasteDF=HFGInfo(HFGWasteFN)%>%
   select(Date,Site=Plant,N1=N1GC,N2=N2GC,PMMoV=PMMOVGC,Pct_BCoV=BCoV)%>%
-  mutate(Site=ifelse(Site!="Madison",NA,"MadisonHFG"))%>%
-  filter(!is.na(Site))
+  mutate(Site=ifelse(Site!="Madison",NA,"MadisonHFG"))
 
 
 HFGCaseDF=full_join(rename(HFGCasesPARSER(HFGCaseFN),Site=Plant),filter(HFGWasteDF,Site!="MadisonHFG"),by=c("Site","Date"))%>%
-  mutate(Site=ifelse(Site!="Madison",NA,"MadisonHFG"))%>%
-  filter(!is.na(Site))
+  mutate(Site=ifelse(Site!="Madison",NA,"MadisonHFG"))
+
 Fullday=data.frame(Date=seq.Date(min(HFGCaseDF$Date),max(HFGCaseDF$Date),1))
 HFGCaseDF=full_join(HFGCaseDF,Fullday,by=c("Date"))%>%
   arrange(Site,Date)%>%
   group_by(Site)%>%
   mutate(SevCases=RollAvg(cases))%>%
   ungroup()%>%
-  select(Date,Site,Cases=cases)%>%
+  select(Date,Site,Cases=cases,SevCases)%>%
   mutate(Tests=NA,rollingPer_pos=NA)
 
 
@@ -108,11 +99,13 @@ Tab2=tabItem(tabName = "BoxPlot",
                                   title = "Controls",
                                   selectInput(inputId = "Site2", label = ("Site"),
                                               choices = c("MMSDData","HFGData"),
-                                              multiple=T,
+                                              multiple=F,
                                               selected="MMSDData"),
-                                  selectInput(inputId = "scale", label = ("y scale"),
-                                              choices = c("log","linear"),
-                                              selected="log"),
+                                  sliderInput("BinSiz", label = "Bin Size", min = 7, 
+                                              max = 30, value = 30),
+                                  selectInput(inputId = "testComp",label = "Cases data",
+                                              choices=c("None","Percent Positive","Number of positive tests"),
+                                              selected="None")
                                               )),
                jqui_resizable(box(width=7,title ="boxplot of concentrations",br(),Plot2, br(),BotDisc,BotDisc2))
              ))
@@ -151,23 +144,27 @@ server <- function(input, output) {
     )
   })
   #Required for tab 1
-  MMSDWasteSubDF<- reactive({
-    return(filter(LatWasteDF, LatWasteDF$Site %in% input$Site))
-  })
+
   MMSDCaseSubDF<- reactive({
     return(filter(LatCaseDF, Site %in% input$Site))
   })
   HFGCaseSubDF = reactive({
     return(filter(HFGCaseDF, HFGCaseDF$Site %in% input$Site))
   })
+  FullCasesData = reactive({
+    return(rbind (HFGCaseSubDF(),MMSDCaseSubDF())%>%
+             filter(!is.na(Site)))
+  })  
+
+  MMSDWasteSubDF<- reactive({
+    return(filter(LatWasteDF, LatWasteDF$Site %in% input$Site))
+  })
   HFGWasteSubDF<- reactive({
     return(filter(HFGWasteDF, HFGWasteDF$Site %in% input$Site))
   })
-  FullCasesData = reactive({
-    return(rbind (HFGCaseSubDF(),MMSDCaseSubDF()))
-  })
   FullWasteData = reactive({
-    return(rbind (HFGWasteSubDF(),MMSDWasteSubDF()))
+    return(rbind (HFGWasteSubDF(),MMSDWasteSubDF())%>%
+             filter(!is.na(Site)))
   })  
   FormulaCont = reactive({
     return(input$Formula)
@@ -195,7 +192,24 @@ server <- function(input, output) {
   })
 
   FullWasteData2 = reactive({
-    return(rbind (HFGWasteSubDF2(),MMSDWasteSubDF2()))
+    return(rbind(HFGWasteSubDF2(),MMSDWasteSubDF2())%>%
+             filter(!is.na(Site)))
+  })
+  MMSDCaseSubDF2<- reactive({
+    if ("MMSDData" %in% input$Site2){
+      return(LatCaseDF)
+    }
+    return(filter(LatCaseDF,LatCaseDF$Site %in% input$Site2))
+  })
+  HFGCaseSubDF2 = reactive({
+    if ("HFGData" %in% input$Site2){
+      return(HFGCaseDF)
+    }
+    return(filter(HFGCaseDF,HFGCaseDF$Site %in% input$Site2))
+  })
+  FullCasesData2 = reactive({
+    return(rbind(HFGCaseSubDF2(),MMSDCaseSubDF2())%>%
+             filter(!is.na(Site)))
   })  
 
   #unique(HFGWasteDFTab2$Site),unique(LatWasteDF$Site)
@@ -203,8 +217,23 @@ server <- function(input, output) {
   output$plot2<-renderPlot(
     width = function() 300+500*length(input$Site2)*8,
     height = function() 800+500*0,{
-      ploter=BoxPlotProduction(FullWasteData2(),"Date","N1","Site",input$scale=="log")
-      return(ploter)
+      boxGraphic=BoxPlotProduction(FullWasteData2(),"Date","N1","Site",BinSiz=input$BinSiz)+Second_theme(ConfigOption())
+      
+      if(input$testComp=="Percent Positive"){
+        TestType="Per_pos"
+        secTestType="rollingPer_pos"
+      }else if(input$testComp=="Number of positive tests"){
+        TestType="Cases"
+        secTestType="SevCases"
+      }else{
+        return(boxGraphic)
+      }
+      casePlot=Buildplot_gen(TestType,MainDF=FullCasesData2(),
+        LineVari=secTestType,Standards=ConfigOption(),Loc="Site",
+        DateLimits=c(min(FullWasteData2()$Date),max(FullWasteData2()$Date)),
+        AxisPos="bottom",Xfreq="31 days")+
+        Header_theme(ConfigOption())
+      return(ggarrange(plotlist=list(casePlot,boxGraphic),ncol =1))
     })
 }
 shinyApp(ui = ui, server = server)
