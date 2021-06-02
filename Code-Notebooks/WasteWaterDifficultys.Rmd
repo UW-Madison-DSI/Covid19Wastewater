@@ -76,23 +76,22 @@ LatWasteDF=WasteWater(LatWasteFN)%>%
 ```{r paused down, fig.height = 8, fig.width = 15}
 N1Start=min(HFGFrame$Date)
 N1End=max(HFGFrame$Date)
-
-
+CStart=min(HFGCaseDF$Date)
+CEnd=max(HFGCaseDF$Date)
 SiteOptions=c("Hudson","Kenosha","Platteville","Madison", "Merrill","Plymouth","River Falls","Sun Prairie","Wausau","Oshkosh")
 
 
 HFGCaseDFroll2%>%
   ggplot()+aes(x=Date)+geom_point(aes(y=ConfirmedCases,x=Date-2))+
-  scale_x_date(limits=c(mdy("1/10/2021"),mdy("4/1/2021")))+
   scale_x_date(limits=c(N1Start,N1End))+
-  facet_wrap(~Site,scales = "free")
+  facet_wrap(~Site,scales = "free")+ggtitle("Sparse HFG Case Data")
   
 SiteOptions2=c("Kenosha","Madison", "Sun Prairie","Wausau","Oshkosh")
 
 HFGFrame%>%
   filter(!is.na(N1),Site %in% SiteOptions2)%>%
   group_by(Site)%>%
-  summarize(leng=max(Date)-min(Date),NDays=length(unique(Date)))
+  summarize(`N1 testing Range`=max(Date)-min(Date),NDays=length(unique(Date)))
 
 SiteOptions2=c("Kenosha","Madison", "Sun Prairie","Wausau")
 ```
@@ -119,7 +118,7 @@ p2=HFGCaseDFroll2%>%
   facet_wrap(~Site,nrow = 1, scales = "free_y")
 
 #EpisodeCases    ConfirmedCases CollectedCases
-ggarrange(p1,p2,nrow = 2,align="hv",common.legend = T)
+annotate_figure(top=text_grob("No clear pattern partially due to short time frame",size=15),ggarrange(p1,p2,nrow = 2,align="hv",common.legend = T))
 ```
 
 ```{r outliers PMMoV, fig.height = 6, fig.width = 13}
@@ -129,14 +128,14 @@ HFGFrame%>%
   mutate(marked=ifelse(PMMoV<1*10^7,"Low PMMoV","MAIN G"))%>%
   mutate(marked=ifelse(PMMoV>1*10^8,"High PMMoV",marked))%>%
   ggplot()+aes(x=PMMoV,y=N1,color=marked)+geom_point()+scale_y_log10()+
-  scale_x_log10()+facet_wrap(~Site)
+  scale_x_log10()+facet_wrap(~Site)+ggtitle("N1 Vs PMMoV looking for trend")
 
 HFGFrame%>%
   filter(Site %in% SiteOptions2)%>%
   mutate(marked=ifelse(PMMoV<1*10^7,"Low PMMoV","MAIN G"))%>%
   mutate(marked=ifelse(PMMoV>1*10^8,"High PMMoV",marked))%>%
   ggplot()+aes(x=Date,y=N1,color=marked)+geom_point()+
-  scale_y_log10()+facet_wrap(~Site)
+  scale_y_log10()+facet_wrap(~Site)+ggtitle("N1 Vs Date using categories from previous graph")
 
 ```
 
@@ -150,7 +149,8 @@ HFGFrame%>%
   ggplot()+aes(x=Pct_BCoV,y=N1,color=marked)+geom_point()+
   #scale_y_log10()+
   #scale_x_log10()+
-  facet_wrap(~Site)
+  facet_wrap(~Site)+
+  ggtitle("N1 Vs PMMoV looking for trend")
 #, scales = "free"
 #scale_x_log10()+,color=marked
 
@@ -159,7 +159,8 @@ HFGFrame%>%
   mutate(marked=ifelse(Pct_BCoV<.5,"Low %Bcov","MAIN G"))%>%
   mutate(marked=ifelse(Pct_BCoV>10,"High %Bcov",marked))%>%
   ggplot()+aes(x=Date,y=N1,color=marked)+geom_point()+
-  scale_y_log10()+facet_wrap(~Site)
+  scale_y_log10()+facet_wrap(~Site)+
+  ggtitle("N1 Vs Date using categories from previous graph")
 #meam=data.frame(a=1:1000)
 #meam$b=30*runif(1000)-15
 #meam%>%
@@ -207,7 +208,7 @@ p4=LatCaseDF%>%
   facet_wrap(~Site,scales="free_y")+
   scale_x_date(limits=c(LeftDate+shift,RightDate+shift))
 
-ggarrange(plotlist = list(p1,p2),nrow = 2,align="hv",common.legend = T)
+annotate_figure(top=text_grob("Dorm data with thresholding",size=15),ggarrange(plotlist = list(p1,p2),nrow = 2,align="hv",common.legend = T))
 
 ```
 
@@ -284,7 +285,7 @@ p2=LatCaseDF%>%
   facet_wrap(~Site,scales="free_y")+
   scale_x_date(limits=c(LeftDate+shift,RightDate+shift))
 
-ggarrange(p1,p2,nrow = 2,align="hv",common.legend = T)
+annotate_figure(top=text_grob("Dorm data with arbitrary boxing",size=15),ggarrange(p1,p2,nrow = 2,align="hv",common.legend = T))
 ```
 
 ```{r madison messure same data}
@@ -298,6 +299,6 @@ HFGData=HFGFrame%>%
 
 ggplot()+geom_point(aes(y=N1,color=Filter,x=Date,shape="High Frequency"),data=HFGData)+
   geom_point(aes(y=N1,x=Date-1,shape="Longitudinal"),data=LatData,size=2.5)+
-  scale_x_date(limits=c(N1Start,N1End))
+  scale_x_date(limits=c(N1Start,N1End))+ggtitle("HFG and Longitudinal data match")
 
 ```
