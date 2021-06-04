@@ -1,5 +1,5 @@
                                   
-WasteServer <- function(input, output) {
+WasteServer <- function(input, output, session) {
 
   ConfigOption=reactive({
     return(list(

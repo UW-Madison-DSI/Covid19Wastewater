@@ -3,6 +3,8 @@
 maxLeftShift=-14
 maxRightShift=14
 
+VarOptionsWaste=c("N1","N2","PMMoV","Pct_BCoV","AVG")
+VarOptionsCase=c("Cases","Per_pos")
 
 #Parts Of Tab 1 defined outside for ease of use
 TopDisc=div("")
@@ -21,11 +23,11 @@ Tab1=tabItem(tabName = "MadDash",
                                               multiple=T,
                                               selected=c("UW-Sellery" ,"UW-LakeShore")),
                                   selectInput(inputId = "VarsWaste", label = ("Wastewater varibles"),
-                                              choices = c("N1","N2","PMMoV","Pct_BCoV","AVG"),
+                                              choices = VarOptionsWaste,
                                               multiple=T,
                                               selected=c("N1")),
                                   selectizeInput(inputId = "VarsTest", label = ("Tests varibles"),
-                                                 choices = c("Per_pos","Cases"),
+                                                 choices = VarOptionsCase,
                                                  multiple=T,
                                                  options = list(maxItems = 1),
                                                  selected="Per_pos"),
@@ -74,7 +76,7 @@ Tab2=tabItem(tabName = "HFGDash",
                                               multiple=T,
                                               selected=c("Madison","Kenosha","Oshkosh","Wausau")),
                                   selectInput(inputId = "Vars2Waste", label = ("Waste Water Varibles"),
-                                              choices = c("N1","N2","PMMoV","Pct_BCoV"),
+                                              choices = VarOptionsWaste,
                                               multiple=T,
                                               selected=c("N1")),
                                   selectInput(inputId = "Vars2Cas", label = ("Cases Varibles"),
@@ -112,4 +114,14 @@ Tab3=tabItem(tabName = "ThreshDash",
                                   title = "Controls",
                                   selectInput(inputId = "Site3", label = ("Site"),
                                               choices = unique(c(unique(HFGFrame$Site),unique(LatCaseDF$Site))),
-                                              multiple=T,)))))
+                                              multiple=T,),
+                                    selectInput(inputId = "MainVars3", label = ("Main variable"),
+                                              choices = c(VarOptionsWaste,VarOptionsCase),
+                                              multiple=F),
+                                  selectizeInput(inputId = "SecondaryVars3", label = ("Secondary variable"),
+                                              choices = c(VarOptionsWaste,VarOptionsCase),
+                                              multiple=F),
+                                  sliderInput("MainThreshold", "Shift cases Date",min = maxLeftShift, max = maxRightShift,step=1,value=0),
+                                  sliderInput("Offset2", "Shift cases Date",min = maxLeftShift, max = maxRightShift,step=1,value=0)
+                                  
+                                  ))))

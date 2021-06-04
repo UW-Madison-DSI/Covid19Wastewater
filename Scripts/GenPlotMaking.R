@@ -26,7 +26,7 @@ Buildplot_gen = function(vari,MainDF,Standards,Loc=NA,ColorType=NA,spanN=NA,
       workDataFrameMean=workDataFrameMean%>%
         mutate(var=var/!!sym(norm))
     }
-    GPlot=PointGen(GPlot,workDataFrameMean,ColorType,Standards)
+    GPlot=PointGen(GPlot,workDataFrameMean,Standards,ColorType,Size=2.5,Bold=T)
   }
   GPlot=GPlot+ylab(Leb)
   if(!is.na(spanN)){
@@ -78,19 +78,36 @@ Buildplot_gen = function(vari,MainDF,Standards,Loc=NA,ColorType=NA,spanN=NA,
   return(GPlot)
 }
 
-PointGen = function(Plot,DF,Standards,ColorType,Size=1){
+PointGen = function(Plot,DF,Standards,ColorType,Size=1,Bold=F){
+
+  if(Bold){
+    shape=23
+    Alpha=1
+  }else{
+    shape=21
+    Alpha=Standards$alphaPoint
+  }
   RPlot=Plot
   if(!is.na(ColorType)){
-    RPlot=RPlot+geom_jitter(data=DF,aes(y=var,x=Date,
-                                        color=!!sym(ColorType)),
-                            alpha=Standards$alphaPoint,
+    RPlot=RPlot+geom_jitter(data=DF,
+                            aes(y=var,x=Date,
+                                fill = !!sym(ColorType),
+                                color= !!sym(ColorType)),
+                            shape = shape,
+                            alpha=Alpha,
                             height=0,width=.1,
                             size=Size*Standards$PointSize,na.rm=T)
     
   }else{
     RPlot=RPlot+geom_jitter(data=DF,aes(y=var,x=Date),
-                            alpha=Standards$alphaPoint,height=0,width=.1,
+                            shape = shape,
+                            fill="Black",
+                            alpha=Alpha,height=0,width=.1,
                             size=Size*Standards$PointSize,na.rm=T)
+  }
+  if(Bold){
+    #slightly jank
+    RPlot=RPlot+scale_color_manual(values=rep("Black",3))
   }
   return(RPlot)
 }
@@ -101,7 +118,6 @@ ColGen = function(Plot,DF,Standards,ColorType,Size=1){
     RPlot=RPlot+geom_col(data=DF,aes(y=var,x=Date,
                                         fill=!!sym(ColorType)),
                             alpha=Standards$alphaPoint,
-                            space  = 0,
                             size=Size*Standards$PointSize,na.rm=T)+ 
       scale_fill_manual(values=c("gray", "light blue"))
     
