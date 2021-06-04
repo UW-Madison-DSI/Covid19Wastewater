@@ -19,7 +19,7 @@ LatWasteDF=WasteWater(LatWasteFN)%>%
 #Reads Transformed HFG Data
 
 HFGFrame=HFGInfo(HFGWasteFN)%>%
-  select(Date,Site=Plant,Filter,Well,N1=N1GC,N2=N2GC,PMMoV=PMMOVGC,Pct_BCoV=BCoV)%>%
+  select(Date,Site=Plant,Filter,Well,N1=N1GC,N2=N2GC,PMMoV=PMMOVGC,Pct_BCoV=BCoV,AVG)%>%
   mutate(Filter=as.character(Filter),Well=as.character(Well))%>%
   rename(`Filter replicates`=Filter)
 

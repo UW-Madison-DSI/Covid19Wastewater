@@ -108,20 +108,26 @@ Tab2=tabItem(tabName = "HFGDash",
                jqui_resizable(box(width=7,title ="High frequency waste water analysis",TopDisc,br(),Plot2, br(),BotDisc,BotDisc2))
              ))
 
+
+Plot3=div(withSpinner(plotOutput("plot3",inline=TRUE)),style="overflow-x: scroll")
+TopDisc=div("")
 Tab3=tabItem(tabName = "ThreshDash",
              fluidRow(
                jqui_resizable(box(width=4,
                                   title = "Controls",
                                   selectInput(inputId = "Site3", label = ("Site"),
-                                              choices = unique(c(unique(HFGFrame$Site),unique(LatCaseDF$Site))),
-                                              multiple=T,),
+                                              choices = unique(c("MadisonHFG",unique(HFGFrame$Site),unique(LatCaseDF$Site))),
+                                              multiple=T,
+                                              selected=c("Hudson")),
                                     selectInput(inputId = "MainVars3", label = ("Main variable"),
                                               choices = c(VarOptionsWaste,VarOptionsCase),
                                               multiple=F),
-                                  selectizeInput(inputId = "SecondaryVars3", label = ("Secondary variable"),
+                                  selectInput(inputId = "SecondaryVars3", label = ("Secondary variable"),
                                               choices = c(VarOptionsWaste,VarOptionsCase),
-                                              multiple=F),
+                                              multiple=F,
+                                              selected="PMMoV"),
                                   numericInput("MainThreshold", "Main Thresholding",min = 0, max = 1,step=.001,value=0),
                                   numericInput("SecondaryThreshold", "SecondaryThresholding",min = 0, max = 1,step=.001,value=0)
                                   
-                                  ))))
+                                  )),
+               jqui_resizable(box(width=7,title ="Thresholding of Variables",TopDisc,br(),Plot3, br(),BotDisc,BotDisc1.5,BotDisc1.75,BotDisc2))))

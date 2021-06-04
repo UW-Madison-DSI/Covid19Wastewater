@@ -1,11 +1,12 @@
 filtered_data_PWaste<- reactive({
   return(filter(LatWasteDF, Site %in% input$Site))
 })
-filtered_data_PCovRoll<- reactive({
-  return(filter(LatCaseDFRoll,Site %in% input$Site))
-})
 filtered_data_PCov<- reactive({
   return(filter(LatCaseDF, Site %in% input$Site))
+})
+
+filtered_data_PCovRoll<- reactive({
+  return(filter(LatCaseDFRoll,Site %in% input$Site))
 })
 
 

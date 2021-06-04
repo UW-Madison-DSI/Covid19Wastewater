@@ -117,7 +117,7 @@ Make_Plots2 = reactive({
 })
 #plots N1GC
 
-T21Plot = renderPlot(
+T2Plot = renderPlot(
   width = function() 245+700*length(input$Site2=="All"),
   height = function() 60+300*(length(input$Vars2Cas)+length(input$Vars2Waste)),
   {

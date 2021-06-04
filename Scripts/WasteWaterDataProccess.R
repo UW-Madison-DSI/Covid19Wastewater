@@ -118,7 +118,8 @@ HFGInfo = function(data){
            Well = "Well Rep")%>%
     mutate(N1LOD=N1LOD=="Y",
            N2LOD=N2LOD=="Y",
-           Date=as.Date(Date))
+           Date=as.Date(Date),
+           AVG = tmpfn(N1GC, N2GC))
   
   #hack fixing inconstancy
   HFGInfo = HFGInfo.PreHack%>%
