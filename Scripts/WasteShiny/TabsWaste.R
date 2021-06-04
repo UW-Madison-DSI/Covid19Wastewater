@@ -121,7 +121,7 @@ Tab3=tabItem(tabName = "ThreshDash",
                                   selectizeInput(inputId = "SecondaryVars3", label = ("Secondary variable"),
                                               choices = c(VarOptionsWaste,VarOptionsCase),
                                               multiple=F),
-                                  sliderInput("MainThreshold", "Shift cases Date",min = maxLeftShift, max = maxRightShift,step=1,value=0),
-                                  sliderInput("Offset2", "Shift cases Date",min = maxLeftShift, max = maxRightShift,step=1,value=0)
+                                  numericInput("MainThreshold", "Main Thresholding",min = 0, max = 1,step=.001,value=0),
+                                  numericInput("SecondaryThreshold", "SecondaryThresholding",min = 0, max = 1,step=.001,value=0)
                                   
                                   ))))
