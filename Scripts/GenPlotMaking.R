@@ -10,7 +10,7 @@ Buildplot_gen = function(vari,MainDF,Standards,Loc=NA,ColorType=NA,spanN=NA,
   if(!is.na(norm)){
     workDataFrameMain=workDataFrameMain%>%
       mutate(var=var/!!sym(norm))
-    Leb=paste(vari,"/",norm)
+    Leb=paste(vari,"per 100 thousand people")
   }
   set.seed(Standards$myseed)
   GPlot=ggplot()
@@ -28,7 +28,7 @@ Buildplot_gen = function(vari,MainDF,Standards,Loc=NA,ColorType=NA,spanN=NA,
     }
     GPlot=PointGen(GPlot,workDataFrameMean,ColorType,Standards)
   }
-  GPlot=GPlot+ylab(vari)
+  GPlot=GPlot+ylab(Leb)
   if(!is.na(spanN)){
     GPlot=GPlot+geom_smooth(data=workDataFrameMain,aes(y=var,x=Date),span=spanN,na.rm=T)
   }

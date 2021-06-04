@@ -6,7 +6,7 @@ WasteServer <- function(input, output) {
       myseed=1234567890,
       XAxisLabSiz=10,
       YAxisLabSiz=15,
-      GenFontSiz=20,
+      GenFontSiz=15,
       alphaPoint=.7,
       PointSize=2,
       alphaWeek=.2)

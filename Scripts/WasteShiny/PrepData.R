@@ -36,7 +36,8 @@ HFGCaseDFRoll=HFGCaseDF%>%
   select(Date,Site,ends_with("Cases"))
 
 HFGPop=read.csv("../../UntrackedData/HFGPop.csv.txt")%>%
-  select(Site=wwtp_name,Population=pop_served)
+  select(Site=wwtp_name,Population=pop_served)%>%
+  mutate(Population=Population/100000)
 
 HFGCaseDF=full_join(HFGPop,HFGCaseDF,by="Site")
 
