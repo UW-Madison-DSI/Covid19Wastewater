@@ -1,5 +1,5 @@
 ---
-title: "WasteWater_Difficultys"
+title: "WasteWater_difficulties"
 author: "Marlin"
 date: "6/1/2021"
 output:
@@ -73,7 +73,7 @@ LatWasteDF=WasteWater(LatWasteFN)%>%
   select(Date,Site,N1,N2,PMMoV,Pct_BCoV,AVG)
 ```
 
-```{r paused down, fig.height = 8, fig.width = 15}
+```{r paused down, fig.height = 8, fig.width = 15,include=F}
 N1Start=min(HFGFrame$Date)
 N1End=max(HFGFrame$Date)
 CStart=min(HFGCaseDF$Date)
@@ -96,7 +96,7 @@ HFGFrame%>%
 SiteOptions2=c("Kenosha","Madison", "Sun Prairie","Wausau")
 ```
 
-```{r No Clear relation, fig.height = 6, fig.width = 16}
+```{r No Clear relation, fig.height = 6, fig.width = 16,include=F}
 SiteOptions3=c("Kenosha","Madison")
 
 p1=HFGFrame%>%
@@ -117,8 +117,12 @@ p2=HFGCaseDFroll2%>%
   scale_x_date(limits=c(N1Start,N1End))+
   facet_wrap(~Site,nrow = 1, scales = "free_y")
 
+p2
+
+p1
+
 #EpisodeCases    ConfirmedCases CollectedCases
-annotate_figure(top=text_grob("No clear pattern partially due to short time frame",size=15),ggarrange(p1,p2,nrow = 2,align="hv",common.legend = T))
+#annotate_figure(top=text_grob("No clear pattern partially due to short time frame",size=15),ggarrange(p1,p2,nrow = 2,align="hv",common.legend = T))
 ```
 
 ```{r outliers PMMoV, fig.height = 6, fig.width = 13}
@@ -140,27 +144,26 @@ HFGFrame%>%
 ```
 
 ```{r outliers Per_Bcov, fig.height = 6, fig.width = 13}
-
 HFGFrame%>%
   filter(Site %in% SiteOptions2)%>%
   filter(N1<2e6)%>%
-  mutate(marked=ifelse(Pct_BCoV<.5,"Low %Bcov","MAIN G"))%>%
-  mutate(marked=ifelse(Pct_BCoV>10,"High %Bcov",marked))%>%
-  ggplot()+aes(x=Pct_BCoV,y=N1,color=marked)+geom_point()+
+  #mutate(marked=ifelse(Pct_BCoV<.5,"Low %Bcov","MAIN G"))%>%
+  #mutate(marked=ifelse(Pct_BCoV>10,"High %Bcov",marked))%>%
+  ggplot()+aes(x=Pct_BCoV,y=N1)+geom_point()+
   #scale_y_log10()+
   #scale_x_log10()+
   facet_wrap(~Site)+
-  ggtitle("N1 Vs PMMoV looking for trend")
+  ggtitle("N1 Vs %Bcov looking for trend")
 #, scales = "free"
 #scale_x_log10()+,color=marked
 
 HFGFrame%>%
   filter(Site %in% SiteOptions2)%>%
-  mutate(marked=ifelse(Pct_BCoV<.5,"Low %Bcov","MAIN G"))%>%
-  mutate(marked=ifelse(Pct_BCoV>10,"High %Bcov",marked))%>%
+  mutate(marked=ifelse(Pct_BCoV<1,"%Bcov<.5","MAIN G"))%>%
+  mutate(marked=ifelse(Pct_BCoV>10,"%Bcov >10%",marked))%>%
   ggplot()+aes(x=Date,y=N1,color=marked)+geom_point()+
   scale_y_log10()+facet_wrap(~Site)+
-  ggtitle("N1 Vs Date using categories from previous graph")
+  ggtitle("N1 Vs Date using thresholding")
 #meam=data.frame(a=1:1000)
 #meam$b=30*runif(1000)-15
 #meam%>%
@@ -170,7 +173,7 @@ HFGFrame%>%
 #  scale_x_log10()
 ```
 
-```{r Thresholding Dorms, fig.height = 8, fig.width = 15}
+```{r Thresholding Dorms, fig.height = 8, fig.width = 15, include=F}
 shift=-0
 LeftDate=min(LatWasteDF$Date)
 RightDate=max(LatWasteDF$Date)
@@ -212,7 +215,7 @@ annotate_figure(top=text_grob("Dorm data with thresholding",size=15),ggarrange(p
 
 ```
 
-```{r Thresholding Gen, fig.height = 16, fig.width = 15}
+```{r Thresholding Gen, fig.height = 16, fig.width = 15, include=F}
 shift=-0
 LeftDate=min(LatWasteDF$Date)
 RightDate=max(LatWasteDF$Date)
@@ -275,7 +278,7 @@ p1=LatWasteDF%>%
   geom_boxplot(aes(y=N1,x=Date,group=Loc),fill="light blue")+
   scale_y_log10()+
   facet_wrap(~Site)
-  #scale_x_date(limits=c(LeftDate,RightDate))
+  scale_x_date(limits=c(LeftDate,RightDate))
 
 p2=LatCaseDF%>%
   filter((Site=="UW-Sellery")|(Site=="UW-LakeShore"))%>%
@@ -285,7 +288,7 @@ p2=LatCaseDF%>%
   facet_wrap(~Site,scales="free_y")+
   scale_x_date(limits=c(LeftDate+shift,RightDate+shift))
 
-annotate_figure(top=text_grob("Dorm data with arbitrary boxing",size=15),ggarrange(p1,p2,nrow = 2,align="hv",common.legend = T))
+annotate_figure(top=text_grob("Dorm data with ad hoc binning",size=15),ggarrange(p1,p2,nrow = 2,align="hv",common.legend = T))
 ```
 
 ```{r madison messure same data}
@@ -299,6 +302,7 @@ HFGData=HFGFrame%>%
 
 ggplot()+geom_point(aes(y=N1,color=Filter,x=Date,shape="High Frequency"),data=HFGData)+
   geom_point(aes(y=N1,x=Date-1,shape="Longitudinal"),data=LatData,size=2.5)+
+  scale_y_log10()+
   scale_x_date(limits=c(N1Start,N1End))+ggtitle("HFG and Longitudinal data match")
 
 ```

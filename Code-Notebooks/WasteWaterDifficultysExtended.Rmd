@@ -1,0 +1,159 @@
+---
+title: "WasteWaterDifficultysExtended"
+author: "Marlin"
+date: "6/2/2021"
+output:
+  pdf_document: default
+  html_document: default
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+
+```{r Importing, include=FALSE}
+library(shiny)
+library(ggpubr)
+library(dplyr)
+library(shinydashboard)
+library(shinyjqui)
+library(shinycssloaders)
+
+#Data Files and prepwork
+source("../Scripts/GenPlotMaking.R")
+source("../Scripts/WasteWaterDataProccess.R")
+source("../Scripts/CassesDataProccess.R")
+source("../Scripts/HelperFunctions.R")
+LatWasteFN <- "../../UntrackedData/WW SARS-COV-2 Data V5.xlsx"
+LatSpringCaseFN="../../UntrackedData/SpringSemester_CasesByDorm.tsv"
+LatFallCaseFN="../../UntrackedData/FallSemester_CasesByDorm.tsv"
+HFGWasteFN = "../../UntrackedData/HFG data for stats preliminary 3-18-21.xlsx"
+HFGCaseFN="../../UntrackedData/HighFreq_CaseData_2021-05-07.csv"
+LatMMSDFN = "../../UntrackedData/MMSD_Cases.2021-05-21.csv"
+
+```
+
+```{r start up, include=FALSE}
+HFGFrame=HFGInfo(HFGWasteFN)%>%
+  select(Date,Site=Plant,Filter,Well,N1=N1GC,N2=N2GC,PMMoV=PMMOVGC,Pct_BCoV=BCoV,everything())%>%
+  mutate(Filter=as.character(Filter),Well=as.character(Well))%>%
+  na.omit()
+
+
+HFGCaseDF=HFGCasesPARSER(HFGCaseFN)
+Fullday=data.frame(Date=seq.Date(min(HFGCaseDF$Date),max(HFGCaseDF$Date),1))
+HFGCaseDF=full_join(HFGCaseDF,Fullday,by=c("Date"))
+
+HFGCaseDF2=HFGCaseDF%>%
+      mutate(isna=ifelse(EpisodeCases==-999,"True","false"))%>%
+      mutate(EpisodeCases=ifelse(EpisodeCases==-999,NA,EpisodeCases))%>%
+      mutate(CollectedCases=ifelse(CollectedCases==-999,NA,CollectedCases))%>%
+      mutate(ConfirmedCases=ifelse(ConfirmedCases==-999,NA,ConfirmedCases))
+
+HFGCaseDFroll2=HFGCaseDF2%>%
+      filter(!is.na(Site))%>%
+      arrange(Site,Date)%>%
+      group_by(Site)%>%
+      mutate(CollectedCases2=RollAvg(CollectedCases),EpisodeCases2=RollAvg(EpisodeCases),ConfirmedCases2=RollAvg(ConfirmedCases))%>%
+      ungroup()
+
+
+LatCaseDF=CovidDataPARSER(LatSpringCaseFN,LatFallCaseFN,LatMMSDFN)%>%
+  select(Date,Site,Cases,Tests,Per_pos,rollingPer_pos,SevCases)%>%
+  mutate(SevTest=RollAvg(Tests))
+
+LatWasteDF=WasteWater(LatWasteFN)%>%
+  mutate(Date=as.Date(Date))%>%
+  filter(!is.na(Date),!is.na(N1),!is.na(Site))%>%
+  filter(Date<mdy("6/5/2021"))%>%
+  select(Date,Site,N1,N2,PMMoV,Pct_BCoV,AVG)
+```
+
+```{r outliers PMMoV, fig.height = 6, fig.width = 13}
+
+HFGFrame%>%
+  mutate(marked=ifelse(PMMoV<1*10^7,"Low PMMoV","MAIN G"))%>%
+  mutate(marked=ifelse(PMMoV>1*10^8,"High PMMoV",marked))%>%
+  ggplot()+aes(x=PMMoV,y=N1,color=marked)+geom_point()+scale_y_log10()+
+  scale_x_log10()+facet_wrap(~Site)+ggtitle("N1 Vs PMMoV looking for trend")
+
+HFGFrame%>%
+  mutate(marked=ifelse(PMMoV<1*10^7,"Low PMMoV","MAIN G"))%>%
+  mutate(marked=ifelse(PMMoV>1*10^8,"High PMMoV",marked))%>%
+  ggplot()+aes(x=Date,y=N1,color=marked)+geom_point()+
+  scale_y_log10()+facet_wrap(~Site)+ggtitle("N1 Vs Date using categories from previous graph")
+
+```
+
+```{r outliers PMMoV, fig.height = 6, fig.width = 13}
+
+LatWasteDF%>%
+  mutate(marked=ifelse(PMMoV<1*10^7,"Low PMMoV","MAIN G"))%>%
+  mutate(marked=ifelse(PMMoV>1*10^8,"High PMMoV",marked))%>%
+  ggplot()+aes(x=PMMoV,y=N1,color=marked)+geom_point()+scale_y_log10()+
+  scale_x_log10()+facet_wrap(~Site)+ggtitle("N1 Vs PMMoV looking for trend")
+
+LatWasteDF%>%
+  mutate(marked=ifelse(PMMoV<1*10^7,"Low PMMoV","MAIN G"))%>%
+  mutate(marked=ifelse(PMMoV>1*10^8,"High PMMoV",marked))%>%
+  ggplot()+aes(x=Date,y=N1,color=marked)+geom_point()+
+  scale_y_log10()+facet_wrap(~Site)+ggtitle("N1 Vs Date using categories from previous graph")
+
+```
+```{r}
+LatWasteDF%>%
+  mutate(marked=ifelse(Pct_BCoV<.5,"Low %Bcov","MAIN G"))%>%
+  mutate(marked=ifelse(Pct_BCoV>10,"High %Bcov",marked))%>%
+  ggplot()+aes(x=Pct_BCoV,y=N1,color=marked)+geom_point()+
+  scale_y_log10()+
+  scale_x_log10()+
+  facet_wrap(~Site)+
+  ggtitle("N1 Vs %Bcov looking for trend")
+#, scales = "free"
+#scale_x_log10()+,color=marked
+
+LatWasteDF%>%
+  mutate(marked=ifelse(Pct_BCoV<.5,"Low %Bcov","MAIN G"))%>%
+  mutate(marked=ifelse(Pct_BCoV>10,"High %Bcov",marked))%>%
+  ggplot()+aes(x=Date,y=N1,color=marked)+
+  geom_point()+
+  scale_y_log10()+
+  facet_wrap(~Site)+
+  ggtitle("N1 Vs Date using categories from previous graph")
+
+```
+
+```{r}
+shift=-0
+LeftDate=min(LatWasteDF$Date)
+RightDate=max(LatWasteDF$Date)
+
+p1=LatWasteDF%>%
+  filter((Site=="MMSD P18"))%>%
+  mutate(Loc="10")%>%
+  mutate(Loc=ifelse(Date<mdy("1/20/2021"),"4",Loc))%>%
+  mutate(Loc=ifelse(Date<mdy("12/23/2020"),"3",Loc))%>%
+  mutate(Loc=ifelse(Date<mdy("11/18/2020"),"2",Loc))%>%
+  mutate(Loc=ifelse(Date<mdy("10/1/2020"),"1",Loc))%>%
+  ggplot()+
+  geom_point(aes(y=N1,x=Date,color=Loc),fill="light blue")+
+  #geom_boxplot(aes(y=N1,x=Date,group=Loc),fill="light blue")+
+  facet_wrap(~Site)
+  #scale_x_date(limits=c(LeftDate,RightDate))
+
+p2=LatCaseDF%>%
+  filter((Site=="MMSD P18"))%>%
+  ggplot()+aes(x=Date)+
+  geom_point(aes(y=Cases))+
+  geom_line(aes(y=SevCases))+
+  facet_wrap(~Site,scales="free_y")+
+  scale_x_date(limits=c(LeftDate+shift,RightDate+shift))
+
+annotate_figure(top=text_grob("Dorm data with arbitrary boxing",size=15),ggarrange(p1,p2,nrow = 2,align="hv",common.legend = T))
+
+
+```

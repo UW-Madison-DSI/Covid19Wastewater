@@ -1,22 +1,20 @@
-RollAvg = function(vectorPerPos,n=7){
-  CurrNum = rep(NA,n)
-  SlideMeanVec=vector(mode="double", length=length(vectorPerPos))
-  for (i in 1:length(vectorPerPos)){
-    
-    CurrNum[(i-1)%%n+1]=vectorPerPos[i]
-    SlideMeanVec[i]=mean(CurrNum,na.rm=T)
-  }
-  return(SlideMeanVec)
-}
-RollPerPos = function(RollingDF,CaseName,TestName,Fucet=NA,n=7){
-  FulldayRange=data.frame(Date=seq.Date(min(RollingDF$Date),max(RollingDF$Date),1))
-  FullDataFM=full_join(RollingDF,FulldayRange,by=c("Date"))%>%
-    arrange(!!sym(Fucet),Date)%>%
-    group_by(!!sym(Fucet))%>%
-    mutate(rollingPer_pos=RollPerPosHelperFunc(!!sym(CaseName),!!sym(TestName)),SevCases=RollAvg(!!sym(CaseName)))%>%
+
+RollPerPos = function(RollingDF,CaseName,TestName,Facet=NA,n=7){
+  TDF=RollingDF%>%
+    mutate(Facet=!!sym(Facet),CaseName=!!sym(CaseName),TestName=!!sym(TestName))
+  FaucetOptions=unique(TDF$Facet)
+  FulldayRange=expand.grid(seq.Date(min(TDF$Date),max(TDF$Date),1),FaucetOptions)%>%
+    rename(Date=Var1,Facet=Var2)
+  
+  FullDataFM=full_join(TDF,FulldayRange,by=c("Date","Facet"))%>%
+    arrange(Facet,Date)%>%
+    group_by(Facet)%>%
+    mutate(Per_pos=RollPerPosHelperFunc(CaseName,TestName),CaseName=RollAvgHelperFunc(CaseName))%>%
     ungroup()
+  FullDataFM[[CaseName]]=FullDataFM$CaseName
   return(FullDataFM)
 }
+
 
 
 RollPerPosHelperFunc = function(vectorCases,vectorTests,n=7){
@@ -24,8 +22,6 @@ RollPerPosHelperFunc = function(vectorCases,vectorTests,n=7){
   CurrNumTests = rep(NA,n)
   SlideMeanVec=vector(mode="double", length=length(vectorCases))
   for (i in 1:length(vectorCases)){
-    CurrNumCase[(i-1)%%n+1]=vectorCases[i]
-    CurrNumTests[(i-1)%%n+1]=vectorTests[i]
     if(!is.na(vectorCases[i])&&!is.na(vectorTests[i])){
       CurrNumCase[(i-1)%%n+1]=vectorCases[i]
       CurrNumTests[(i-1)%%n+1]=vectorTests[i]
@@ -36,4 +32,49 @@ RollPerPosHelperFunc = function(vectorCases,vectorTests,n=7){
     SlideMeanVec[i]=100*sum(CurrNumCase,na.rm=T)/sum(CurrNumTests,na.rm=T)
   }
   return(SlideMeanVec)
+}
+
+RollAvg = function(RollingDF,Facet="Site",n=7){
+  TDF=RollingDF%>%
+    mutate(Facet=!!sym(Facet))
+  FaucetOptions=unique(TDF$Facet)
+  FulldayRange=expand.grid(seq.Date(min(TDF$Date),max(TDF$Date),1),FaucetOptions)%>%
+    rename(Date=Var1,Facet=Var2)
+  
+  FullDataFM=full_join(TDF,FulldayRange,by=c("Date","Facet"))%>%
+    arrange(Facet,Date)%>%
+    group_by(Facet)%>%
+    mutate(across(ends_with("Cases"),RollAvgHelperFunc))%>%
+    ungroup()
+  FullDataFM[[Facet]]=FullDataFM$Facet
+  return(FullDataFM)
+}
+
+RollAvgHelperFunc = function(vectorCases,n=7){
+  CurrNumCase = rep(NA,n)
+  SlideMeanVec=vector(mode="double", length=length(vectorCases))
+  for (i in 1:length(vectorCases)){
+    CurrNumCase[(i-1)%%n+1]=vectorCases[i]
+    SlideMeanVec[i]=mean(CurrNumCase,na.rm=T)
+  }
+  return(SlideMeanVec)
+}
+
+WeekendGen = function(DateVec){
+  #Generating the weekends starts and end dates
+  #TO DO:Capture the weekend if the data intersects with it
+  DateRangeDF=data.frame(Date=seq(min(DateVec), max(DateVec), "days"))%>%
+    mutate(Days=weekdays(Date))%>%
+    filter(Days %in% c("Sunday","Monday"))
+  if (DateRangeDF$Days[1]=="Monday"){
+    DateRangeDF=DateRangeDF[-1,]}
+  if (tail(DateRangeDF$Days, n=1)=="Sunday"){
+    DateRangeDF=head(DateRangeDF, -1)}
+  MRan=filter(DateRangeDF,Days=="Sunday")%>%
+    rename(Left=Date)
+  SRan=filter(DateRangeDF,Days=="Monday")%>%
+    rename(Right=Date)
+  DateRangeCDF=cbind(MRan,SRan)%>%
+    select(Left,Right)
+  return(DateRangeCDF)
 }
