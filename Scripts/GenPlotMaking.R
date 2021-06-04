@@ -2,12 +2,15 @@ Buildplot_gen = function(vari,MainDF,Standards,Loc=NA,ColorType=NA,spanN=NA,
                          LineDF=NA, MeanDF=NA ,DateLimits=NA,WeekDF=NA,
                          AxisPos="top",log_scale=F,RMOutliers=F, 
                          IgnoreLog = c("Pct_BCoV"), Xfreq="24 days",
-                         LineColor="black",YLabel=NA,norm=NA,Colplot=F){
+                         LineColor="black",YLabel=NA,norm=NA,
+                         Colplot=F,nrow=1,scalesF="fixed"){
+  Leb=vari
   workDataFrameMain=MainDF%>%
     mutate(var=!!sym(vari))
   if(!is.na(norm)){
     workDataFrameMain=workDataFrameMain%>%
       mutate(var=var/!!sym(norm))
+    Leb=paste(vari,"/",norm)
   }
   set.seed(Standards$myseed)
   GPlot=ggplot()
@@ -66,9 +69,12 @@ Buildplot_gen = function(vari,MainDF,Standards,Loc=NA,ColorType=NA,spanN=NA,
     GPlot=GPlot+ylab(YLabel)
   }
   ValLimits=c(ValLimMin,ValLimMax)
-  GPlot=GPlot+coord_cartesian(ylim=ValLimits,xlim=DateLimits)
+  if(is.na(scalesF)){
+    GPlot=GPlot+coord_cartesian(ylim=ValLimits)
+  }
+  GPlot=GPlot+coord_cartesian(xlim=DateLimits)
   GPlot=GPlot+scale_x_date(position=AxisPos,date_breaks=Xfreq,date_labels="%b %d")
-  GPlot=GPlot+facet_wrap(as.formula(paste("~", Loc)), nrow = 1)+Middle_theme(Standards)
+  GPlot=GPlot+facet_wrap(as.formula(paste("~", Loc)), nrow = nrow,scales=scalesF)+Middle_theme(Standards)
   return(GPlot)
 }
 
