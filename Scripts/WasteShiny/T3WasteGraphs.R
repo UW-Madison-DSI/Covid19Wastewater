@@ -28,6 +28,7 @@ HFGCaseDF3 = reactive({
     mutate(Site=ifelse(Site=="Madison","MadisonHFG",Site))%>%
     filter(Site %in% input$Site3)%>%
     mutate(Cases=CollectedCases,Per_pos=NA)%>%
+    mutate(Cases=ifelse(Cases==-999,2.5,Cases))%>%
     select(Date,Site,Cases,Per_pos)
   return(CaseDF)
 })
@@ -39,14 +40,12 @@ CaseDFGen <- reactive({
 
 DFGen <- reactive({
   FullDF=full_join(CaseDFGen(),WasteDFGen(),by=c("Date","Site"))
-  MainThreshold     =mean(pull(FullDF,input$MainVars3),na.rm=T)*input$MainThreshold
-  SecondaryThreshold=mean(pull(FullDF,input$SecondaryVars3),na.rm=T)*input$SecondaryThreshold
+  SecondaryThreshold=mean(pull(FullDF,input$SecondaryVars3),na.rm=T)*input$Thresholding
   FullDF=FullDF%>%
     mutate(Threshold="Low Main & Sec")%>%
-    mutate(Threshold=ifelse(!!sym(input$SecondaryVars3)>SecondaryThreshold,"High Sec",Threshold))%>%
-    mutate(Threshold=ifelse(!!sym(input$MainVars3)>MainThreshold,"High Main",Threshold))%>%
-    mutate(Threshold=ifelse(!!sym(input$MainVars3)>MainThreshold&
-                            !!sym(input$SecondaryVars3)>SecondaryThreshold,"High Main & Sec",Threshold))%>%
+    mutate(Threshold=ifelse(!!sym(input$SecondaryVars3)>SecondaryThreshold,
+                            paste("High",input$SecondaryVars3),
+                            paste("Low",input$SecondaryVars3)))%>%
     mutate(Threshold=ifelse(is.na(Threshold),"weird",Threshold))
 
   return(FullDF)
@@ -54,14 +53,18 @@ DFGen <- reactive({
 
 ToLog=c("N1","N2","PMMoV","AVG")
 
-  T3Plot = renderPlot(width = function() 245+700,
-                      height = function() 60+300,
+  T3Plot = renderPlot(width = function() 245+400*length(input$Site3),
+                      height = function() 60+600,
     {
+    GraphLimitsDF=DFGen()%>%
+      filter(!is.na(!!sym(input$MainVars3)))
+    
+    GraphLimits=c(min(GraphLimitsDF$Date),max(GraphLimitsDF$Date))
     Plot1=ggplot(data=DFGen())+aes(x=!!sym(input$SecondaryVars3),
                                    y=!!sym(input$MainVars3),color = Threshold)+
-          geom_point()+facet_wrap(~Site,nrow=1)
+          geom_point()+facet_wrap(~Site,nrow=1,scales = "free")
     Plot2=ggplot(data=DFGen())+aes(x=Date,y=!!sym(input$MainVars3),color = Threshold)+
-      geom_point()+facet_wrap(~Site,nrow=1,scales = "free_x")
+      geom_point()+facet_wrap(~Site,nrow=1,scales = "free_x")+scale_x_date(limits=GraphLimits)
     
     if(input$MainVars3 %in% ToLog){
       Plot1=Plot1+scale_y_log10()

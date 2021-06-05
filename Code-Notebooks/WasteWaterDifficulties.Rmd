@@ -369,26 +369,32 @@ HFGFrame%>%
 
 UW thresholding / box plots; (remove winter break)
 
+Points are easily masked if we think they are unneeded
 
 ```{r boxplots, fig.height = 8, fig.width = 15}
+NovemberBreak=seq(from=mdy("12/18/2020"),to=mdy("1/25/2021"),by=1)
+
 shift=-0
 LeftDate=min(LatWasteDF$Date)
 RightDate=max(LatWasteDF$Date)
 
 p1=LatWasteDF%>%
   filter((Site=="UW-Sellery")|(Site=="UW-LakeShore"))%>%
+  filter(!(Date %in% NovemberBreak))%>%
   mutate(Loc="10")%>%
-  mutate(Loc=ifelse(Site=="UW-LakeShore"&Date<mdy("1/20/2021"),"4",Loc))%>%
-  mutate(Loc=ifelse(Site=="UW-LakeShore"&Date<mdy("12/23/2020"),"3",Loc))%>%
+  mutate(Loc=ifelse(Site=="UW-LakeShore"&Date<mdy("1/25/2021"),"4",Loc))%>%
+  mutate(Loc=ifelse(Site=="UW-LakeShore"&Date<mdy("12/18/2020"),"3",Loc))%>%
   mutate(Loc=ifelse(Site=="UW-LakeShore"&Date<mdy("11/18/2020"),"2",Loc))%>%
-  mutate(Loc=ifelse(Site=="UW-LakeShore"&Date<mdy("10/9/2020"),"1",Loc))%>%
+  mutate(Loc=ifelse(Site=="UW-LakeShore"&Date<mdy("10/18/2020"),"1",Loc))%>%
   
-  mutate(Loc=ifelse(Site=="UW-Sellery"&Date<mdy("2/5/2021"),"4",Loc))%>%
-  mutate(Loc=ifelse(Site=="UW-Sellery"&Date<mdy("12/8/2020"),"3",Loc))%>%
-  mutate(Loc=ifelse(Site=="UW-Sellery"&Date<mdy("11/18/2020"),"2",Loc))%>%
+  mutate(Loc=ifelse(Site=="UW-Sellery"&Date<mdy("2/5/2021"),"5",Loc))%>%
+  #mutate(Loc=ifelse(Site=="UW-Sellery"&Date<mdy("12/18/2020"),"4",Loc))%>%
+  mutate(Loc=ifelse(Site=="UW-Sellery"&Date<mdy("12/18/2020"),"3",Loc))%>%
+  mutate(Loc=ifelse(Site=="UW-Sellery"&Date<mdy("11/4/2020"),"2",Loc))%>%
   mutate(Loc=ifelse(Site=="UW-Sellery"&Date<mdy("10/11/2020"),"1",Loc))%>%
   ggplot()+
   geom_boxplot(aes(y=N1,x=Date,group=Loc),fill="light blue")+
+  geom_point(aes(y=N1,x=Date,color=Loc),fill="light blue")+
   scale_y_log10()+
   facet_wrap(~Site)
   scale_x_date(limits=c(LeftDate,RightDate))

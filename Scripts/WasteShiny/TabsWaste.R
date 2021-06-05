@@ -126,8 +126,7 @@ Tab3=tabItem(tabName = "ThreshDash",
                                               choices = c(VarOptionsWaste,VarOptionsCase),
                                               multiple=F,
                                               selected="PMMoV"),
-                                  numericInput("MainThreshold", "Main Thresholding",min = 0, max = 1,step=.001,value=0),
-                                  numericInput("SecondaryThreshold", "SecondaryThresholding",min = 0, max = 1,step=.001,value=0)
+                                  numericInput("Thresholding", "SecondaryThresholding",min = 0, max = 1,step=.001,value=0)
                                   
                                   )),
                jqui_resizable(box(width=7,title ="Thresholding of Variables",TopDisc,br(),Plot3, br(),BotDisc,BotDisc1.5,BotDisc1.75,BotDisc2))))
