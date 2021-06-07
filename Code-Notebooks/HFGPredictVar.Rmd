@@ -74,7 +74,7 @@ LatWasteDF=WasteWater(LatWasteFN)%>%
 
 
 
-Clear linear relationship between N1 and its varience
+Clear linear relationship between N1 and its standard deviations
 
 ```{r Varience within groups}
 
@@ -82,7 +82,8 @@ HFGFrame%>%
   select(Date,Site,Filter,N1)%>%
   group_by(Site,Date)%>%
   summarize(mN1=mean(N1),vN1=var(N1))%>%
-  ggplot()+geom_point(aes(x=mN1,y=sqrt(vN1),color=Site))+scale_y_log10()+scale_x_log10()
+  ggplot()+geom_point(aes(x=mN1,y=sqrt(vN1),color=Site))+
+  scale_y_log10()+scale_x_log10()+ggtitle("Mean vs Standard deviation of 9 points")
 
 HFGVarNine=HFGFrame%>%
   select(Date,Site,Filter,N1)%>%
@@ -96,7 +97,8 @@ HFGFrame%>%
   select(Date,Site,Filter,N1)%>%
   group_by(Site,Date,Filter)%>%
   summarize(mN1=mean(N1),vN1=var(N1))%>%
-  ggplot()+geom_point(aes(x=mN1,y=sqrt(vN1),color=Site))+scale_y_log10()+scale_x_log10()
+  ggplot()+geom_point(aes(x=mN1,y=sqrt(vN1),color=Site))+
+  scale_y_log10()+scale_x_log10()+ggtitle("Mean vs Standard deviation of 3 points")
 
 
 
@@ -110,6 +112,8 @@ cor(HFGVarThree$mN1,sqrt(HFGVarThree$vN1),use="pairwise.complete.obs")
 cor(HFGVarThree$mN1,HFGVarThree$vN1,use="pairwise.complete.obs")
 ```
 
+Generated LM from relationship
+
 ```{r validating,fig.height = 15, fig.width = 15,include=F}
 T=8
 
@@ -119,26 +123,26 @@ HFGVar=HFGFrame%>%
   group_by(Site,Date)%>%
   summarize(mN1=mean(N1),vN1=var(N1))
 
-LM=lm(data=HFGVar,sqrt(vN1)~mN1)
+LM=lm(data=HFGVar,sqrt(vN1)~mN1-1)
 
 LM
 
-HFGFrame%>%
-  select(Date,Site,N1,Filter)%>%
-  mutate(lower=N1-1.860*sqrt(207167*N1)/sqrt(9))%>%
-  mutate(Upper=N1+1.860*sqrt(207167*N1)/sqrt(9))%>%
-  #mutate(contzero=lower<0&Upper>0)
-  ggplot()+
-  geom_rect(aes(fill=Filter,ymin=lower,ymax=Upper,xmin=Date-.3,xmax=Date+.3),alpha=.1)+
-  geom_point(aes(x=Date,y=N1,color=Filter))+scale_y_log10()+facet_wrap(~Site)
+# HFGFrame%>%
+#   select(Date,Site,N1,Filter)%>%
+#   mutate(lower=N1-1.860*sqrt(207167*N1)/sqrt(9))%>%
+#   mutate(Upper=N1+1.860*sqrt(207167*N1)/sqrt(9))%>%
+#   #mutate(contzero=lower<0&Upper>0)
+#   ggplot()+
+#   geom_rect(aes(fill=Filter,ymin=lower,ymax=Upper,xmin=Date-.3,xmax=Date+.3),alpha=.1)+
+#   geom_point(aes(x=Date,y=N1,color=Filter))+scale_y_log10()+facet_wrap(~Site)
 
 ```
 
 ```{r Extend to general data varience,fig.height = 15, fig.width = 15,include=F}
 LatWasteDF%>%
   select(Date,Site,N1)%>%
-  mutate(lower=N1-1.860*sqrt(207167*N1)/sqrt(9))%>%
-  mutate(Upper=N1+1.860*sqrt(207167*N1)/sqrt(9))%>%
+  mutate(lower=N1-2*0.2196*N1)%>%
+  mutate(Upper=N1+2*0.2196*N1)%>%
   #mutate(contzero=lower<0&Upper>0)
   ggplot()+
   geom_rect(aes(ymin=lower,ymax=Upper,xmin=Date-1,xmax=Date+1),fill="red",alpha=.1)+
@@ -146,6 +150,8 @@ LatWasteDF%>%
 
 
 ```
+
+using the strong relationship we can predict the standard deviation of the point to get a better understanding of the possible true values
 
 ```{r Compare madison method,fig.height = 15, fig.width = 15}
 LatData=LatWasteDF%>%
@@ -166,8 +172,27 @@ ggplot()+
   geom_point(aes(y=N1,color=Filter,x=Date,shape="High Frequency"),data=HFGData)+
   geom_point(aes(y=N1,x=Date-1,shape="Longitudinal"),data=LatData,size=2.5)+
   scale_y_log10()+
-  scale_x_date(limits=c(N1Start,N1End))+ggtitle("HFG, Longitudinal data and predicted intervels")
+  scale_x_date(limits=c(N1Start,N1End))+ggtitle("Waste data and predicted 2 standard deviations")
 
+```
+
+```{r Extend,fig.height = 15, fig.width = 15}
+LatData=LatWasteDF%>%
+  select(Date,Site,N1)%>%
+  mutate(lower=N1-2*0.2196*N1)%>%
+  mutate(Upper=N1+2*0.2196*N1)
+
+#??lat data off shifted by one day??
+N1Start=min(HFGFrame$Date)
+N1End=max(HFGFrame$Date)
+
+
+ggplot()+
+  geom_rect(aes(ymin=lower,ymax=Upper,xmin=Date-1,xmax=Date+1),fill="red",alpha=.1,data=LatData)+
+  geom_point(aes(y=N1,x=Date,shape="Longitudinal"),data=LatData,size=2.5)+
+  facet_wrap(~Site)+
+  scale_y_log10()+
+  ggtitle("Waste data and predicted 2 standard deviations")
 
 ```
 
