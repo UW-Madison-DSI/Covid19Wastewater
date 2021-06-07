@@ -110,6 +110,14 @@ HFGVarThree=HFGFrame%>%
 
 cor(HFGVarThree$mN1,sqrt(HFGVarThree$vN1),use="pairwise.complete.obs")
 cor(HFGVarThree$mN1,HFGVarThree$vN1,use="pairwise.complete.obs")
+
+# cases
+# LM
+# SD
+# mean line
+# collection, analysis
+#
+#
 ```
 
 Generated LM from relationship
@@ -189,7 +197,7 @@ N1End=max(HFGFrame$Date)
 
 ggplot()+
   geom_rect(aes(ymin=lower,ymax=Upper,xmin=Date-1,xmax=Date+1),fill="red",alpha=.1,data=LatData)+
-  geom_point(aes(y=N1,x=Date,shape="Longitudinal"),data=LatData,size=2.5)+
+  geom_point(aes(y=N1,x=Date),data=LatData,size=2.5)+
   facet_wrap(~Site)+
   scale_y_log10()+
   ggtitle("Waste data and predicted 2 standard deviations")
