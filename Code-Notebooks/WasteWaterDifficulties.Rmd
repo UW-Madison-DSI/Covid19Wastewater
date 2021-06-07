@@ -94,9 +94,7 @@ ConfigOption=list(
 
 
 
-Focus on HFG. Why? replicates and our best shot. (future: graphic and analysis computing, e.g. variances.
-
-
+Focus on HFG. Why? replicates and our best shot.
 
 
 ```{r paused down, fig.height = 8, fig.width = 15,include=F}
@@ -164,8 +162,8 @@ source("../Scripts/GenPlotMaking.R")
 
 
 
-Cases: for Madison and Kenosha (and Sun Prairie + Wausau if they are plotted in PMMoV section.
-Points: larger pop avoids problematic small pop areas (low numbers have a lot of variance; 1-4 => -999.
+Cases: 
+larger pop avoids problematic small pop areas (low numbers have a lot of variance; 1-4 => -999.
 also: relatively small sample size (relative to variance in case counts):
 short duration; some flowage districts haver fewer observations.
 Describe plots of cases (or %positive): Unimodal: is there a trend? segmentation? can't say;
@@ -217,11 +215,16 @@ HFDCasesGraphic+ annotate("text", x = N1Start+11.5, y = max(RelData$CollectedCas
 N1:
 left (and right?): outliers called out by Dagmara; action: ignore them.
 remaining dips: what are they:
-3 interpretations: (a) real dip; (b) just chaotic quirky;
+3 interpretations: 
+
+(a) real dip; 
+
+(b) just chaotic quirky;
+
 (c) longer explanation: 9 replicates have low var; OK good experiment; good benchwork.
 now think about the stochasticity of the sampling process; you capture a liter of ww
 whose N1 concentration is a random variable.
-Plot: N1 for 2 or 4 welts.
+
 
 
 
@@ -311,7 +314,7 @@ HFGFrame%>%
   mutate(`PMMoV Level`=ifelse(PMMoV<1*10^7,"Low","Medium"))%>%
   mutate(`PMMoV Level`=ifelse(PMMoV>1*10^8,"High",`PMMoV Level`))%>%
   ggplot()+aes(x=PMMoV,y=N1,color=`PMMoV Level`)+geom_point()+scale_y_log10()+
-  scale_x_log10()+facet_wrap(~Site)+ggtitle("relationship of PMMoV to N1")+ Header_theme(ConfigOption)+
+  scale_x_log10()+facet_wrap(~Site)+ggtitle("N1 Vs PMMoV")+ Header_theme(ConfigOption)+
   xlab("PMMoV (GC/L)")+ylab("N1 (GC/L)")+
   theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
             plot.margin = unit(c(.5,0,0,0), "cm"))
@@ -321,8 +324,8 @@ HFGFrame%>%
   mutate(`PMMoV Level`=ifelse(PMMoV<1*10^7,"Low","Medium"))%>%
   mutate(`PMMoV Level`=ifelse(PMMoV>1*10^8,"High",`PMMoV Level`))%>%
   ggplot()+aes(x=Date,y=N1,color=`PMMoV Level`)+ Header_theme(ConfigOption)+geom_point()+
-  ylab("N1 (GC/L)")+
-  scale_y_log10()+facet_wrap(~Site)+#ggtitle("relationship of PMMoV to N1")+
+  ylab("N1 (GC/L)")+ggtitle("PMMoV and N1 appear unrelated")+
+  scale_y_log10()+facet_wrap(~Site)+
   theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
             plot.margin = unit(c(.5,0,0,0), "cm"))
 
@@ -332,23 +335,25 @@ HFGFrame%>%
 HFGFrame%>%
   filter(Site %in% SiteOptions2)%>%
   filter(N1<2e6)%>%
-  #mutate(marked=ifelse(Pct_BCoV<.5,"Low %Bcov","MAIN G"))%>%
-  #mutate(marked=ifelse(Pct_BCoV>10,"High %Bcov",marked))%>%
-  ggplot()+aes(x=Pct_BCoV,y=N1)+geom_point()+
+  mutate(`Percent BCoV Recovery`=ifelse(Pct_BCoV<.5,"Low","Medium"))%>%
+  mutate(`Percent BCoV Recovery`=ifelse(Pct_BCoV>10,"High",`Percent BCoV Recovery`))%>%
+  ggplot()+aes(x=Pct_BCoV,y=N1,color=`Percent BCoV Recovery`)+geom_point()+
+  xlab("%Bcov Recovery")+
+  ylab("N1 (GC/L)")+
   #scale_y_log10()+
   #scale_x_log10()+
   facet_wrap(~Site)+
-  ggtitle("N1 Vs %Bcov looking for trend")
+  ggtitle("N1 Vs %Bcov recovery")
 #, scales = "free"
 #scale_x_log10()+,color=marked
 
 HFGFrame%>%
   filter(Site %in% SiteOptions2)%>%
-  mutate(marked=ifelse(Pct_BCoV<1,"%Bcov<.5","MAIN G"))%>%
-  mutate(marked=ifelse(Pct_BCoV>10,"%Bcov >10%",marked))%>%
-  ggplot()+aes(x=Date,y=N1,color=marked)+geom_point()+
-  scale_y_log10()+facet_wrap(~Site)+
-  ggtitle("N1 Vs Date using thresholding")
+  mutate(Per_Bcov_Recovery=ifelse(Pct_BCoV<.5,"Low","Medium"))%>%
+  mutate(Per_Bcov_Recovery=ifelse(Pct_BCoV>10,"High",Per_Bcov_Recovery))%>%
+  ggplot()+aes(x=Date,y=N1,color=Per_Bcov_Recovery)+geom_point()+
+  ggtitle("Percent BCoV recovery and N1 appear unrelated")+
+  scale_y_log10()+facet_wrap(~Site)
 #meam=data.frame(a=1:1000)
 #meam$b=30*runif(1000)-15
 #meam%>%
@@ -356,6 +361,28 @@ HFGFrame%>%
 #  ggplot()+geom_point(aes(x=a,y=noiscor))+
 #  scale_y_log10()+
 #  scale_x_log10()
+```
+
+question to resolve: date off by one between MMSD and HFG; is it in the emails or READMEs?
+
+
+```{r madison messure same data}
+
+LatData=LatWasteDF%>%
+  filter((Site=="Madison"))
+HFGData=HFGFrame%>%
+  filter((Site=="Madison"))
+
+#??lat data off shifted by one day??
+#*change legend labels
+
+ggplot()+geom_point(aes(y=N1,color=`Filter replicates`,x=Date,shape="High Frequency"),data=HFGData)+
+  geom_point(aes(y=N1,x=Date-1,shape="Longitudinal"),data=LatData,size=2.5)+
+  ylab("N1 (GC/L)")+
+  scale_y_log10()+
+  labs(shape="Data Set")+
+  scale_x_date(limits=c(N1Start,N1End))+ggtitle("HFG and Longitudinal data match")
+
 ```
 
 ```{r Thresholding Dorms, fig.height = 8, fig.width = 15, include=F}
@@ -444,9 +471,7 @@ HFGFrame%>%
 
 ```
 
-UW thresholding / box plots; (remove winter break)
-
-Points are easily masked if we think they are unneeded
+UW thresholding / box plots
 
 ```{r boxplots, fig.height = 8, fig.width = 15}
 NovemberBreak=seq(from=mdy("12/18/2020"),to=mdy("1/25/2021"),by=1)
@@ -471,10 +496,12 @@ p1=LatWasteDF%>%
   mutate(Loc=ifelse(Site=="UW-Sellery"&Date<mdy("10/11/2020"),"1",Loc))%>%
   ggplot()+
   geom_boxplot(aes(y=N1,x=Date,group=Loc),fill="light blue")+
-  geom_point(aes(y=N1,x=Date,color=Loc),fill="light blue")+
+  #geom_point(aes(y=N1,x=Date,color=Loc),fill="light blue")+
   scale_y_log10()+
-  facet_wrap(~Site)
-  scale_x_date(limits=c(LeftDate,RightDate))
+  facet_wrap(~Site)+
+  ylab("N1 (GC/L)")+
+  scale_x_date(limits=c(LeftDate,RightDate))+ Header_theme(ConfigOption)
+    
 
   
 RelCaseLongDF=LatCaseDF%>%
@@ -493,27 +520,12 @@ p2=Buildplot_gen(
       Standards=ConfigOption,
       AxisPos="bottom",
       LineColor="red",
-      Colplot=F,scalesF="free_y")
+      Colplot=F,scalesF="free_y")+
+      theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+            plot.margin = unit(c(.5,0,0,0), "cm"))
 
 annotate_figure(top=text_grob("Dorm data with ad hoc binning",size=15),ggarrange(p1,p2,nrow = 2,align="hv"))
 ```
 
 
-question to resolve: date off by one between MMSD and HFG; is it in the emails or READMEs?
 
-
-```{r madison messure same data}
-
-LatData=LatWasteDF%>%
-  filter((Site=="Madison"))
-HFGData=HFGFrame%>%
-  filter((Site=="Madison"))
-
-#??lat data off shifted by one day??
-
-ggplot()+geom_point(aes(y=N1,color=`Filter replicates`,x=Date,shape="High Frequency"),data=HFGData)+
-  geom_point(aes(y=N1,x=Date-1,shape="Longitudinal"),data=LatData,size=2.5)+
-  scale_y_log10()+
-  scale_x_date(limits=c(N1Start,N1End))+ggtitle("HFG and Longitudinal data match")
-
-```
