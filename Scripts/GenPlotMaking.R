@@ -2,7 +2,7 @@ Buildplot_gen = function(vari,MainDF,Standards,Loc=NA,ColorType=NA,spanN=NA,
                          LineDF=NA, MeanDF=NA ,DateLimits=NA,WeekDF=NA,
                          AxisPos="top",log_scale=F,RMOutliers=F, 
                          IgnoreLog = c("Pct_BCoV"), Xfreq="24 days",
-                         LineColor="black",YLabel=NA,norm=NA,
+                         LineColor="black",YLabel=NA,norm=NA, boxingDF=NA,
                          Colplot=F,nrow=1,scalesF="fixed",Start=NA,End=NA){
   Leb=vari
   workDataFrameMain=MainDF%>%
@@ -14,9 +14,10 @@ Buildplot_gen = function(vari,MainDF,Standards,Loc=NA,ColorType=NA,spanN=NA,
   }
   set.seed(Standards$myseed)
   GPlot=ggplot()
-  if(Colplot){
+  if(Colplot&!is.na(MainDF)){
     GPlot=ColGen(GPlot,workDataFrameMain,Standards,ColorType)
-  }else{
+  }
+  else if(!is.na(MainDF)){
   GPlot=PointGen(GPlot,workDataFrameMain,Standards,ColorType)
   }
   if(is.data.frame(MeanDF)){
@@ -40,6 +41,10 @@ Buildplot_gen = function(vari,MainDF,Standards,Loc=NA,ColorType=NA,spanN=NA,
         mutate(var=var/!!sym(norm))
     }
     GPlot=GPlot+geom_line(data=workDataFrameLine,aes(y=var,x=Date),color=LineColor,size=1,na.rm=TRUE)
+  }
+  
+  if(!is.na(boxingDF)){
+    GPlot=GPlot+geom_rect(aes(ymin=lower,ymax=Upper,xmin=Date-.3,xmax=Date+.3),fill="red",alpha=.4,data=meanOfN1)
   }
   
   if(!is.na(Start)&!is.na(End)){

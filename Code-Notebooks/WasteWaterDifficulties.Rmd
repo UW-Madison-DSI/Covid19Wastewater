@@ -1,5 +1,5 @@
 ---
-title: "WasteWater_difficulties"
+title: "WasteWater Analyses"
 author: "Marlin"
 date: "6/1/2021"
 output:
@@ -226,13 +226,16 @@ Plot: N1 for 2 or 4 welts.
 
 
 
-```{r No claer relation N1, fig.height = 6, fig.width = 16}
+```{r No clear relation N1, fig.height = 6, fig.width = 16}
 meanOfN1=HFGFrame%>%
   filter(Site %in% SiteOptions2)%>%
   group_by(Site,Date)%>%
-  summarise(N1=exp(mean(log(N1),na.rm=T)))
+  summarise(N1=exp(mean(log(N1),na.rm=T)))%>%
+  select(Date,Site,N1)%>%
+  mutate(lower=N1-2*0.2199*N1)%>%
+  mutate(Upper=N1+2*0.2199*N1)
 
-Buildplot_gen(
+N1PlotGraphic=Buildplot_gen(
   "N1",
   MainDF=RelWasteData,
   LineDF =meanOfN1,
@@ -249,16 +252,20 @@ Buildplot_gen(
       theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
             plot.margin = unit(c(.5,0,0,0), "cm"))
 
+N1PlotGraphic
+
 #EpisodeCases    ConfirmedCases CollectedCases
 #annotate_figure(top=text_grob("No clear pattern partially due to short time frame",size=15),ggarrange(p1,p2,nrow = 2,align="hv",common.legend = T))
 #yaxis needs units=
 #N1 (GC/L)
 ```
 
-Description
 
 
-```{r predicting varience}
+
+```{r predicting varience, fig.height = 6, fig.width = 16}
+#Description
+
 HFGFrame%>%
   select(Date,Site,`Filter replicates`,N1)%>%
   group_by(Site,Date)%>%
@@ -269,26 +276,55 @@ HFGFrame%>%
 
 
 
+# Buildplot_gen(
+#   "N1",
+#   MainDF=RelWasteData,
+#   #LineDF =meanOfN1,
+#   Loc="Site",
+#   YLabel = "N1 (GC/L)",
+#   log_scale=T,
+#   ColorType="Filter replicates",
+#   DateLimits=Date_lim_HFG,
+#   RMOutliers=T,
+#   AxisPos="bottom",
+#   Standards=ConfigOption,
+#   Xfreq="14 days",
+#   boxingDF=meanOfN1,
+#   nrow=2)+ Header_theme(ConfigOption)+
+#       theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+#             plot.margin = unit(c(.5,0,0,0), "cm"))
+
+
+#N1PlotGraphic+geom_rect(aes(ymin=lower,ymax=Upper,xmin=Date-.3,xmax=Date+.3),fill="red",alpha=.6,data=meanOfN1)
+
 ```
 
 %BoCov and PMMOV
 can we use these? answer: don't see how.
 
 ```{r outliers PMMoV, fig.height = 6, fig.width = 16}
+#fix order to low medium high
+#add x axis label
+#PMMoV (GC/L)
+HFGFrame%>%
+  filter(Site %in% SiteOptions2)%>%
+  mutate(`PMMoV Level`=ifelse(PMMoV<1*10^7,"Low","Medium"))%>%
+  mutate(`PMMoV Level`=ifelse(PMMoV>1*10^8,"High",`PMMoV Level`))%>%
+  ggplot()+aes(x=PMMoV,y=N1,color=`PMMoV Level`)+geom_point()+scale_y_log10()+
+  scale_x_log10()+facet_wrap(~Site)+ggtitle("relationship of PMMoV to N1")+ Header_theme(ConfigOption)+
+  xlab("PMMoV (GC/L)")+ylab("N1 (GC/L)")+
+  theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+            plot.margin = unit(c(.5,0,0,0), "cm"))
 
 HFGFrame%>%
   filter(Site %in% SiteOptions2)%>%
-  mutate(marked=ifelse(PMMoV<1*10^7,"Low PMMoV","MAIN G"))%>%
-  mutate(marked=ifelse(PMMoV>1*10^8,"High PMMoV",marked))%>%
-  ggplot()+aes(x=PMMoV,y=N1,color=marked)+geom_point()+scale_y_log10()+
-  scale_x_log10()+facet_wrap(~Site)+ggtitle("N1 Vs PMMoV looking for trend")
-
-HFGFrame%>%
-  filter(Site %in% SiteOptions2)%>%
-  mutate(marked=ifelse(PMMoV<1*10^7,"Low PMMoV","MAIN G"))%>%
-  mutate(marked=ifelse(PMMoV>1*10^8,"High PMMoV",marked))%>%
-  ggplot()+aes(x=Date,y=N1,color=marked)+geom_point()+
-  scale_y_log10()+facet_wrap(~Site)+ggtitle("N1 Vs Date using categories from previous graph")
+  mutate(`PMMoV Level`=ifelse(PMMoV<1*10^7,"Low","Medium"))%>%
+  mutate(`PMMoV Level`=ifelse(PMMoV>1*10^8,"High",`PMMoV Level`))%>%
+  ggplot()+aes(x=Date,y=N1,color=`PMMoV Level`)+ Header_theme(ConfigOption)+geom_point()+
+  ylab("N1 (GC/L)")+
+  scale_y_log10()+facet_wrap(~Site)+#ggtitle("relationship of PMMoV to N1")+
+  theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+            plot.margin = unit(c(.5,0,0,0), "cm"))
 
 ```
 

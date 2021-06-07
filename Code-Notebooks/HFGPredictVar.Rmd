@@ -81,7 +81,7 @@ Clear linear relationship between N1 and its standard deviations
 HFGFrame%>%
   select(Date,Site,Filter,N1)%>%
   group_by(Site,Date)%>%
-  summarize(mN1=mean(N1),vN1=var(N1))%>%
+  summarize(mN1=exp(mean(log(N1))),vN1=var(N1))%>%
   ggplot()+geom_point(aes(x=mN1,y=sqrt(vN1),color=Site))+
   scale_y_log10()+scale_x_log10()+ggtitle("Mean vs Standard deviation of 9 points")
 
@@ -165,8 +165,8 @@ using the strong relationship we can predict the standard deviation of the point
 LatData=LatWasteDF%>%
   filter((Site=="Madison"))%>%
   select(Date,Site,N1)%>%
-  mutate(lower=N1-2*0.2196*N1)%>%
-  mutate(Upper=N1+2*0.2196*N1)
+  mutate(lower=N1-2*0.2199*N1)%>%
+  mutate(Upper=N1+2*0.2199*N1)
 HFGData=HFGFrame%>%
   filter((Site=="Madison"))
 
