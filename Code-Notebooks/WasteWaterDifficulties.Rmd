@@ -228,14 +228,16 @@ Plot: N1 for 2 or 4 welts.
 
 ```{r No claer relation N1, fig.height = 6, fig.width = 16}
 meanOfN1=HFGFrame%>%
+  filter(Site %in% SiteOptions2)%>%
   group_by(Site,Date)%>%
-  summarise(N1=mean(N1,na.rm=T))
+  summarise(N1=exp(mean(log(N1),na.rm=T)))
 
 Buildplot_gen(
   "N1",
   MainDF=RelWasteData,
-  LineDF =  ,
+  LineDF =meanOfN1,
   Loc="Site",
+  YLabel = "N1 (GC/L)",
   log_scale=T,
   ColorType="Filter replicates",
   DateLimits=Date_lim_HFG,
@@ -249,8 +251,25 @@ Buildplot_gen(
 
 #EpisodeCases    ConfirmedCases CollectedCases
 #annotate_figure(top=text_grob("No clear pattern partially due to short time frame",size=15),ggarrange(p1,p2,nrow = 2,align="hv",common.legend = T))
+#yaxis needs units=
+#N1 (GC/L)
 ```
 
+Description
+
+
+```{r predicting varience}
+HFGFrame%>%
+  select(Date,Site,`Filter replicates`,N1)%>%
+  group_by(Site,Date)%>%
+  summarize(mN1=exp(mean(log(N1))),vN1=var(N1))%>%
+  ggplot()+geom_point(aes(x=mN1,y=sqrt(vN1),color=Site))+
+  scale_y_log10()+scale_x_log10()+ylab("SD")+xlab("Daily geometric mean of N1")+
+  ggtitle("Measurement error scales linearly")
+
+
+
+```
 
 %BoCov and PMMOV
 can we use these? answer: don't see how.
