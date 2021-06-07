@@ -125,16 +125,16 @@ SiteOptions2=c("Kenosha","Madison", "Sun Prairie","Wausau")
 ```
 
 ```{r No Clear relation,include=F}
+MaskedDataRange="1-4 Cases"
 RelData=HFGCaseDF%>%
   filter(Site %in% SiteOptions2)%>%
-    mutate(Small3=ifelse(EpisodeCases==-999,"Range 1-5","Normal Values"))%>%
-    mutate(Small=ifelse(CollectedCases==-999,"Range 1-5","Normal Values"))%>%
-    mutate(Small2=ifelse(ConfirmedCases==-999,"Range 1-5","Normal Values"))%>%
-    filter(!is.na(Small))%>%
+    mutate(Small3=ifelse(EpisodeCases==-999,MaskedDataRange,"Normal Values"))%>%
+    mutate(PHI_masking=ifelse(CollectedCases==-999,MaskedDataRange,"Reported values"))%>%
+    mutate(Small2=ifelse(ConfirmedCases==-999,MaskedDataRange,"Normal Values"))%>%
+    filter(!is.na(PHI_masking))%>%
     mutate(EpisodeCases=ifelse(EpisodeCases==-999,2.5,EpisodeCases))%>%
     mutate(CollectedCases=ifelse(CollectedCases==-999,2.5,CollectedCases))%>%
     mutate(ConfirmedCases=ifelse(ConfirmedCases==-999,2.5,ConfirmedCases))
-
 RelRollData=HFGCaseDFRoll%>%
   filter(Site %in% SiteOptions2)
 
@@ -174,12 +174,13 @@ Cases plot:
 
 
 ```{r No claer relation Cases, fig.height = 6, fig.width = 16}
-  
+#c(N1Start,N1End)
 
 Date_lim_HFG=c(min(RelData$Date)-2,max(RelData$Date)+2)
-Buildplot_gen("CollectedCases",
+
+HFDCasesGraphic=Buildplot_gen("CollectedCases",
   MainDF=RelData,
-  ColorType="Small",
+  ColorType="PHI_masking",
   Loc="Site",
   LineDF=RelRollData,
   WeekDF=HFGDateRangeDF,
@@ -190,9 +191,25 @@ Buildplot_gen("CollectedCases",
   LineColor="red",
   norm="Population",
   Colplot=T,
+  Start=N1Start,
+  End=N1End,
   nrow=2)+ Header_theme(ConfigOption)+
       theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
             plot.margin = unit(c(.5,0,0,0), "cm"))
+
+#ordered factor
+#arrow point to lines
+#label span of hf collection
+#arrow at bottom
+#add text box to explain lines
+
+scopeText=geom_text(aes(label = "Range of HF collection"))
+
+HFDCasesGraphic+ annotate("text", x = N1Start+11.5, y = max(RelData$CollectedCases/RelData$Population), label = "<-  Range of HF collection  ->")
+
+
+#add arrows
+
 ```
 
 
@@ -210,9 +227,14 @@ Plot: N1 for 2 or 4 welts.
 
 
 ```{r No claer relation N1, fig.height = 6, fig.width = 16}
+meanOfN1=HFGFrame%>%
+  group_by(Site,Date)%>%
+  summarise(N1=mean(N1,na.rm=T))
+
 Buildplot_gen(
   "N1",
   MainDF=RelWasteData,
+  LineDF =  ,
   Loc="Site",
   log_scale=T,
   ColorType="Filter replicates",

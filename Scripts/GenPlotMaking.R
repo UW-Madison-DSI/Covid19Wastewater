@@ -3,7 +3,7 @@ Buildplot_gen = function(vari,MainDF,Standards,Loc=NA,ColorType=NA,spanN=NA,
                          AxisPos="top",log_scale=F,RMOutliers=F, 
                          IgnoreLog = c("Pct_BCoV"), Xfreq="24 days",
                          LineColor="black",YLabel=NA,norm=NA,
-                         Colplot=F,nrow=1,scalesF="fixed"){
+                         Colplot=F,nrow=1,scalesF="fixed",Start=NA,End=NA){
   Leb=vari
   workDataFrameMain=MainDF%>%
     mutate(var=!!sym(vari))
@@ -41,6 +41,12 @@ Buildplot_gen = function(vari,MainDF,Standards,Loc=NA,ColorType=NA,spanN=NA,
     }
     GPlot=GPlot+geom_line(data=workDataFrameLine,aes(y=var,x=Date),color=LineColor,size=1,na.rm=TRUE)
   }
+  
+  if(!is.na(Start)&!is.na(End)){
+    GPlot=GPlot+geom_vline(xintercept = Start,linetype="dashed")
+    GPlot=GPlot+geom_vline(xintercept = End,linetype="dashed")
+  }
+  
 
   rec_min=-Inf
   if(log_scale&&!(vari %in% IgnoreLog)){
@@ -119,7 +125,7 @@ ColGen = function(Plot,DF,Standards,ColorType,Size=1,width=.4){
                             xmax=Date+width, fill=!!sym(ColorType)),
                             alpha=Standards$alphaPoint,
                             size=Size*Standards$PointSize,na.rm=TRUE)+ 
-      scale_fill_manual(values=c("gray", "light blue"))
+      scale_fill_manual(values=c("light blue","gray"))
     
   }else{
     RPlot=RPlot+geom_rect(data=DF,aes(ymin=0,ymax=var,xmin=Date-width,
