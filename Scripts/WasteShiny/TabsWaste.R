@@ -118,7 +118,7 @@ Tab3=tabItem(tabName = "ThreshDash",
                                   selectInput(inputId = "Site3", label = ("Site"),
                                               choices = unique(c("MadisonHFG",unique(HFGFrame$Site),unique(LatCaseDF$Site))),
                                               multiple=T,
-                                              selected=c("Hudson")),
+                                              selected=c("MadisonHFG","Kenosha","Wausau","Sun Prairie")),
                                     selectInput(inputId = "MainVars3", label = ("Main variable"),
                                               choices = c(VarOptionsWaste,VarOptionsCase),
                                               multiple=F),
@@ -126,7 +126,7 @@ Tab3=tabItem(tabName = "ThreshDash",
                                               choices = c(VarOptionsWaste,VarOptionsCase),
                                               multiple=F,
                                               selected="PMMoV"),
-                                  numericInput("Thresholding", "SecondaryThresholding",min = 0, max = 1,step=.001,value=0)
+                                  numericInput("Thresholding", "SecondaryThresholding",min = 0, max = 1,step=.001,value=.3)
                                   
                                   )),
                jqui_resizable(box(width=7,title ="Thresholding of Variables",TopDisc,br(),Plot3, br(),BotDisc,BotDisc1.5,BotDisc1.75,BotDisc2))))

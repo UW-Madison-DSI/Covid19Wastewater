@@ -17,7 +17,7 @@ Buildplot_gen = function(vari,MainDF,Standards,Loc=NA,ColorType=NA,spanN=NA,
   if(Colplot){
     GPlot=ColGen(GPlot,workDataFrameMain,Standards,ColorType)
   }else{
-    GPlot=PointGen(GPlot,workDataFrameMain,Standards,ColorType)
+  GPlot=PointGen(GPlot,workDataFrameMain,Standards,ColorType)
   }
   if(is.data.frame(MeanDF)){
     workDataFrameMean=MeanDF%>%
@@ -26,11 +26,11 @@ Buildplot_gen = function(vari,MainDF,Standards,Loc=NA,ColorType=NA,spanN=NA,
       workDataFrameMean=workDataFrameMean%>%
         mutate(var=var/!!sym(norm))
     }
-    GPlot=PointGen(GPlot,workDataFrameMean,Standards,ColorType,Size=2.5,Bold=T)
+    GPlot=PointGen(GPlot,workDataFrameMean,Standards,ColorType,Size=2.5,Bold=TRUE)
   }
   GPlot=GPlot+ylab(Leb)
   if(!is.na(spanN)){
-    GPlot=GPlot+geom_smooth(data=workDataFrameMain,aes(y=var,x=Date),span=spanN,na.rm=T)
+    GPlot=GPlot+geom_smooth(data=workDataFrameMain,aes(y=var,x=Date),span=spanN,na.rm=TRUE)
   }
   if(is.data.frame(LineDF)){
     workDataFrameLine=LineDF%>%
@@ -39,7 +39,7 @@ Buildplot_gen = function(vari,MainDF,Standards,Loc=NA,ColorType=NA,spanN=NA,
       workDataFrameLine=workDataFrameLine%>%
         mutate(var=var/!!sym(norm))
     }
-    GPlot=GPlot+geom_line(data=workDataFrameLine,aes(y=var,x=Date),color=LineColor,size=1,na.rm=T)
+    GPlot=GPlot+geom_line(data=workDataFrameLine,aes(y=var,x=Date),color=LineColor,size=1,na.rm=TRUE)
   }
 
   rec_min=-Inf
@@ -50,7 +50,7 @@ Buildplot_gen = function(vari,MainDF,Standards,Loc=NA,ColorType=NA,spanN=NA,
   if(is.data.frame(WeekDF)){
     GPlot=GPlot+geom_rect(data=WeekDF, 
                           aes(xmin=Left, xmax=Right, ymin=rec_min, ymax=Inf),
-                          fill='pink', alpha=Standards$alphaWeek,na.rm=T)
+                          fill='pink', alpha=Standards$alphaWeek,na.rm=TRUE)
   }
   VarVec=workDataFrameMain$var
   ValLimMin=min(VarVec)
@@ -96,14 +96,14 @@ PointGen = function(Plot,DF,Standards,ColorType,Size=1,Bold=F){
                             shape = shape,
                             alpha=Alpha,
                             height=0,width=.1,
-                            size=Size*Standards$PointSize,na.rm=T)
+                            size=Size*Standards$PointSize,na.rm=TRUE)
     
   }else{
     RPlot=RPlot+geom_jitter(data=DF,aes(y=var,x=Date),
                             shape = shape,
                             fill="Black",
                             alpha=Alpha,height=0,width=.1,
-                            size=Size*Standards$PointSize,na.rm=T)
+                            size=Size*Standards$PointSize,na.rm=TRUE)
   }
   if(Bold){
     #slightly jank
@@ -112,19 +112,20 @@ PointGen = function(Plot,DF,Standards,ColorType,Size=1,Bold=F){
   return(RPlot)
 }
 
-ColGen = function(Plot,DF,Standards,ColorType,Size=1){
+ColGen = function(Plot,DF,Standards,ColorType,Size=1,width=.4){
   RPlot=Plot
   if(!is.na(ColorType)){
-    RPlot=RPlot+geom_col(data=DF,aes(y=var,x=Date,
-                                        fill=!!sym(ColorType)),
+    RPlot=RPlot+geom_rect(data=DF,aes(ymin=0,ymax=var,xmin=Date-width,
+                            xmax=Date+width, fill=!!sym(ColorType)),
                             alpha=Standards$alphaPoint,
-                            size=Size*Standards$PointSize,na.rm=T)+ 
+                            size=Size*Standards$PointSize,na.rm=TRUE)+ 
       scale_fill_manual(values=c("gray", "light blue"))
     
   }else{
-    RPlot=RPlot+geom_col(data=DF,aes(y=var,x=Date),
-                            alpha=Standards$alphaPoint,height=0,width=.1,
-                            size=Size*Standards$PointSize,na.rm=T)
+    RPlot=RPlot+geom_rect(data=DF,aes(ymin=0,ymax=var,xmin=Date-width,
+                                      xmax=Date+width,),
+                          fill= "gray", alpha=Standards$alphaPoint, 
+                          size=Size*Standards$PointSize,na.rm=TRUE)
   }
   return(RPlot)
 }
@@ -188,11 +189,13 @@ SiteLagHeatMap = function(CaseDF,WasteDF,seqminmax,Loc,Dat,Forma){
     mutate(SiteBest=ifelse(Correlation==bestCase,location,NA))
   cor.df$`time lag`=factor(cor.df$`time lag`, levels=c(mincol:maxcol))
   plotedGraph=cor.df%>%
-    ggplot(aes(x=`time lag`)) + geom_tile(aes(y=location, fill= Correlation),na.rm=T) + geom_tile(aes(y=SiteBest),fill=NA,color="white",size=1,show.legend = FALSE,na.rm=T)+
+    ggplot(aes(x=`time lag`)) + geom_tile(aes(y=location, fill= Correlation),na.rm=TRUE) + 
+    geom_tile(aes(y=SiteBest),fill=NA,color="white",size=1,show.legend = FALSE,na.rm=TRUE)+
     theme(axis.text.x = element_text(angle = 90))+ scale_fill_continuous(type = "viridis",limits=c(-1,1))+
-    geom_text(aes(y=SiteBest,label = round(Correlation, 2)),na.rm=T)
+    geom_text(aes(y=SiteBest,label = round(Correlation, 2)),na.rm=TRUE)
   return(plotedGraph)
 }
+
 library(lubridate)
 BoxPlotProduction = function(wastewaterDF,Time,concentration,Loc,BinSiz=7,DateLimits=NA){
   BoxGraphic=wastewaterDF%>%
@@ -200,9 +203,9 @@ BoxPlotProduction = function(wastewaterDF,Time,concentration,Loc,BinSiz=7,DateLi
     mutate(arbataryBin = as.Date(BinSiz*((as.numeric(Date) %/% BinSiz) - (as.numeric(min(Date)) %/% BinSiz))+as.numeric(min(Date)),origin = as.Date("1970-01-01")))%>%
     mutate(logN1=log(N1))%>%
     group_by(arbataryBin,Site)%>%
-    mutate(meanC=exp(mean(logN1,na.rm=T)))%>%
+    mutate(meanC=exp(mean(logN1,na.rm=TRUE)))%>%
     ggplot()+
-    geom_boxplot(aes(y=N1,x=arbataryBin,group=arbataryBin),fill="light blue",na.rm=T)+
+    geom_boxplot(aes(y=N1,x=arbataryBin,group=arbataryBin),fill="light blue",na.rm=TRUE)+
     geom_point(aes(y=meanC,x=arbataryBin),shape = 4,color="red")+coord_cartesian(xlim=DateLimits)+scale_y_log10()+
     facet_wrap(~Site,nrow = 1)+scale_x_date(date_breaks="21 days",date_labels="%b %d")
   return(BoxGraphic)

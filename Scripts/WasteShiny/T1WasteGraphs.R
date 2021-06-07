@@ -43,7 +43,7 @@ Make_Plots1 = reactive({
       Standards=ConfigOption(),
       AxisPos="bottom",
       LineColor="red",
-      Colplot=F)
+      Colplot=TRUE)
     plots=c(list(CasePlot),plots)
   }
   #DormPlot=DormPlot+ylab("Percent Positive")+

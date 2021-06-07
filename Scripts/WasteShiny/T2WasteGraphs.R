@@ -36,19 +36,19 @@ filtered_data_P<- reactive({
 Data_mean_var = reactive({
   HFGSiteMean=filtered_data_P()%>%
     group_by(Date,Site)%>%
-    summarise(N1=exp(mean(log(N1),na.rm = T)),
-              N2=exp(mean(log(N2),na.rm = T)),
-              PMMoV=exp(mean(log(PMMoV),na.rm = T)),
-              Pct_BCoV=exp(mean(log(Pct_BCoV),na.rm = T)))
+    summarise(N1=exp(mean(log(N1),na.rm = TRUE)),
+              N2=exp(mean(log(N2),na.rm = TRUE)),
+              PMMoV=exp(mean(log(PMMoV),na.rm = TRUE)),
+              Pct_BCoV=exp(mean(log(Pct_BCoV),na.rm = TRUE)))
 })
 #Data of the means of each Filter
 Filter_mean_var = reactive({
   HFGFilterMean=filtered_data_P()%>%
     group_by(Date,Site,`Filter replicates`)%>%
-    summarise(N1=exp(mean(log(N1),na.rm = T)),
-              N2=exp(mean(log(N2),na.rm = T)),
-              PMMoV=exp(mean(log(PMMoV),na.rm = T)),
-              Pct_BCoV=exp(mean(log(Pct_BCoV),na.rm = T)))
+    summarise(N1=exp(mean(log(N1),na.rm = TRUE)),
+              N2=exp(mean(log(N2),na.rm = TRUE)),
+              PMMoV=exp(mean(log(PMMoV),na.rm = TRUE)),
+              Pct_BCoV=exp(mean(log(Pct_BCoV),na.rm = TRUE)))
 })
 #Putting data in reactive shell for possible additions
 DF_Week = reactive({

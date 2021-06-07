@@ -46,7 +46,8 @@ DFGen <- reactive({
     mutate(Threshold=ifelse(!!sym(input$SecondaryVars3)>SecondaryThreshold,
                             paste("High",input$SecondaryVars3),
                             paste("Low",input$SecondaryVars3)))%>%
-    mutate(Threshold=ifelse(is.na(Threshold),"weird",Threshold))
+    filter(!is.na(Threshold))
+  print(FullDF)
 
   return(FullDF)
 })
@@ -56,13 +57,18 @@ ToLog=c("N1","N2","PMMoV","AVG")
   T3Plot = renderPlot(width = function() 245+400*length(input$Site3),
                       height = function() 60+600,
     {
+      print(DFGen())
+    if(nrow(DFGen())==0){
+      
+      return(ggplot())
+    }
     GraphLimitsDF=DFGen()%>%
       filter(!is.na(!!sym(input$MainVars3)))
     
     GraphLimits=c(min(GraphLimitsDF$Date),max(GraphLimitsDF$Date))
     Plot1=ggplot(data=DFGen())+aes(x=!!sym(input$SecondaryVars3),
                                    y=!!sym(input$MainVars3),color = Threshold)+
-          geom_point()+facet_wrap(~Site,nrow=1,scales = "free")
+          geom_point()+facet_wrap(~Site,nrow=1)
     Plot2=ggplot(data=DFGen())+aes(x=Date,y=!!sym(input$MainVars3),color = Threshold)+
       geom_point()+facet_wrap(~Site,nrow=1,scales = "free_x")+scale_x_date(limits=GraphLimits)
     
