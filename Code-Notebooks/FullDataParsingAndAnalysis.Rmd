@@ -313,7 +313,7 @@ server <- function(input, output) {
             axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
             plot.margin = unit(c(.5,0,0,0), "cm"))
     a=MadBoxPlot+
-      scale_y_log10(limits=c(1e3,5e6))
+      scale_y_log10(limits=c(1e3,5e6))+ggtitle("N1 curve filtered from weird values")
       #scale_x_date(limits=c(N1Start,N1End))+
     b=MadBoxPlot
     return(ggarrange(a,b,nrow=2,common.legend = TRUE,align="hv"))
