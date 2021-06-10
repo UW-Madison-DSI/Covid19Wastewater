@@ -1,6 +1,6 @@
 ---
-title: "WasteWater Analyses"
-author: "Marlin"
+title: "WasteWater Analysis"
+author: "Steve Goldstein and Marlin Lee"
 date: "6/1/2021"
 output:
   pdf_document: default
@@ -94,7 +94,9 @@ ConfigOption=list(
 
 
 
-Focus on HFG. Why? replicates and our best shot.
+Focus on HF Data. 
+
+replicates and our best shot.
 
 
 ```{r paused down, fig.height = 8, fig.width = 15,include=F}
@@ -162,10 +164,12 @@ source("../Scripts/GenPlotMaking.R")
 
 
 
+
 Cases: 
 larger pop avoids problematic small pop areas (low numbers have a lot of variance; 1-4 => -999.
 also: relatively small sample size (relative to variance in case counts):
-short duration; some flowage districts haver fewer observations.
+short duration; 
+some flowage districts have fewer observations.
 Describe plots of cases (or %positive): Unimodal: is there a trend? segmentation? can't say;
 Cases plot:
 
@@ -191,8 +195,10 @@ HFDCasesGraphic=Buildplot_gen("CollectedCases",
   Colplot=T,
   Start=N1Start,
   End=N1End,
-  nrow=2)+ Header_theme(ConfigOption)+
+  nrow=2,
+  Bind=F)+ Header_theme(ConfigOption)+
       theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+            axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
             plot.margin = unit(c(.5,0,0,0), "cm"))
 
 #ordered factor
@@ -200,10 +206,11 @@ HFDCasesGraphic=Buildplot_gen("CollectedCases",
 #label span of hf collection
 #arrow at bottom
 #add text box to explain lines
-
+YMax=max(RelData$CollectedCases/RelData$Population)
+  
 scopeText=geom_text(aes(label = "Range of HF collection"))
 
-HFDCasesGraphic+ annotate("text", x = N1Start+11.5, y = max(RelData$CollectedCases/RelData$Population), label = "<-  Range of HF collection  ->")
+HFDCasesGraphic+ annotate("text", x = N1Start+11.5, y = YMax, label = "<-  Range of HF collection  ->")
 
 
 #add arrows
@@ -253,6 +260,7 @@ N1PlotGraphic=Buildplot_gen(
   Xfreq="14 days",
   nrow=2)+ Header_theme(ConfigOption)+
       theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+            axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
             plot.margin = unit(c(.5,0,0,0), "cm"))
 
 N1PlotGraphic
@@ -266,36 +274,38 @@ N1PlotGraphic
 
 
 
-```{r predicting varience, fig.height = 6, fig.width = 16}
-#Description
+```{r predicting varience,include=FALSE,fig.height = 15, fig.width = 20}
+#Varience analysis
 
 HFGFrame%>%
   select(Date,Site,`Filter replicates`,N1)%>%
   group_by(Site,Date)%>%
   summarize(mN1=exp(mean(log(N1))),vN1=var(N1))%>%
   ggplot()+geom_point(aes(x=mN1,y=sqrt(vN1),color=Site))+
-  scale_y_log10()+scale_x_log10()+ylab("SD")+xlab("Daily geometric mean of N1")+
+  scale_y_log10()+scale_x_log10()+
+  ylab("SD")+xlab("Daily geometric mean of N1")+
   ggtitle("Measurement error scales linearly")
 
 
 
-# Buildplot_gen(
-#   "N1",
-#   MainDF=RelWasteData,
-#   #LineDF =meanOfN1,
-#   Loc="Site",
-#   YLabel = "N1 (GC/L)",
-#   log_scale=T,
-#   ColorType="Filter replicates",
-#   DateLimits=Date_lim_HFG,
-#   RMOutliers=T,
-#   AxisPos="bottom",
-#   Standards=ConfigOption,
-#   Xfreq="14 days",
-#   boxingDF=meanOfN1,
-#   nrow=2)+ Header_theme(ConfigOption)+
-#       theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
-#             plot.margin = unit(c(.5,0,0,0), "cm"))
+Buildplot_gen(
+  "N1",
+  MainDF=RelWasteData,
+  #LineDF =meanOfN1,
+  Loc="Site",
+  YLabel = "N1 (GC/L)",
+  log_scale=T,
+  ColorType="Filter replicates",
+  DateLimits=Date_lim_HFG,
+  RMOutliers=T,
+  AxisPos="bottom",
+  Standards=ConfigOption,
+  Xfreq="14 days",
+  boxingDF=meanOfN1,
+  nrow=2)+ Header_theme(ConfigOption)+
+      theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+            axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
+            plot.margin = unit(c(.5,0,0,0), "cm"))
 
 
 #N1PlotGraphic+geom_rect(aes(ymin=lower,ymax=Upper,xmin=Date-.3,xmax=Date+.3),fill="red",alpha=.6,data=meanOfN1)
@@ -305,68 +315,74 @@ HFGFrame%>%
 %BoCov and PMMOV
 can we use these? answer: don't see how.
 
-```{r outliers PMMoV, fig.height = 6, fig.width = 16}
+```{r fig.height = 6, fig.width = 16}
 #fix order to low medium high
 #add x axis label
 #PMMoV (GC/L)
-HFGFrame%>%
+PMMoVUseDF=HFGFrame%>%
   filter(Site %in% SiteOptions2)%>%
   mutate(`PMMoV Level`=ifelse(PMMoV<1*10^7,"Low","Medium"))%>%
   mutate(`PMMoV Level`=ifelse(PMMoV>1*10^8,"High",`PMMoV Level`))%>%
+  mutate(`PMMoV Level`=factor(`PMMoV Level`,levels=c("High","Medium","Low")))
+
+PMMoVUseDF%>%
   ggplot()+aes(x=PMMoV,y=N1,color=`PMMoV Level`)+geom_point()+scale_y_log10()+
   scale_x_log10()+facet_wrap(~Site)+ggtitle("N1 Vs PMMoV")+ Header_theme(ConfigOption)+
-  xlab("PMMoV (GC/L)")+ylab("N1 (GC/L)")+
-  theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+  xlab("PMMoV (GC/L)")+ylab("N1 (GC/L)")+ Header_theme(ConfigOption)+
+      theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+            axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
             plot.margin = unit(c(.5,0,0,0), "cm"))
 
-HFGFrame%>%
-  filter(Site %in% SiteOptions2)%>%
-  mutate(`PMMoV Level`=ifelse(PMMoV<1*10^7,"Low","Medium"))%>%
-  mutate(`PMMoV Level`=ifelse(PMMoV>1*10^8,"High",`PMMoV Level`))%>%
+PMMoVUseDF%>%
   ggplot()+aes(x=Date,y=N1,color=`PMMoV Level`)+ Header_theme(ConfigOption)+geom_point()+
   ylab("N1 (GC/L)")+ggtitle("PMMoV and N1 appear unrelated")+
-  scale_y_log10()+facet_wrap(~Site)+
-  theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+  scale_y_log10()+facet_wrap(~Site)+ Header_theme(ConfigOption)+
+      theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+            axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
             plot.margin = unit(c(.5,0,0,0), "cm"))
 
 ```
 
 ```{r outliers Per_Bcov, fig.height = 6, fig.width = 13}
-HFGFrame%>%
+BCoVUseDF=HFGFrame%>%
   filter(Site %in% SiteOptions2)%>%
   filter(N1<2e6)%>%
   mutate(`Percent BCoV Recovery`=ifelse(Pct_BCoV<.5,"Low","Medium"))%>%
   mutate(`Percent BCoV Recovery`=ifelse(Pct_BCoV>10,"High",`Percent BCoV Recovery`))%>%
+  mutate(`Percent BCoV Recovery`=factor(`Percent BCoV Recovery`,levels=c("High","Medium","Low")))
+
+BCoVUseDF%>%
   ggplot()+aes(x=Pct_BCoV,y=N1,color=`Percent BCoV Recovery`)+geom_point()+
-  xlab("%Bcov Recovery")+
+  xlab("Percent Bcov Recovery")+
   ylab("N1 (GC/L)")+
   #scale_y_log10()+
   #scale_x_log10()+
   facet_wrap(~Site)+
-  ggtitle("N1 Vs %Bcov recovery")
+  ggtitle("N1 Vs %Bcov recovery")+ Header_theme(ConfigOption)+
+      theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+            axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
+            plot.margin = unit(c(.5,0,0,0), "cm"))
 #, scales = "free"
 #scale_x_log10()+,color=marked
 
-HFGFrame%>%
-  filter(Site %in% SiteOptions2)%>%
-  mutate(Per_Bcov_Recovery=ifelse(Pct_BCoV<.5,"Low","Medium"))%>%
-  mutate(Per_Bcov_Recovery=ifelse(Pct_BCoV>10,"High",Per_Bcov_Recovery))%>%
-  ggplot()+aes(x=Date,y=N1,color=Per_Bcov_Recovery)+geom_point()+
+BCoVUseDF%>%
+  ggplot()+aes(x=Date,y=N1,color=`Percent BCoV Recovery`)+geom_point()+
   ggtitle("Percent BCoV recovery and N1 appear unrelated")+
-  scale_y_log10()+facet_wrap(~Site)
-#meam=data.frame(a=1:1000)
-#meam$b=30*runif(1000)-15
-#meam%>%
-#  mutate(noiscor=a+b)%>%
-#  ggplot()+geom_point(aes(x=a,y=noiscor))+
-#  scale_y_log10()+
-#  scale_x_log10()
+  scale_y_log10()+facet_wrap(~Site)+ Header_theme(ConfigOption)+
+      theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+            axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
+            plot.margin = unit(c(.5,0,0,0), "cm"))
+
 ```
+
+
+
+
 
 question to resolve: date off by one between MMSD and HFG; is it in the emails or READMEs?
 
 
-```{r madison messure same data}
+```{r madison messure same data, fig.height = 6, fig.width = 13}
 
 LatData=LatWasteDF%>%
   filter((Site=="Madison"))
@@ -381,7 +397,10 @@ ggplot()+geom_point(aes(y=N1,color=`Filter replicates`,x=Date,shape="High Freque
   ylab("N1 (GC/L)")+
   scale_y_log10()+
   labs(shape="Data Set")+
-  scale_x_date(limits=c(N1Start,N1End))+ggtitle("HFG and Longitudinal data match")
+  scale_x_date(limits=c(N1Start,N1End))+ggtitle("HFG and Longitudinal data match")+ Header_theme(ConfigOption)+
+      theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+            axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
+            plot.margin = unit(c(.5,0,0,0), "cm"))
 
 ```
 
@@ -495,7 +514,7 @@ p1=LatWasteDF%>%
   mutate(Loc=ifelse(Site=="UW-Sellery"&Date<mdy("11/4/2020"),"2",Loc))%>%
   mutate(Loc=ifelse(Site=="UW-Sellery"&Date<mdy("10/11/2020"),"1",Loc))%>%
   ggplot()+
-  geom_boxplot(aes(y=N1,x=Date,group=Loc),fill="light blue")+
+  geom_boxplot(aes(y=N1,x=Date,group=Loc),fill="light blue",show.legend = FALSE)+
   #geom_point(aes(y=N1,x=Date,color=Loc),fill="light blue")+
   scale_y_log10()+
   facet_wrap(~Site)+
@@ -522,6 +541,7 @@ p2=Buildplot_gen(
       LineColor="red",
       Colplot=F,scalesF="free_y")+
       theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+            axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
             plot.margin = unit(c(.5,0,0,0), "cm"))
 
 annotate_figure(top=text_grob("Dorm data with ad hoc binning",size=15),ggarrange(p1,p2,nrow = 2,align="hv"))

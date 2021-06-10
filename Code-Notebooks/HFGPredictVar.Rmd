@@ -74,6 +74,7 @@ LatWasteDF=WasteWater(LatWasteFN)%>%
 
 
 
+
 Clear linear relationship between N1 and its standard deviations
 
 ```{r Varience within groups}
@@ -120,16 +121,21 @@ cor(HFGVarThree$mN1,HFGVarThree$vN1,use="pairwise.complete.obs")
 #
 ```
 
+
+
+
 Generated LM from relationship
 
 ```{r validating,fig.height = 15, fig.width = 15,include=F}
 T=8
 
 HFGVar=HFGFrame%>%
-  select(Date,Site,N1)%>%
+  select(Date,Site,N1,Pct_BCoV)%>%
   filter(N1<10e7)%>%
   group_by(Site,Date)%>%
-  summarize(mN1=mean(N1),vN1=var(N1))
+  summarize(mN1=mean(N1),vN1=var(N1),VBC=mean(Pct_BCoV),VBC=mean(Pct_BCoV))
+
+
 
 LM=lm(data=HFGVar,sqrt(vN1)~mN1-1)
 
@@ -182,6 +188,8 @@ ggplot()+
   scale_y_log10()+
   scale_x_date(limits=c(N1Start,N1End))+ggtitle("Waste data and predicted 2 standard deviations")
 
+#filter on variance
+#
 ```
 
 ```{r Extend,fig.height = 15, fig.width = 15}

@@ -1,0 +1,395 @@
+---
+title: "FullDataParsingAndAnalysis"
+author: "Marlin"
+date: "6/8/2021"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+library(shiny)
+library(ggpubr)
+library(dplyr)
+library(shinydashboard)
+library(shinyjqui)
+library(shinycssloaders)
+
+#Data Files and prepwork
+source("../Scripts/GenPlotMaking.R")
+source("../Scripts/WasteWaterDataProccess.R")
+source("../Scripts/CassesDataProccess.R")
+source("../Scripts/HelperFunctions.R")
+LatWasteFN <- "../../UntrackedData/WW SARS-COV-2 Data V5.xlsx"
+LatSpringCaseFN="../../UntrackedData/SpringSemester_CasesByDorm.tsv"
+LatFallCaseFN="../../UntrackedData/FallSemester_CasesByDorm.tsv"
+HFGWasteFN = "../../UntrackedData/HFG data for stats preliminary 3-18-21.xlsx"
+HFGCaseFN="../../UntrackedData/HighFreq_CaseData_2021-05-07.csv"
+LatMMSDFN = "../../UntrackedData/MMSD_Cases.2021-05-21.csv"
+
+source("../Scripts/WasteShiny/PrepData.R", local = TRUE)
+
+ConfigOption=list(
+      myseed=1234567890,
+      XAxisLabSiz=10,
+      YAxisLabSiz=15,
+      GenFontSiz=20,
+      alphaPoint=.7,
+      PointSize=2,
+      alphaWeek=.2)
+
+AllData="../../UntrackedData/WATERMICRO_WW_COVID-2021-06-07 19 05.xlsx"
+AllDataDF=read_excel(AllData,col_types=c(rep("guess",48),"text",rep("guess",12)))%>%
+  rename(Site=wwtp_name,FlowRate=average_flow_rate,
+         Cov1_below_lod=avg_sars_cov2_below_lod,cov2_conc=avg_sars_cov2_conc,
+         BCoV=bcov_rec_rate,BCoVConc=bcov_spike_conc,county=county_names,
+         Date=unformatted_collectdate,
+         N1=n1_sars_cov2_conc,
+         N1Error=n1_sars_cov2_error,
+         N2=n2_sars_cov2_conc,
+         N2Error=n2_sars_cov2_error,
+         PMMoV=pmmov_conc,
+         Pop=population_served)%>%
+         mutate(Date=as.Date(Date),N1=as.numeric(N1),N2=as.numeric(N2),Pop=as.numeric(Pop),
+         N1Error=as.numeric(N1Error),N2Error=as.numeric(N2Error),PMMoV=as.numeric(PMMoV),
+         BCoV=as.numeric(BCoV))%>%
+         mutate(Site=ifelse(Site=="Madison Metro","Madison",Site))%>%
+         select(Date,Site, BCoV, N1,N1Error,N2, N2Error,PMMoV,Pop)
+
+```
+
+```{r Data set has comp to previous data sets, fig.height = 6, fig.width = 13}
+
+
+MadLIMSDF=AllDataDF%>%
+  filter(Site=="Madison")%>%
+  select(Date,N1)%>%
+  mutate(Date=Date+1)
+
+MadLongDF=LatWasteDF%>%
+  filter(Site=="Madison")%>%
+  select(Date,N1)
+
+MadBothDF=full_join(MadLIMSDF,MadLongDF,by=c("Date"))%>%
+  rename(LongN1=N1.y,LIMSN1=N1.x)%>%
+  mutate(Diff=LIMSN1-LongN1,Diff=ifelse(is.na(LIMSN1),LongN1,Diff),Diff=ifelse(is.na(LongN1),LIMSN1,Diff))%>%
+  mutate(Missing=ifelse(is.na(LIMSN1),"N1 missing in Full data","No missing data"))%>%
+  mutate(Missing=ifelse(is.na(LongN1),"N1 missing in Longitudinal data",Missing))
+
+
+ MadHFDF=HFGFrame%>%
+   filter((Site=="Madison"))
+
+N1Start=min(MadHFDF$Date)-1
+N1End=max(MadHFDF$Date)+1
+
+MadBothDF%>%
+  ggplot()+geom_point(aes(x=Date,y=Diff,color=Missing))+
+  ggtitle("Both datasets are identical to a point")+
+  ylab("LIMS N1 - Longitudinal N1")+ Header_theme(ConfigOption)+
+      theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+            axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
+            plot.margin = unit(c(.5,0,0,0), "cm"))
+MadBothDF%>%
+  ggplot()+geom_jitter(aes(x=Date,y=LongN1,color="Longitudinal"),width=0,height=20000)+
+  geom_jitter(aes(x=Date,y=LIMSN1,color="LIMS"),width=0,height=20000)+
+  geom_vline(xintercept = N1Start,linetype="dashed")+
+  geom_vline(xintercept = N1End,linetype="dashed")+
+  ggtitle("Both datasets are identical to a point")+
+  ylab("N1")+ Header_theme(ConfigOption)+
+      theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+            axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
+            plot.margin = unit(c(.5,0,0,0), "cm"))
+
+
+ggplot()+geom_point(aes(x=Date,shape="HF DF",color=`Filter replicates`),data=MadHFDF)+
+  aes(y=N1)+geom_point(aes(x=Date-1,shape="Lims DF"),data=MadLIMSDF,size=2)+
+  geom_point(aes(x=Date-1,shape="Longitudinal DF"),data=MadLongDF,size=2)+
+  ylab("N1 (GC/L)")+
+  scale_y_log10()+
+  labs(shape="Data Set")+
+  scale_x_date(limits=c(N1Start,N1End))+
+  ggtitle("HFG and Longitudinal data match") + Header_theme(ConfigOption)+
+      theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+            axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
+            plot.margin = unit(c(.5,0,0,0), "cm"))
+
+
+MadHFMeanDF=MadHFDF%>%
+  filter(Site=="Madison")%>%
+  group_by(Date)%>%
+  summarise(N1GeoMean=exp(mean(log(N1))),N1Mean=mean(N1))
+
+
+ggplot()+
+  geom_point(aes(x=Date,y=N1,shape="HF DF",color=`Filter replicates`),data=MadHFDF)+
+  geom_jitter(aes(x=Date-1,y=N1,shape="Longitudinal"), data = MadLongDF ,size=3,height=0,width=.2)+
+  geom_jitter(aes(x=Date,y=N1Mean,shape="HF Mean"),data = MadHFMeanDF,size=3,height=0,width=.2)+
+  scale_y_log10()+
+  scale_x_date(limits=c(N1Start,N1End))+
+  ggtitle("Both datasets are identical to a point")+
+  ylab("N1")+ Header_theme(ConfigOption)+
+      theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+            axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
+            plot.margin = unit(c(.5,0,0,0), "cm"))
+
+MadBothDF=full_join(MadLongDF,MadHFDF,by=c("Date"))%>%
+  rename(LongN1=N1.y,HFN1=N1.x)%>%
+  mutate(Diff=HFN1-LongN1,Diff=ifelse(is.na(HFN1),LongN1,Diff),Diff=ifelse(is.na(LongN1),HFN1,Diff))%>%
+  mutate(Missing=ifelse(is.na(HFN1),"N1 missing in Full data","No missing data"))%>%
+  mutate(Missing=ifelse(is.na(LongN1),"N1 missing in Longitudinal data",Missing))
+
+MadBothDF%>%
+  ggplot()+geom_point(aes(x=Date,y=Diff,color=Missing))
+```
+
+```{r Summary of the data}
+SiteOptions=c("Hudson","Kenosha","Platteville","Madison", "Merrill","Plymouth","River Falls","Sun Prairie","Wausau","Oshkosh")
+
+MadisonLIMSData=AllDataDF%>%
+  filter(grepl("Madison",Site))%>%
+  group_by(Site)%>%
+  summarise(n=n(),Dur=max(Date)-min(Date),min=min(Date),max=max(Date))
+UWLIMSData=AllDataDF%>%
+  filter(grepl("UW",Site))%>%
+  group_by(Site)%>%
+  summarise(n=n(),Dur=max(Date)-min(Date),min=min(Date),max=max(Date))
+HFLIMSData=AllDataDF%>%
+  filter(Site %in% SiteOptions)%>%
+  group_by(Site)%>%
+  summarise(n=n(),Dur=max(Date)-min(Date),min=min(Date),max=max(Date))
+
+AllDataDF%>%
+  group_by(Site)%>%
+  summarise(n=n(),Dur=max(Date)-min(Date),MeanP=mean(Pop,na.rm=TRUE))%>%
+  arrange(desc(MeanP))
+LargePopAreas=c("Madison","Hudson","Kenosha","Wausau","Oshkosh")
+
+
+
+```
+```{r error scales lin with N1, fig.height = 6, fig.width = 13}
+
+AllDataDF%>%
+  ggplot()+aes(x=N1,y=N1Error)+geom_point()+scale_y_log10()+scale_x_log10()+ Header_theme(ConfigOption)+
+      theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+            axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
+            plot.margin = unit(c(.5,0,0,0), "cm"))
+
+AllDataDF%>%
+  ggplot()+aes(x=N2,y=N2Error)+geom_point()+scale_y_log10()+scale_x_log10()+ Header_theme(ConfigOption)+
+      theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+            axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
+            plot.margin = unit(c(.5,0,0,0), "cm"))
+
+```
+
+```{r LM Creation extended}
+
+
+```
+
+```{r,fig.height = 10, fig.width = 14}
+a=AllDataDF%>%
+  filter(Site =="Madison")%>%
+  ggplot()+#geom_point(aes(x=Date,y=N1))+
+  geom_rect(aes(ymin=N1-2*N1Error,ymax=N1+2*N1Error,xmin=Date-1,xmax=Date+1),fill="light blue",color="Black",alpha=.5)+
+  geom_rect(aes(ymin=N1,ymax=N1,xmin=Date-1,xmax=Date+1),fill="red",color="Black",alpha=.5)+
+  geom_smooth(aes(x=Date,y=N1),span=.42,se=FALSE)+
+  scale_y_log10(limits=c(1e3,5e6))+
+  #scale_x_date(limits=c(N1Start,N1End))+
+  facet_wrap(~Site,scales = "free_y")+
+  ggtitle("4 largest citys with 2 SE bounds")+ 
+  Header_theme(ConfigOption)+
+      theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+            axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
+            plot.margin = unit(c(.5,0,0,0), "cm"))
+
+# HFGMean=HFGFrame%>%
+#   filter(Site %in%LargePopAreas)%>%
+#   filter(N1<1e8)%>%
+#   group_by(Site,Date)%>%
+#   summarize(SD=sqrt(var(N1)),N1=mean(N1))
+# HFGFrame=HFGFrame%>%
+#   filter(N1<1e8)%>%
+#   filter(Site %in%LargePopAreas)
+# ggplot()+aes(x=Date)+
+# scale_y_log10(limits=c(1e3,5e6))+
+# scale_x_date(limits=c(N1Start,N1End))+
+# geom_rect(aes(ymin=N1-2*SD,ymax=N1+2*SD,xmin=Date-.5,xmax=Date+.5),fill="light blue",color="Black",alpha=.5,data=HFGMean)+
+# geom_point(aes(y=N1,color=`Filter replicates`),data=HFGFrame)+
+#   facet_wrap(~Site,scales = "free_y")+ 
+#   Header_theme(ConfigOption)+
+#       theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+#             axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
+#             plot.margin = unit(c(.5,0,0,0), "cm"))
+
+
+b=AllDataDF%>%
+  filter(Site =="Madison")%>%
+  ggplot()+#geom_point(aes(x=Date,y=N1))+
+  geom_rect(aes(ymin=N1-2*N1Error,ymax=N1+2*N1Error,xmin=Date-1,xmax=Date+1),fill="light blue",color="Black",alpha=.5)+
+  geom_rect(aes(ymin=N1,ymax=N1,xmin=Date-1,xmax=Date+1),fill="red",color="Black",alpha=.5)+
+  geom_smooth(aes(x=Date,y=N1),span=.42,se=FALSE)+
+  #scale_y_log10(limits=c(1e3,5e6))+
+  #scale_x_date(limits=c(N1Start,N1End))+
+  facet_wrap(~Site,scales = "free_y")+
+  ggtitle("4 largest citys with 2 SE bounds")+ 
+  Header_theme(ConfigOption)+
+      theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+            axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
+            plot.margin = unit(c(.5,0,0,0), "cm"))
+
+#HFG outdated?
+
+#get all the data overlapped
+#no hfg data
+ggarrange(a,b,nrow=2)
+
+```
+
+
+```{r PMMoV Tresh,fig.height = 15, fig.width = 15}
+PMMoVUseDF=AllDataDF%>%
+  filter(Site %in%LargePopAreas)%>%
+  mutate(`PMMoV Level`=ifelse(PMMoV<5*10^6,"Low","Medium"))%>%
+  mutate(`PMMoV Level`=ifelse(PMMoV>2*10^7,"High",`PMMoV Level`))%>%
+  mutate(`PMMoV Level`=factor(`PMMoV Level`,levels=c("High","Medium","Low")))
+
+PMMoVUseDF%>%
+  ggplot()+aes(x=PMMoV,y=N1,color=`PMMoV Level`)+geom_point()+scale_y_log10()+
+  scale_x_log10()+
+  facet_wrap(~Site)+
+  ggtitle("N1 Vs PMMoV")+
+  xlab("PMMoV (GC/L)")+ylab("N1 (GC/L)")+ 
+  Header_theme(ConfigOption)+
+      theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+            axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
+            plot.margin = unit(c(.5,0,0,0), "cm"))
+
+PMMoVUseDF%>%
+  ggplot()+aes(x=Date,y=N1,color=`PMMoV Level`)+
+  geom_point()+
+  ylab("N1 (GC/L)")+ggtitle("PMMoV and N1 appear unrelated")+
+  scale_y_log10()+facet_wrap(~Site)+ 
+  Header_theme(ConfigOption)+
+      theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+            axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
+            plot.margin = unit(c(.5,0,0,0), "cm"))
+```
+
+```{r BCoV Tresh,fig.height = 15, fig.width = 15}
+BCoVUseDF=AllDataDF%>%
+  filter(Site %in%LargePopAreas)%>%
+  mutate(`Percent BCoV Recovery`=ifelse(BCoV<1,"Low","Medium"))%>%
+  mutate(`Percent BCoV Recovery`=ifelse(BCoV>10,"High",`Percent BCoV Recovery`))%>%
+  mutate(`Percent BCoV Recovery`=factor(`Percent BCoV Recovery`,levels=c("High","Medium","Low")))%>%
+  filter(BCoV>0)
+
+BCoVUseDF%>%
+  ggplot()+aes(x=BCoV,y=N1,color=`Percent BCoV Recovery`)+geom_point()+
+  xlab("Percent Bcov Recovery")+
+  ylab("N1 (GC/L)")+
+  #scale_y_log10()+
+  #scale_x_log10()+
+  facet_wrap(~Site)+
+  ggtitle("N1 Vs %Bcov recovery")+ Header_theme(ConfigOption)+
+      theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+            axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
+            plot.margin = unit(c(.5,0,0,0), "cm"))
+#, scales = "free"
+#scale_x_log10()+,color=marked
+
+BCoVUseDF%>%
+  ggplot()+aes(x=Date,y=N1,color=`Percent BCoV Recovery`)+geom_point()+
+  ggtitle("Percent BCoV recovery and N1 appear unrelated")+
+  scale_y_log10()+facet_wrap(~Site)+ Header_theme(ConfigOption)+
+      theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+            axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
+            plot.margin = unit(c(.5,0,0,0), "cm"))
+```
+
+```{r HFG Data, fig.height = 6, fig.width = 18}
+# library(plotly)
+# GPlot=AllDataDF%>%
+#   ggplot()+geom_point(aes(x=Date,y=N1))+facet_wrap(~Site)
+# ggplotly(GPlot)
+MaskedDataRange="1-4 Cases"
+RelData=HFGCaseDF%>%
+  filter(Site %in% LargePopAreas)%>%
+    mutate(PHI_masking=ifelse(CollectedCases==-999,MaskedDataRange,"Reported values"))%>%
+    filter(!is.na(PHI_masking))%>%
+    mutate(CollectedCases=ifelse(CollectedCases==-999,2.5,CollectedCases))
+RelRollData=HFGCaseDFRoll%>%
+  filter(Site %in% LargePopAreas)
+
+Date_lim_HFG=c(min(RelData$Date)-2,max(RelData$Date)+2)
+
+LIMSHFDF=AllDataDF%>%
+  filter(Site %in%LargePopAreas)
+
+LIMSHFDFRoll=RollAvg(LIMSHFDF)
+
+LIMSRange=c(min(AllDataDF$Date)-1,max(AllDataDF$Date)+1)
+
+HFDCasesGraphic=Buildplot_gen("CollectedCases",
+  MainDF=RelData,
+  ColorType="PHI_masking",
+  Loc="Site",
+  LineDF=RelRollData,
+  WeekDF=HFGDateRangeDF,
+  DateLimits=LIMSRange,
+  Standards=ConfigOption,
+  Xfreq="30 days",
+  AxisPos="bottom",
+  LineColor="red",
+  norm="Population",
+  Colplot=T,
+  Start=N1Start,
+  End=N1End,
+  nrow=2,
+  Bind=F)+ Header_theme(ConfigOption)+
+      theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+            axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
+            plot.margin = unit(c(.5,0,0,0), "cm"))
+
+#ordered factor
+#arrow point to lines
+#label span of hf collection
+#arrow at bottom
+#add text box to explain lines
+YMax=max(RelData$CollectedCases/RelData$Population)
+  
+
+HFDCasesGraphic+ annotate("text", x = N1Start+11.5, y = YMax, label = "Range of HF collection")
+
+
+
+
+HFDLIMSGraphic=Buildplot_gen(
+  "N1",
+  MainDF=LIMSHFDF,
+  Loc="Site",
+  spanN=.3,
+  YLabel = "N1 (GC/L)",
+  log_scale=T,
+  DateLimits=LIMSRange,
+  #RMOutliers=T,
+  AxisPos="bottom",
+  Standards=ConfigOption,
+  Start=Date_lim_HFG[1],
+  End=Date_lim_HFG[2],
+  Xfreq="30 days",
+  nrow=2)+ Header_theme(ConfigOption)+
+      theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+            axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
+            plot.margin = unit(c(.5,0,0,0), "cm"))
+
+YMax=max(LIMSHFDF$N1)
+  
+
+
+HFDLIMSGraphic+ annotate("text", x = N1Start+18, y = YMax, label = "Range of HF Case Data")
+
+
+```
+
