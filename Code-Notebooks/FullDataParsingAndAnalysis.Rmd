@@ -293,6 +293,10 @@ server <- function(input, output) {
   })
   output$BoxPlot <- renderPlot({
     BoxWidth=1
+    FilteredMadBoxPlot=UsedDF()%>%
+      filter(Site =="Madison")%>%
+      filter(WeirdVar!="Unexpected high Varience")
+      
     MadBoxPlot=UsedDF()%>%
       filter(Site =="Madison")%>%
       #filter(WeirdVar=="Unexpected high Varience")%>%
@@ -301,7 +305,7 @@ server <- function(input, output) {
       ggplot()+#geom_point(aes(x=Date,y=N1))+
       geom_rect(aes(ymin=ErrorMin,ymax=ErrorMax,xmin=Date-BoxWidth,xmax=Date+BoxWidth,fill=WeirdVar),color="Black",alpha=.5)+
       geom_rect(aes(ymin=N1,ymax=N1,xmin=Date-BoxWidth,xmax=Date+BoxWidth),color="black",alpha=.5)+
-      geom_smooth(aes(x=Date,y=N1),span=.42,se=FALSE)+
+      geom_smooth(aes(x=Date,y=N1),span=.42,se=FALSE,data=FilteredMadBoxPlot)+
       facet_wrap(~Site,scales = "free_y")+
       ggtitle("Madison N1 with 2 SE bars")+ 
       Header_theme(ConfigOption)+
