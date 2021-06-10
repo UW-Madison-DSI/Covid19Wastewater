@@ -183,68 +183,144 @@ AllDataDF%>%
 
 ```
 
-```{r LM Creation extended}
+```{r LM Creation extended,fig.height = 10, fig.width = 14}
+VarN1LIMSMode=lm(N1Error~N1,data=AllDataDF)
+VarN2LIMSMode=lm(N2Error~N2-1,data=AllDataDF)
+
+AllDataDF%>%
+  ggplot()+aes(x=N2,y=N2Error)+geom_point()+
+  geom_abline(slope=VarN1LIMSMode[[1]],intercept = 0)+
+  Header_theme(ConfigOption)+
+      theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+            axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
+            plot.margin = unit(c(.5,0,0,0), "cm"))
+# VarN1N2LIMSMode=lm(N1Error~N1+N2-1,data=AllDataDF)uj
+# VarN1HFGMode=lm(N1Error~N1-1,data=AllDataDF)
+# VarN2HFGMode=lm(N2Error~N2-1,data=AllDataDF)
+CriticalPoint=2
+LIMSWExpErrorDF=AllDataDF%>%
+  filter(!is.na(N1))%>%
+  mutate(PredN1Var=predict(VarN1LIMSMode))%>%
+  mutate(WeirdVar=ifelse(N1Error/PredN1Var>CriticalPoint,"Unexpected high Varience","Expected range of varience"))
+LIMSWExpErrorDF%>%
+  ggplot()+aes(x=N1)+geom_point(aes(y=N1Error/PredN1Var))+#geom_point(aes(y=PredN1Var),color="red")+
+  geom_hline(yintercept = 1,color="red")+
+  geom_hline(yintercept = CriticalPoint,color="red")+
+  scale_y_log10()+
+  scale_x_log10()+ 
+  Header_theme(ConfigOption)+
+      theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+            axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
+            plot.margin = unit(c(.5,0,0,0), "cm"))
+
 
 
 ```
 
+
 ```{r,fig.height = 10, fig.width = 14}
-a=AllDataDF%>%
+BoxWidth=1
+MadBoxPlot=LIMSWExpErrorDF%>%
   filter(Site =="Madison")%>%
+  #filter(WeirdVar=="Unexpected high Varience")%>%
+  mutate(ErrorMin=N1-2*N1Error,ErrorMax=N1+2*N1Error)%>%
+  mutate(ErrorMin=ifelse(ErrorMin>0,ErrorMin,0))%>%
   ggplot()+#geom_point(aes(x=Date,y=N1))+
-  geom_rect(aes(ymin=N1-2*N1Error,ymax=N1+2*N1Error,xmin=Date-1,xmax=Date+1),fill="light blue",color="Black",alpha=.5)+
-  geom_rect(aes(ymin=N1,ymax=N1,xmin=Date-1,xmax=Date+1),fill="red",color="Black",alpha=.5)+
+  geom_rect(aes(ymin=ErrorMin,ymax=ErrorMax,xmin=Date-BoxWidth,xmax=Date+BoxWidth,fill=WeirdVar),color="Black",alpha=.5)+
+  geom_rect(aes(ymin=N1,ymax=N1,xmin=Date-BoxWidth,xmax=Date+BoxWidth),color="black",alpha=.5)+
   geom_smooth(aes(x=Date,y=N1),span=.42,se=FALSE)+
-  scale_y_log10(limits=c(1e3,5e6))+
-  #scale_x_date(limits=c(N1Start,N1End))+
   facet_wrap(~Site,scales = "free_y")+
-  ggtitle("4 largest citys with 2 SE bounds")+ 
+  ggtitle("Madison citys with 2 SE bounds")+ 
   Header_theme(ConfigOption)+
       theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
             axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
             plot.margin = unit(c(.5,0,0,0), "cm"))
 
-# HFGMean=HFGFrame%>%
-#   filter(Site %in%LargePopAreas)%>%
-#   filter(N1<1e8)%>%
-#   group_by(Site,Date)%>%
-#   summarize(SD=sqrt(var(N1)),N1=mean(N1))
-# HFGFrame=HFGFrame%>%
-#   filter(N1<1e8)%>%
-#   filter(Site %in%LargePopAreas)
-# ggplot()+aes(x=Date)+
-# scale_y_log10(limits=c(1e3,5e6))+
-# scale_x_date(limits=c(N1Start,N1End))+
-# geom_rect(aes(ymin=N1-2*SD,ymax=N1+2*SD,xmin=Date-.5,xmax=Date+.5),fill="light blue",color="Black",alpha=.5,data=HFGMean)+
-# geom_point(aes(y=N1,color=`Filter replicates`),data=HFGFrame)+
-#   facet_wrap(~Site,scales = "free_y")+ 
-#   Header_theme(ConfigOption)+
-#       theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
-#             axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
-#             plot.margin = unit(c(.5,0,0,0), "cm"))
 
-
-b=AllDataDF%>%
-  filter(Site =="Madison")%>%
-  ggplot()+#geom_point(aes(x=Date,y=N1))+
-  geom_rect(aes(ymin=N1-2*N1Error,ymax=N1+2*N1Error,xmin=Date-1,xmax=Date+1),fill="light blue",color="Black",alpha=.5)+
-  geom_rect(aes(ymin=N1,ymax=N1,xmin=Date-1,xmax=Date+1),fill="red",color="Black",alpha=.5)+
-  geom_smooth(aes(x=Date,y=N1),span=.42,se=FALSE)+
-  #scale_y_log10(limits=c(1e3,5e6))+
+a=MadBoxPlot+
+  scale_y_log10(limits=c(1e3,5e6))
   #scale_x_date(limits=c(N1Start,N1End))+
-  facet_wrap(~Site,scales = "free_y")+
-  ggtitle("4 largest citys with 2 SE bounds")+ 
+  
+
+
+b=MadBoxPlot
+
+
+
+ggarrange(a,b,nrow=2,common.legend = TRUE,align="hv")
+
+```
+```{r shiny controlled thresholding}
+ui <- fluidPage(
+  titlePanel("Varience Thresholding"),
+  sidebarLayout(
+    sidebarPanel(
+      sliderInput(inputId = "Thresh",
+                  label = "Threshold ratio",
+                  min = 1,
+                  max = 7.5,
+                  value = 2),
+    ),
+    mainPanel(
+      tabsetPanel(type = "tabs",
+       tabPanel("PredictedPlot", plotOutput(outputId = "dotPlot")),
+       tabPanel("BoxPlot", plotOutput(outputId = "BoxPlot",height = "800px"))
+       )
+    )
+  )
+)
+server <- function(input, output) {
+
+  UsedDF = reactive({
+    LIMSWExpErrorDF=AllDataDF%>%
+      filter(!is.na(N1))%>%
+      mutate(PredN1Var=predict(VarN1LIMSMode))%>%
+      mutate(WeirdVar=ifelse(N1Error/PredN1Var>input$Thresh,"Unexpected high Varience","Expected range of varience"))
+  })
+  
+  output$dotPlot <- renderPlot({
+    UsedDF()%>%
+    filter(Site =="Madison")%>%
+  ggplot()+aes(x=N1)+geom_point(aes(y=N1Error/PredN1Var,color=WeirdVar))+#geom_point(aes(y=PredN1Var),color="red")+
+  geom_hline(yintercept = 1,color="dark green")+
+  geom_hline(yintercept = input$Thresh,color="dark green")+
+  scale_y_log10()+
+  scale_x_log10()+ 
   Header_theme(ConfigOption)+
       theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
             axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
             plot.margin = unit(c(.5,0,0,0), "cm"))
-
-#HFG outdated?
-
-#get all the data overlapped
-#no hfg data
-ggarrange(a,b,nrow=2)
-
+  })
+  output$BoxPlot <- renderPlot({
+    BoxWidth=1
+    MadBoxPlot=UsedDF()%>%
+      filter(Site =="Madison")%>%
+      #filter(WeirdVar=="Unexpected high Varience")%>%
+      mutate(ErrorMin=N1-2*N1Error,ErrorMax=N1+2*N1Error)%>%
+      mutate(ErrorMin=ifelse(ErrorMin>0,ErrorMin,0))%>%
+      ggplot()+#geom_point(aes(x=Date,y=N1))+
+      geom_rect(aes(ymin=ErrorMin,ymax=ErrorMax,xmin=Date-BoxWidth,xmax=Date+BoxWidth,fill=WeirdVar),color="Black",alpha=.5)+
+      geom_rect(aes(ymin=N1,ymax=N1,xmin=Date-BoxWidth,xmax=Date+BoxWidth),color="black",alpha=.5)+
+      geom_smooth(aes(x=Date,y=N1),span=.42,se=FALSE)+
+      facet_wrap(~Site,scales = "free_y")+
+      ggtitle("Madison N1 with 2 SE bars")+ 
+      Header_theme(ConfigOption)+
+        theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+            axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
+            plot.margin = unit(c(.5,0,0,0), "cm"))
+    a=MadBoxPlot+
+      scale_y_log10(limits=c(1e3,5e6))
+      #scale_x_date(limits=c(N1Start,N1End))+
+    b=MadBoxPlot
+    return(ggarrange(a,b,nrow=2,common.legend = TRUE,align="hv"))
+    if(input$Log){
+      MadBoxPlot=MadBoxPlot+scale_y_log10()
+    }
+    MadBoxPlot
+  
+    })
+}
+shinyApp(ui, server)
 ```
 
 
@@ -391,5 +467,26 @@ YMax=max(LIMSHFDF$N1)
 HFDLIMSGraphic+ annotate("text", x = N1Start+18, y = YMax, label = "Range of HF Case Data")
 
 
+```
+
+```{r HFG Boxplot,include=FALSE}
+# HFGMean=HFGFrame%>%
+#   filter(Site %in%LargePopAreas)%>%
+#   filter(N1<1e8)%>%
+#   group_by(Site,Date)%>%
+#   summarize(SD=sqrt(var(N1)),N1=mean(N1))
+# HFGFrame=HFGFrame%>%
+#   filter(N1<1e8)%>%
+#   filter(Site %in%LargePopAreas)
+# ggplot()+aes(x=Date)+
+# scale_y_log10(limits=c(1e3,5e6))+
+# scale_x_date(limits=c(N1Start,N1End))+
+# geom_rect(aes(ymin=N1-2*SD,ymax=N1+2*SD,xmin=Date-.5,xmax=Date+.5),fill="light blue",color="Black",alpha=.5,data=HFGMean)+
+# geom_point(aes(y=N1,color=`Filter replicates`),data=HFGFrame)+
+#   facet_wrap(~Site,scales = "free_y")+
+#   Header_theme(ConfigOption)+
+#       theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+#             axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
+#             plot.margin = unit(c(.5,0,0,0), "cm"))
 ```
 
