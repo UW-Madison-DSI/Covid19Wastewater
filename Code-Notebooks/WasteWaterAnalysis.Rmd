@@ -217,6 +217,27 @@ HFDCasesGraphic+ annotate("text", x = N1Start+11.5, y = YMax, label = "<-  Range
 
 ```
 
+```{r Case comp}
+
+HFGMadCaseDF=HFGCaseDF%>%
+  filter(Site=="Madison")%>%
+  select(-Site)%>%
+  filter(ConfirmedCases!=-999)
+
+LIMSMadCaseDF=LatCaseDF%>%
+  filter(Site=="Madison")%>%
+  select(-Site)
+
+
+BothCases=inner_join(HFGMadCaseDF,LIMSMadCaseDF,by = c("Date"))
+
+BothCases%>%
+  ggplot()+
+  aes(x=ConfirmedCases,y=Cases)+
+  geom_point()
+
+```
+
 
 
 N1:

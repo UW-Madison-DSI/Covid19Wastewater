@@ -170,13 +170,20 @@ LargePopAreas=c("Madison","Hudson","Kenosha","Wausau","Oshkosh")
 ```{r error scales lin with N1, fig.height = 6, fig.width = 13}
 
 AllDataDF%>%
-  ggplot()+aes(x=N1,y=N1Error)+geom_point()+scale_y_log10()+scale_x_log10()+ Header_theme(ConfigOption)+
+  ggplot()+aes(x=N1,y=N1Error)+geom_point()+
+  scale_y_log10()+
+  scale_x_log10()+ 
+  Header_theme(ConfigOption)+
       theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
             axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
             plot.margin = unit(c(.5,0,0,0), "cm"))
 
 AllDataDF%>%
-  ggplot()+aes(x=N2,y=N2Error)+geom_point()+scale_y_log10()+scale_x_log10()+ Header_theme(ConfigOption)+
+  ggplot()+aes(x=N2,y=N2Error)+
+  geom_point()+
+  scale_y_log10()+
+  scale_x_log10()+ 
+  Header_theme(ConfigOption)+
       theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
             axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
             plot.margin = unit(c(.5,0,0,0), "cm"))
@@ -184,28 +191,39 @@ AllDataDF%>%
 ```
 
 ```{r LM Creation extended,fig.height = 10, fig.width = 14}
-VarN1LIMSMode=lm(N1Error~N1,data=AllDataDF)
+HFGVar=HFGFrame%>%
+  select(Date,Site,N1,Pct_BCoV)%>%
+  filter(N1<10e7)%>%
+  group_by(Site,Date)%>%
+  summarize(N1Error=var(N1),N1=mean(N1))
+
+VarN1LIMSMadMode = AllDataDF%>%
+  filter(Site=="Madison")%>%
+  lm(formula=N1Error~N1-1)
+
+VarN1HFDMode=lm(data=HFGVar,N1Error~N1-1)
+
+
+VarN1LIMSMode=lm(N1Error~N1-1,data=AllDataDF)
 VarN2LIMSMode=lm(N2Error~N2-1,data=AllDataDF)
 
-AllDataDF%>%
-  ggplot()+aes(x=N2,y=N2Error)+geom_point()+
-  geom_abline(slope=VarN1LIMSMode[[1]],intercept = 0)+
-  Header_theme(ConfigOption)+
-      theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
-            axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
-            plot.margin = unit(c(.5,0,0,0), "cm"))
-# VarN1N2LIMSMode=lm(N1Error~N1+N2-1,data=AllDataDF)uj
+VarN1N2LIMSMode=lm(N1Error~N1+N2-1,data=AllDataDF)
 # VarN1HFGMode=lm(N1Error~N1-1,data=AllDataDF)
 # VarN2HFGMode=lm(N2Error~N2-1,data=AllDataDF)
+
+UsedModel=VarN1LIMSMode
+
 CriticalPoint=2
 LIMSWExpErrorDF=AllDataDF%>%
   filter(!is.na(N1))%>%
-  mutate(PredN1Var=predict(VarN1LIMSMode))%>%
+  mutate(PredN1Var=predict.lm(UsedModel,.))%>%
   mutate(WeirdVar=ifelse(N1Error/PredN1Var>CriticalPoint,"Unexpected high Varience","Expected range of varience"))
+```
+
+```{r Model exploration}
 LIMSWExpErrorDF%>%
-  ggplot()+aes(x=N1)+geom_point(aes(y=N1Error/PredN1Var))+#geom_point(aes(y=PredN1Var),color="red")+
-  geom_hline(yintercept = 1,color="red")+
-  geom_hline(yintercept = CriticalPoint,color="red")+
+  ggplot()+aes(x=N1)+geom_point(aes(y=N1Error))+
+  geom_point(aes(y=PredN1Var),color="red")+
   scale_y_log10()+
   scale_x_log10()+ 
   Header_theme(ConfigOption)+
@@ -215,46 +233,94 @@ LIMSWExpErrorDF%>%
 
 
 
-```
 
 
-```{r,fig.height = 10, fig.width = 14}
-BoxWidth=1
-MadBoxPlot=LIMSWExpErrorDF%>%
-  filter(Site =="Madison")%>%
-  #filter(WeirdVar=="Unexpected high Varience")%>%
-  mutate(ErrorMin=N1-2*N1Error,ErrorMax=N1+2*N1Error)%>%
-  mutate(ErrorMin=ifelse(ErrorMin>0,ErrorMin,0))%>%
-  ggplot()+#geom_point(aes(x=Date,y=N1))+
-  geom_rect(aes(ymin=ErrorMin,ymax=ErrorMax,xmin=Date-BoxWidth,xmax=Date+BoxWidth,fill=WeirdVar),color="Black",alpha=.5)+
-  geom_rect(aes(ymin=N1,ymax=N1,xmin=Date-BoxWidth,xmax=Date+BoxWidth),color="black",alpha=.5)+
-  geom_smooth(aes(x=Date,y=N1),span=.42,se=FALSE)+
-  facet_wrap(~Site,scales = "free_y")+
-  ggtitle("Madison citys with 2 SE bounds")+ 
+
+LIMSWExpErrorDF%>%
+  ggplot()+aes(x=N1)+geom_point(aes(y=N1Error/PredN1Var))+
+  geom_point(aes(y=PredN1Var/PredN1Var),color="red")+
+  #geom_point(aes(y=PredN1Var/PredN1Var+1),color="red")+
+  scale_y_log10()+
+  scale_x_log10()+ 
   Header_theme(ConfigOption)+
       theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
             axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
             plot.margin = unit(c(.5,0,0,0), "cm"))
 
+LIMSWExpErrorDF%>%
+  ggplot()+aes(x=N1)+geom_point(aes(y=N1Error-PredN1Var))+
+  #geom_point(aes(y=PredN1Var/PredN1Var),color="red")+
+  #scale_y_log10()+
+  scale_x_log10()+ 
+  Header_theme(ConfigOption)+
+      theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+            axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
+            plot.margin = unit(c(.5,0,0,0), "cm"))+ylab("residuals")
+
+
+```
+
+
+```{r LM boxplot exploration,fig.height = 10, fig.width = 14}
+BoxWidth=1
+MadBoxData=LIMSWExpErrorDF%>%
+  filter(Site =="Madison")%>%
+  #filter(WeirdVar=="Unexpected high Varience")%>%
+  mutate(ErrorMin=N1-2*N1Error,ErrorMax=N1+2*N1Error)%>%
+  mutate(ErrorMin=ifelse(ErrorMin>0,ErrorMin,0))
+MadBoxNoWeirdData=MadBoxData%>%
+  filter(WeirdVar=="Expected range of varience")
+MadBoxPlot=MadBoxData%>%
+  ggplot()+#geom_point(aes(x=Date,y=N1))+
+  geom_rect(aes(ymin=ErrorMin,ymax=ErrorMax,xmin=Date-BoxWidth,xmax=Date+BoxWidth,fill=WeirdVar),color="Black",alpha=.5)+
+  geom_rect(aes(ymin=N1,ymax=N1,xmin=Date-BoxWidth,xmax=Date+BoxWidth),color="black",alpha=.5)+
+  geom_smooth(aes(x=Date,y=N1),span=.33,se=FALSE,data=MadBoxNoWeirdData)+
+   Header_theme(ConfigOption)
+
 
 a=MadBoxPlot+
-  scale_y_log10(limits=c(1e3,5e6))
+  scale_y_log10(limits=c(1e3,5e6))+
+  ggtitle("Madison citys with 2 SE bounds")+
+  facet_wrap(~Site,scales = "free_y")
   #scale_x_date(limits=c(N1Start,N1End))+
   
 
 
-b=MadBoxPlot
+b=MadBoxPlot+
+      theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+            axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
+            plot.margin = unit(c(.5,0,0,0), "cm"))
 
 
+aalook=ggarrange(a,b,nrow=2,common.legend = TRUE,align="hv")
+aa=ggarrange(a,b,nrow=2,common.legend = TRUE,align="hv",legend = "none")
+a=LatCaseDF%>%
+  filter(Site=="Madison")%>%
+  ggplot()+aes(x=Date,y=Cases)+geom_point()+
+  scale_y_log10()+
+  facet_wrap(~Site,scales = "free_y")+
+  Header_theme(ConfigOption)+
+  ggtitle("Madison Case Data")
+b=LatCaseDF%>%
+  filter(Site=="Madison")%>%
+  ggplot()+aes(x=Date,y=Cases)+
+  geom_point()+
+  Header_theme(ConfigOption)+
+      theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+            axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
+            plot.margin = unit(c(.5,0,0,0), "cm"))
 
-ggarrange(a,b,nrow=2,common.legend = TRUE,align="hv")
+ab=ggarrange(a,b,nrow=2,align="hv")
 
+ggarrange(aa,ab,nrow=1,align="hv")
 ```
+
+
 ```{r shiny controlled thresholding}
 ui <- fluidPage(
   titlePanel("Varience Thresholding"),
   sidebarLayout(
-    sidebarPanel(
+    sidebarPanel(width=2,
       sliderInput(inputId = "Thresh",
                   label = "Threshold ratio",
                   min = 1,
@@ -263,8 +329,9 @@ ui <- fluidPage(
     ),
     mainPanel(
       tabsetPanel(type = "tabs",
-       tabPanel("PredictedPlot", plotOutput(outputId = "dotPlot")),
-       tabPanel("BoxPlot", plotOutput(outputId = "BoxPlot",height = "800px"))
+       tabPanel("PredictedPlot", plotOutput(outputId = "dotPlot",height = "800px")),
+       tabPanel("BoxPlot", plotOutput(outputId = "BoxPlot",height = "800px")),
+       tabPanel("Multiboxes", plotOutput(outputId = "Multiboxes",height = "800"))
        )
     )
   )
@@ -272,25 +339,44 @@ ui <- fluidPage(
 server <- function(input, output) {
 
   UsedDF = reactive({
-    LIMSWExpErrorDF=AllDataDF%>%
+    AllDataDF%>%
       filter(!is.na(N1))%>%
-      mutate(PredN1Var=predict(VarN1LIMSMode))%>%
+      mutate(PredN1Var=predict(UsedModel,.))%>%
       mutate(WeirdVar=ifelse(N1Error/PredN1Var>input$Thresh,"Unexpected high Varience","Expected range of varience"))
   })
   
+  output$Multiboxes <- renderPlot({
+    CompBoxPlot=UsedDF()%>%
+      filter(Site =="Madison")%>%
+      mutate(ErrorMin=N1-2*PredN1Var,ErrorMax=N1+2*PredN1Var)%>%
+      mutate(ErrorMin=ifelse(ErrorMin>0,ErrorMin,0))%>%
+      ggplot()+#geom_point(aes(x=Date,y=N1))+
+      geom_rect(aes(ymin=ErrorMin,ymax=ErrorMax,xmin=Date,xmax=Date+BoxWidth,fill="Predicted"),color="Black",alpha=.5)+
+      geom_rect(aes(ymin=N1-2*N1Error,ymax=N1+2*N1Error,xmin=Date-BoxWidth,xmax=Date,fill="Real Var"),color="black",alpha=.5)+
+      geom_rect(aes(ymin=N1,ymax=N1,xmin=Date-BoxWidth,xmax=Date+BoxWidth),color="black",alpha=.5)
+    a=CompBoxPlot+
+      scale_y_log10()+ggtitle("Pred vs actual boxplots")
+      #scale_x_date(limits=c(N1Start,N1End))+
+    b=CompBoxPlot
+    return(ggarrange(a,b,nrow=2,common.legend = TRUE,align="hv"))
+  })
+  
+  
   output$dotPlot <- renderPlot({
     UsedDF()%>%
-    filter(Site =="Madison")%>%
+    #filter(Site =="Madison")%>%
   ggplot()+aes(x=N1)+geom_point(aes(y=N1Error/PredN1Var,color=WeirdVar))+#geom_point(aes(y=PredN1Var),color="red")+
   geom_hline(yintercept = 1,color="dark green")+
   geom_hline(yintercept = input$Thresh,color="dark green")+
-  scale_y_log10()+
+  #scale_y_log10()+
   scale_x_log10()+ 
   Header_theme(ConfigOption)+
       theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
             axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
             plot.margin = unit(c(.5,0,0,0), "cm"))
   })
+  
+  #filter(WeirdVar=="Unexpected high Varience")%>%
   output$BoxPlot <- renderPlot({
     BoxWidth=1
     FilteredMadBoxPlot=UsedDF()%>%
@@ -299,23 +385,22 @@ server <- function(input, output) {
       
     MadBoxPlot=UsedDF()%>%
       filter(Site =="Madison")%>%
-      #filter(WeirdVar=="Unexpected high Varience")%>%
       mutate(ErrorMin=N1-2*N1Error,ErrorMax=N1+2*N1Error)%>%
       mutate(ErrorMin=ifelse(ErrorMin>0,ErrorMin,0))%>%
       ggplot()+#geom_point(aes(x=Date,y=N1))+
       geom_rect(aes(ymin=ErrorMin,ymax=ErrorMax,xmin=Date-BoxWidth,xmax=Date+BoxWidth,fill=WeirdVar),color="Black",alpha=.5)+
       geom_rect(aes(ymin=N1,ymax=N1,xmin=Date-BoxWidth,xmax=Date+BoxWidth),color="black",alpha=.5)+
-      geom_smooth(aes(x=Date,y=N1),span=.42,se=FALSE,data=FilteredMadBoxPlot)+
+      geom_smooth(aes(x=Date,y=N1),span=.33,se=FALSE,data=FilteredMadBoxPlot)+
+      Header_theme(ConfigOption)
+    a=MadBoxPlot+
+      scale_y_log10(limits=c(1e3,5e6))+
       facet_wrap(~Site,scales = "free_y")+
-      ggtitle("Madison N1 with 2 SE bars")+ 
-      Header_theme(ConfigOption)+
+      ggtitle("N1 curve filtered from weird values")
+      #scale_x_date(limits=c(N1Start,N1End))+
+    b=MadBoxPlot+
         theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
             axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
             plot.margin = unit(c(.5,0,0,0), "cm"))
-    a=MadBoxPlot+
-      scale_y_log10(limits=c(1e3,5e6))+ggtitle("N1 curve filtered from weird values")
-      #scale_x_date(limits=c(N1Start,N1End))+
-    b=MadBoxPlot
     return(ggarrange(a,b,nrow=2,common.legend = TRUE,align="hv"))
     if(input$Log){
       MadBoxPlot=MadBoxPlot+scale_y_log10()
@@ -472,6 +557,8 @@ HFDLIMSGraphic+ annotate("text", x = N1Start+18, y = YMax, label = "Range of HF 
 
 
 ```
+
+
 
 ```{r HFG Boxplot,include=FALSE}
 # HFGMean=HFGFrame%>%
