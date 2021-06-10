@@ -57,13 +57,15 @@ AllDataDF=read_excel(AllData,col_types=c(rep("guess",48),"text",rep("guess",12))
 
 ```
 
-```{r Data set has comp to previous data sets, fig.height = 6, fig.width = 13}
-
+```{r LIMS vs long dataset, include = FALSE}
 
 MadLIMSDF=AllDataDF%>%
   filter(Site=="Madison")%>%
   select(Date,N1)%>%
   mutate(Date=Date+1)
+
+ MadHFDF=HFGFrame%>%
+   filter((Site=="Madison"))
 
 MadLongDF=LatWasteDF%>%
   filter(Site=="Madison")%>%
@@ -75,9 +77,6 @@ MadBothDF=full_join(MadLIMSDF,MadLongDF,by=c("Date"))%>%
   mutate(Missing=ifelse(is.na(LIMSN1),"N1 missing in Full data","No missing data"))%>%
   mutate(Missing=ifelse(is.na(LongN1),"N1 missing in Longitudinal data",Missing))
 
-
- MadHFDF=HFGFrame%>%
-   filter((Site=="Madison"))
 
 N1Start=min(MadHFDF$Date)-1
 N1End=max(MadHFDF$Date)+1
@@ -101,29 +100,37 @@ MadBothDF%>%
             plot.margin = unit(c(.5,0,0,0), "cm"))
 
 
-ggplot()+geom_point(aes(x=Date,shape="HF DF",color=`Filter replicates`),data=MadHFDF)+
-  aes(y=N1)+geom_point(aes(x=Date-1,shape="Lims DF"),data=MadLIMSDF,size=2)+
-  geom_point(aes(x=Date-1,shape="Longitudinal DF"),data=MadLongDF,size=2)+
-  ylab("N1 (GC/L)")+
-  scale_y_log10()+
-  labs(shape="Data Set")+
-  scale_x_date(limits=c(N1Start,N1End))+
-  ggtitle("HFG and Longitudinal data match") + Header_theme(ConfigOption)+
-      theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
-            axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
-            plot.margin = unit(c(.5,0,0,0), "cm"))
+```
+
+```{r Data set has comp to previous data sets, fig.height = 6, fig.width = 13}
+MadLIMSDF2=MadLIMSDF%>%
+  mutate(Date=Date-1)
+
+
+MadBothDF=full_join(MadLIMSDF,MadHFDF,by=c("Date"))%>%
+  rename(LIMSN1=N1.x,HFN1=N1.y)%>%
+  mutate(Diff=HFN1-LIMSN1,Diff=ifelse(is.na(HFN1),LIMSN1,Diff),Diff=ifelse(is.na(LIMSN1),HFN1,Diff))%>%
+  mutate(Missing=ifelse(is.na(HFN1),"N1 missing in HF data","No missing data"))%>%
+  mutate(Missing=ifelse(is.na(LIMSN1),"N1 missing in LIMS data",Missing))
+
+
+
+
+
 
 
 MadHFMeanDF=MadHFDF%>%
   filter(Site=="Madison")%>%
   group_by(Date)%>%
-  summarise(N1GeoMean=exp(mean(log(N1))),N1Mean=mean(N1))
+  summarise(N1GeoMean=exp(mean(log(N1),na.rm = TRUE)),N1Mean=mean(N1,na.rm = TRUE))
 
 
 ggplot()+
   geom_point(aes(x=Date,y=N1,shape="HF DF",color=`Filter replicates`),data=MadHFDF)+
-  geom_jitter(aes(x=Date-1,y=N1,shape="Longitudinal"), data = MadLongDF ,size=3,height=0,width=.2)+
-  geom_jitter(aes(x=Date,y=N1Mean,shape="HF Mean"),data = MadHFMeanDF,size=3,height=0,width=.2)+
+  geom_point(aes(x=Date-1,y=N1,shape="Longitudinal"), data = MadLongDF ,size=3)+
+  geom_point(aes(x=Date-.25,y=N1GeoMean,shape="HF Geo Mean"),data = MadHFMeanDF,size=3)+
+  geom_point(aes(x=Date+.25,y=N1Mean,shape="HF Mean"),data = MadHFMeanDF,size=3)+
+  #geom_point(aes(x=Date-1,y=N1,shape="LIMS"),data = MadLIMSDF,size=3)+
   scale_y_log10()+
   scale_x_date(limits=c(N1Start,N1End))+
   ggtitle("Both datasets are identical to a point")+
@@ -132,14 +139,20 @@ ggplot()+
             axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
             plot.margin = unit(c(.5,0,0,0), "cm"))
 
-MadBothDF=full_join(MadLongDF,MadHFDF,by=c("Date"))%>%
-  rename(LongN1=N1.y,HFN1=N1.x)%>%
-  mutate(Diff=HFN1-LongN1,Diff=ifelse(is.na(HFN1),LongN1,Diff),Diff=ifelse(is.na(LongN1),HFN1,Diff))%>%
-  mutate(Missing=ifelse(is.na(HFN1),"N1 missing in Full data","No missing data"))%>%
-  mutate(Missing=ifelse(is.na(LongN1),"N1 missing in Longitudinal data",Missing))
 
-MadBothDF%>%
-  ggplot()+geom_point(aes(x=Date,y=Diff,color=Missing))
+MadLongDF2=MadLongDF%>%
+  mutate(Date=Date-1)
+
+MadAllMeans=full_join(MadHFMeanDF,MadLongDF2,by=c("Date"))%>%
+  mutate(GeoMeanVsN1=abs(N1GeoMean-N1))%>%
+  mutate(MeanVsN1=abs(N1Mean-N1))%>%
+  filter(!is.na(GeoMeanVsN1))
+
+MadAllMeans%>%
+  ggplot()+aes(x=Date)+
+  geom_point(aes(y=MeanVsN1,color="mean"),size=2)+
+  geom_point(aes(y=GeoMeanVsN1,color="geomean"),size=2)+
+  scale_x_date(limits=c(N1Start,N1End))
 ```
 
 ```{r Summary of the data}
