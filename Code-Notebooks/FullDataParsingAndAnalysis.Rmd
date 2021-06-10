@@ -148,6 +148,7 @@ MadAllMeans%>%
   geom_point(aes(y=GeoMeanVsN1,color="geomean"),size=2)+
   scale_x_date(limits=c(N1Start,N1End))
 
+
 MadAllMeansRounded=MadAllMeans%>%
   mutate(N1GeoMean=round(N1GeoMean),N1Mean=round(N1Mean))%>%
   mutate(GeoMeanVsN1=abs(N1GeoMean-N1))%>%
@@ -187,6 +188,7 @@ LargePopAreas=c("Madison","Hudson","Kenosha","Wausau","Oshkosh")
 
 ```{r error scales lin with N1, fig.height = 6, fig.width = 13}
 
+
 AllDataDF%>%
   ggplot()+aes(x=N1,y=N1Error)+geom_point()+
   scale_y_log10()+
@@ -219,7 +221,7 @@ VarN1LIMSMadMode = AllDataDF%>%
   filter(Site=="Madison")%>%
   lm(formula=N1Error~N1-1)
 
-VarN1HFDMode=lm(data=HFGVar,N1Error~N1-1)
+VarN1HFDMode=lm(data=HFGVar-1,N1Error~N1-1)
 
 
 VarN1LIMSMode=lm(N1Error~N1-1,data=AllDataDF)
@@ -236,6 +238,10 @@ LIMSWExpErrorDF=AllDataDF%>%
   filter(!is.na(N1))%>%
   mutate(PredN1Var=predict.lm(UsedModel,.))%>%
   mutate(WeirdVar=ifelse(N1Error/PredN1Var>CriticalPoint,"Unexpected high Varience","Expected range of varience"))
+
+
+
+#
 ```
 
 ```{r Model exploration}
@@ -273,7 +279,7 @@ LIMSWExpErrorDF%>%
   Header_theme(ConfigOption)+
       theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
             axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
-            plot.margin = unit(c(.5,0,0,0), "cm"))+ylab("residuals")
+            plot.margin = unit(c(.5,0,0,0), "cm"))+ylab("residuals")+ggtitle("Predicting varience Residuals")
 
 
 ```
@@ -288,6 +294,9 @@ MadBoxData=LIMSWExpErrorDF%>%
   mutate(ErrorMin=ifelse(ErrorMin>0,ErrorMin,0))
 MadBoxNoWeirdData=MadBoxData%>%
   filter(WeirdVar=="Expected range of varience")
+
+Limits=c(min(MadBoxData$Date,na.rm = TRUE),max(MadBoxData$Date,na.rm = TRUE))
+
 MadBoxPlot=MadBoxData%>%
   ggplot()+#geom_point(aes(x=Date,y=N1))+
   geom_rect(aes(ymin=ErrorMin,ymax=ErrorMax,xmin=Date-BoxWidth,xmax=Date+BoxWidth,fill=WeirdVar),color="Black",alpha=.5)+
@@ -312,17 +321,18 @@ b=MadBoxPlot+
 
 aalook=ggarrange(a,b,nrow=2,common.legend = TRUE,align="hv")
 aa=ggarrange(a,b,nrow=2,common.legend = TRUE,align="hv",legend = "none")
-a=LatCaseDF%>%
+
+CasePlots=LatCaseDF%>%
   filter(Site=="Madison")%>%
   ggplot()+aes(x=Date,y=Cases)+geom_point()+
+  scale_x_date(limits=Limits)
+
+a=CasePlots+
   scale_y_log10()+
   facet_wrap(~Site,scales = "free_y")+
   Header_theme(ConfigOption)+
   ggtitle("Madison Case Data")
-b=LatCaseDF%>%
-  filter(Site=="Madison")%>%
-  ggplot()+aes(x=Date,y=Cases)+
-  geom_point()+
+b=CasePlots+
   Header_theme(ConfigOption)+
       theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
             axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
@@ -419,11 +429,30 @@ server <- function(input, output) {
         theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
             axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
             plot.margin = unit(c(.5,0,0,0), "cm"))
-    return(ggarrange(a,b,nrow=2,common.legend = TRUE,align="hv"))
-    if(input$Log){
-      MadBoxPlot=MadBoxPlot+scale_y_log10()
-    }
-    MadBoxPlot
+    
+    N1Graphics=ggarrange(a,b,nrow=2,common.legend = TRUE,align="hv")
+    
+    CasePlots=LatCaseDF%>%
+      filter(Site=="Madison")%>%
+      ggplot()+aes(x=Date,y=Cases)+geom_point()+
+      scale_x_date(limits=Limits)
+      
+    a=CasePlots+
+      scale_y_log10()+
+      facet_wrap(~Site,scales = "free_y")+
+      Header_theme(ConfigOption)+
+      ggtitle("Madison Case Data")
+    b=CasePlots+
+      Header_theme(ConfigOption)+
+      theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+        axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
+        plot.margin = unit(c(.5,0,0,0), "cm"))
+    
+    CasesGraphics=ggarrange(a,b,nrow=2,align="hv")
+
+    FinalGraphic=ggarrange(N1Graphics,CasesGraphics,nrow=1,align="hv")
+    return(FinalGraphic)
+
   
     })
 }

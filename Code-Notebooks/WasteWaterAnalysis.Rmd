@@ -221,20 +221,23 @@ HFDCasesGraphic+ annotate("text", x = N1Start+11.5, y = YMax, label = "<-  Range
 
 HFGMadCaseDF=HFGCaseDF%>%
   filter(Site=="Madison")%>%
-  select(-Site)%>%
   filter(ConfirmedCases!=-999)
 
 LIMSMadCaseDF=LatCaseDF%>%
-  filter(Site=="Madison")%>%
-  select(-Site)
+  filter(Site=="Madison")
 
 
-BothCases=inner_join(HFGMadCaseDF,LIMSMadCaseDF,by = c("Date"))
+BothCases=inner_join(HFGMadCaseDF,LIMSMadCaseDF,by = c("Date","Site"))
 
 BothCases%>%
   ggplot()+
   aes(x=ConfirmedCases,y=Cases)+
-  geom_point()
+  geom_point()+
+  geom_abline(slope=1,color="red")+
+  facet_wrap(~Site)+
+  ylab("Census track level Case data")+
+  xlab("Address level Case data")
+
 
 ```
 
