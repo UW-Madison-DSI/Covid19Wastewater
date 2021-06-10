@@ -113,12 +113,6 @@ MadBothDF=full_join(MadLIMSDF,MadHFDF,by=c("Date"))%>%
   mutate(Missing=ifelse(is.na(HFN1),"N1 missing in HF data","No missing data"))%>%
   mutate(Missing=ifelse(is.na(LIMSN1),"N1 missing in LIMS data",Missing))
 
-
-
-
-
-
-
 MadHFMeanDF=MadHFDF%>%
   filter(Site=="Madison")%>%
   group_by(Date)%>%
@@ -153,6 +147,16 @@ MadAllMeans%>%
   geom_point(aes(y=MeanVsN1,color="mean"),size=2)+
   geom_point(aes(y=GeoMeanVsN1,color="geomean"),size=2)+
   scale_x_date(limits=c(N1Start,N1End))
+
+MadAllMeansRounded=MadAllMeans%>%
+  mutate(N1GeoMean=round(N1GeoMean),N1Mean=round(N1Mean))%>%
+  mutate(GeoMeanVsN1=abs(N1GeoMean-N1))%>%
+  mutate(MeanVsN1=abs(N1Mean-N1))
+MadAllMeans%>%
+  ggplot()+aes(x=Date)+
+  geom_point(aes(y=MeanVsN1,color="mean"),size=2)+
+  geom_point(aes(y=GeoMeanVsN1,color="geomean"),size=2)+
+  scale_x_date(limits=c(N1Start,N1End))
 ```
 
 ```{r Summary of the data}
@@ -180,6 +184,7 @@ LargePopAreas=c("Madison","Hudson","Kenosha","Wausau","Oshkosh")
 
 
 ```
+
 ```{r error scales lin with N1, fig.height = 6, fig.width = 13}
 
 AllDataDF%>%
