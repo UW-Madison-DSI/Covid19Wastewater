@@ -38,7 +38,7 @@ ConfigOption=list(
       alphaWeek=.2)
 
 AllData="../../UntrackedData/WATERMICRO_WW_COVID-2021-06-07 19 05.xlsx"
-AllDataDF=read_excel(AllData,col_types=c(rep("guess",48),"text",rep("guess",12)))%>%
+LIMSFullDF=read_excel(AllData,col_types=c(rep("guess",48),"text",rep("guess",12)))%>%
   rename(Site=wwtp_name,FlowRate=average_flow_rate,
          Cov1_below_lod=avg_sars_cov2_below_lod,cov2_conc=avg_sars_cov2_conc,
          BCoV=bcov_rec_rate,BCoVConc=bcov_spike_conc,county=county_names,
@@ -53,13 +53,17 @@ AllDataDF=read_excel(AllData,col_types=c(rep("guess",48),"text",rep("guess",12))
          N1Error=as.numeric(N1Error),N2Error=as.numeric(N2Error),PMMoV=as.numeric(PMMoV),
          BCoV=as.numeric(BCoV))%>%
          mutate(Site=ifelse(Site=="Madison Metro","Madison",Site))%>%
-         select(Date,Site, BCoV, N1,N1Error,N2, N2Error,PMMoV,Pop)
+         select(Date,Site, BCoV, N1,N1Error,N2, N2Error,PMMoV,Pop)%>%
+  filter(N1Error>0)
+LIMSFullDFRoll=RollAvg(LIMSFullDF,n=21,var=c("N1","N1Error"))%>%
+  filter(!is.nan(N1)&!is.nan(N1Error))%>%
+  select(Date,Site,N1,N1Error)
 
 ```
 
 ```{r LIMS vs long dataset, include = FALSE}
 
-MadLIMSDF=AllDataDF%>%
+MadLIMSDF=LIMSFullDF%>%
   filter(Site=="Madison")%>%
   select(Date,N1)%>%
   mutate(Date=Date+1)
@@ -163,20 +167,20 @@ MadAllMeans%>%
 ```{r Summary of the data}
 SiteOptions=c("Hudson","Kenosha","Platteville","Madison", "Merrill","Plymouth","River Falls","Sun Prairie","Wausau","Oshkosh")
 
-MadisonLIMSData=AllDataDF%>%
+MadisonLIMSData=LIMSFullDF%>%
   filter(grepl("Madison",Site))%>%
   group_by(Site)%>%
   summarise(n=n(),Dur=max(Date)-min(Date),min=min(Date),max=max(Date))
-UWLIMSData=AllDataDF%>%
+UWLIMSData=LIMSFullDF%>%
   filter(grepl("UW",Site))%>%
   group_by(Site)%>%
   summarise(n=n(),Dur=max(Date)-min(Date),min=min(Date),max=max(Date))
-HFLIMSData=AllDataDF%>%
+HFLIMSData=LIMSFullDF%>%
   filter(Site %in% SiteOptions)%>%
   group_by(Site)%>%
   summarise(n=n(),Dur=max(Date)-min(Date),min=min(Date),max=max(Date))
 
-AllDataDF%>%
+LIMSFullDF%>%
   group_by(Site)%>%
   summarise(n=n(),Dur=max(Date)-min(Date),MeanP=mean(Pop,na.rm=TRUE))%>%
   arrange(desc(MeanP))
@@ -189,8 +193,8 @@ LargePopAreas=c("Madison","Hudson","Kenosha","Wausau","Oshkosh")
 ```{r error scales lin with N1, fig.height = 6, fig.width = 13}
 
 
-AllDataDF%>%
-  ggplot()+aes(x=N1,y=N1Error)+geom_point()+
+LIMSFullDF%>%
+  ggplot()+aes(x=N1,y=N1Error/N1)+geom_point()+
   scale_y_log10()+
   scale_x_log10()+ 
   Header_theme(ConfigOption)+
@@ -198,7 +202,9 @@ AllDataDF%>%
             axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
             plot.margin = unit(c(.5,0,0,0), "cm"))
 
-AllDataDF%>%
+
+
+LIMSFullDF%>%
   ggplot()+aes(x=N2,y=N2Error)+
   geom_point()+
   scale_y_log10()+
@@ -210,6 +216,71 @@ AllDataDF%>%
 
 ```
 
+```{r rig testing}
+N1ZPrep=LIMSFullDF%>%
+  mutate(N1ErrorNorm=N1Error/N1)%>%
+  filter(!is.na(N1ErrorNorm))%>%
+  filter(N1ErrorNorm>0,N1ErrorNorm!=Inf)%>%
+  summarise(meanNorm=mean(N1ErrorNorm),SDNorm=sqrt(var(N1ErrorNorm)),
+            mean=mean(N1Error),SD=sqrt(var(N1Error)),
+            regMean=mean(N1),regSE=sqrt(var(N1)))
+
+LIMSFullDF%>%
+  select(Date,N1,N1Error)%>%
+  mutate(N1ErrorNorm=N1Error/N1)%>%
+  filter(N1ErrorNorm>0,N1ErrorNorm!=Inf)%>%
+  mutate(meanN1Norm=N1ZPrep$regMean,
+         SDN1Norm=N1ZPrep$regSE,
+         meanError=N1ZPrep$mean,
+         SDError=N1ZPrep$SD,
+         RegMean=N1ZPrep$regMean,
+         RegSE=N1ZPrep$regSE)%>%
+  mutate(ZScoreNorm=(N1ErrorNorm-meanN1Norm)/SDN1Norm,
+         ZScore=(N1-RegMean)/RegSE,
+         ZScoreError=(N1Error-meanError)/SDError)%>%
+  ggplot()+
+  #geom_bar(aes(x=ZScore))
+  geom_point(aes(x=N1,y=ZScoreError))+
+  scale_y_log10()+
+  scale_x_log10()
+  #scale_y_continuous(limits=c(-3000,2000))
+#,y=ZScoreNorm
+```
+```{r ouliers with rolling average and predicted var}
+CriticalPoint=5
+TestingDF=inner_join(LIMSFullDFRoll,LIMSFullDF,by=c("Date","Site"))%>%
+  rename(rollN1=N1.x,N1=N1.y,rollN1Error=N1Error.x,N1Error=N1Error.y)%>%
+  select(Date,Site,rollN1,rollN1Error,N1,N1Error)%>%
+  mutate(ZScore=(N1-rollN1)/rollN1Error*.8)%>%
+  mutate(ExtremeScores=!(ZScore>-2&ZScore<2))
+TestingDF%>%
+  ggplot()+
+  geom_point(aes(x=N1,y=ZScore))+
+  scale_x_log10()
+
+
+TestingDF%>%
+  filter(Site=="Madison")%>%
+  ggplot()+aes(x=Date-15,y=N1)+
+  geom_point()+facet_wrap(~Site)+
+  scale_y_log10()
+
+TestingDF%>%
+  filter(Site=="Madison")%>%
+  filter(!ExtremeScores)%>%
+  ggplot()+aes(x=Date,y=N1)+
+  geom_point()+facet_wrap(~Site)+
+  scale_y_log10()
+
+LatCaseDF%>%
+  filter(Site=="Madison")%>%
+  filter(!is.na(Cases))%>%
+  filter(!is.na(Date))%>%
+  ggplot()+aes(x=Date,y=Cases)+geom_point()+
+  scale_x_date(limits=Limits)+facet_wrap(~Site)+
+  scale_y_log10()
+```
+
 ```{r LM Creation extended,fig.height = 10, fig.width = 14}
 HFGVar=HFGFrame%>%
   select(Date,Site,N1,Pct_BCoV)%>%
@@ -217,26 +288,27 @@ HFGVar=HFGFrame%>%
   group_by(Site,Date)%>%
   summarize(N1Error=var(N1),N1=mean(N1))
 
-VarN1LIMSMadMode = AllDataDF%>%
+VarN1LIMSMadMode = LIMSFullDF%>%
   filter(Site=="Madison")%>%
   lm(formula=N1Error~N1-1)
 
-VarN1HFDMode=lm(data=HFGVar-1,N1Error~N1-1)
+VarN1HFDMode=lm(data=HFGVar,N1Error~N1-1)
 
 
-VarN1LIMSMode=lm(N1Error~N1-1,data=AllDataDF)
-VarN2LIMSMode=lm(N2Error~N2-1,data=AllDataDF)
+VarN1LIMSMode=lm(log(N1Error)~N1-1,data=LIMSFullDF)
+VarN2LIMSMode=lm(N2Error~N2-1,data=LIMSFullDF)
 
-VarN1N2LIMSMode=lm(N1Error~N1+N2-1,data=AllDataDF)
-# VarN1HFGMode=lm(N1Error~N1-1,data=AllDataDF)
-# VarN2HFGMode=lm(N2Error~N2-1,data=AllDataDF)
+VarN1N2LIMSMode=lm(N1Error~N1+N2-1,data=LIMSFullDF)
+# VarN1HFGMode=lm(N1Error~N1-1,data=LIMSFullDF)
+# VarN2HFGMode=lm(N2Error~N2-1,data=LIMSFullDF)
 
 UsedModel=VarN1LIMSMode
 
 CriticalPoint=2
-LIMSWExpErrorDF=AllDataDF%>%
+LIMSWExpErrorDF=LIMSFullDF%>%
   filter(!is.na(N1))%>%
   mutate(PredN1Var=predict.lm(UsedModel,.))%>%
+  mutate(PredN1Var=N1)%>%
   mutate(WeirdVar=ifelse(N1Error/PredN1Var>CriticalPoint,"Unexpected high Varience","Expected range of varience"))
 
 
@@ -257,9 +329,6 @@ LIMSWExpErrorDF%>%
 
 
 
-
-
-
 LIMSWExpErrorDF%>%
   ggplot()+aes(x=N1)+geom_point(aes(y=N1Error/PredN1Var))+
   geom_point(aes(y=PredN1Var/PredN1Var),color="red")+
@@ -272,7 +341,7 @@ LIMSWExpErrorDF%>%
             plot.margin = unit(c(.5,0,0,0), "cm"))
 
 LIMSWExpErrorDF%>%
-  ggplot()+aes(x=N1)+geom_point(aes(y=N1Error-PredN1Var))+
+  ggplot()+aes(x=N1)+geom_point(aes(y=(N1Error-0.08185*PredN1Var)/(0.08185*PredN1Var)))+
   #geom_point(aes(y=PredN1Var/PredN1Var),color="red")+
   #scale_y_log10()+
   scale_x_log10()+ 
@@ -345,6 +414,11 @@ ggarrange(aa,ab,nrow=1,align="hv")
 
 
 ```{r shiny controlled thresholding}
+#add 2 week rolling average to confirm concept
+#how to scale data to relate
+#add formal test
+#think about things
+#give dates of the case outliers
 ui <- fluidPage(
   titlePanel("Varience Thresholding"),
   sidebarLayout(
@@ -367,7 +441,7 @@ ui <- fluidPage(
 server <- function(input, output) {
 
   UsedDF = reactive({
-    AllDataDF%>%
+    LIMSFullDF%>%
       filter(!is.na(N1))%>%
       mutate(PredN1Var=predict(UsedModel,.))%>%
       mutate(WeirdVar=ifelse(N1Error/PredN1Var>input$Thresh,"Unexpected high Varience","Expected range of varience"))
@@ -418,7 +492,7 @@ server <- function(input, output) {
       ggplot()+#geom_point(aes(x=Date,y=N1))+
       geom_rect(aes(ymin=ErrorMin,ymax=ErrorMax,xmin=Date-BoxWidth,xmax=Date+BoxWidth,fill=WeirdVar),color="Black",alpha=.5)+
       geom_rect(aes(ymin=N1,ymax=N1,xmin=Date-BoxWidth,xmax=Date+BoxWidth),color="black",alpha=.5)+
-      geom_smooth(aes(x=Date,y=N1),span=.33,se=FALSE,data=FilteredMadBoxPlot)+
+      geom_smooth(aes(x=Date,y=N1),span=.33,se=TRUE,data=FilteredMadBoxPlot)+
       Header_theme(ConfigOption)
     a=MadBoxPlot+
       scale_y_log10(limits=c(1e3,5e6))+
@@ -461,7 +535,7 @@ shinyApp(ui, server)
 
 
 ```{r PMMoV Tresh,fig.height = 15, fig.width = 15}
-PMMoVUseDF=AllDataDF%>%
+PMMoVUseDF=LIMSFullDF%>%
   filter(Site %in%LargePopAreas)%>%
   mutate(`PMMoV Level`=ifelse(PMMoV<5*10^6,"Low","Medium"))%>%
   mutate(`PMMoV Level`=ifelse(PMMoV>2*10^7,"High",`PMMoV Level`))%>%
@@ -490,7 +564,7 @@ PMMoVUseDF%>%
 ```
 
 ```{r BCoV Tresh,fig.height = 15, fig.width = 15}
-BCoVUseDF=AllDataDF%>%
+BCoVUseDF=LIMSFullDF%>%
   filter(Site %in%LargePopAreas)%>%
   mutate(`Percent BCoV Recovery`=ifelse(BCoV<1,"Low","Medium"))%>%
   mutate(`Percent BCoV Recovery`=ifelse(BCoV>10,"High",`Percent BCoV Recovery`))%>%
@@ -522,7 +596,7 @@ BCoVUseDF%>%
 
 ```{r HFG Data, fig.height = 6, fig.width = 18}
 # library(plotly)
-# GPlot=AllDataDF%>%
+# GPlot=LIMSFullDF%>%
 #   ggplot()+geom_point(aes(x=Date,y=N1))+facet_wrap(~Site)
 # ggplotly(GPlot)
 MaskedDataRange="1-4 Cases"
@@ -536,12 +610,12 @@ RelRollData=HFGCaseDFRoll%>%
 
 Date_lim_HFG=c(min(RelData$Date)-2,max(RelData$Date)+2)
 
-LIMSHFDF=AllDataDF%>%
+LIMSHFDF=LIMSFullDF%>%
   filter(Site %in%LargePopAreas)
 
 LIMSHFDFRoll=RollAvg(LIMSHFDF)
 
-LIMSRange=c(min(AllDataDF$Date)-1,max(AllDataDF$Date)+1)
+LIMSRange=c(min(LIMSFullDF$Date)-1,max(LIMSFullDF$Date)+1)
 
 HFDCasesGraphic=Buildplot_gen("CollectedCases",
   MainDF=RelData,

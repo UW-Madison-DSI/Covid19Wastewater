@@ -92,7 +92,30 @@ ConfigOption=list(
     
 ```
 
+```{r Comp cases,include=FALSE}
+HFGCaseDF2=HFGCaseDF%>%
+  filter(Site=="Madison")%>%
+  filter(ConfirmedCases!=-999)%>%
+  filter(CollectedCases!=-999)
+LatCaseDF2=LatCaseDF%>%
+  filter(Site=="Madison")%>%
+  mutate(Date=Date)
 
+ggplot() + geom_point(aes(x=Date,y=Cases,color="cases"),data=LatCaseDF2) + 
+  geom_point(aes(x=Date+2,y=CollectedCases,color="CollectedCases"),data=HFGCaseDF2)+
+  scale_x_date(limits=c(min(HFGCaseDF2$Date),max(HFGCaseDF2$Date)))+
+  facet_wrap(~Site)
+
+inner_join(HFGCaseDF2,LatCaseDF2,by=c("Date","Site"))%>%
+  ggplot()+aes(x=Cases,y=CollectedCases)+geom_point()+
+  geom_abline()
+
+a=inner_join(HFGCaseDF2,LatCaseDF2,by=c("Date","Site"))%>%
+  mutate(Diff=abs(CollectedCases-Cases))%>%
+  filter(Diff>75)%>%
+  select(Site,Date,CollectedCases,Cases)
+a$Date
+```
 
 Focus on HF Data. 
 
@@ -239,6 +262,28 @@ BothCases%>%
   xlab("Address level Case data")
 
 
+BothCases%>%
+  mutate(ratio=CollectedCases/Cases)%>%
+  mutate(weird=CollectedCases>80+Cases|CollectedCases<Cases-70)%>%
+  ggplot()+
+  aes(x=CollectedCases,y=Cases,color=weird)+
+  geom_point()+
+  geom_abline(slope=1,color="red")+
+  geom_abline(slope=1,intercept=80,color="red")+
+  geom_abline(slope=1,intercept=-70,color="red")+
+  facet_wrap(~Site)+
+  ylab("Census track level Case data")+
+  xlab("Address level Case data")
+
+BothCases%>%
+  mutate(weird=CollectedCases>80+Cases|CollectedCases<Cases-70)%>%
+  filter(weird)%>%
+  select(Site,Date,CollectedCases,Cases)
+
+BothCases%>%
+  mutate(weird=ConfirmedCases>80+Cases|ConfirmedCases<Cases-70)%>%
+  filter(weird)%>%
+  select(Site,Date,ConfirmedCases,Cases)
 ```
 
 

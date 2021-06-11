@@ -34,7 +34,7 @@ RollPerPosHelperFunc = function(vectorCases,vectorTests,n=7){
   return(SlideMeanVec)
 }
 
-RollAvg = function(RollingDF,Facet="Site",n=7){
+RollAvg = function(RollingDF,Facet="Site",n=7,var=c("EpisodeCases","CollectedCases","ConfirmedCases")){
   TDF=RollingDF%>%
     mutate(Facet=!!sym(Facet))
   FaucetOptions=unique(TDF$Facet)
@@ -44,9 +44,11 @@ RollAvg = function(RollingDF,Facet="Site",n=7){
   FullDataFM=full_join(TDF,FulldayRange,by=c("Date","Facet"))%>%
     arrange(Facet,Date)%>%
     group_by(Facet)%>%
-    mutate(across(ends_with("Cases"),RollAvgHelperFunc))%>%
+    mutate(across(any_of(var),RollAvgHelperFunc,n=n))%>%
     ungroup()
   FullDataFM[[Facet]]=FullDataFM$Facet
+  FullDataFM=FullDataFM%>%
+    select(-Facet)
   return(FullDataFM)
 }
 
