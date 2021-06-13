@@ -38,37 +38,40 @@ LatMMSDFN = "../../UntrackedData/MMSD_Cases.2021-05-21.csv"
 ```
 
 ```{r start up, include=FALSE}
-HFGFrame=HFGInfo(HFGWasteFN)%>%
-  select(Date,Site=Plant,Filter,Well,N1=N1GC,N2=N2GC,PMMoV=PMMOVGC,Pct_BCoV=BCoV,everything())%>%
-  mutate(Filter=as.character(Filter),Well=as.character(Well))%>%
-  na.omit()
-
-
-HFGCaseDF=HFGCasesPARSER(HFGCaseFN)
-Fullday=data.frame(Date=seq.Date(min(HFGCaseDF$Date),max(HFGCaseDF$Date),1))
-HFGCaseDF=full_join(HFGCaseDF,Fullday,by=c("Date"))
-
-# HFGCaseDF2=HFGCaseDF%>%
-#       mutate(isna=ifelse(EpisodeCases==-999,"True","false"))%>%
-#       mutate(EpisodeCases=ifelse(EpisodeCases==-999,NA,EpisodeCases))%>%
-#       mutate(CollectedCases=ifelse(CollectedCases==-999,NA,CollectedCases))%>%
-#       mutate(ConfirmedCases=ifelse(ConfirmedCases==-999,NA,ConfirmedCases))
+# HFGFrame=HFGInfo(HFGWasteFN)%>%
+#   select(Date,Site=Plant,'Filter replicates',Well,N1=N1GC,N2=N2GC,PMMoV=PMMOVGC,Pct_BCoV=BCoV,everything())%>%
+#   mutate('Filter replicates'=as.character('Filter replicates'),Well=as.character(Well))%>%
+#   na.omit()
 # 
-# HFGCaseDFroll2=HFGCaseDF2%>%
-#       filter(!is.na(Site))%>%
-#       arrange(Site,Date)%>%
-#       group_by(Site)%>%
-#       mutate(CollectedCases2=RollAvg(CollectedCases),EpisodeCases2=RollAvg(EpisodeCases),ConfirmedCases2=RollAvg(ConfirmedCases))%>%
-#       ungroup()
+# 
+# HFGCaseDF=HFGCasesPARSER(HFGCaseFN)
+# Fullday=data.frame(Date=seq.Date(min(HFGCaseDF$Date),max(HFGCaseDF$Date),1))
+# HFGCaseDF=full_join(HFGCaseDF,Fullday,by=c("Date"))
+# 
+# # HFGCaseDF2=HFGCaseDF%>%
+# #       mutate(isna=ifelse(EpisodeCases==-999,"True","false"))%>%
+# #       mutate(EpisodeCases=ifelse(EpisodeCases==-999,NA,EpisodeCases))%>%
+# #       mutate(CollectedCases=ifelse(CollectedCases==-999,NA,CollectedCases))%>%
+# #       mutate(ConfirmedCases=ifelse(ConfirmedCases==-999,NA,ConfirmedCases))
+# # 
+# # HFGCaseDFroll2=HFGCaseDF2%>%
+# #       filter(!is.na(Site))%>%
+# #       arrange(Site,Date)%>%
+# #       group_by(Site)%>%
+# #       mutate(CollectedCases2=RollAvg(CollectedCases),EpisodeCases2=RollAvg(EpisodeCases),ConfirmedCases2=RollAvg(ConfirmedCases))%>%
+# #       ungroup()
+# 
+# 
+# LatCaseDF=CovidDataPARSER(LatSpringCaseFN,LatFallCaseFN,LatMMSDFN)
+# 
+# LatWasteDF=WasteWater(LatWasteFN)%>%
+#   mutate(Date=as.Date(Date))%>%
+#   filter(!is.na(Date),!is.na(N1),!is.na(Site))%>%
+#   filter(Date<mdy("6/5/2021"))%>%
+#   select(Date,Site,N1,N2,PMMoV,Pct_BCoV,AVG)
 
 
-LatCaseDF=CovidDataPARSER(LatSpringCaseFN,LatFallCaseFN,LatMMSDFN)
-
-LatWasteDF=WasteWater(LatWasteFN)%>%
-  mutate(Date=as.Date(Date))%>%
-  filter(!is.na(Date),!is.na(N1),!is.na(Site))%>%
-  filter(Date<mdy("6/5/2021"))%>%
-  select(Date,Site,N1,N2,PMMoV,Pct_BCoV,AVG)
+source("../Scripts/WasteShiny/PrepData.R", local = TRUE)
 ```
 
 
@@ -80,14 +83,14 @@ Clear linear relationship between N1 and its standard deviations
 ```{r Varience within groups}
 
 HFGFrame%>%
-  select(Date,Site,Filter,N1)%>%
+  select(Date,Site,'Filter replicates',N1)%>%
   group_by(Site,Date)%>%
   summarize(mN1=exp(mean(log(N1))),vN1=var(N1))%>%
   ggplot()+geom_point(aes(x=mN1,y=sqrt(vN1),color=Site))+
   scale_y_log10()+scale_x_log10()+ggtitle("Mean vs Standard deviation of 9 points")
 
 HFGVarNine=HFGFrame%>%
-  select(Date,Site,Filter,N1)%>%
+  select(Date,Site,'Filter replicates',N1)%>%
   group_by(Site,Date)%>%
   summarize(mN1=mean(N1),vN1=var(N1))
 
@@ -95,8 +98,8 @@ HFGVarNine=HFGFrame%>%
 cor(HFGVarNine$mN1,sqrt(HFGVarNine$vN1))
 
 HFGFrame%>%
-  select(Date,Site,Filter,N1)%>%
-  group_by(Site,Date,Filter)%>%
+  select(Date,Site,'Filter replicates',N1)%>%
+  group_by(Site,Date,'Filter replicates')%>%
   summarize(mN1=mean(N1),vN1=var(N1))%>%
   ggplot()+geom_point(aes(x=mN1,y=sqrt(vN1),color=Site))+
   scale_y_log10()+scale_x_log10()+ggtitle("Mean vs Standard deviation of 3 points")
@@ -104,8 +107,8 @@ HFGFrame%>%
 
 
 HFGVarThree=HFGFrame%>%
-  select(Date,Site,Filter,N1)%>%
-  group_by(Site,Date,Filter)%>%
+  select(Date,Site,'Filter replicates',N1)%>%
+  group_by(Site,Date,'Filter replicates')%>%
   summarize(mN1=mean(N1),vN1=var(N1))
 
 
@@ -142,13 +145,13 @@ LM=lm(data=HFGVar,sqrt(vN1)~mN1-1)
 LM
 
 # HFGFrame%>%
-#   select(Date,Site,N1,Filter)%>%
+#   select(Date,Site,N1,'Filter replicates')%>%
 #   mutate(lower=N1-1.860*sqrt(207167*N1)/sqrt(9))%>%
 #   mutate(Upper=N1+1.860*sqrt(207167*N1)/sqrt(9))%>%
 #   #mutate(contzero=lower<0&Upper>0)
 #   ggplot()+
-#   geom_rect(aes(fill=Filter,ymin=lower,ymax=Upper,xmin=Date-.3,xmax=Date+.3),alpha=.1)+
-#   geom_point(aes(x=Date,y=N1,color=Filter))+scale_y_log10()+facet_wrap(~Site)
+#   geom_rect(aes(fill='Filter replicates',ymin=lower,ymax=Upper,xmin=Date-.3,xmax=Date+.3),alpha=.1)+
+#   geom_point(aes(x=Date,y=N1,color='Filter replicates'))+scale_y_log10()+facet_wrap(~Site)
 
 ```
 
@@ -183,12 +186,12 @@ N1End=max(HFGFrame$Date)
 
 ggplot()+
   geom_rect(aes(ymin=lower,ymax=Upper,xmin=Date-1.3,xmax=Date-.7),fill="red",alpha=.1,data=LatData)+
-  geom_point(aes(y=N1,color=Filter,x=Date,shape="High Frequency"),data=HFGData)+
+  geom_point(aes(y=N1,color='Filter replicates',x=Date,shape="High Frequency"),data=HFGData)+
   geom_point(aes(y=N1,x=Date-1,shape="Longitudinal"),data=LatData,size=2.5)+
   scale_y_log10()+
   scale_x_date(limits=c(N1Start,N1End))+ggtitle("Waste data and predicted 2 standard deviations")
 
-#filter on variance
+#'Filter replicates' on variance
 #
 ```
 
