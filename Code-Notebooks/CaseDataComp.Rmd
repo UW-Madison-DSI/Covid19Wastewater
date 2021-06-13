@@ -1,0 +1,85 @@
+---
+title: "Comparing address and census level case data"
+author: "Marlin Lee"
+date: "6/13/2021"
+output:
+  pdf_document: default
+  html_document: default
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+
+```{r Importing, include=FALSE}
+library(shiny)
+library(ggpubr)
+library(dplyr)
+library(shinydashboard)
+library(shinyjqui)
+library(shinycssloaders)
+
+#Data Files and prepwork
+source("../Scripts/GenPlotMaking.R")
+source("../Scripts/WasteWaterDataProccess.R")
+source("../Scripts/CassesDataProccess.R")
+source("../Scripts/HelperFunctions.R")
+LatWasteFN <- "../../UntrackedData/WW SARS-COV-2 Data V5.xlsx"
+LatSpringCaseFN="../../UntrackedData/SpringSemester_CasesByDorm.tsv"
+LatFallCaseFN="../../UntrackedData/FallSemester_CasesByDorm.tsv"
+HFGWasteFN = "../../UntrackedData/HFG data for stats preliminary 3-18-21.xlsx"
+HFGCaseFN="../../UntrackedData/HighFreq_CaseData_2021-05-07.csv"
+LatMMSDFN = "../../UntrackedData/MMSD_Cases.2021-05-21.csv"
+
+
+source("../Scripts/WasteShiny/PrepData.R", local = TRUE)
+```
+
+
+```{r Comp cases}
+HFGCaseDF2=HFGCaseDF%>%
+  filter(Site=="Madison")%>%
+  filter(ConfirmedCases!=-999)%>%
+  filter(CollectedCases!=-999)
+LatCaseDF2=LatCaseDF%>%
+  filter(Site=="Madison")
+
+ggplot() + geom_point(aes(x=Date,y=Cases,color="cases"),data=LatCaseDF2) + 
+  geom_point(aes(x=Date,y=ConfirmedCases,color="ConfirmedCases"),data=HFGCaseDF2)+
+  scale_x_date(limits=c(min(HFGCaseDF2$Date),max(HFGCaseDF2$Date)))+
+  facet_wrap(~Site)
+
+inner_join(HFGCaseDF2,LatCaseDF2,by=c("Date","Site"))%>%
+  ggplot()+aes(x=Cases,y=ConfirmedCases)+geom_point()+
+  geom_abline()
+
+inner_join(HFGCaseDF2,LatCaseDF2,by=c("Date","Site"))%>%
+  mutate(Diff=abs(ConfirmedCases-Cases))%>%
+  ggplot()+
+  geom_point(aes(x=Date,y=Diff))+
+  #geom_point(aes(x=Date,y=ConfirmedCases,color=Diff>75))+
+  geom_abline()
+
+
+
+ggplot() + geom_point(aes(x=Date,y=Cases,color="cases"),data=LatCaseDF2) + 
+  geom_point(aes(x=Date,y=ReportedCases,color="ReportedCases"),data=HFGCaseDF2)+
+  scale_x_date(limits=c(min(HFGCaseDF2$Date),max(HFGCaseDF2$Date)))+
+  facet_wrap(~Site)
+
+inner_join(HFGCaseDF2,LatCaseDF2,by=c("Date","Site"))%>%
+  ggplot()+aes(x=Cases,y=ReportedCases)+geom_point()+
+  geom_abline()
+
+inner_join(HFGCaseDF2,LatCaseDF2,by=c("Date","Site"))%>%
+  mutate(Diff=abs(ReportedCases-Cases))%>%
+  ggplot()+
+  geom_point(aes(x=Date,y=Diff))+
+  #geom_point(aes(x=Date,y=ConfirmedCases,color=Diff>75))+
+  geom_abline()
+
+```

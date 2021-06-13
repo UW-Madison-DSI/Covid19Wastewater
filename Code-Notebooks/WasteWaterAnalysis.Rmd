@@ -38,48 +38,6 @@ LatMMSDFN = "../../UntrackedData/MMSD_Cases.2021-05-21.csv"
 ```
 
 ```{r start up, include=FALSE}
-HFGFrame=HFGInfo(HFGWasteFN)%>%
-  select(Date,Site=Plant,Filter,Well,N1=N1GC,N2=N2GC,PMMoV=PMMOVGC,Pct_BCoV=BCoV)%>%
-  mutate(Filter=as.character(Filter),Well=as.character(Well))%>%
-  rename(`Filter replicates`=Filter)
-
-
-HFGCaseDF=HFGCasesPARSER(HFGCaseFN)
-
-
-
-HFGCaseDFRoll=HFGCaseDF%>%
-  mutate(EpisodeCases=ifelse(EpisodeCases==-999,2.5,EpisodeCases))%>%
-  mutate(CollectedCases=ifelse(CollectedCases==-999,2.5,CollectedCases))%>%
-  mutate(ConfirmedCases=ifelse(ConfirmedCases==-999,2.5,ConfirmedCases))%>%
-  RollAvg(Facet="Site")%>%
-  select(Date,Site,ends_with("Cases"))
-
-HFGPop=read.csv("../../UntrackedData/HFGPop.csv.txt")%>%
-  select(Site=wwtp_name,Population=pop_served)
-
-HFGCaseDF=full_join(HFGPop,HFGCaseDF,by="Site")
-
-HFGCaseDFRoll=full_join(HFGPop,HFGCaseDFRoll,by="Site")
-
-
-
-HFGDateRangeDF=WeekendGen(HFGCaseDF$Date)
-
-LatCaseDF=CovidDataPARSER(LatSpringCaseFN,LatFallCaseFN,LatMMSDFN)%>%
-  filter(!is.na(Site))%>%
-  select(Date,Site,Cases,Tests,Per_pos)
-
-#return(LatCaseDF)
-LatCaseDFRoll=RollPerPos(LatCaseDF,"Cases","Tests",Facet="Site")%>%
-  select(Date,Site,Cases,Per_pos)
-
-LatWasteDF=WasteWater(LatWasteFN)%>%
-  mutate(Date=as.Date(Date))%>%
-  filter(!is.na(Date),!is.na(N1),!is.na(Site))%>%
-  filter(Date<mdy("6/5/2021"))%>%
-  select(Date,Site,N1,N2,PMMoV,Pct_BCoV,AVG)
-
 
 ConfigOption=list(
       myseed=1234567890,
@@ -90,32 +48,11 @@ ConfigOption=list(
       PointSize=2,
       alphaWeek=.2)
     
+
+source("../Scripts/WasteShiny/PrepData.R", local = TRUE)
 ```
 
-```{r Comp cases,include=FALSE}
-HFGCaseDF2=HFGCaseDF%>%
-  filter(Site=="Madison")%>%
-  filter(ConfirmedCases!=-999)%>%
-  filter(CollectedCases!=-999)
-LatCaseDF2=LatCaseDF%>%
-  filter(Site=="Madison")%>%
-  mutate(Date=Date)
 
-ggplot() + geom_point(aes(x=Date,y=Cases,color="cases"),data=LatCaseDF2) + 
-  geom_point(aes(x=Date+2,y=CollectedCases,color="CollectedCases"),data=HFGCaseDF2)+
-  scale_x_date(limits=c(min(HFGCaseDF2$Date),max(HFGCaseDF2$Date)))+
-  facet_wrap(~Site)
-
-inner_join(HFGCaseDF2,LatCaseDF2,by=c("Date","Site"))%>%
-  ggplot()+aes(x=Cases,y=CollectedCases)+geom_point()+
-  geom_abline()
-
-a=inner_join(HFGCaseDF2,LatCaseDF2,by=c("Date","Site"))%>%
-  mutate(Diff=abs(CollectedCases-Cases))%>%
-  filter(Diff>75)%>%
-  select(Site,Date,CollectedCases,Cases)
-a$Date
-```
 
 Focus on HF Data. 
 
@@ -182,7 +119,7 @@ Filter_mean_var = reactive({
               PMMoV=exp(mean(log(PMMoV),na.rm = T)),
               Pct_BCoV=exp(mean(log(Pct_BCoV),na.rm = T)))
 })
-source("../Scripts/GenPlotMaking.R")
+
 ```
 
 

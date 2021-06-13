@@ -24,8 +24,14 @@ HFGFrame=HFGInfo(HFGWasteFN)%>%
   rename(`Filter replicates`=Filter)
 
 
-HFGCaseDF=HFGCasesPARSER(HFGCaseFN)
+HFGCaseDFNoReported=HFGCasesPARSER(HFGCaseFN)
 
+#Reported Cases match census level case data
+HFGCaseDFReportedOnly=HFGCaseDFNoReported%>%
+  mutate(Date=Date+1,ReportedCases=ConfirmedCases)%>%
+  select(Date,Site,ReportedCases)
+
+HFGCaseDF = full_join(HFGCaseDFReportedOnly,HFGCaseDFNoReported,by=c("Date","Site"))
 
 
 HFGCaseDFRoll=HFGCaseDF%>%

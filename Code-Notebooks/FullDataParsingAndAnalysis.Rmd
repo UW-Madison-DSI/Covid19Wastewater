@@ -14,7 +14,7 @@ library(shinydashboard)
 library(shinyjqui)
 library(shinycssloaders)
 
-#Data Files and prepwork
+#Data Files and prep work
 source("../Scripts/GenPlotMaking.R")
 source("../Scripts/WasteWaterDataProccess.R")
 source("../Scripts/CassesDataProccess.R")
@@ -414,11 +414,7 @@ ggarrange(aa,ab,nrow=1,align="hv")
 
 
 ```{r shiny controlled thresholding}
-#add 2 week rolling average to confirm concept
-#how to scale data to relate
-#add formal test
-#think about things
-#give dates of the case outliers
+
 ui <- fluidPage(
   titlePanel("Varience Thresholding"),
   sidebarLayout(
