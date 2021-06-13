@@ -28,35 +28,21 @@ source("../Scripts/GenPlotMaking.R")
 source("../Scripts/WasteWaterDataProccess.R")
 source("../Scripts/CassesDataProccess.R")
 source("../Scripts/HelperFunctions.R")
-LatWasteFN <- "../../UntrackedData/WW SARS-COV-2 Data V5.xlsx"
-LatSpringCaseFN="../../UntrackedData/SpringSemester_CasesByDorm.tsv"
-LatFallCaseFN="../../UntrackedData/FallSemester_CasesByDorm.tsv"
-HFGWasteFN = "../../UntrackedData/HFG data for stats preliminary 3-18-21.xlsx"
-HFGCaseFN="../../UntrackedData/HighFreq_CaseData_2021-05-07.csv"
-LatMMSDFN = "../../UntrackedData/MMSD_Cases.2021-05-21.csv"
+
 
 ```
 
 ```{r start up, include=FALSE}
-
-ConfigOption=list(
-      myseed=1234567890,
-      XAxisLabSiz=10,
-      YAxisLabSiz=15,
-      GenFontSiz=20,
-      alphaPoint=.7,
-      PointSize=2,
-      alphaWeek=.2)
-    
-
 source("../Scripts/WasteShiny/PrepData.R", local = TRUE)
 ```
 
 
+This report is meant to give an overarching view of the data analysis done and the attempts to reduce noise and find relationships in the data. We find that the data has [I am not sure how we want to summarize this]
 
-Focus on HF Data. 
+  
+  We  focus on the high frequency data from January 25 2021 to February 16 2021 as it has many features which could help reduce noise in both the case data and waste water data. The data has 3 well replicates for each of the 3 filter replicates which means for each day there is 9 replicates of the sample. This make the data vital as it minimizes any error in data collection which gives the best shot for understanding an underlying trend.
 
-replicates and our best shot.
+
 
 
 ```{r paused down, fig.height = 8, fig.width = 15,include=F}
@@ -102,40 +88,29 @@ RelWasteData=HFGFrame%>%
     filter(!is.na(Site))%>%
     filter(Site %in% SiteOptions2)
 
-Data_mean_var = reactive({
-  HFGSiteMean=filtered_data_P()%>%
-    group_by(Date,Site)%>%
-    summarise(N1=exp(mean(log(N1),na.rm = T)),
-              N2=exp(mean(log(N2),na.rm = T)),
-              PMMoV=exp(mean(log(PMMoV),na.rm = T)),
-              Pct_BCoV=exp(mean(log(Pct_BCoV),na.rm = T)))
-})
-#Data of the means of each Filter
-Filter_mean_var = reactive({
-  HFGFilterMean=filtered_data_P()%>%
-    group_by(Date,Site,`Filter replicates`)%>%
-    summarise(N1=exp(mean(log(N1),na.rm = T)),
-              N2=exp(mean(log(N2),na.rm = T)),
-              PMMoV=exp(mean(log(PMMoV),na.rm = T)),
-              Pct_BCoV=exp(mean(log(Pct_BCoV),na.rm = T)))
-})
-
 ```
 
 
+  We furthermore focus on the large location centers where number of cases stays mostly above 5. Due to PHI masking the majority of the case data of smaller location needs to be reduce. Additionally the lower population would be expected [Prove this?] to have higher day to day variance which makes it unsuited for showing a causal relationship.
+    
+  below shows that within the time frame of the high frequency measurements there is no clear 7 day average trend among the 4 Sites.
+
+[I used collected cases for this section of the report. Should I switch to reported cases to get parity with other data source]
 
 
-Cases: 
-larger pop avoids problematic small pop areas (low numbers have a lot of variance; 1-4 => -999.
-also: relatively small sample size (relative to variance in case counts):
-short duration; 
-some flowage districts have fewer observations.
-Describe plots of cases (or %positive): Unimodal: is there a trend? segmentation? can't say;
-Cases plot:
-
-
+[Might want to limit the graph to just the days we have N1 data on so all date based graphics have the same ending points. Or at least a smaller buffer]
 
 ```{r No claer relation Cases, fig.height = 6, fig.width = 16}
+# Cases: 
+# larger pop avoids problematic small pop areas (low numbers have a lot of variance; 1-4 => -999.
+# also: relatively small sample size (relative to variance in case counts):
+# short duration; 
+# some flowage districts have fewer observations.
+# Describe plots of cases (or %positive): Unimodal: is there a trend? segmentation? can't say;
+# Cases plot:
+
+
+
 #c(N1Start,N1End)
 
 Date_lim_HFG=c(min(RelData$Date)-2,max(RelData$Date)+2)
@@ -150,6 +125,7 @@ HFDCasesGraphic=Buildplot_gen("CollectedCases",
   Standards=ConfigOption,
   Xfreq="14 days",
   AxisPos="bottom",
+  YLabel = "Cases per 100,000 people",
   LineColor="red",
   norm="Population",
   Colplot=T,
@@ -177,72 +153,29 @@ HFDCasesGraphic+ annotate("text", x = N1Start+11.5, y = YMax, label = "<-  Range
 
 ```
 
-```{r Case comp}
-
-HFGMadCaseDF=HFGCaseDF%>%
-  filter(Site=="Madison")%>%
-  filter(ConfirmedCases!=-999)
-
-LIMSMadCaseDF=LatCaseDF%>%
-  filter(Site=="Madison")
-
-
-BothCases=inner_join(HFGMadCaseDF,LIMSMadCaseDF,by = c("Date","Site"))
-
-BothCases%>%
-  ggplot()+
-  aes(x=ConfirmedCases,y=Cases)+
-  geom_point()+
-  geom_abline(slope=1,color="red")+
-  facet_wrap(~Site)+
-  ylab("Census track level Case data")+
-  xlab("Address level Case data")
-
-
-BothCases%>%
-  mutate(ratio=CollectedCases/Cases)%>%
-  mutate(weird=CollectedCases>80+Cases|CollectedCases<Cases-70)%>%
-  ggplot()+
-  aes(x=CollectedCases,y=Cases,color=weird)+
-  geom_point()+
-  geom_abline(slope=1,color="red")+
-  geom_abline(slope=1,intercept=80,color="red")+
-  geom_abline(slope=1,intercept=-70,color="red")+
-  facet_wrap(~Site)+
-  ylab("Census track level Case data")+
-  xlab("Address level Case data")
-
-BothCases%>%
-  mutate(weird=CollectedCases>80+Cases|CollectedCases<Cases-70)%>%
-  filter(weird)%>%
-  select(Site,Date,CollectedCases,Cases)
-
-BothCases%>%
-  mutate(weird=ConfirmedCases>80+Cases|ConfirmedCases<Cases-70)%>%
-  filter(weird)%>%
-  select(Site,Date,ConfirmedCases,Cases)
-```
 
 
 
-N1:
-left (and right?): outliers called out by Dagmara; action: ignore them.
-remaining dips: what are they:
-3 interpretations: 
 
-(a) real dip; 
-
-(b) just chaotic quirky;
-
-(c) longer explanation: 9 replicates have low var; OK good experiment; good benchwork.
-now think about the stochasticity of the sampling process; you capture a liter of ww
-whose N1 concentration is a random variable.
-
-
+The N1 data has an unnatural dip on January 28 that should be ignore as testing error. otherwise we see chaotic movements that do not mirror the Covid-19 case data. Furthermore the the replicates have low variation which implies the problem is not in the PCR process. There are three possible explanations for these dips. The first explanations is that the waste water is naturally highly chaotic in capturing N1 loads. The second explanation is that the variation is just the true N1 relationship in the community. Finally the sampling process of waste water might fail to capture the true concentration. This might be from collection site issues or from flow issues.
 
 
 
 ```{r No clear relation N1, fig.height = 6, fig.width = 16}
+# N1:
+# left (and right?): outliers called out by Dagmara; action: ignore them.
+# remaining dips: what are they:
+# 3 interpretations: 
+# 
+# (a) real dip; 
+# 
+# (b) just chaotic quirky;
+# 
+# (c) longer explanation: 9 replicates have low var; OK good experiment; good benchmark.
+# now think about the stochasticity of the sampling process; you capture a liter of ww
+# whose N1 concentration is a random variable.
+
+
 meanOfN1=HFGFrame%>%
   filter(Site %in% SiteOptions2)%>%
   group_by(Site,Date)%>%
@@ -263,7 +196,7 @@ N1PlotGraphic=Buildplot_gen(
   RMOutliers=T,
   AxisPos="bottom",
   Standards=ConfigOption,
-  Xfreq="14 days",
+  Xfreq="7 days",
   nrow=2)+ Header_theme(ConfigOption)+
       theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
             axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
@@ -318,13 +251,16 @@ Buildplot_gen(
 
 ```
 
-%BoCov and PMMOV
-can we use these? answer: don't see how.
+To confirm there is no way to explain the weird movements of the N1 concentration we looked to see if they could be explained by abnormal Percent BeCoV recovery or PMMoV [Use full names]. Below shows unusual PMMoV values do not explain the unusual N1 values.
+
+
+
 
 ```{r fig.height = 6, fig.width = 16}
-#fix order to low medium high
-#add x axis label
-#PMMoV (GC/L)
+
+# %BoCov and PMMOV
+# can we use these? answer: don't see how.
+
 PMMoVUseDF=HFGFrame%>%
   filter(Site %in% SiteOptions2)%>%
   mutate(`PMMoV Level`=ifelse(PMMoV<1*10^7,"Low","Medium"))%>%
@@ -348,6 +284,9 @@ PMMoVUseDF%>%
             plot.margin = unit(c(.5,0,0,0), "cm"))
 
 ```
+
+BCov has no clear outliers and the extreme values of BCov have no relation to the N1 data. This means that its use as a control is limited.
+
 
 ```{r outliers Per_Bcov, fig.height = 6, fig.width = 13}
 BCoVUseDF=HFGFrame%>%
@@ -385,11 +324,11 @@ BCoVUseDF%>%
 
 
 
-question to resolve: date off by one between MMSD and HFG; is it in the emails or READMEs?
 
 
-```{r madison messure same data, fig.height = 6, fig.width = 13}
 
+```{r madison messure same data, fig.height = 6, fig.width = 13, include=FALSE}
+#question to resolve: date off by one between MMSD and HFG; is it in the emails or READMEs?
 LatData=LatWasteDF%>%
   filter((Site=="Madison"))
 HFGData=HFGFrame%>%
@@ -496,7 +435,7 @@ ggplot()+geom_point(aes(y=N1,color=`Filter replicates`,x=Date,shape="High Freque
 
 ```
 
-UW thresholding / box plots
+One solution to the noisy data is to instead look at boxes of days. Doing this shows a clear relationship in the US Dorms Data below. However when it comes to larger locations this method seems less effective.
 
 ```{r boxplots, fig.height = 8, fig.width = 15}
 NovemberBreak=seq(from=mdy("12/18/2020"),to=mdy("1/25/2021"),by=1)

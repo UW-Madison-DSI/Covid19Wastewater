@@ -1,4 +1,9 @@
-#Longatudal Data
+LatWasteFN <- "../../UntrackedData/WW SARS-COV-2 Data V5.xlsx"
+LatSpringCaseFN="../../UntrackedData/SpringSemester_CasesByDorm.tsv"
+LatFallCaseFN="../../UntrackedData/FallSemester_CasesByDorm.tsv"
+HFGWasteFN = "../../UntrackedData/HFG data for stats preliminary 3-18-21.xlsx"
+HFGCaseFN="../../UntrackedData/HighFreq_CaseData_2021-05-07.csv"
+LatMMSDFN = "../../UntrackedData/MMSD_Cases.2021-05-21.csv"
 
 LatCaseDF=CovidDataPARSER(LatSpringCaseFN,LatFallCaseFN,LatMMSDFN)%>%
   filter(!is.na(Site))%>%
@@ -13,6 +18,37 @@ LatWasteDF=WasteWater(LatWasteFN)%>%
   filter(!is.na(Date),!is.na(N1),!is.na(Site))%>%
   filter(Date<mdy("6/5/2021"))%>%
   select(Date,Site,N1,N2,PMMoV,Pct_BCoV,AVG)
+
+ConfigOption=list(
+  myseed=1234567890,
+  XAxisLabSiz=10,
+  YAxisLabSiz=15,
+  GenFontSiz=20,
+  alphaPoint=.7,
+  PointSize=2,
+  alphaWeek=.2)
+
+AllData="../../UntrackedData/WATERMICRO_WW_COVID-2021-06-07 19 05.xlsx"
+LIMSFullDF=read_excel(AllData,col_types=c(rep("guess",48),"text",rep("guess",12)))%>%
+  rename(Site=wwtp_name,FlowRate=average_flow_rate,
+         Cov1_below_lod=avg_sars_cov2_below_lod,cov2_conc=avg_sars_cov2_conc,
+         BCoV=bcov_rec_rate,BCoVConc=bcov_spike_conc,county=county_names,
+         Date=unformatted_collectdate,
+         N1=n1_sars_cov2_conc,
+         N1Error=n1_sars_cov2_error,
+         N2=n2_sars_cov2_conc,
+         N2Error=n2_sars_cov2_error,
+         PMMoV=pmmov_conc,
+         Pop=population_served)%>%
+  mutate(Date=as.Date(Date),N1=as.numeric(N1),N2=as.numeric(N2),Pop=as.numeric(Pop),
+         N1Error=as.numeric(N1Error),N2Error=as.numeric(N2Error),PMMoV=as.numeric(PMMoV),
+         BCoV=as.numeric(BCoV))%>%
+  mutate(Site=ifelse(Site=="Madison Metro","Madison",Site))%>%
+  select(Date,Site, BCoV, N1,N1Error,N2, N2Error,PMMoV,Pop)%>%
+  filter(N1Error>0)
+
+
+#LatWasteDF=LIMSFullDF
 
 
 
