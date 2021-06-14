@@ -29,19 +29,19 @@ LIMSFullDFRoll=RollAvg(LIMSFullDF,n=21,var=c("N1","N1Error"))%>%
 ```{r LM gen}
 
 UnWeightedModel=lm(N1Error~N1-1,data=LIMSFullDF)
-SDModel=lm(N1Error~N1-1,weights=1/N1Error,data=LIMSFullDF)
-VarModel=lm(N1Error~N1-1,weights=1/N1Error^2,data=LIMSFullDF)
+#SDModel=lm(N1Error~N1-1,weights=1/N1Error,data=LIMSFullDF)
+#VarModel=lm(N1Error~N1-1,weights=1/N1Error^2,data=LIMSFullDF)
 
-summary(UnWeightedModel)
-summary(SDModel)
-summary(VarModel)
+#summary(UnWeightedModel)
+#summary(SDModel)
+#summary(VarModel)
 ```
 
 ```{r Residue}
 UsedDF =  LIMSFullDF%>%
     mutate(PredN1Un=predict(UnWeightedModel,.))%>%
-    mutate(PredN1SD=predict(SDModel,.))%>%
-    mutate(PredN1Var=predict(VarModel,.))%>%
+    #mutate(PredN1SD=predict(SDModel,.))%>%
+    #mutate(PredN1Var=predict(VarModel,.))%>%
     mutate(WeirdVar=ifelse(N1Error/PredN1Un>2,"Unexpected high Varience","Expected range of varience"))
 
 UsedDF%>%
@@ -57,7 +57,7 @@ UsedDF%>%
 ```
 
 
-```{r LM test,fig.height = 14, fig.width = 14}
+```{r LM test,fig.height = 10, fig.width = 10}
 #ifelse(BCoV>0,BCoV,0))
 errorband=F
 
@@ -73,8 +73,8 @@ Limits=c(min(MadLIMSData$Date,na.rm = TRUE),max(MadLIMSData$Date,na.rm = TRUE))
 MadBoxPlot=ggplot()+
   #geom_point(aes(x=Date,y=N1),data=MadLIMSData)+
   geom_smooth(aes(x=Date,y=N1,color="Unweighted"),span=.33,se=errorband,data=FilteredMadBoxPlot)+
-  geom_smooth(aes(x=Date,y=N1,color="SD", weight=PredN1SD/(N1Error)),span=.33,se=errorband,data=MadLIMSData)+
-  geom_smooth(aes(x=Date,y=N1,color="Var", weight=PredN1Var^2/(N1Error)^2),span=.33,se=errorband,data=MadLIMSData)+
+  geom_smooth(aes(x=Date,y=N1,color="SD", weight=PredN1Un/(N1Error)),span=.33,se=errorband,data=MadLIMSData)+
+  geom_smooth(aes(x=Date,y=N1,color="Var", weight=PredN1Un^2/(N1Error)^2),span=.33,se=errorband,data=MadLIMSData)+
   Header_theme(ConfigOption)
 
 N1LogGra=MadBoxPlot+
@@ -114,6 +114,6 @@ FinalGraphic=ggarrange(N1Graphics,CasesGraphics,nrow=1,align="hv")
 
 MainComp=ggarrange(N1LogGra,CaseLinGra,nrow=2,align="hv",common.legend = T)
 
-FinalGraphic
+MainComp
 
 ```
