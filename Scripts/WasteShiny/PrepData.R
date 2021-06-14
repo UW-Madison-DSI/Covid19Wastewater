@@ -45,10 +45,13 @@ LIMSFullDF=read_excel(AllData,col_types=c(rep("guess",48),"text",rep("guess",12)
          BCoV=as.numeric(BCoV))%>%
   mutate(Site=ifelse(Site=="Madison Metro","Madison",Site))%>%
   select(Date,Site, BCoV, N1,N1Error,N2, N2Error,PMMoV,Pop)%>%
-  filter(N1Error>0)
+  filter(N1Error>0)%>%
+  mutate(Site=ifelse(Site=="Covid Sewage UW DORM","UW-LakeShore",Site),Site=ifelse(Site=="Covid Sewage UW Sell","UW-Sellery",Site))%>%
+  #mutate(temp=ifelse(grep("Madison",Site)&Site!="Madison",paste("MMSD",split(Site,sep="-")[1]),Site))
 
 
-#LatWasteDF=LIMSFullDF
+# LatWasteDF=LIMSFullDF%>%
+#   filter(grep("Madison",Site))
 
 
 

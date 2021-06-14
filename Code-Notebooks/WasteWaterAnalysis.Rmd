@@ -441,27 +441,29 @@ One solution to the noisy data is to instead look at boxes of days. Doing this s
 NovemberBreak=seq(from=mdy("12/18/2020"),to=mdy("1/25/2021"),by=1)
 
 shift=-0
-LeftDate=min(LatWasteDF$Date)
-RightDate=max(LatWasteDF$Date)
+LeftDate=min(LIMSFullDF$Date)
+RightDate=max(LIMSFullDF$Date)
 
-p1=LatWasteDF%>%
-  filter((Site=="UW-Sellery")|(Site=="UW-LakeShore"))%>%
+p1=LIMSFullDF%>%
+  filter((Site=="UW-LakeShore")|(Site=="UW-Sellery"))%>%
   filter(!(Date %in% NovemberBreak))%>%
   mutate(Loc="10")%>%
+  mutate(Loc=ifelse(Site=="UW-LakeShore"&Date<mdy("3/14/2021"),"5",Loc))%>%
   mutate(Loc=ifelse(Site=="UW-LakeShore"&Date<mdy("1/25/2021"),"4",Loc))%>%
   mutate(Loc=ifelse(Site=="UW-LakeShore"&Date<mdy("12/18/2020"),"3",Loc))%>%
   mutate(Loc=ifelse(Site=="UW-LakeShore"&Date<mdy("11/18/2020"),"2",Loc))%>%
-  mutate(Loc=ifelse(Site=="UW-LakeShore"&Date<mdy("10/18/2020"),"1",Loc))%>%
+  mutate(Loc=ifelse(Site=="UW-LakeShore"&Date<mdy("10/6/2020"),"1",Loc))%>%
   
+  mutate(Loc=ifelse(Site=="UW-Sellery"&Date<mdy("3/12/2021"),"6",Loc))%>%
   mutate(Loc=ifelse(Site=="UW-Sellery"&Date<mdy("2/5/2021"),"5",Loc))%>%
   #mutate(Loc=ifelse(Site=="UW-Sellery"&Date<mdy("12/18/2020"),"4",Loc))%>%
   mutate(Loc=ifelse(Site=="UW-Sellery"&Date<mdy("12/18/2020"),"3",Loc))%>%
   mutate(Loc=ifelse(Site=="UW-Sellery"&Date<mdy("11/4/2020"),"2",Loc))%>%
-  mutate(Loc=ifelse(Site=="UW-Sellery"&Date<mdy("10/11/2020"),"1",Loc))%>%
+  mutate(Loc=ifelse(Site=="UW-Sellery"&Date<mdy("10/18/2020"),"1",Loc))%>%
   ggplot()+
   geom_boxplot(aes(y=N1,x=Date,group=Loc),fill="light blue",show.legend = FALSE)+
-  #geom_point(aes(y=N1,x=Date,color=Loc),fill="light blue")+
-  scale_y_log10()+
+  #geom_point(aes(y=N1,x=Date,color=Loc),fill="light blue",show.legend = FALSE)+
+  #scale_y_log10()+
   facet_wrap(~Site)+
   ylab("N1 (GC/L)")+
   scale_x_date(limits=c(LeftDate,RightDate))+ Header_theme(ConfigOption)
@@ -480,16 +482,88 @@ p2=Buildplot_gen(
       MainDF=RelCaseLongDF,
       Loc="Site",
       LineDF=RelCaseLongRollDF,
-      DateLimits=Date_lim_long+shift,
+      DateLimits=c(LeftDate,RightDate)+shift,
       Standards=ConfigOption,
       AxisPos="bottom",
       LineColor="red",
-      Colplot=F,scalesF="free_y")+
+      Colplot=T,scalesF="free_y")+
       theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
             axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
             plot.margin = unit(c(.5,0,0,0), "cm"))
 
 annotate_figure(top=text_grob("Dorm data with ad hoc binning",size=15),ggarrange(p1,p2,nrow = 2,align="hv"))
+
+#think of cases log is natural for concern but not for count
+#why would you want to focus on smaller values?
+#noise - have to interp 1 value is not perfect rep
+#log is natural for concentration 
+
+#do for other data-hope for corelation
+#do some kind of running number
+
+#next things
+#weighted regression-adjacent dates?-n1error^2,N1error,filtered weird values,compare residuals,R^2,smooth line of reg plotted together.
+#hack to remove outliers, compare options
+#1/Dif() - try later - day to day dependence
+
+#create LM outliers comp file
+#Have tons of clean data - look at for Madison - extend to interceptors? - other places - see if information holds. confidence in data
+#Best shot at clean data - rig tested
+
+#next: look at variance, PMMoV, %BCoV
+
+#How to link to cases
+#How to connect data of 2 frequency
+#
+#
+#
+```
+
+```{r}
+LIMSFullDFPure=LIMSFullDF%>%
+  filter(BCoV!=-1)
+
+LIMSFullDFRoll=RollAvg(LIMSFullDFPure,var=c("N1","PMMoV"))
+
+
+ui <- fluidPage(
+  titlePanel("Varience Thresholding"),
+  sidebarLayout(
+    sidebarPanel(width=2,
+      sliderInput(inputId = "Offset",
+                  label = "Offset N1 Data",
+                  min = -14,
+                  max = 14,
+                  value = 2),
+
+    ),
+    mainPanel(
+      tabsetPanel(type = "tabs",
+       tabPanel("VSPlot", plotOutput(outputId = "VSPlot",height = "800"))
+       )
+    )
+  )
+)
+server <- function(input, output) {
+
+  UsedDF = reactive({
+    LIMSFullDF2=LIMSFullDFRoll%>%
+      mutate(Date=Date + input$Offset)
+    
+    return(inner_join(RelCaseLongRollDF,LIMSFullDF2,by=c("Date","Site")))
+  })
+  
+  output$VSPlot <- renderPlot({
+    GRPlot=UsedDF()%>%
+      ggplot()+aes(x=N1,y=Cases)+geom_point()+geom_smooth(method=lm)+scale_y_log10()+scale_x_log10()
+    
+    return(GRPlot)
+  })
+
+}
+shinyApp(ui, server)
+
+LIMSFullDF
 ```
 
 

@@ -114,7 +114,7 @@ LargePopAreas=c("Madison","Hudson","Kenosha","Wausau","Oshkosh")
 
 
 LIMSFullDF%>%
-  ggplot()+aes(x=N1,y=N1Error/N1)+geom_point()+
+  ggplot()+aes(x=N1,y=N1Error)+geom_point()+
   scale_y_log10()+
   scale_x_log10()+ 
   Header_theme(ConfigOption)+
@@ -192,13 +192,13 @@ TestingDF%>%
   geom_point()+facet_wrap(~Site)+
   scale_y_log10()
 
-LatCaseDF%>%
-  filter(Site=="Madison")%>%
-  filter(!is.na(Cases))%>%
-  filter(!is.na(Date))%>%
-  ggplot()+aes(x=Date,y=Cases)+geom_point()+
-  scale_x_date(limits=Limits)+facet_wrap(~Site)+
-  scale_y_log10()
+# LatCaseDF%>%
+#   filter(Site=="Madison")%>%
+#   filter(!is.na(Cases))%>%
+#   filter(!is.na(Date))%>%
+#   ggplot()+aes(x=Date,y=Cases)+geom_point()+
+#   scale_x_date(limits=Limits)+facet_wrap(~Site)+
+#   scale_y_log10()
 ```
 
 ```{r LM Creation extended,fig.height = 10, fig.width = 14}
@@ -215,7 +215,7 @@ VarN1LIMSMadMode = LIMSFullDF%>%
 VarN1HFDMode=lm(data=HFGVar,N1Error~N1-1)
 
 
-VarN1LIMSMode=lm(N1Error~N1-1,data=LIMSFullDF)
+VarN1LIMSMode=lm(N1Error~N1,weights=1/N1Error^2,data=LIMSFullDF)
 VarN2LIMSMode=lm(N2Error~N2-1,data=LIMSFullDF)
 
 VarN1N2LIMSMode=lm(N1Error~N1+N2-1,data=LIMSFullDF)
@@ -261,10 +261,10 @@ LIMSWExpErrorDF%>%
             plot.margin = unit(c(.5,0,0,0), "cm"))
 
 LIMSWExpErrorDF%>%
-  ggplot()+aes(x=N1)+geom_point(aes(y=(N1Error-0.08185*PredN1Var)/(0.08185*PredN1Var)))+
+  ggplot()+aes(x=N1)+geom_point(aes(y=PredN1Var-N1Error))+
   #geom_point(aes(y=PredN1Var/PredN1Var),color="red")+
   #scale_y_log10()+
-  scale_x_log10()+ 
+  #scale_x_log10()+ 
   Header_theme(ConfigOption)+
       theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
             axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
