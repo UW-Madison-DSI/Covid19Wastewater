@@ -88,3 +88,8 @@ MadAllMeans%>%
   mutate(MeanVsN1=abs(N1Mean-N1)))
 
 ```
+
+```{r Varience calculated}
+
+
+```

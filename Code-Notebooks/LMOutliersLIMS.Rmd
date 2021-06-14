@@ -28,24 +28,71 @@ LIMSFullDFRoll=RollAvg(LIMSFullDF,n=21,var=c("N1","N1Error"))%>%
 
 ```{r LM gen}
 
+#N1~N1Error
+#N1Error grows with N1
+#Need to normalize N1Error
+
+#the weights N1/N1Error
+#Predicted error:some constant*value 
+#find constant with regression
+
+#Implicit date correlation
+
+#N1~Date(adjacent N1 values), weighting=N1/N1Error
+
+#Estimate  want football shape
+#Pred N1 draw smooth of N1 with weights with large normalized variance
+#cant fill in values but have smooth curve
+
+#State the regression problem clearly
+#2 steps
+#We want to find a curve of N1 based on Date and N1Error
+#problem: N1Error strongly correlates with N1
+#Solution: Normalize by N1
+#subProblem Predict N1Error from N1
+#Simple LM
+#Normalize with N1Error / PredictedN1Error
+
+#PredError/N1Error
+#N1~Date,
+
 UnWeightedModel=lm(N1Error~N1-1,data=LIMSFullDF)
-#SDModel=lm(N1Error~N1-1,weights=1/N1Error,data=LIMSFullDF)
-#VarModel=lm(N1Error~N1-1,weights=1/N1Error^2,data=LIMSFullDF)
+SDModel=lm(N1Error~N1-1,weights=1/N1Error,data=LIMSFullDF)
+VarModel=lm(N1Error~N1-1,weights=1/N1Error^2,data=LIMSFullDF)
 
 #summary(UnWeightedModel)
 #summary(SDModel)
 #summary(VarModel)
+
+UsedDF%>%
+  ggplot()+aes(x=N1)+geom_point(aes(y=log(N1Error)-log(0.08188*N1)))+scale_x_log10()
+
+UsedDF%>%
+  ggplot()+aes(x=N1)+geom_point(aes(y=N1Error-0.08188*N1))+scale_x_log10()
+
+UsedDF%>%
+  ggplot()+aes(x=N1)+geom_point(aes(y=N1Error/(0.08188*N1)))+scale_x_log10()+scale_y_log10()
+#N1Error~N1 weight on 1/N1Error^2
+#norm in reg y is predicted by x
+
+
+log(var(seq(1,10)))
+var(log(seq(1,10)))
+
+data.frame(x=seq(1,100))%>%
+  mutate(vars=max(seq(1,10)))
 ```
 
 ```{r Residue}
+#predict(UnWeightedModel,.)
 UsedDF =  LIMSFullDF%>%
-    mutate(PredN1Un=predict(UnWeightedModel,.))%>%
+    mutate(PredN1Un=N1)%>%
     #mutate(PredN1SD=predict(SDModel,.))%>%
     #mutate(PredN1Var=predict(VarModel,.))%>%
     mutate(WeirdVar=ifelse(N1Error/PredN1Un>2,"Unexpected high Varience","Expected range of varience"))
 
 UsedDF%>%
-  ggplot()+aes(x=N1)+geom_point(aes(y=N1Error-PredN1Un))+
+  ggplot()+aes(x=N1)+geom_point(aes(y=N1Error))
   scale_x_log10()
 UsedDF%>%
   ggplot()+aes(x=N1)+geom_point(aes(y=N1Error-PredN1SD))+
@@ -54,12 +101,15 @@ UsedDF%>%
   ggplot()+aes(x=N1)+geom_point(aes(y=N1Error-PredN1Var))+
   scale_x_log10()
 
+
+#Weighted regression package
 ```
 
 
-```{r LM test,fig.height = 10, fig.width = 10}
+```{r LM test,fig.height = 8, fig.width = 10}
 #ifelse(BCoV>0,BCoV,0))
 errorband=F
+SpanN1=.33
 
 FilteredMadBoxPlot=UsedDF%>%
   filter(Site =="Madison")%>%
@@ -72,10 +122,14 @@ Limits=c(min(MadLIMSData$Date,na.rm = TRUE),max(MadLIMSData$Date,na.rm = TRUE))
 
 MadBoxPlot=ggplot()+
   #geom_point(aes(x=Date,y=N1),data=MadLIMSData)+
-  geom_smooth(aes(x=Date,y=N1,color="Unweighted"),span=.33,se=errorband,data=FilteredMadBoxPlot)+
-  geom_smooth(aes(x=Date,y=N1,color="SD", weight=PredN1Un/(N1Error)),span=.33,se=errorband,data=MadLIMSData)+
-  geom_smooth(aes(x=Date,y=N1,color="Var", weight=PredN1Un^2/(N1Error)^2),span=.33,se=errorband,data=MadLIMSData)+
+  geom_smooth(aes(x=Date,y=N1,color="Filltered"),span=SpanN1,se=errorband,data=FilteredMadBoxPlot)+
+  geom_smooth(aes(x=Date,y=N1,color="SD", weight=N1/(N1Error)),span=SpanN1,se=errorband,data=MadLIMSData)+
+  geom_smooth(aes(x=Date,y=N1,color="Var", weight=N1^2/(N1Error)^2),span=SpanN1,se=errorband,data=MadLIMSData)+
   Header_theme(ConfigOption)
+
+loess(N1~Date,weight=N1/(N1Error),data=MadLIMSData)
+
+
 
 N1LogGra=MadBoxPlot+
   scale_y_log10()+
