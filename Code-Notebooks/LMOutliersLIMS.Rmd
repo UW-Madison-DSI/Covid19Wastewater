@@ -73,8 +73,8 @@ Limits=c(min(MadLIMSData$Date,na.rm = TRUE),max(MadLIMSData$Date,na.rm = TRUE))
 MadBoxPlot=ggplot()+
   #geom_point(aes(x=Date,y=N1),data=MadLIMSData)+
   geom_smooth(aes(x=Date,y=N1,color="Unweighted"),span=.33,se=errorband,data=FilteredMadBoxPlot)+
-  geom_smooth(aes(x=Date,y=N1,color="SD", weight=1/(N1Error)),span=.33,se=errorband,data=MadLIMSData)+
-  geom_smooth(aes(x=Date,y=N1,color="Var", weight=1/(N1Error)^2),span=.33,se=errorband,data=MadLIMSData)+
+  geom_smooth(aes(x=Date,y=N1,color="SD", weight=PredN1SD/(N1Error)),span=.33,se=errorband,data=MadLIMSData)+
+  geom_smooth(aes(x=Date,y=N1,color="Var", weight=PredN1Var^2/(N1Error)^2),span=.33,se=errorband,data=MadLIMSData)+
   Header_theme(ConfigOption)
 
 N1LogGra=MadBoxPlot+
@@ -94,7 +94,7 @@ CasePlots=LatCaseDF%>%
   filter(Site=="Madison")%>%
   ggplot()+aes(x=Date,y=Cases)+
   geom_point()+
-  geom_smooth(se=F,span=.33)+
+  geom_smooth(se=F,span=.22)+
   scale_x_date(limits=Limits)
   
 CaseLogGra=CasePlots+
@@ -111,6 +111,8 @@ CaseLinGra=CasePlots+
 CasesGraphics=ggarrange(CaseLogGra,CaseLinGra,nrow=2,align="hv")
 
 FinalGraphic=ggarrange(N1Graphics,CasesGraphics,nrow=1,align="hv")
+
+MainComp=ggarrange(N1LogGra,CaseLinGra,nrow=2,align="hv",common.legend = T)
 
 FinalGraphic
 
