@@ -37,6 +37,8 @@ LIMSFullDFRoll=RollAvg(LIMSFullDF,n=21,var=c("N1","N1Error"))%>%
 
 ```{r LIMS vs long dataset, include = FALSE}
 
+
+
 MadLIMSDF=LIMSFullDF%>%
   filter(Site=="Madison")%>%
   select(Date,N1)%>%
@@ -80,63 +82,7 @@ MadBothDF%>%
 
 ```
 
-```{r Data set has comp to previous data sets, fig.height = 6, fig.width = 13}
-MadLIMSDF2=MadLIMSDF%>%
-  mutate(Date=Date-1)
 
-
-MadBothDF=full_join(MadLIMSDF,MadHFDF,by=c("Date"))%>%
-  rename(LIMSN1=N1.x,HFN1=N1.y)%>%
-  mutate(Diff=HFN1-LIMSN1,Diff=ifelse(is.na(HFN1),LIMSN1,Diff),Diff=ifelse(is.na(LIMSN1),HFN1,Diff))%>%
-  mutate(Missing=ifelse(is.na(HFN1),"N1 missing in HF data","No missing data"))%>%
-  mutate(Missing=ifelse(is.na(LIMSN1),"N1 missing in LIMS data",Missing))
-
-MadHFMeanDF=MadHFDF%>%
-  filter(Site=="Madison")%>%
-  group_by(Date)%>%
-  summarise(N1GeoMean=exp(mean(log(N1),na.rm = TRUE)),N1Mean=mean(N1,na.rm = TRUE))
-
-
-ggplot()+
-  geom_point(aes(x=Date,y=N1,shape="HF DF",color=`Filter replicates`),data=MadHFDF)+
-  geom_point(aes(x=Date-1,y=N1,shape="Longitudinal"), data = MadLongDF ,size=3)+
-  geom_point(aes(x=Date-.25,y=N1GeoMean,shape="HF Geo Mean"),data = MadHFMeanDF,size=3)+
-  geom_point(aes(x=Date+.25,y=N1Mean,shape="HF Mean"),data = MadHFMeanDF,size=3)+
-  #geom_point(aes(x=Date-1,y=N1,shape="LIMS"),data = MadLIMSDF,size=3)+
-  scale_y_log10()+
-  scale_x_date(limits=c(N1Start,N1End))+
-  ggtitle("Both datasets are identical to a point")+
-  ylab("N1")+ Header_theme(ConfigOption)+
-      theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
-            axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
-            plot.margin = unit(c(.5,0,0,0), "cm"))
-
-
-MadLongDF2=MadLongDF%>%
-  mutate(Date=Date-1)
-
-MadAllMeans=full_join(MadHFMeanDF,MadLongDF2,by=c("Date"))%>%
-  mutate(GeoMeanVsN1=abs(N1GeoMean-N1))%>%
-  mutate(MeanVsN1=abs(N1Mean-N1))%>%
-  filter(!is.na(GeoMeanVsN1))
-
-MadAllMeans%>%
-  ggplot()+aes(x=Date)+
-  geom_point(aes(y=MeanVsN1,color="mean"),size=2)+
-  geom_point(aes(y=GeoMeanVsN1,color="geomean"),size=2)+
-  scale_x_date(limits=c(N1Start,N1End))
-
-
-MadAllMeansRounded=MadAllMeans%>%
-  mutate(N1GeoMean=round(N1GeoMean),N1Mean=round(N1Mean))%>%
-  mutate(GeoMeanVsN1=abs(N1GeoMean-N1))%>%
-  mutate(MeanVsN1=abs(N1Mean-N1))
-MadAllMeans%>%
-  ggplot()+aes(x=Date)+
-  geom_point(aes(y=MeanVsN1,color="mean"),size=2)+
-  geom_point(aes(y=GeoMeanVsN1,color="geomean"),size=2)+
-  scale_x_date(limits=c(N1Start,N1End))
-```
 
 ```{r Summary of the data}
 SiteOptions=c("Hudson","Kenosha","Platteville","Madison", "Merrill","Plymouth","River Falls","Sun Prairie","Wausau","Oshkosh")
@@ -269,7 +215,7 @@ VarN1LIMSMadMode = LIMSFullDF%>%
 VarN1HFDMode=lm(data=HFGVar,N1Error~N1-1)
 
 
-VarN1LIMSMode=lm(log(N1Error)~N1-1,data=LIMSFullDF)
+VarN1LIMSMode=lm(N1Error~N1-1,data=LIMSFullDF)
 VarN2LIMSMode=lm(N2Error~N2-1,data=LIMSFullDF)
 
 VarN1N2LIMSMode=lm(N1Error~N1+N2-1,data=LIMSFullDF)
@@ -389,6 +335,8 @@ ggarrange(aa,ab,nrow=1,align="hv")
 
 ```{r shiny controlled thresholding}
 
+SiteOptions2=c("Kenosha","Madison", "Sun Prairie","Wausau")
+
 ui <- fluidPage(
   titlePanel("Varience Thresholding"),
   sidebarLayout(
@@ -398,6 +346,9 @@ ui <- fluidPage(
                   min = 1,
                   max = 7.5,
                   value = 2),
+      selectInput(inputId = "Site",
+                  label = "Site",
+                  choices=SiteOptions2)
     ),
     mainPanel(
       tabsetPanel(type = "tabs",
