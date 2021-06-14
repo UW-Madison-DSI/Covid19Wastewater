@@ -5,6 +5,7 @@ HFGWasteFN = "../../UntrackedData/HFG data for stats preliminary 3-18-21.xlsx"
 HFGCaseFN="../../UntrackedData/HighFreq_CaseData_2021-05-07.csv"
 LatMMSDFN = "../../UntrackedData/MMSD_Cases.2021-05-21.csv"
 
+
 LatCaseDF=CovidDataPARSER(LatSpringCaseFN,LatFallCaseFN,LatMMSDFN)%>%
   filter(!is.na(Site))%>%
   select(Date,Site,Cases,Tests,Per_pos)
@@ -46,7 +47,7 @@ LIMSFullDF=read_excel(AllData,col_types=c(rep("guess",48),"text",rep("guess",12)
   mutate(Site=ifelse(Site=="Madison Metro","Madison",Site))%>%
   select(Date,Site, BCoV, N1,N1Error,N2, N2Error,PMMoV,Pop)%>%
   filter(N1Error>0)%>%
-  mutate(Site=ifelse(Site=="Covid Sewage UW DORM","UW-LakeShore",Site),Site=ifelse(Site=="Covid Sewage UW Sell","UW-Sellery",Site))%>%
+  mutate(Site=ifelse(Site=="Covid Sewage UW DORM","UW-LakeShore",Site),Site=ifelse(Site=="Covid Sewage UW Sell","UW-Sellery",Site))
   #mutate(temp=ifelse(grep("Madison",Site)&Site!="Madison",paste("MMSD",split(Site,sep="-")[1]),Site))
 
 

@@ -9,21 +9,14 @@ output: html_document
 library(shiny)
 library(ggpubr)
 library(dplyr)
-library(shinydashboard)
-library(shinyjqui)
-library(shinycssloaders)
+
 
 #Data Files and prep work
 source("../Scripts/GenPlotMaking.R")
 source("../Scripts/WasteWaterDataProccess.R")
 source("../Scripts/CassesDataProccess.R")
 source("../Scripts/HelperFunctions.R")
-LatWasteFN <- "../../UntrackedData/WW SARS-COV-2 Data V5.xlsx"
-LatSpringCaseFN="../../UntrackedData/SpringSemester_CasesByDorm.tsv"
-LatFallCaseFN="../../UntrackedData/FallSemester_CasesByDorm.tsv"
-HFGWasteFN = "../../UntrackedData/HFG data for stats preliminary 3-18-21.xlsx"
-HFGCaseFN="../../UntrackedData/HighFreq_CaseData_2021-05-07.csv"
-LatMMSDFN = "../../UntrackedData/MMSD_Cases.2021-05-21.csv"
+
 
 source("../Scripts/WasteShiny/PrepData.R", local = TRUE)
 
@@ -31,4 +24,94 @@ source("../Scripts/WasteShiny/PrepData.R", local = TRUE)
 LIMSFullDFRoll=RollAvg(LIMSFullDF,n=21,var=c("N1","N1Error"))%>%
   filter(!is.nan(N1)&!is.nan(N1Error))%>%
   select(Date,Site,N1,N1Error)
+```
+
+```{r LM gen}
+
+UnWeightedModel=lm(N1Error~N1-1,data=LIMSFullDF)
+SDModel=lm(N1Error~N1-1,weights=1/N1Error,data=LIMSFullDF)
+VarModel=lm(N1Error~N1-1,weights=1/N1Error^2,data=LIMSFullDF)
+
+summary(UnWeightedModel)
+summary(SDModel)
+summary(VarModel)
+```
+
+```{r Residue}
+UsedDF =  LIMSFullDF%>%
+    mutate(PredN1Un=predict(UnWeightedModel,.))%>%
+    mutate(PredN1SD=predict(SDModel,.))%>%
+    mutate(PredN1Var=predict(VarModel,.))%>%
+    mutate(WeirdVar=ifelse(N1Error/PredN1Un>2,"Unexpected high Varience","Expected range of varience"))
+
+UsedDF%>%
+  ggplot()+aes(x=N1)+geom_point(aes(y=N1Error-PredN1Un))+
+  scale_x_log10()
+UsedDF%>%
+  ggplot()+aes(x=N1)+geom_point(aes(y=N1Error-PredN1SD))+
+  scale_x_log10()
+UsedDF%>%
+  ggplot()+aes(x=N1)+geom_point(aes(y=N1Error-PredN1Var))+
+  scale_x_log10()
+
+```
+
+
+```{r LM test,fig.height = 14, fig.width = 14}
+#ifelse(BCoV>0,BCoV,0))
+errorband=F
+
+FilteredMadBoxPlot=UsedDF%>%
+  filter(Site =="Madison")%>%
+  filter(WeirdVar!="Unexpected high Varience")
+
+MadLIMSData=UsedDF%>%
+  filter(Site =="Madison")
+
+Limits=c(min(MadLIMSData$Date,na.rm = TRUE),max(MadLIMSData$Date,na.rm = TRUE))
+
+MadBoxPlot=ggplot()+
+  #geom_point(aes(x=Date,y=N1),data=MadLIMSData)+
+  geom_smooth(aes(x=Date,y=N1,color="Unweighted"),span=.33,se=errorband,data=FilteredMadBoxPlot)+
+  geom_smooth(aes(x=Date,y=N1,color="SD", weight=1/(N1Error)),span=.33,se=errorband,data=MadLIMSData)+
+  geom_smooth(aes(x=Date,y=N1,color="Var", weight=1/(N1Error)^2),span=.33,se=errorband,data=MadLIMSData)+
+  Header_theme(ConfigOption)
+
+N1LogGra=MadBoxPlot+
+  scale_y_log10()+
+  facet_wrap(~Site,scales = "free_y")+
+  ggtitle("N1 curve filtered from weird values")
+  #scale_x_date(limits=c(N1Start,N1End))+
+
+N1LinGra=MadBoxPlot+
+    theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+      axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
+      plot.margin = unit(c(.5,0,0,0), "cm"))
+    
+N1Graphics=ggarrange(N1LogGra,N1LinGra,nrow=2,align="hv",legend = "none")
+    
+CasePlots=LatCaseDF%>%
+  filter(Site=="Madison")%>%
+  ggplot()+aes(x=Date,y=Cases)+
+  geom_point()+
+  geom_smooth(se=F,span=.33)+
+  scale_x_date(limits=Limits)
+  
+CaseLogGra=CasePlots+
+  scale_y_log10()+
+  facet_wrap(~Site,scales = "free_y")+
+  Header_theme(ConfigOption)+
+  ggtitle("Madison Case Data")
+CaseLinGra=CasePlots+
+  Header_theme(ConfigOption)+
+  theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+    axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
+    plot.margin = unit(c(.5,0,0,0), "cm"))
+    
+CasesGraphics=ggarrange(CaseLogGra,CaseLinGra,nrow=2,align="hv")
+
+FinalGraphic=ggarrange(N1Graphics,CasesGraphics,nrow=1,align="hv")
+
+FinalGraphic
+
 ```
