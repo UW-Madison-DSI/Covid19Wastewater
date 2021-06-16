@@ -6,10 +6,11 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
+#library(MASS)
 library(shiny)
 library(ggpubr)
 library(dplyr)
-
+library(lmtest)
 
 #Data Files and prep work
 source("../Scripts/GenPlotMaking.R")
@@ -26,148 +27,216 @@ LIMSFullDFRoll=RollAvg(LIMSFullDF,n=21,var=c("N1","N1Error"))%>%
   select(Date,Site,N1,N1Error)
 ```
 
-```{r LM gen}
+```{r LM no weight gen}
+LIMSFullDF%>%
+  ggplot()+geom_histogram(aes(x=N1), bins=90)#+scale_y_log10()
 
-#N1~N1Error
-#N1Error grows with N1
-#Need to normalize N1Error
+graphLM = function(LM){
+  par(mfrow=c(2,2)) # init 4 charts in 1 panel
+  return(plot(LM))
+}
 
-#the weights N1/N1Error
-#Predicted error:some constant*value 
-#find constant with regression
+#wt <- 1 / lm(abs(model$residuals) ~ model$fitted.values)$fitted.values^2
+UnWeightedModel=lm(N1Error~N1,weights=1+N1Error*0,data=LIMSFullDF)
+sumVar=1/mean(weights(UnWeightedModel))
 
-#Implicit date correlation
 
-#N1~Date(adjacent N1 values), weighting=N1/N1Error
-
-#Estimate  want football shape
-#Pred N1 draw smooth of N1 with weights with large normalized variance
-#cant fill in values but have smooth curve
-
-#State the regression problem clearly
-#2 steps
-#We want to find a curve of N1 based on Date and N1Error
-#problem: N1Error strongly correlates with N1
-#Solution: Normalize by N1
-#subProblem Predict N1Error from N1
-#Simple LM
-#Normalize with N1Error / PredictedN1Error
-
-#PredError/N1Error
-#N1~Date,
-
-UnWeightedModel=lm(N1Error~N1-1,data=LIMSFullDF)
-SDModel=lm(N1Error~N1-1,weights=1/N1Error,data=LIMSFullDF)
-VarModel=lm(N1Error~N1-1,weights=1/N1Error^2,data=LIMSFullDF)
-
+print("UnWeightedModel")
 #summary(UnWeightedModel)
-#summary(SDModel)
-#summary(VarModel)
-
-UsedDF%>%
-  ggplot()+aes(x=N1)+geom_point(aes(y=log(N1Error)-log(0.08188*N1)))+scale_x_log10()
-
-UsedDF%>%
-  ggplot()+aes(x=N1)+geom_point(aes(y=N1Error-0.08188*N1))+scale_x_log10()
-
-UsedDF%>%
-  ggplot()+aes(x=N1)+geom_point(aes(y=N1Error/(0.08188*N1)))+scale_x_log10()+scale_y_log10()
-#N1Error~N1 weight on 1/N1Error^2
-#norm in reg y is predicted by x
 
 
-log(var(seq(1,10)))
-var(log(seq(1,10)))
 
-data.frame(x=seq(1,100))%>%
-  mutate(vars=max(seq(1,10)))
-```
 
-```{r Residue}
-#predict(UnWeightedModel,.)
+
 UsedDF =  LIMSFullDF%>%
-    mutate(PredN1Un=N1)%>%
-    #mutate(PredN1SD=predict(SDModel,.))%>%
-    #mutate(PredN1Var=predict(VarModel,.))%>%
+    mutate(PredN1Un=predict(UnWeightedModel,.))%>%
     mutate(WeirdVar=ifelse(N1Error/PredN1Un>2,"Unexpected high Varience","Expected range of varience"))
 
-UsedDF%>%
-  ggplot()+aes(x=N1)+geom_point(aes(y=N1Error))
-  scale_x_log10()
-UsedDF%>%
-  ggplot()+aes(x=N1)+geom_point(aes(y=N1Error-PredN1SD))+
-  scale_x_log10()
-UsedDF%>%
-  ggplot()+aes(x=N1)+geom_point(aes(y=N1Error-PredN1Var))+
-  scale_x_log10()
 
 
-#Weighted regression package
+#look into package how do residuals
+
+#diffrent messures of proformence
+
+UsedDF$resid=residuals(UnWeightedModel)
+
+UsedDF%>%
+  ggplot()+aes(x=PredN1Un,y=resid)+geom_point()#+scale_x_log10()
+UsedDF%>%
+  ggplot()+aes(x=resid)+geom_histogram(bins=120)#+scale_x_log10()
+
+#lm(abs(residuals(UnWeightedModel))~fitted(UnWeightedModel))
+
+library(gvlma)
+gvlma(UnWeightedModel)
+# library(caret)
+# library(e1071)
+# SETran=BoxCoxTrans(LIMSFullDF$N1Error)
+# NDF <- cbind(LIMSFullDF, SEN12 = predict(SETran, LIMSFullDF$N1Error))
+# UnWeightedModel2=lm(SEN12~N1,data=NDF)
+#gvlma(UnWeightedModel2)
+#install.packages("e1071")
+
+
+
+graphLM(UnWeightedModel)
+car::ncvTest(UnWeightedModel)
+bptest(UnWeightedModel)
+dwtest(UnWeightedModel)
 ```
 
 
-```{r LM test,fig.height = 8, fig.width = 10}
-#ifelse(BCoV>0,BCoV,0))
-errorband=F
-SpanN1=.33
+```{r var weight}
+# Weights1=1/fitted( lm(abs(residuals(UnWeightedModel))~fitted(UnWeightedModel)) )^2
+# sumVar=1/mean(Weights1)
+# Weights2=Weights1*sumVar
+# VarModel=lm(N1Error~N1,weights=Weights2,data=LIMSFullDF)
 
-FilteredMadBoxPlot=UsedDF%>%
-  filter(Site =="Madison")%>%
-  filter(WeirdVar!="Unexpected high Varience")
 
-MadLIMSData=UsedDF%>%
+VarModel=lm(N1Error~N1,weights=1/(N1Error^2),data=LIMSFullDF)
+sumVar=1/mean(weights(VarModel))
+VarModel=lm(N1Error~N1,weights=sumVar/(N1Error^2),data=LIMSFullDF)
+print("VarWeightedModel")
+
+#summary(VarModel)
+
+VarDF = LIMSFullDF%>%
+    mutate(PredN1Er=predict(VarModel,.))
+
+VarDF$resid=residuals(VarModel)
+VarDF$residweighted=weighted.residuals(VarModel, drop0 = TRUE)
+
+VarDF%>%
+  ggplot()+aes(x=N1,y=residweighted)+geom_point()#+scale_x_log10()#+scale_y_log10()
+VarDF%>%
+  ggplot()+aes(x=residweighted)+geom_histogram()#+scale_x_log10()#+scale_y_log10()
+
+graphLM(VarModel)
+car::ncvTest(VarModel)
+bptest(VarModel)
+
+
+
+```
+
+```{r sd weight}
+# Weights1=1/fitted( lm(abs(residuals(UnWeightedModel))~fitted(UnWeightedModel)) )
+# sumVar=1/mean(Weights1)
+# Weights2=Weights1*sumVar
+# SDModel=lm(N1Error~N1,weights=Weights2,data=LIMSFullDF)
+
+SDModel=lm(N1Error~N1,weights=1/N1Error,data=LIMSFullDF)
+sumVar=1/mean(weights(SDModel))
+SDModel=lm(N1Error~N1,weights=sumVar/N1Error,data=LIMSFullDF)
+
+
+print("SDWeightedModel")
+SDModel=lm(N1Error~N1,weights=sumVar/N1Error,data=LIMSFullDF)
+#summary(SDModel)
+
+SDDF = LIMSFullDF%>%
+    mutate(PredN1Er=predict(SDModel,.))
+
+
+SDDF$resid=residuals(SDModel)
+SDDF$residweighted=weighted.residuals(SDModel, drop0 = TRUE)
+#SDDF$studres=studres(SDModel)
+
+SDDF%>%
+  ggplot()+aes(x=PredN1Er)+#geom_point(aes(y=resid/500,color="resid"))+
+  geom_point(aes(y=residweighted))#+scale_x_log10()
+
+
+SDDF%>%
+  ggplot()+aes(x=residweighted)+geom_histogram(bins=90)#+scale_x_log10()#+scale_y_log10()
+
+graphLM(SDModel)
+car::ncvTest(SDModel)
+bptest(SDModel)
+```
+```{r loess resid}
+MadLIMSData=LIMSFullDF%>%
   filter(Site =="Madison")
 
-Limits=c(min(MadLIMSData$Date,na.rm = TRUE),max(MadLIMSData$Date,na.rm = TRUE))
-
-MadBoxPlot=ggplot()+
-  #geom_point(aes(x=Date,y=N1),data=MadLIMSData)+
-  geom_smooth(aes(x=Date,y=N1,color="Filltered"),span=SpanN1,se=errorband,data=FilteredMadBoxPlot)+
-  geom_smooth(aes(x=Date,y=N1,color="SD", weight=N1/(N1Error)),span=SpanN1,se=errorband,data=MadLIMSData)+
-  geom_smooth(aes(x=Date,y=N1,color="Var", weight=N1^2/(N1Error)^2),span=SpanN1,se=errorband,data=MadLIMSData)+
-  Header_theme(ConfigOption)
-
-loess(N1~Date,weight=N1/(N1Error),data=MadLIMSData)
-
-
-
-N1LogGra=MadBoxPlot+
-  scale_y_log10()+
-  facet_wrap(~Site,scales = "free_y")+
-  ggtitle("N1 curve filtered from weird values")
-  #scale_x_date(limits=c(N1Start,N1End))+
-
-N1LinGra=MadBoxPlot+
-    theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
-      axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
-      plot.margin = unit(c(.5,0,0,0), "cm"))
-    
-N1Graphics=ggarrange(N1LogGra,N1LinGra,nrow=2,align="hv",legend = "none")
-    
-CasePlots=LatCaseDF%>%
+Form=MadLIMSData%>%
+  mutate(Date=as.numeric(Date))%>%
+  loess(formula=N1~Date, span=.33, weights = N1/N1Error^2)
+MadLIMSDataTemp=MadLIMSData
+MadLIMSDataTemp$Fit=predict(Form)
+MadLIMSDataTemp$Resid=residuals(Form)
+MadLIMSDataTemp%>%
   filter(Site=="Madison")%>%
-  ggplot()+aes(x=Date,y=Cases)+
-  geom_point()+
-  geom_smooth(se=F,span=.22)+
-  scale_x_date(limits=Limits)
-  
-CaseLogGra=CasePlots+
-  scale_y_log10()+
-  facet_wrap(~Site,scales = "free_y")+
-  Header_theme(ConfigOption)+
-  ggtitle("Madison Case Data")
-CaseLinGra=CasePlots+
-  Header_theme(ConfigOption)+
-  theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
-    axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
-    plot.margin = unit(c(.5,0,0,0), "cm"))
-    
-CasesGraphics=ggarrange(CaseLogGra,CaseLinGra,nrow=2,align="hv")
+  ggplot(aes(x=Date))+geom_point(aes(y=N1))+geom_line(aes(y=Fit))+facet_wrap(~Site)+scale_y_log10()
 
-FinalGraphic=ggarrange(N1Graphics,CasesGraphics,nrow=1,align="hv")
 
-MainComp=ggarrange(N1LogGra,CaseLinGra,nrow=2,align="hv",common.legend = T)
+MadLIMSDataTemp%>%
+  filter(Site=="Madison")%>%
+  ggplot(aes(x=Fit))+geom_point(aes(y=Resid))+scale_x_log10()
+```
 
-MainComp
+```{r LM test,fig.height = 8, fig.width = 10}
+# #ifelse(BCoV>0,BCoV,0))
+# errorband=F
+# SpanN1=.33
+# 
+# FilteredMadBoxPlot=UsedDF%>%
+#   filter(Site =="Madison")%>%
+#   filter(WeirdVar!="Unexpected high Varience")
+# 
+# MadLIMSData=UsedDF%>%
+#   filter(Site =="Madison")
+# 
+# Limits=c(min(MadLIMSData$Date,na.rm = TRUE),max(MadLIMSData$Date,na.rm = TRUE))
+# 
+# MadBoxPlot=ggplot()+
+#   #geom_point(aes(x=Date,y=N1),data=MadLIMSData)+
+#   geom_smooth(aes(x=Date,y=N1,color="Normal"),span=SpanN1,se=errorband,data=MadLIMSData)+
+#   geom_smooth(aes(x=Date,y=N1,color="Filltered"),span=SpanN1,se=errorband,data=FilteredMadBoxPlot)+
+#   geom_smooth(aes(x=Date,y=N1,color="SD", weight=N1/(N1Error)),span=SpanN1,se=errorband,data=MadLIMSData)+
+#   geom_smooth(aes(x=Date,y=N1,color="Var", weight=N1^2/(N1Error)^2),span=SpanN1,se=errorband,data=MadLIMSData)+
+#   Header_theme(ConfigOption)
+# 
+# #loess(N1~Date,weight=N1/(N1Error),data=MadLIMSData)
+# 
+# 
+# 
+# N1LogGra=MadBoxPlot+
+#   scale_y_log10()+
+#   facet_wrap(~Site,scales = "free_y")+
+#   ggtitle("N1 curve filtered from weird values")
+#   #scale_x_date(limits=c(N1Start,N1End))+
+# 
+# N1LinGra=MadBoxPlot+
+#     theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+#       axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
+#       plot.margin = unit(c(.5,0,0,0), "cm"))
+#     
+# N1Graphics=ggarrange(N1LogGra,N1LinGra,nrow=2,align="hv",legend = "none")
+#     
+# CasePlots=LatCaseDF%>%
+#   filter(Site=="Madison")%>%
+#   ggplot()+aes(x=Date,y=Cases)+
+#   geom_point()+
+#   geom_smooth(se=F,span=.22)+
+#   scale_x_date(limits=Limits)
+#   
+# CaseLogGra=CasePlots+
+#   scale_y_log10()+
+#   facet_wrap(~Site,scales = "free_y")+
+#   Header_theme(ConfigOption)+
+#   ggtitle("Madison Case Data")
+# CaseLinGra=CasePlots+
+#   Header_theme(ConfigOption)+
+#   theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+#     axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
+#     plot.margin = unit(c(.5,0,0,0), "cm"))
+#     
+# CasesGraphics=ggarrange(CaseLogGra,CaseLinGra,nrow=2,align="hv")
+# 
+# FinalGraphic=ggarrange(N1Graphics,CasesGraphics,nrow=1,align="hv")
+# 
+# MainComp=ggarrange(N1LogGra,CaseLinGra,nrow=2,align="hv",common.legend = T)
+# 
+# MainComp
 
 ```
