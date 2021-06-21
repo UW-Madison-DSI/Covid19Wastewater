@@ -40,6 +40,10 @@ graphLM = function(LM){
 UnWeightedModel=lm(N1Error~N1,weights=1+N1Error*0,data=LIMSFullDF)
 sumVar=1/mean(weights(UnWeightedModel))
 
+#use <- instead of =
+#always done so should be done for readability
+#reserve = for passing of parameter
+#passing value not reference
 
 print("UnWeightedModel")
 #summary(UnWeightedModel)
@@ -59,11 +63,22 @@ UsedDF =  LIMSFullDF%>%
 #diffrent messures of proformence
 
 UsedDF$resid=residuals(UnWeightedModel)
-
-UsedDF%>%
-  ggplot()+aes(x=PredN1Un,y=resid)+geom_point()#+scale_x_log10()
-UsedDF%>%
-  ggplot()+aes(x=resid)+geom_histogram(bins=120)#+scale_x_log10()
+#save plot then print it instead
+#better for reuse and saving
+#better when we are using other formats
+#use subroutine to graph
+#1 thought for idea means cleaner process
+#-Be consistent with style-
+#group style - understand styles
+#be free to improve style
+UsedDF %>%
+  ggplot() + 
+  aes(x=PredN1Un,y=resid) +
+  geom_point(size=.05,shape=3) #+scale_x_log10()
+UsedDF %>%
+  ggplot() + 
+  aes(x=resid) +
+  geom_histogram(bins=120)#+scale_x_log10()
 
 #lm(abs(residuals(UnWeightedModel))~fitted(UnWeightedModel))
 
@@ -83,25 +98,444 @@ graphLM(UnWeightedModel)
 car::ncvTest(UnWeightedModel)
 bptest(UnWeightedModel)
 dwtest(UnWeightedModel)
+#data is only iid with other plants
+```
+
+```{r model testing, warning=False}
+
+#make a plot to solve
+
+
+Ajust=1000000000000
+FirstQuintile=summary(LIMSFullDF$N1Error)[2]
+ThirdQuintile=summary(LIMSFullDF$N1Error)[5]
+ModelDF <- LIMSFullDF%>%
+  filter(N1!=0)%>%
+  mutate(N1Error=ifelse(FirstQuintile/Ajust>N1Error,FirstQuintile/Ajust,N1Error))%>%
+  mutate(N1Error=ifelse(ThirdQuintile*Ajust<N1Error,ThirdQuintile*Ajust,N1Error))
 ```
 
 
+```{r}
+
+
+
+ModelDF <- LIMSFullDF
+
+UnWeightedModel <- lm(N1Error~N1-1,weights=rep(1,dim(ModelDF)[1]),data=ModelDF)
+#UnWeightedModelstatistic <- summary(UnWeightedModel)[9:11]
+
+VarModel <- lm(N1Error~N1-1,weights=1/N1Error^2,data=ModelDF)
+#VarModelstatistic <- summary(VarModel)[9:11]
+
+SDModel <- lm(N1Error~N1-1,weights=1/N1Error,data=ModelDF)
+#SDModelstatistic <- summary(SDModel)[9:11]
+
+dumbyDF=data.frame(resid=residuals(UnWeightedModel),Fit=fitted(UnWeightedModel))
+
+
+
+#PredTrans <- lm(N1Error/N1^.7~N1,data=ModelDF)
+Weights2 <- 1/fitted(
+  lm(
+    abs(residuals(UnWeightedModel)) ~ fitted(UnWeightedModel)
+    )
+  )^2
+#predicted SE
+TraditionalModel=lm(N1Error~N1-1,weights=Weights2,data=LIMSFullDF)
+
+
+ModelDF2 <- ModelDF%>%
+  mutate(NoWeightResid=weighted.residuals(UnWeightedModel))%>%
+  mutate(VarResidUn=residuals(VarModel))%>%
+  mutate(SDResidUn=residuals(SDModel))%>%
+  mutate(TradResidUn=residuals(TraditionalModel))%>%
+  #mutate(NormTransResid=weighted.residuals(PredTrans))%>%
+  mutate(NoWeightPred=predict(UnWeightedModel))%>%
+  mutate(VarPred=predict(VarModel))%>%
+  mutate(SDPred=predict(SDModel))%>%
+  mutate(TradPred=predict(TraditionalModel))
+  #mutate(NormTransPred=predict(PredTrans))
+ModelDF2$TempW=Weights2
+
+ModelDF2%>%
+  ggplot()+
+  aes(x=N1) +
+  geom_point(aes(y=N1Error))+
+  geom_point(aes(y=NoWeightPred,color="NoWeightPred"))+
+  geom_point(aes(y=VarPred,color="VarPred"))+
+  geom_point(aes(y=SDPred,color="SDPred"))+
+  geom_point(aes(y=TradPred,color="TradPred"))
+  scale_x_log10()+
+  scale_y_log10()+
+  ggtitle("observed vs predicted (log y, x)")
+
+#y=N1Error/N1^.7
+ModelDF2%>%
+  ggplot()+
+  aes(x=N1) +
+  geom_point(aes(y=TradResidUn, color="Traditional residues"))+
+  geom_point(aes(y=NoWeightResid,color="no weight residues"))+
+  geom_point(aes(y=SDResidUn,color="SE residues"))+
+  geom_point(aes(y=VarResidUn,color="var residues"))+
+  ggtitle("4 Model unweighted residues")
+
+ModelDF2%>%
+  ggplot()+
+  aes(x=N1) +
+  geom_point(aes(y=1/N1Error,color="Varience weight"))+
+  geom_point(aes(y=1,color="1"))+
+  geom_point(aes(y=1/N1Error^.5,color="SE weight"))+
+  geom_point(aes(y=Weights2^.5,color="traditional weights"))+
+  scale_y_log10()+
+  scale_x_log10()+
+  labs(title = "4 Model squareroot weightes (log x,y scale)", y="Weights^.5")
+
+WeightedResidPlot=ModelDF2%>%
+  mutate(SDWeightedResid=SDResidUn/N1Error^.5,
+         TradWeightedResid=TradResidUn*Weights2^.5,
+         VarWeightedResid=VarResidUn/N1Error)%>%
+  pivot_longer(cols=c("SDWeightedResid","TradWeightedResid","VarWeightedResid","NoWeightResid"),
+               names_to = "model")%>%
+  ggplot()+
+  aes(x=N1) +
+  geom_point(aes(y=value,color="No weight"))+
+  facet_wrap(~model,scales = "free")+
+  labs(title = "4 Model weighted residuals", y="weighted resid")
+WeightedResidPlot
+WeightedResidPlot+scale_x_log10()
+
+# ModelDF2%>%
+#   #filter(VarResidUn/N1Error>-1)%>%
+#   ggplot()+
+#   aes(x=N1)+
+#   geom_point(aes(y=VarResidUn/N1Error))+
+#   scale_x_log10()
+
+
+#identical(ModelDF2$VarResidUn/ModelDF2$N1Error,weighted.residuals(VarModel))
+#dif=ModelDF2$VarResidUn/ModelDF2$N1Error-weighted.residuals(VarModel)
+#dif[dif>.000000000000001]
+
+
+dumbyDF%>%
+  ggplot()+
+  aes(x=Fit,y=abs(resid))%>%
+  geom_point()+
+  scale_y_log10()+
+  scale_x_log10()
+
+#eval model fit
+#don't want lm predict
+#go ahead with *1/SE* 1/Var 1 loess analysis
+#todo
+#loess
+#get ideas of what cleans up the data
+#span
+#what prop of data used-want day windows instead?-
+#could approximate
+#look at how many weeks in the data set 2 / number of week
+#find a way to have span depend on independent variables
+#get firm understanding of loess in gen
+#loess vs lowess know why one is better or worse
+#research
+#span might be used to rep time shedding distribution
+#2 week rolling
+#find how span works to know what to pick
+#might want some other time based smoothing
+#asymmetrical span?
+#how to use weighting
+#can we just insert weight
+#local weighting vs global weighting = interaction
+#what does weight parameter do? effect global or local
+#experiment and reverse
+#at least to dials to move
+#span -> 0 = more interpretation
+#experimentation -> research
+#loess(weight=) vs weightedloess vs loess.fit()
+#
+
+#prio
+#make plots of each different set of weights to compare
+#each with a couple spans
+#3 by 3
+#span ~0,2/weeks,~1 by 1,1/se,1/se^2
+#
+
+#masters in math - not worth
+#PHD in DS or cs or stat
+#masters in DS?
+#masters in 
+
+
+#deal with multiple sites? do later- get it working on mad first
+#some other math department?
+#
+#some transformation that fixes 
+#se vs N1
+#evaluate goodness of fit
+#better scaling
+
+#graph
+#
+#
+
+```
+
+```{r how R2 works}
+#rob ML uw mce
+
+#10>0
+#r^2 is 
+#when rss is 0 R2 is 1
+#downweight things above the regressive line
+#down weight things that dont fit mode
+r2RSE <- function(x){
+  #x$w=x$w*0+1
+  #observed-fitted
+  rss <- sum(x$weights * x$residuals^2)
+  mss <- sum(x$weights * x$fitted^2)
+  R2 <- mss/(rss + mss)
+  #1-(rss/(rss+mss))
+  #
+  DF=length(x$weights)-1
+  RSE <- sqrt(rss/(DF))
+  return(list(R2=R2,RSE=RSE))
+}
+
+options(scipen = 50)
+
+r2RSE(SDModel)
+summary(SDModel)
+
+
+#SDModel
+#UnWeightedModel
+#VarModel
+#anova(VarModel)
+
+#get R2 ajusted as well
+
+```
+
+```{r}
+ModelDF2%>%
+  ggplot()+
+  aes(x=N1) +
+  geom_point(aes(y=N1Error))+
+  geom_point(aes(y=NoWeightPred,color="NoWeightPred"))+
+  geom_point(aes(y=VarPred,color="VarPred"))+
+  geom_point(aes(y=SDPred,color="SDPred"))+
+  scale_x_log10()+
+  scale_y_log10()
+
+ModelDF2%>%
+  ggplot()+
+  aes(x=N1) +
+  geom_point(aes(y=N1Error,color=log(1/N1Error^2)))+
+  scale_color_gradient(low = "blue", high = "red", na.value = NA)+
+  scale_x_log10()+
+  scale_y_log10()
+
+
+
+
+ModelDF2$temp1=1/fitted(lm(abs(residuals(UnWeightedModel))~fitted(UnWeightedModel)))^2
+ModelDF2$temp2=1/fitted(lm(abs(residuals(UnWeightedModel))~fitted(UnWeightedModel)))
+ModelDF2%>%
+  ggplot()+
+  aes(x=N1Error) +
+  geom_point(aes(y=temp1,color="recomendend weights"))+
+  geom_point(aes(y=1/N1Error^2,color="1/N1Error^2"))+
+  scale_x_log10()+
+  scale_y_log10()
+ModelDF2%>%
+  ggplot()+
+  aes(x=N1Error) +
+  geom_point(aes(y=temp2,color="recomendend weights"))+
+  geom_point(aes(y=1/N1Error,color="1/N1Error"))+
+  scale_x_log10()+
+  scale_y_log10()
+```
+
+```{r, width=15,height=15}
+library(ggpubr)
+library(limma)
+PointSize=.01
+#make plots of each different set of weights to compare
+#each with a couple spans
+#3 by 3
+#span ~0,2/weeks,~1 by 1,1/se,1/se^2
+#enp.target
+HighSpan <- .2
+MinWeight <- 0
+
+MadModDF <- ModelDF%>%
+  filter(Site=="Madison")%>%
+  select(Date,N1,N1Error)%>%
+  mutate(Date=as.numeric(Date))
+
+BasedPlot <- MadModDF%>%
+  ggplot()+
+  aes(x=Date)+
+  geom_point(aes(y=N1))+
+  scale_y_log10()
+
+LM11 <- loessFit(y=MadModDF$N1,x=MadModDF$Date,weights=rep(1,dim(MadModDF)[1]),span=HighSpan,min.weight=MinWeight)
+
+MadModDF$pred <- LM11$fitted
+G11 <- BasedPlot+
+  geom_line(aes(y=pred),color="red",size=PointSize, data=MadModDF)+
+  ggtitle("weights=1, method=weightedlowess")
+
+LM12 <- loessFit(y=MadModDF$N1,x=MadModDF$Date,weights=1/MadModDF$N1Error,span=HighSpan,min.weight=MinWeight)
+MadModDF$pred <- LM12$fitted
+G12 <- BasedPlot+
+  geom_line(aes(y=pred),color="red",size=PointSize, data=MadModDF)+
+  ggtitle("weights=1/N1Error, method=weightedlowess")
+
+LM13 <- loessFit(y=MadModDF$N1,x=MadModDF$Date,weights=1/(MadModDF$N1Error^2),span=HighSpan,min.weight=MinWeight,)
+MadModDF$pred <- LM13$fitted
+G13 <- BasedPlot+
+  geom_line(aes(y=pred),color="red",size=PointSize, data=MadModDF)+
+  ggtitle("weights=1/N1Error^2, method=weightedlowess")
+
+
+
+LM21 <- loessFit(y=MadModDF$N1,x=MadModDF$Date,weights=rep(1,dim(MadModDF)[1]),span=HighSpan,min.weight=MinWeight,method="loess")
+MadModDF$pred <- LM21$fitted
+G21 <- BasedPlot+
+  geom_line(aes(y=pred),color="red",size=PointSize, data=MadModDF)+
+  ggtitle("weights=1, method=loess")
+
+LM22 <- loessFit(y=MadModDF$N1,x=MadModDF$Date,weights=1/MadModDF$N1Error,span=HighSpan,min.weight=MinWeight,method="loess")
+MadModDF$pred <- LM22$fitted
+G22 <- BasedPlot+
+  geom_line(aes(y=pred),color="red",size=PointSize, data=MadModDF)+
+  ggtitle("weights=1/N1Error, method=loess")
+
+LM23 <- loessFit(y=MadModDF$N1,x=MadModDF$Date,weights=1/MadModDF$N1Error^2,span=HighSpan,min.weight=MinWeight,method="loess")
+MadModDF$pred <- LM23$fitted
+G23 <- BasedPlot+
+  geom_line(aes(y=pred),color="red",size=PointSize, data=MadModDF)+
+  ggtitle("weights=1/N1Error^2, method=loess")
+
+LM31 <- loess(N1~Date,weights=rep(1,dim(MadModDF)[1]),span=HighSpan,data=MadModDF)
+MadModDF$pred <- predict(LM31)
+
+G31 <- BasedPlot+
+  geom_line(aes(y=pred),color="red",size=PointSize, data=MadModDF)+
+  ggtitle("weights=1, method=loess, deg=2")
+
+LM32 <- loess(N1~Date,weights=1/N1Error,span=HighSpan,data=MadModDF)
+MadModDF$pred <- predict(LM32)
+
+G32 <- BasedPlot+
+  geom_line(aes(y=pred),color="red",size=PointSize, data=MadModDF)+
+  ggtitle("weights=1/N1Error, method=loess, deg=2")
+
+LM33 <- loess(N1~Date,weights=1/N1Error^2,span=HighSpan,data=MadModDF)
+MadModDF$pred <- predict(LM33)
+
+G33 <- BasedPlot+
+  geom_line(aes(y=pred),color="red",size=PointSize, data=MadModDF)+
+  ggtitle("weights=1/N1Error^2, method=loess, deg=2")
+
+# LM31 <- loessFit(y=MadModDF$N1,x=MadModDF$Date,weights=MadModDF$N1,span=HighSpan,min.weight=MinWeight,method="loess")
+# MadModDF$pred=LM31$fitted
+# G31=BasedPlot+
+#   geom_line(aes(y=pred),color="red",size=PointSize, data=MadModDF)+
+#   ggtitle("weights=N1, method=loess")
+# 
+# LM32 <- loessFit(y=MadModDF$N1,x=MadModDF$Date,weights=MadModDF$N1/MadModDF$N1Error,span=HighSpan,min.weight=MinWeight,method="loess")
+# MadModDF$pred=LM32$fitted
+# G32=BasedPlot+
+#   geom_line(aes(y=pred),color="red",size=PointSize, data=MadModDF)+
+#   ggtitle("weights=N1/N1Error, method=loess")
+# 
+# LM33 <- loessFit(y=MadModDF$N1,x=MadModDF$Date,weights=MadModDF$N1/MadModDF$N1Error^2,span=HighSpan,min.weight=MinWeight,method="loess")
+# MadModDF$pred=LM33$fitted
+# G33=BasedPlot+
+#   geom_line(aes(y=pred),color="red",size=PointSize, data=MadModDF)+
+#   ggtitle("weights=N1/N1Error^2, method=loess")
+
+ggarrange(G11,G12,G13,G21,G22,G23,G31,G32,G33)
+
+```
+
+```{r percentage of data that 2 weeks contains}
+#max(MadModDF$Date)-min(MadModDF$Date)
+# 
+# 14/252
+# 252/(7*4)
+# ?ggarange
+# .4*252
+# 
+# 176.4/7
+# MadModDF%>%
+#   summarize(n())
+# 189/252*7
+# 
+# LM11=loess(N1~Date,weights=rep(1,dim(MadModDF)[1]),span=MidSpan,data=MadModDF)
+# MadModDF$pred=predict(LM11)
+# T1=BasedPlot+
+#   geom_line(aes(y=pred),color="red",size=PointSize, data=MadModDF)+
+#   ggtitle("weights=1 span=14 days")
+# LM11=loess(N1~Date,weights=rep(1,dim(MadModDF)[1]),enp.target=14,data=MadModDF)
+# MadModDF$pred=predict(LM11)
+# T2=BasedPlot+
+#   geom_line(aes(y=pred),color="red",size=PointSize, data=MadModDF)+
+#   ggtitle("weights=1 span=14 days")
+# T1
+# T2
+```
+
+
+```{r manual weigyt}
+# TempDF=LIMSFullDF%>%
+#   select(Date,Site,N1,N1Error)%>%
+#   mutate(weight=round(max(N1Error^2)/(1000000000*N1Error^2)))
+# 
+# #TempDF.expanded <- TempDF[rep(row.names(TempDF), TempDF$weight), 1:4]
+# 
+# UnWeightedModelTemp <- lm(N1Error~N1-1,weights=rep(1,dim(TempDF.expanded)[1]),data=TempDF.expanded)
+# #UnWeightedModelstatistic <- summary(UnWeightedModel)[9:11]
+# 
+# 
+# TempModelDF2 <- LIMSFullDF%>%
+#   # mutate(NoWeightResid=weighted.residuals(UnWeightedModelTemp,.))%>%
+#   # mutate(VarResid=weighted.residuals(VarModelTemp,.))%>%
+#   # mutate(SDResid=weighted.residuals(SDModelTemp,.))%>%
+#   mutate(NoWeightPred=predict(UnWeightedModelTemp,.))
+# 
+# TempModelDF2%>%
+#   ggplot()+
+#   aes(x=N1) +
+#   geom_point(aes(y=N1Error))+
+#   geom_point(aes(y=NoWeightPred),color="blue")+
+#   scale_x_log10()+
+#   scale_y_log10()
+
+```
+
+
+
 ```{r var weight}
-# Weights1=1/fitted( lm(abs(residuals(UnWeightedModel))~fitted(UnWeightedModel)) )^2
-# sumVar=1/mean(Weights1)
-# Weights2=Weights1*sumVar
-# VarModel=lm(N1Error~N1,weights=Weights2,data=LIMSFullDF)
+Weights1=1/fitted(lm(abs(residuals(UnWeightedModel))~fitted(UnWeightedModel)))^2
+sumVar=1/mean(Weights1)
+Weights2=Weights1*sumVar
+VarModel=lm(N1Error~N1,weights=Weights2,data=LIMSFullDF)
 
 
-VarModel=lm(N1Error~N1,weights=1/(N1Error^2),data=LIMSFullDF)
-sumVar=1/mean(weights(VarModel))
-VarModel=lm(N1Error~N1,weights=sumVar/(N1Error^2),data=LIMSFullDF)
+# VarModel=lm(N1Error~N1-1,weights=1/(N1Error^2),data=LIMSFullDF)
+# sumVar=1/mean(weights(VarModel))
+# VarModel=lm(N1Error~N1-1,weights=sumVar/(N1Error^2),data=LIMSFullDF)
 print("VarWeightedModel")
 
 #summary(VarModel)
 
 VarDF = LIMSFullDF%>%
-    mutate(PredN1Er=predict(VarModel,.))
+    mutate(PredN1ErVar=predict(VarModel,.))
 
 VarDF$resid=residuals(VarModel)
 VarDF$residweighted=weighted.residuals(VarModel, drop0 = TRUE)
@@ -116,6 +550,50 @@ car::ncvTest(VarModel)
 bptest(VarModel)
 
 
+summary(LIMSFullDF$N1Error^2)
+#some points with very small SE far from global mean of SE
+  #Some max in weighting?
+  #Truncation
+  #no values outside interquintile?
+summary(VarModel)
+SDDF%>%
+  ggplot()+
+  aes(x=N1)+
+  geom_point(aes(y=N1Error))+
+  geom_point(aes(y=PredN1ErVar),color="red")+
+  geom_point(aes(y=PredN1Er),color="blue")+
+  scale_x_log10()
+#show whats screwy with variance
+#from basics
+SDDF%>%
+  ggplot()+
+  aes(x=N1Error/N1)+
+  geom_histogram()
+
+#does it move it closer to homosketiskity
+#Want to see what model moves it closer to hemoskasitiy
+#Something analytic about homosketcity
+#Something bad with R^2
+#arbitrary truncate to see if it removes issue
+#left side only? or both
+#So few that you get close to same results
+#describe the issue
+
+#trying to reduce it, not cure it
+#if not good enough try something else
+
+#good model -> 
+
+#Smooth plot of N1
+#Temporal - loess does this - 7 day average does this 2
+#weighting to reduce issues
+#N1Error is IID normal
+#not sure what we are taking for loess
+#try loess, loessfit, weightedloess
+#regression formula
+#next step is to understand
+#don't need to get first part
+#Goal is understanding
 
 ```
 
@@ -125,13 +603,11 @@ bptest(VarModel)
 # Weights2=Weights1*sumVar
 # SDModel=lm(N1Error~N1,weights=Weights2,data=LIMSFullDF)
 
-SDModel=lm(N1Error~N1,weights=1/N1Error,data=LIMSFullDF)
+SDModel=lm(N1Error~N1-1,weights=1/N1Error,data=LIMSFullDF)
 sumVar=1/mean(weights(SDModel))
-SDModel=lm(N1Error~N1,weights=sumVar/N1Error,data=LIMSFullDF)
-
 
 print("SDWeightedModel")
-SDModel=lm(N1Error~N1,weights=sumVar/N1Error,data=LIMSFullDF)
+SDModel=lm(N1Error~N1,weights=1/N1Error,data=LIMSFullDF)
 #summary(SDModel)
 
 SDDF = LIMSFullDF%>%
@@ -143,7 +619,7 @@ SDDF$residweighted=weighted.residuals(SDModel, drop0 = TRUE)
 #SDDF$studres=studres(SDModel)
 
 SDDF%>%
-  ggplot()+aes(x=PredN1Er)+#geom_point(aes(y=resid/500,color="resid"))+
+  ggplot()+aes(x=PredN1Er)+
   geom_point(aes(y=residweighted))#+scale_x_log10()
 
 
@@ -153,90 +629,125 @@ SDDF%>%
 graphLM(SDModel)
 car::ncvTest(SDModel)
 bptest(SDModel)
+
 ```
+
 ```{r loess resid}
 MadLIMSData=LIMSFullDF%>%
   filter(Site =="Madison")
 
-Form=MadLIMSData%>%
+# SDModel=lm(N1Error~N1,weights=1/N1Error,data=MadLIMSData)
+# sumVar=1/mean(weights(SDModel))
+# SDModel=lm(N1Error~N1,weights=sumVar/N1Error,data=MadLIMSData)
+
+MadLIMSDataTemp=MadLIMSData%>%
+  mutate(weight=(1/N1Error^2))
+
+Form=MadLIMSDataTemp%>%
   mutate(Date=as.numeric(Date))%>%
-  loess(formula=N1~Date, span=.33, weights = N1/N1Error^2)
-MadLIMSDataTemp=MadLIMSData
+  loess(formula=N1~Date, span=.24, weights = weight)
 MadLIMSDataTemp$Fit=predict(Form)
-MadLIMSDataTemp$Resid=residuals(Form)
+MadLIMSDataTemp$Resid=weighted.residuals(Form)*sqrt(MadLIMSDataTemp$weight)
 MadLIMSDataTemp%>%
   filter(Site=="Madison")%>%
-  ggplot(aes(x=Date))+geom_point(aes(y=N1))+geom_line(aes(y=Fit))+facet_wrap(~Site)+scale_y_log10()
+  ggplot(aes(x=Date))+geom_point(aes(y=Fit),color="red")+geom_point(aes(y=N1))+facet_wrap(~Site)+scale_y_log10()
 
+LatCaseDF%>%
+  filter(Site=="Madison")%>%
+  ggplot()+aes(x=Date,y=Cases)+
+  geom_point()+
+  geom_smooth(se=F,span=.24)+
+  scale_x_date(limits=c(min(MadLIMSData$Date,na.rm = TRUE),max(MadLIMSData$Date,na.rm = TRUE)))
 
 MadLIMSDataTemp%>%
+  ggplot(aes(x=N1))+geom_point(aes(y=Resid))#+scale_x_log10()
+
+```
+
+```{r loessFit}
+
+library(limma)
+mod=loessFit(x=MadLIMSData$N1,y=as.numeric(MadLIMSData$Date),weights=1/MadLIMSData$N1Error^2)
+
+MadLIMSDataTemp2=MadLIMSData
+MadLIMSDataTemp2$Fit=mod$fitted
+MadLIMSDataTemp2$Resid=mod$residuals
+MadLIMSDataTemp2%>%
+  ggplot(aes(x=Date))+geom_point(aes(y=Fit))+facet_wrap(~Site)#+geom_point(aes(y=N1))+scale_y_log10()
+
+
+MadLIMSDataTemp2%>%
   filter(Site=="Madison")%>%
-  ggplot(aes(x=Fit))+geom_point(aes(y=Resid))+scale_x_log10()
+  ggplot(aes(x=Fit))+geom_point(aes(y=Resid*sqrt(1/MadLIMSDataTemp$N1Error)))+scale_x_log10()
 ```
 
 ```{r LM test,fig.height = 8, fig.width = 10}
-# #ifelse(BCoV>0,BCoV,0))
-# errorband=F
-# SpanN1=.33
-# 
-# FilteredMadBoxPlot=UsedDF%>%
-#   filter(Site =="Madison")%>%
-#   filter(WeirdVar!="Unexpected high Varience")
-# 
-# MadLIMSData=UsedDF%>%
-#   filter(Site =="Madison")
-# 
-# Limits=c(min(MadLIMSData$Date,na.rm = TRUE),max(MadLIMSData$Date,na.rm = TRUE))
-# 
-# MadBoxPlot=ggplot()+
-#   #geom_point(aes(x=Date,y=N1),data=MadLIMSData)+
-#   geom_smooth(aes(x=Date,y=N1,color="Normal"),span=SpanN1,se=errorband,data=MadLIMSData)+
-#   geom_smooth(aes(x=Date,y=N1,color="Filltered"),span=SpanN1,se=errorband,data=FilteredMadBoxPlot)+
-#   geom_smooth(aes(x=Date,y=N1,color="SD", weight=N1/(N1Error)),span=SpanN1,se=errorband,data=MadLIMSData)+
-#   geom_smooth(aes(x=Date,y=N1,color="Var", weight=N1^2/(N1Error)^2),span=SpanN1,se=errorband,data=MadLIMSData)+
-#   Header_theme(ConfigOption)
-# 
-# #loess(N1~Date,weight=N1/(N1Error),data=MadLIMSData)
-# 
-# 
-# 
-# N1LogGra=MadBoxPlot+
-#   scale_y_log10()+
-#   facet_wrap(~Site,scales = "free_y")+
-#   ggtitle("N1 curve filtered from weird values")
-#   #scale_x_date(limits=c(N1Start,N1End))+
-# 
-# N1LinGra=MadBoxPlot+
-#     theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
-#       axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
-#       plot.margin = unit(c(.5,0,0,0), "cm"))
-#     
-# N1Graphics=ggarrange(N1LogGra,N1LinGra,nrow=2,align="hv",legend = "none")
-#     
-# CasePlots=LatCaseDF%>%
-#   filter(Site=="Madison")%>%
-#   ggplot()+aes(x=Date,y=Cases)+
-#   geom_point()+
-#   geom_smooth(se=F,span=.22)+
-#   scale_x_date(limits=Limits)
-#   
-# CaseLogGra=CasePlots+
-#   scale_y_log10()+
-#   facet_wrap(~Site,scales = "free_y")+
-#   Header_theme(ConfigOption)+
-#   ggtitle("Madison Case Data")
-# CaseLinGra=CasePlots+
-#   Header_theme(ConfigOption)+
-#   theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
-#     axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
-#     plot.margin = unit(c(.5,0,0,0), "cm"))
-#     
-# CasesGraphics=ggarrange(CaseLogGra,CaseLinGra,nrow=2,align="hv")
-# 
-# FinalGraphic=ggarrange(N1Graphics,CasesGraphics,nrow=1,align="hv")
-# 
-# MainComp=ggarrange(N1LogGra,CaseLinGra,nrow=2,align="hv",common.legend = T)
-# 
-# MainComp
+#ifelse(BCoV>0,BCoV,0))
+errorband=F
+SpanN1=.33
+
+FilteredMadBoxPlot=UsedDF%>%
+  filter(Site =="Madison")%>%
+  filter(WeirdVar!="Unexpected high Varience")
+
+MadLIMSData=UsedDF%>%
+  filter(Site =="Madison")
+
+Limits=c(min(MadLIMSData$Date,na.rm = TRUE),max(MadLIMSData$Date,na.rm = TRUE))
+
+MadBoxPlot=ggplot()+
+  #geom_point(aes(x=Date,y=N1),data=MadLIMSData)+
+  geom_smooth(aes(x=Date,y=N1,color="Normal"),span=SpanN1,se=errorband,data=MadLIMSData)+
+  geom_smooth(aes(x=Date,y=N1,color="Filltered"),span=SpanN1,se=errorband,data=FilteredMadBoxPlot)+
+  geom_smooth(aes(x=Date,y=N1,color="SD", weight=N1/(N1Error)),span=SpanN1,se=errorband,data=MadLIMSData)+
+  geom_smooth(aes(x=Date,y=N1,color="Var", weight=N1^2/(N1Error)^2),span=SpanN1,se=errorband,data=MadLIMSData)+
+  Header_theme(ConfigOption)
+
+#loess(N1~Date,weight=N1/(N1Error),data=MadLIMSData)
+
+
+
+N1LogGra=MadBoxPlot+
+  scale_y_log10()+
+  facet_wrap(~Site,scales = "free_y")+
+  ggtitle("N1 curve filtered from weird values")
+  #scale_x_date(limits=c(N1Start,N1End))+
+
+N1LinGra=MadBoxPlot+
+    theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+      axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
+      plot.margin = unit(c(.5,0,0,0), "cm"))
+
+N1Graphics=ggarrange(N1LogGra,N1LinGra,nrow=2,align="hv",legend = "none")
+
+CasePlots=LatCaseDF%>%
+  filter(Site=="Madison")%>%
+  ggplot()+aes(x=Date,y=Cases)+
+  geom_point()+
+  geom_smooth(se=F,span=.22)+
+  scale_x_date(limits=Limits)
+
+CaseLogGra=CasePlots+
+  scale_y_log10()+
+  facet_wrap(~Site,scales = "free_y")+
+  Header_theme(ConfigOption)+
+  ggtitle("Madison Case Data")
+CaseLinGra=CasePlots+
+  Header_theme(ConfigOption)+
+  theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+    axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
+    plot.margin = unit(c(.5,0,0,0), "cm"))
+
+CasesGraphics=ggarrange(CaseLogGra,CaseLinGra,nrow=2,align="hv")
+
+FinalGraphic=ggarrange(N1Graphics,CasesGraphics,nrow=1,align="hv")
+
+MainComp=ggarrange(N1LogGra,CaseLinGra,nrow=2,align="hv",common.legend = T)
+
+MainComp
+
+# stat_smooth
+# ?predictdf
+# predict(Form)
 
 ```
