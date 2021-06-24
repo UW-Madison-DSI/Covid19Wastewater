@@ -1,0 +1,48 @@
+Goal:
+	show current state of analysis
+	make significant step toward wrapping up project
+
+start:
+	cases vs N1 (smooth plus ambiguity, outliers)
+	supplementary:  N2;  geomean (N1, N2)...
+
+1.  Linear model show SE scales as N1
+    	   figure:  some regression figure
+
+    caveats;  role in analysis is limited to heuristic for choosing
+    weights
+	however, not sufficient weights (only outliers for qPCR)
+
+    brian:  mmsd vs all data plot:
+    	    var vs SE  plusses and minuses
+	    question:  other normalizations?
+
+2. smoothing of N1 for Madison
+   	     brian:  provide interactive link for him and pdf with presets for
+   	     span, min.weights max.weights;
+
+	     include clear code that exposes only what we want him to
+	     use
+
+
+	     others:  2 versions with span
+	     
+	     	     pdf
+
+3. smoothing of N1 for interceptors; for dorms (fall and winter
+separate)
+
+4.  supplement:  N2; geomean
+    		 other wwpts
+
+
+5 cases+WW measurements for MMSD
+  a. smoothed cases below smoothed N1 (geomean, N2)
+    two versions of span  (one version of cases?)
+  b. same for UW and interceptors;
+
+
+6. other info:  update %BCoV and PMMoV analysis
+
+
+  
