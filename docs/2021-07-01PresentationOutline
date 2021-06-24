@@ -30,7 +30,9 @@ start:
 	     	     pdf
 
 3. smoothing of N1 for interceptors; for dorms (fall and winter
-separate)
+separate)  todo: exact dates for fall end and winter start
+	   work on:  interceptors;
+	   
 
 4.  supplement:  N2; geomean
     		 other wwpts
@@ -38,11 +40,22 @@ separate)
 
 5 cases+WW measurements for MMSD
   a. smoothed cases below smoothed N1 (geomean, N2)
-    two versions of span  (one version of cases?)
-  b. same for UW and interceptors;
 
+     two versions of span  (one version of cases?)
+    todo: smoothing for case data;
+    
+  b. same for UW and interceptors;
+  
 
 6. other info:  update %BCoV and PMMoV analysis
 
+=============
+research  questions or future work
+	  1. shedding lag distribution: cases or N1
+	  2. better lm
+	  3. limma heirarchical model
+
+	  
+     
 
   
