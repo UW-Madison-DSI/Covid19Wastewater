@@ -27,9 +27,28 @@ LIMSFullDFRoll=RollAvg(LIMSFullDF,n=21,var=c("N1","N1Error"))%>%
   select(Date,Site,N1,N1Error)
 ```
 
-```{r LM no weight gen}
+```{r View}
+dist2d <- function(a,b,c) {
+ v1 <- b - c
+ v2 <- a - b
+ m <- cbind(v1,v2)
+ d <- abs(det(m))/sqrt(sum(v1*v1))
+}
+
 LIMSFullDF%>%
   ggplot()+geom_histogram(aes(x=N1), bins=90)#+scale_y_log10()
+
+LIMSFullDF%>%
+  ggplot()+geom_point(aes(x=N1,y=N1Error))
+# 
+# lm(N1Error~N1-1, data=LIMSFullDF)
+# LIMSFullDF%>%
+#   mutate(Dist=dist2d(c(N1,N1Error),c(0,0),c(1,.08188)))
+```
+
+
+
+```{r LM no weight gen}
 
 graphLM = function(LM){
   par(mfrow=c(2,2)) # init 4 charts in 1 panel
@@ -110,9 +129,99 @@ Ajust=1000000000000
 FirstQuintile=summary(LIMSFullDF$N1Error)[2]
 ThirdQuintile=summary(LIMSFullDF$N1Error)[5]
 ModelDF <- LIMSFullDF%>%
-  filter(N1!=0)%>%
-  mutate(N1Error=ifelse(FirstQuintile/Ajust>N1Error,FirstQuintile/Ajust,N1Error))%>%
-  mutate(N1Error=ifelse(ThirdQuintile*Ajust<N1Error,ThirdQuintile*Ajust,N1Error))
+  filter(N1!=0)
+```
+
+```{r N1/N1Error}
+UnWeightedModel <- lm(N1Error~N1-1,weights=rep(1,dim(ModelDF)[1]),data=ModelDF)
+
+
+VarModel <- lm(N1Error~N1-1,weights=N1/N1Error^2,data=ModelDF)
+
+
+SDModel <- lm(N1Error~N1-1,weights=N1^1/N1Error,data=ModelDF)
+
+TestDF%>%
+  ggplot()+
+  aes(x=N1,y=sqrt(N1^.7/N1Error))+
+  geom_point()+
+  geom_smooth(method="lm")+
+  scale_x_log10()
+TestDF%>%
+  ggplot()+
+  aes(x=N1,y=(N1Error-0.076*N1)*sqrt(1/N1Error^2))+
+  geom_point()+
+  geom_smooth(method="lm")+
+  scale_x_log10()#+scale_y_log10()
+
+TestDF%>%
+  ggplot()+
+  aes(x=N1,y=N1Error/N1^.65)+
+  geom_point()+
+  geom_smooth(method="lm")+
+  scale_x_log10()#+scale_y_log10()
+
+# 
+# TestDF2=TestDF%>%
+#   filter(N1!=0)
+# lm(N1Error/N1^.65~N1-1,data=TestDF2)
+TestDF <- ModelDF%>%
+  mutate(NoWeight=predict(UnWeightedModel, drop0 = FALSE),
+         N1VarWeight=predict(VarModel, drop0 = FALSE),
+         N1SDWeight=predict(SDModel, drop0 = FALSE))
+  pivot_longer(cols=NoWeight:N1SDWeight)
+
+N1Graph=TestDF%>%
+  ggplot()+
+  aes(x=N1)+
+  geom_point(aes(y=value,color=name))+
+  facet_wrap(~name,scales = "free",nrow = 3)+
+  scale_x_log10()
+
+TestDF%>%
+  ggplot()+
+  aes(x=N1) +
+  geom_point(aes(y=N1Error))+
+  #geom_point(aes(y=NoWeight,color="NoWeightPred"))+
+  geom_point(aes(y=N1VarWeight,color="VarPred"))+
+  #geom_point(aes(y=N1SDWeight,color="SDPred"))+
+  ggtitle("observed vs predicted (y, x)")
+#goal: no heteroskitisty
+#first approach shows it depends on n1
+#-
+VarModel2 <- lm(N1Error~N1-1,weights=1/N1Error^2,data=ModelDF)
+summary(VarModel2)
+summary(VarModel)
+plot(VarModel2)
+plot(VarModel)
+#Goal: Brian: draw a line at the work we are doing: try to wrap up: messy data makes analysis hard
+#skeptical that we can get clear idea
+#weighting helped; don't have data that meets assumption
+```
+
+```{r noN1}
+UnWeightedModel <- lm(N1Error~N1-1,weights=rep(1,dim(ModelDF)[1]),data=ModelDF)
+
+
+VarModel2 <- lm(N1Error~N1-1,weights=1/N1Error^2,data=ModelDF)
+
+
+SDModel2 <- lm(N1Error~N1-1,weights=1/N1,data=ModelDF)
+
+TestDF2 <- ModelDF%>%
+  mutate(NoWeight=weighted.residuals(UnWeightedModel, drop0 = FALSE),
+         N1VarWeight=weighted.residuals(VarModel2, drop0 = FALSE),
+         N1SDWeight=weighted.residuals(SDModel2, drop0 = FALSE))%>%
+  pivot_longer(cols=NoWeight:N1SDWeight)
+
+TestDF2%>%
+  ggplot()+
+  aes(x=N1)+
+  geom_point(aes(y=value,color=name))+
+  facet_wrap(~name,scales = "free",nrow = 3)+
+  scale_x_log10()
+
+
 ```
 
 
@@ -125,10 +234,10 @@ ModelDF <- LIMSFullDF
 UnWeightedModel <- lm(N1Error~N1-1,weights=rep(1,dim(ModelDF)[1]),data=ModelDF)
 #UnWeightedModelstatistic <- summary(UnWeightedModel)[9:11]
 
-VarModel <- lm(N1Error~N1-1,weights=1/N1Error^2,data=ModelDF)
+VarModel <- lm(N1Error~N1-1,weights=N1/N1Error^2,data=ModelDF)
 #VarModelstatistic <- summary(VarModel)[9:11]
 
-SDModel <- lm(N1Error~N1-1,weights=1/N1Error,data=ModelDF)
+SDModel <- lm(N1Error~N1-1,weights=N1/N1Error,data=ModelDF)
 #SDModelstatistic <- summary(SDModel)[9:11]
 
 dumbyDF=data.frame(resid=residuals(UnWeightedModel),Fit=fitted(UnWeightedModel))
@@ -165,10 +274,8 @@ ModelDF2%>%
   geom_point(aes(y=NoWeightPred,color="NoWeightPred"))+
   geom_point(aes(y=VarPred,color="VarPred"))+
   geom_point(aes(y=SDPred,color="SDPred"))+
-  geom_point(aes(y=TradPred,color="TradPred"))
-  scale_x_log10()+
-  scale_y_log10()+
-  ggtitle("observed vs predicted (log y, x)")
+  geom_point(aes(y=TradPred,color="TradPred"))+
+  ggtitle("observed vs predicted (y, x)")
 
 #y=N1Error/N1^.7
 ModelDF2%>%
@@ -225,61 +332,18 @@ dumbyDF%>%
   scale_y_log10()+
   scale_x_log10()
 
-#eval model fit
-#don't want lm predict
-#go ahead with *1/SE* 1/Var 1 loess analysis
-#todo
-#loess
-#get ideas of what cleans up the data
-#span
-#what prop of data used-want day windows instead?-
-#could approximate
-#look at how many weeks in the data set 2 / number of week
-#find a way to have span depend on independent variables
-#get firm understanding of loess in gen
-#loess vs lowess know why one is better or worse
-#research
-#span might be used to rep time shedding distribution
-#2 week rolling
-#find how span works to know what to pick
-#might want some other time based smoothing
-#asymmetrical span?
-#how to use weighting
-#can we just insert weight
-#local weighting vs global weighting = interaction
-#what does weight parameter do? effect global or local
-#experiment and reverse
-#at least to dials to move
-#span -> 0 = more interpretation
-#experimentation -> research
-#loess(weight=) vs weightedloess vs loess.fit()
-#
-
-#prio
-#make plots of each different set of weights to compare
-#each with a couple spans
-#3 by 3
-#span ~0,2/weeks,~1 by 1,1/se,1/se^2
-#
-
-#masters in math - not worth
-#PHD in DS or cs or stat
-#masters in DS?
-#masters in 
 
 
-#deal with multiple sites? do later- get it working on mad first
-#some other math department?
-#
-#some transformation that fixes 
-#se vs N1
-#evaluate goodness of fit
-#better scaling
 
-#graph
-#
-#
-
+ModelDF2%>%
+  ggplot()+
+  aes(x=N1) +
+  #geom_point(aes(y=TradResidUn, color="Traditional residues"))+
+  #geom_point(aes(y=NoWeightResid/sqrt(N1/N1Error),color="no weight residues"))+
+  geom_point(aes(y=SDResidUn,color="SE residues"))+
+  #geom_point(aes(y=VarResidUn,color="var residues"))+
+  ggtitle("4 Model unweighted residues")+
+  scale_x_log10()
 ```
 
 ```{r how R2 works}
@@ -361,19 +425,45 @@ ModelDF2%>%
 ```{r, width=15,height=15}
 library(ggpubr)
 library(limma)
-PointSize=.01
-#make plots of each different set of weights to compare
-#each with a couple spans
-#3 by 3
-#span ~0,2/weeks,~1 by 1,1/se,1/se^2
+PointSize=.001
+
+#make span smaller
+#draw them with the boxes
+#reorganize
+#interactive:
+#pick weights,span,lin log ?min, max?
+#make correct dates
+#pick site
+#add other method
+#all plots with same method on same plot
+#have boxs
+#could scale:= zoom in, zoom out.
+#goal: get a measure of proforemence
+#-experiment for trends
+
+#compare to cases
+#have a panel with cases to compare
+#for mad,intercepters,hfg
+#hudsen, okash
+#Limma has tools for hiearcle model-different locations have different weighting
+#-do research on this
+#3 hour time diffrence
+
+#goal:understand what we have-best shot
+#show error with heat map coloring-transparency?
+#reduce size of points
+
 #enp.target
 HighSpan <- .2
 MinWeight <- 0
 
 MadModDF <- ModelDF%>%
   filter(Site=="Madison")%>%
+  #filter(N1=0)%>%
   select(Date,N1,N1Error)%>%
   mutate(Date=as.numeric(Date))
+
+LargestWeight=1/min(MadModDF$N1Error)
 
 BasedPlot <- MadModDF%>%
   ggplot()+
@@ -382,63 +472,67 @@ BasedPlot <- MadModDF%>%
   scale_y_log10()
 
 LM11 <- loessFit(y=MadModDF$N1,x=MadModDF$Date,weights=rep(1,dim(MadModDF)[1]),span=HighSpan,min.weight=MinWeight)
-
-MadModDF$pred <- LM11$fitted
+MadModDF$pred1 <- LM11$fitted
+LM12 <- loessFit(y=MadModDF$N1,x=MadModDF$Date,weights=1/(MadModDF$N1Error*LargestWeight),span=HighSpan,min.weight=MinWeight)
+MadModDF$pred2 <- LM12$fitted
+LM13 <- loessFit(y=MadModDF$N1,x=MadModDF$Date,weights=1/((MadModDF$N1Error*LargestWeight)^2),span=HighSpan,min.weight=MinWeight,)
+MadModDF$pred3 <- LM13$fitted
+LM21 <- loessFit(y=MadModDF$N1,x=MadModDF$Date,weights=rep(1,dim(MadModDF)[1]),span=HighSpan,min.weight=MinWeight,method="loess")
+MadModDF$pred4 <- LM21$fitted
+LM22 <- loessFit(y=MadModDF$N1,x=MadModDF$Date,weights=1/(MadModDF$N1Error*LargestWeight),span=HighSpan,min.weight=MinWeight,method="loess")
+MadModDF$pred5 <- LM22$fitted
+LM23 <- loessFit(y=MadModDF$N1,x=MadModDF$Date,weights=1/(MadModDF$N1Error*LargestWeight)^2,span=HighSpan,min.weight=MinWeight,method="loess")
+MadModDF$pred6 <- LM23$fitted
+LM31 <- loess(N1~Date,weights=rep(1,dim(MadModDF)[1]),span=HighSpan,data=MadModDF)
+MadModDF$pred7 <- predict(LM31)
+LM32 <- loess(N1~Date,weights=1/(N1Error*LargestWeight),span=HighSpan,data=MadModDF)
+MadModDF$pred8 <- predict(LM32)
+LM33 <- loess(N1~Date,weights=1/(N1Error*LargestWeight)^2,span=HighSpan,data=MadModDF)
+MadModDF$pred9 <- predict(LM33)
+MadModDF%>%
+  mutate(Date=as.Date(Date))
 G11 <- BasedPlot+
-  geom_line(aes(y=pred),color="red",size=PointSize, data=MadModDF)+
+  geom_line(aes(y=pred1),color="red",size=PointSize, data=MadModDF)+
   ggtitle("weights=1, method=weightedlowess")
 
-LM12 <- loessFit(y=MadModDF$N1,x=MadModDF$Date,weights=1/MadModDF$N1Error,span=HighSpan,min.weight=MinWeight)
-MadModDF$pred <- LM12$fitted
+
 G12 <- BasedPlot+
-  geom_line(aes(y=pred),color="red",size=PointSize, data=MadModDF)+
+  geom_line(aes(y=pred2),color="red",size=PointSize, data=MadModDF)+
   ggtitle("weights=1/N1Error, method=weightedlowess")
 
-LM13 <- loessFit(y=MadModDF$N1,x=MadModDF$Date,weights=1/(MadModDF$N1Error^2),span=HighSpan,min.weight=MinWeight,)
-MadModDF$pred <- LM13$fitted
+
 G13 <- BasedPlot+
-  geom_line(aes(y=pred),color="red",size=PointSize, data=MadModDF)+
+  geom_line(aes(y=pred3),color="red",size=PointSize, data=MadModDF)+
   ggtitle("weights=1/N1Error^2, method=weightedlowess")
 
 
 
-LM21 <- loessFit(y=MadModDF$N1,x=MadModDF$Date,weights=rep(1,dim(MadModDF)[1]),span=HighSpan,min.weight=MinWeight,method="loess")
-MadModDF$pred <- LM21$fitted
 G21 <- BasedPlot+
-  geom_line(aes(y=pred),color="red",size=PointSize, data=MadModDF)+
+  geom_line(aes(y=pred4),color="red",size=PointSize, data=MadModDF)+
   ggtitle("weights=1, method=loess")
 
-LM22 <- loessFit(y=MadModDF$N1,x=MadModDF$Date,weights=1/MadModDF$N1Error,span=HighSpan,min.weight=MinWeight,method="loess")
-MadModDF$pred <- LM22$fitted
 G22 <- BasedPlot+
-  geom_line(aes(y=pred),color="red",size=PointSize, data=MadModDF)+
+  geom_line(aes(y=pred5),color="red",size=PointSize, data=MadModDF)+
   ggtitle("weights=1/N1Error, method=loess")
 
-LM23 <- loessFit(y=MadModDF$N1,x=MadModDF$Date,weights=1/MadModDF$N1Error^2,span=HighSpan,min.weight=MinWeight,method="loess")
-MadModDF$pred <- LM23$fitted
+
 G23 <- BasedPlot+
-  geom_line(aes(y=pred),color="red",size=PointSize, data=MadModDF)+
+  geom_line(aes(y=pred6),color="red",size=PointSize, data=MadModDF)+
   ggtitle("weights=1/N1Error^2, method=loess")
 
-LM31 <- loess(N1~Date,weights=rep(1,dim(MadModDF)[1]),span=HighSpan,data=MadModDF)
-MadModDF$pred <- predict(LM31)
 
 G31 <- BasedPlot+
-  geom_line(aes(y=pred),color="red",size=PointSize, data=MadModDF)+
+  geom_line(aes(y=pred7),color="red",size=PointSize, data=MadModDF)+
   ggtitle("weights=1, method=loess, deg=2")
 
-LM32 <- loess(N1~Date,weights=1/N1Error,span=HighSpan,data=MadModDF)
-MadModDF$pred <- predict(LM32)
 
 G32 <- BasedPlot+
-  geom_line(aes(y=pred),color="red",size=PointSize, data=MadModDF)+
+  geom_line(aes(y=pred8),color="red",size=PointSize, data=MadModDF)+
   ggtitle("weights=1/N1Error, method=loess, deg=2")
 
-LM33 <- loess(N1~Date,weights=1/N1Error^2,span=HighSpan,data=MadModDF)
-MadModDF$pred <- predict(LM33)
 
 G33 <- BasedPlot+
-  geom_line(aes(y=pred),color="red",size=PointSize, data=MadModDF)+
+  geom_line(aes(y=pred9),color="red",size=PointSize, data=MadModDF)+
   ggtitle("weights=1/N1Error^2, method=loess, deg=2")
 
 # LM31 <- loessFit(y=MadModDF$N1,x=MadModDF$Date,weights=MadModDF$N1,span=HighSpan,min.weight=MinWeight,method="loess")
@@ -461,7 +555,79 @@ G33 <- BasedPlot+
 
 ggarrange(G11,G12,G13,G21,G22,G23,G31,G32,G33)
 
+#CaseLinGra
 ```
+
+```{r Madison Model}
+HighSpan <- .1
+MinWeight <- 0
+PointSize=1
+
+MadModDF <- ModelDF%>%
+  filter(Site=="Madison")%>%
+  filter(N1!=0)%>%
+  select(Date,N1,N1Error)%>%
+  mutate(Date=as.numeric(Date))
+
+LargestWeight=1/min(MadModDF$N1Error)
+
+
+LM11 <- loessFit(y=MadModDF$N1,x=MadModDF$Date,weights=rep(1,dim(MadModDF)[1]),span=HighSpan,min.weight=MinWeight)
+MadModDF$pred1 <- LM11$fitted
+LM12 <- loessFit(y=MadModDF$N1,x=MadModDF$Date,weights=1/(MadModDF$N1Error*LargestWeight),span=HighSpan,min.weight=MinWeight)
+MadModDF$pred2 <- LM12$fitted
+LM13 <- loessFit(y=MadModDF$N1,x=MadModDF$Date,weights=1/((MadModDF$N1Error*LargestWeight)^2),span=HighSpan,min.weight=MinWeight)
+MadModDF$pred3 <- LM13$fitted
+
+BasedPlot <- MadModDF%>%
+  ggplot()+
+  aes(x=Date)+
+  geom_point(aes(y=N1,alpha=1/N1Error),size=PointSize)+
+  scale_y_log10()
+#,alpha=1/N1Error
+BasedPlot+
+  #geom_line(aes(y=pred3,color="weight=1/N1Error^2"))+
+  geom_line(aes(y=pred1,color="weight=1"))+
+  geom_line(aes(y=pred2,color="weight=1/N1Error"))
+```
+
+```{r Hudsen}
+HudModDF <- ModelDF%>%
+  filter(Site=="Hudson")%>%
+  #filter(N1=0)%>%
+  select(Date,N1,N1Error)%>%
+  mutate(Date=as.numeric(Date))
+
+LargestWeight=1/min(HudModDF$N1Error)
+
+
+LM11 <- loessFit(y=HudModDF$N1,x=HudModDF$Date,weights=rep(1,dim(HudModDF)[1]),span=HighSpan,min.weight=MinWeight)
+HudModDF$pred1 <- LM11$fitted
+LM12 <- loessFit(y=HudModDF$N1,x=HudModDF$Date,weights=1/(HudModDF$N1Error*LargestWeight),span=HighSpan,min.weight=MinWeight)
+HudModDF$pred2 <- LM12$fitted
+LM13 <- loessFit(y=HudModDF$N1,x=HudModDF$Date,weights=1/((HudModDF$N1Error*LargestWeight)^2),span=HighSpan,min.weight=MinWeight)
+HudModDF$pred3 <- LM13$fitted
+
+BasedPlot <- HudModDF%>%
+  ggplot()+
+  aes(x=Date)+
+  geom_point(aes(y=N1,alpha=1/N1Error),size=PointSize)+
+  scale_y_log10()
+
+BasedPlot+
+  #geom_line(aes(y=pred3,color="weight=1/N1Error^2"))+
+  geom_line(aes(y=pred1,color="weight=1"))+
+  geom_line(aes(y=pred2,color="weight=1/N1Error"))
+  
+
+#unique(ModelDF$Site)
+```
+```{r}
+
+
+
+```
+
 
 ```{r percentage of data that 2 weeks contains}
 #max(MadModDF$Date)-min(MadModDF$Date)
@@ -469,7 +635,7 @@ ggarrange(G11,G12,G13,G21,G22,G23,G31,G32,G33)
 # 14/252
 # 252/(7*4)
 # ?ggarange
-# .4*252
+ .2*252
 # 
 # 176.4/7
 # MadModDF%>%

@@ -17,8 +17,9 @@ LatCaseDFRoll=RollPerPos(LatCaseDF,"Cases","Tests",Facet="Site")%>%
 LatWasteDF=WasteWater(LatWasteFN)%>%
   mutate(Date=as.Date(Date))%>%
   filter(!is.na(Date),!is.na(N1),!is.na(Site))%>%
-  filter(Date<mdy("6/5/2021"))%>%
-  select(Date,Site,N1,N2,PMMoV,Pct_BCoV,AVG)
+  filter(Date<mdy("6/5/2021"))
+#%>%
+ # select(Date,Site,N1,N2,PMMoV,Pct_BCoV,AVG)
 
 ConfigOption=list(
   myseed=1234567890,
@@ -47,7 +48,10 @@ LIMSFullDF=read_excel(AllData,col_types=c(rep("guess",48),"text",rep("guess",12)
   mutate(Site=ifelse(Site=="Madison Metro","Madison",Site))%>%
   select(Date,Site, BCoV, N1,N1Error,N2, N2Error,PMMoV,Pop)%>%
   filter(N1Error>0)%>%
-  mutate(Site=ifelse(Site=="Covid Sewage UW DORM","UW-LakeShore",Site),Site=ifelse(Site=="Covid Sewage UW Sell","UW-Sellery",Site))
+  mutate(Site=ifelse(Site=="Covid Sewage UW DORM","UW-LakeShore",Site),Site=ifelse(Site=="Covid Sewage UW Sell","UW-Sellery",Site))%>%
+  mutate(Site=ifelse(Site=="Madison-P2-Central","MMSD-P2",Site),Site=ifelse(Site=="Madison-P7-SE","MMSD-P7",Site))%>%
+  mutate(Site=ifelse(Site=="Madison-P8-West","MMSD-P8",Site),Site=ifelse(Site=="Madison-P11-SW","MMSD-P11",Site))%>%
+  mutate(Site=ifelse(Site=="Madison-P18-NE","MMSD-P18",Site))
   #mutate(temp=ifelse(grep("Madison",Site)&Site!="Madison",paste("MMSD",split(Site,sep="-")[1]),Site))
 
 

@@ -342,7 +342,7 @@ ui <- fluidPage(
   sidebarLayout(
     sidebarPanel(width=2,
       sliderInput(inputId = "Thresh",
-                  label = "Threshold ratio",
+                  label = "Threshold ratnio",
                   min = 1,
                   max = 7.5,
                   value = 2),

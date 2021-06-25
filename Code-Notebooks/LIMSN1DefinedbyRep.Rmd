@@ -20,24 +20,21 @@ source("../Scripts/WasteShiny/PrepData.R", local = TRUE)
 ```
 
 ```{r Data set has comp to previous data sets, fig.height = 6, fig.width = 13}
-N1Start=min(MadHFDF$Date)-1
-N1End=max(MadHFDF$Date)+1
-
 MadLIMSDF=LIMSFullDF%>%
   filter(Site=="Madison")%>%
-  select(Date,N1)%>%
+  select(Date,N1,N1Error)%>%
   mutate(Date=Date+1)
 
  MadHFDF=HFGFrame%>%
    filter((Site=="Madison"))
+ 
+N1Start=min(MadHFDF$Date)-1
+N1End=max(MadHFDF$Date)+1
 
 MadLongDF=LatWasteDF%>%
   filter(Site=="Madison")%>%
   select(Date,N1)
 
-
-MadLIMSDF2=MadLIMSDF%>%
-  mutate(Date=Date-1)
 
 
 MadBothDF=full_join(MadLIMSDF,MadHFDF,by=c("Date"))%>%
@@ -90,6 +87,15 @@ MadAllMeans%>%
 ```
 
 ```{r Varience calculated}
+MadBothDF%>%
+  select(Date,HFN1,N1Error)%>%
+  group_by(Date)%>%
+  summarise(N1Error=mean(N1Error),HFN1Error=sd(HFN1)/sqrt(length(HFN1)))%>%
+  ggplot()+
+  aes(x=Date)+
+  geom_point(aes(y=N1Error))+
+  geom_point(aes(y=HFN1Error, color="HFN1Error"))+
+  scale_x_date(limits=c(N1Start,N1End))
 
-
+#
 ```
