@@ -345,8 +345,6 @@ LoessSmoothPlot <- function(SiteS,Span=.3,min=1e-5,max=1e5,BoxWidth=.5,Independe
 
 LoessSmoothPlot(SiteS="Madison",Span=.1,min=0,max=120)
 LoessSmoothPlot(SiteS="Madison",Span=.3,min=0,max=120)
-
-LoessSmoothPlot(SiteS="Madison",Span=.1,min=0,max=120,Independent="N2",Dependent="N2Error")
 ```
 
 
