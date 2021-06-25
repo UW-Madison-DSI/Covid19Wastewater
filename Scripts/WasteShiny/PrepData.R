@@ -3,7 +3,7 @@ LatSpringCaseFN="../../UntrackedData/SpringSemester_CasesByDorm.tsv"
 LatFallCaseFN="../../UntrackedData/FallSemester_CasesByDorm.tsv"
 HFGWasteFN = "../../UntrackedData/HFG data for stats preliminary 3-18-21.xlsx"
 HFGCaseFN="../../UntrackedData/HighFreq_CaseData_2021-05-07.csv"
-LatMMSDFN = "../../UntrackedData/MMSD_Cases.2021-05-21.csv"
+LatMMSDFN = "../CaseData/results/2021-06-24/MMSD_Cases.csv"
 
 
 LatCaseDF=CovidDataPARSER(LatSpringCaseFN,LatFallCaseFN,LatMMSDFN)%>%

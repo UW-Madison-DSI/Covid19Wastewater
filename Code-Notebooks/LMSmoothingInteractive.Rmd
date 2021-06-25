@@ -32,7 +32,7 @@ ModelDF <- LIMSFullDF%>%
   select(Date,Site,BCoV,PMMoV,N1,N1Error)%>%
   mutate(Weight=N1/N1Error)
   
-write.csv(ModelDF,"N1ErrorDF", row.names = T)
+#write.csv(ModelDF,"N1ErrorDF", row.names = T)
 ```
 
 ```{r Madison Model}
