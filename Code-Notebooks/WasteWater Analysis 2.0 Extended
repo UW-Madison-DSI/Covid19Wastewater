@@ -1,0 +1,159 @@
+---
+title: "WasteWater Analysis 2.0 Extended"
+author: "Steve Goldstein and Marlin Lee"
+date: "6/1/2021"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(message = FALSE,warning = FALSE)
+
+#library(shiny)
+library(ggpubr)
+library(dplyr)
+# library(shinydashboard)
+# library(shinyjqui)
+# library(shinycssloaders)
+library(limma)
+
+#Data Files and prep work
+source("../Scripts/GenPlotMaking.R")
+source("../Scripts/WasteWaterDataProccess.R")
+source("../Scripts/CassesDataProccess.R")
+source("../Scripts/HelperFunctions.R")
+
+
+source("../Scripts/WasteShiny/PrepData.R", local = TRUE)
+```
+
+
+
+```{r start up, include=FALSE}
+
+HFGPop=read.csv("../../UntrackedData/HFGPop.csv.txt")%>%
+  select(Site=wwtp_name,Population=pop_served)
+
+
+ConfigOption=list(
+      myseed=1234567890,
+      XAxisLabSiz=10,
+      YAxisLabSiz=15,
+      GenFontSiz=20,
+      alphaPoint=.7,
+      PointSize=2,
+      alphaWeek=.2)
+    
+```
+
+```{r, include=FALSE}
+DayRolling=30
+
+
+
+LatCaseDFRoll=RollPerPos(LatCaseDF,"Cases","Tests",Facet="Site",n=DayRolling)%>%
+  select(Date,Site,Cases,Per_pos)#%>%
+  #mutate(Date=Date-DayRolling/2)
+
+CasePlotMaking = function(SiteS,Method="Cases"){
+  SiteCases=LatCaseDF%>%
+    filter(Site==SiteS)
+
+  SiteCasesRoll=LatCaseDFRoll%>%
+    filter(Site==SiteS)
+  
+  LIMSSiteDF=LIMSFullDF%>%
+   filter(Site==SiteS)
+
+
+  Date_lim_long=c(min(LIMSFullDF$Date),max(LIMSFullDF$Date))
+  
+  CasePlot <- Buildplot_gen(
+      Method,
+      MainDF=SiteCases,
+      Loc="Site",
+      LineDF=SiteCasesRoll,
+      Xfreq="35 days",
+      DateLimits=Date_lim_long,
+      Standards=ConfigOption,
+      AxisPos="bottom",
+      LineColor="red",
+      Colplot=TRUE) + Header_theme(ConfigOption)+
+      theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+            axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
+            plot.margin = unit(c(.5,0,0,0), "cm"))
+  return(CasePlot)
+  
+}
+```
+
+```{r Loess Model, include=FALSE}
+#Gen Both Cases and per Pos plot
+LoessSmoothPlot <- function(SiteS,Span=.3,min=1e-5,max=1e5,BoxWidth=.5,Independent="N1",Dependent="N1Error",HasNo=F, Title=T,FullLim=F){
+  PlaceHolder=""
+  if(HasNo){
+    PlaceHolder="no"
+  }
+  LIMSDF=LIMSFullDF%>%
+    filter(Site==SiteS)%>%
+    mutate(Indy=!!sym(Independent),
+           Dep=!!sym(Dependent))%>%
+    filter(!is.na(Dep),
+           !is.na(Indy),
+           Dep>0,
+           Indy>0)
+    
+  DFSize=dim(LIMSDF)[1]
+  ConWeightModel=loessFit(y=LIMSDF$Indy,
+                       x=LIMSDF$Date,
+                       weights=rep(1,DFSize),
+                       span=Span,
+                       min.weight=min,
+                       max.weight=max,
+                       iterations=10)
+
+  SEWeightModel=loessFit(y=LIMSDF$Indy,
+                       x=LIMSDF$Date,
+                       weights=LIMSDF$Indy/LIMSDF$Dep,
+                       span=Span,min.weight=min,
+                       max.weight=max,
+                       iterations=10)
+  LIMSDF$Pred1 <- ConWeightModel$fitted
+  LIMSDF$PredSE <- SEWeightModel$fitted
+  LoessPlot=LIMSDF%>%
+    mutate(ErrorMin=Indy-Dep,ErrorMax=Indy+Dep)%>%
+        mutate(ErrorMin=ifelse(ErrorMin>0,ErrorMin,0))%>%
+        ggplot()+
+        aes(x=Date)+
+        geom_rect(aes(ymin=ErrorMin,ymax=ErrorMax,xmin=Date-BoxWidth,xmax=Date+BoxWidth),color="black",alpha=.25)+
+        geom_rect(aes(ymin=Indy,ymax=Indy,xmin=Date-BoxWidth,xmax=Date+BoxWidth),color="black",alpha=.25)+
+        #geom_point(aes(y=Indy,size=Indy/Dep))+
+        #geom_line(aes(y=PredVarError,color="weight=1/Dep^2"))+
+        geom_line(aes(y=Pred1,color="1"),size=1.25)+
+        geom_line(aes(y=PredSE,color=paste0(Independent,"/",Dependent)),size=1.25)+
+        facet_wrap(~Site)+
+        #scale_y_log10()+
+        labs(color="Weights Used")+
+    ylab(Independent)+
+    theme(legend.position = "bottom")
+  if(Title){
+    LoessPlot=LoessPlot+
+      ggtitle(paste0("Weighted loess smoothing with ",PlaceHolder," truncation 
+                   loessFit(",Independent, " ~ Date, span=",Span,")"))
+  }
+  if(FullLim){
+    XVar=LIMSFullDF$Date
+    YVar=pull(LIMSFullDF,Independent)
+    XLim <- c(min(XVar),max(XVar))
+    YLim <- c(min(YVar[YVar!=0]),max(YVar))
+    print(XLim, YLim)
+    LoessPlot <- LoessPlot+
+      scale_x_date(limits = XLim)+
+      scale_y_log10(limits = YLim)
+  }
+  return(LoessPlot)
+}
+
+```

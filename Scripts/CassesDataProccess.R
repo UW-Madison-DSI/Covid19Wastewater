@@ -31,7 +31,7 @@ CovidDataPARSER= function(File1,File2,MMSDFN){
   
   lag=1
   MMSDdata = read.csv(MMSDFN)%>%
-    mutate(ServiceID = ifelse(ServiceID=="MMSD","Madison",paste("MMSD P",ServiceID,sep="")),Date = as.Date(Date))%>%
+    mutate(ServiceID = ifelse(ServiceID=="MMSD","Madison",paste("MMSD-P",ServiceID,sep="")),Date = as.Date(Date))%>%
     rename(Site=ServiceID)%>%
     group_by(Site)%>%
     mutate(Cases=Cases - lag(Cases, n=lag,default = NA),Tests=Tests- lag(Tests, n=lag,default = NA))%>%

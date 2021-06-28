@@ -167,7 +167,7 @@ ui <- fluidPage(
       numericInput(
                   inputId="MinWeight",
                   label="Minimum weight",
-                  value=1e-5,
+                  value=0,
                   min = NA,
                   max = NA,
                   step = NA,
@@ -176,7 +176,7 @@ ui <- fluidPage(
       numericInput(
                   inputId="MaxWeight",
                   label="Maximum weight",
-                  value=1e5,
+                  value=120,
                   min = NA,
                   max = NA,
                   step = NA,
