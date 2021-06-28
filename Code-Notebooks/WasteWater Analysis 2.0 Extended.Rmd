@@ -1,0 +1,385 @@
+---
+title: "WasteWater Analysis 2.0 Extended"
+author: "Steve Goldstein and Marlin Lee"
+date: "6/1/2021"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(message = FALSE,warning = FALSE)
+
+#library(shiny)
+library(ggpubr)
+library(dplyr)
+# library(shinydashboard)
+# library(shinyjqui)
+# library(shinycssloaders)
+library(limma)
+
+#Data Files and prep work
+source("../Scripts/GenPlotMaking.R")
+source("../Scripts/WasteWaterDataProccess.R")
+source("../Scripts/CassesDataProccess.R")
+source("../Scripts/HelperFunctions.R")
+
+
+source("../Scripts/WasteShiny/PrepData.R", local = TRUE)
+```
+
+
+
+```{r start up, include=FALSE}
+
+HFGPop=read.csv("../../UntrackedData/HFGPop.csv.txt")%>%
+  select(Site=wwtp_name,Population=pop_served)
+
+
+ConfigOption=list(
+      myseed=1234567890,
+      XAxisLabSiz=10,
+      YAxisLabSiz=15,
+      GenFontSiz=20,
+      alphaPoint=.7,
+      PointSize=2,
+      alphaWeek=.2)
+    
+```
+
+```{r, include=FALSE}
+DayRolling=30
+
+
+
+LatCaseDFRoll=RollPerPos(LatCaseDF,"Cases","Tests",Facet="Site",n=DayRolling)%>%
+  select(Date,Site,Cases,Per_pos)#%>%
+  #mutate(Date=Date-DayRolling/2)
+
+CasePlotMaking = function(SiteS,Method="Cases"){
+  SiteCases=LatCaseDF%>%
+    filter(Site==SiteS)
+
+  SiteCasesRoll=LatCaseDFRoll%>%
+    filter(Site==SiteS)
+  
+  LIMSSiteDF=LIMSFullDF%>%
+   filter(Site==SiteS)
+
+
+  Date_lim_long=c(min(LIMSFullDF$Date),max(LIMSFullDF$Date))
+  
+  CasePlot <- Buildplot_gen(
+      Method,
+      MainDF=SiteCases,
+      Loc="Site",
+      LineDF=SiteCasesRoll,
+      Xfreq="35 days",
+      DateLimits=Date_lim_long,
+      Standards=ConfigOption,
+      AxisPos="bottom",
+      LineColor="red",
+      Colplot=TRUE) + Header_theme(ConfigOption)+
+      theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+            axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
+            plot.margin = unit(c(.5,0,0,0), "cm"))
+  return(CasePlot)
+  
+}
+```
+
+```{r Loess Model, include=FALSE}
+#Gen Both Cases and per Pos plot
+LoessSmoothPlot <- function(SiteS,Span=.3,min=1e-5,max=1e5,BoxWidth=.5,Independent="N1",Dependent="N1Error",HasNo=F, Title=T,FullLim=F){
+  PlaceHolder=""
+  if(HasNo){
+    PlaceHolder="no"
+  }
+  LIMSDF=LIMSFullDF%>%
+    filter(Site==SiteS)%>%
+    mutate(Indy=!!sym(Independent),
+           Dep=!!sym(Dependent))%>%
+    filter(!is.na(Dep),
+           !is.na(Indy),
+           Dep>0,
+           Indy>0)
+    
+  DFSize=dim(LIMSDF)[1]
+  ConWeightModel=loessFit(y=LIMSDF$Indy,
+                       x=LIMSDF$Date,
+                       weights=rep(1,DFSize),
+                       span=Span,
+                       min.weight=min,
+                       max.weight=max,
+                       iterations=10)
+
+  SEWeightModel=loessFit(y=LIMSDF$Indy,
+                       x=LIMSDF$Date,
+                       weights=LIMSDF$Indy/LIMSDF$Dep,
+                       span=Span,min.weight=min,
+                       max.weight=max,
+                       iterations=10)
+  LIMSDF$Pred1 <- ConWeightModel$fitted
+  LIMSDF$PredSE <- SEWeightModel$fitted
+  LoessPlot=LIMSDF%>%
+    mutate(ErrorMin=Indy-Dep,ErrorMax=Indy+Dep)%>%
+        mutate(ErrorMin=ifelse(ErrorMin>0,ErrorMin,0))%>%
+        ggplot()+
+        aes(x=Date)+
+        geom_rect(aes(ymin=ErrorMin,ymax=ErrorMax,xmin=Date-BoxWidth,xmax=Date+BoxWidth),color="black",alpha=.25)+
+        geom_rect(aes(ymin=Indy,ymax=Indy,xmin=Date-BoxWidth,xmax=Date+BoxWidth),color="black",alpha=.25)+
+        #geom_point(aes(y=Indy,size=Indy/Dep))+
+        #geom_line(aes(y=PredVarError,color="weight=1/Dep^2"))+
+        geom_line(aes(y=Pred1,color="1"),size=1.25)+
+        geom_line(aes(y=PredSE,color=paste0(Independent,"/",Dependent)),size=1.25)+
+        facet_wrap(~Site)+
+        #scale_y_log10()+
+        labs(color="Weights Used")+
+    ylab(Independent)+
+    theme(legend.position = "bottom")
+  if(Title){
+    LoessPlot=LoessPlot+
+      ggtitle(paste0("Weighted loess smoothing with ",PlaceHolder," truncation 
+                   loessFit(",Independent, " ~ Date, span=",Span,")"))
+  }
+  if(FullLim){
+    XVar=LIMSFullDF$Date
+    YVar=pull(LIMSFullDF,Independent)
+    XLim <- c(min(XVar),max(XVar))
+    YLim <- c(min(YVar[YVar!=0]),max(YVar))
+    LoessPlot <- LoessPlot+
+      scale_x_date(limits = XLim)+
+      scale_y_log10(limits = YLim)
+  }
+  return(LoessPlot)
+}
+
+```
+
+```{r, echo=FALSE}
+SimpleN1ErrorN1Model <- function(Independent,Dependent,...){
+  TempDF <- LIMSFullDF%>%
+    mutate(Indy=!!sym(Independent),
+           Dep=!!sym(Dependent))%>%
+    filter(!is.na(Dep),
+           !is.na(Indy),
+           Dep>0,
+           Indy>0)
+  UnWeightedModelFull2 <- lm(Dep~Indy-1,weights=Indy/Dep,data=TempDF)
+  
+  TempDF%>%
+    mutate(FullDataPredict=predict.lm(UnWeightedModelFull2,.))%>%
+    ggplot()+aes(x=Indy)+
+    geom_point(aes(y=Dep),size=1)+
+    geom_smooth(aes(y=Dep),method="lm",se=F,formula=y~0+x)+
+    #geom_point(aes(y=FullDataPredict,color="Predicted"),size=1)+
+    scale_x_log10()+
+    scale_y_log10()+
+    ggtitle("LM (N1Error ~ N1 - 1)")+
+    ylab(Dependent)+
+    xlab(Independent)+
+    theme(aspect.ratio=1)
+
+}
+```
+
+
+
+```{r SE Pred N1 Brian, width=15, fig.height = 9, fig.width = 12, echo=FALSE}
+
+LIMSFullDFM <- LIMSFullDF%>%
+  mutate(IsMadison=ifelse(Site=="Madison","Madison","Other"))
+
+LIMSMadDF <- LIMSFullDFM%>%
+  filter(IsMadison=="Madison")
+
+
+MadN1ErrorN1Model <- function(Independent,Dependent,...){
+  TempDF <- LIMSFullDF%>%
+    mutate(Indy=!!sym(Independent),
+           Dep=!!sym(Dependent))%>%
+    filter(!is.na(Dep),
+           !is.na(Indy),
+           Dep>0,
+           Indy>0)%>%
+    mutate(IsMadison=ifelse(Site=="Madison","Madison","Other"))
+  
+  LIMSMadDF <- TempDF%>%
+    filter(IsMadison=="Madison")
+
+  
+  UnWeightedModelFull2 <- lm(Dep~Indy-1,data=TempDF)#weights=Indy/Dep
+  UnWeightedModelMad2 <- lm(Dep~Indy-1,data=LIMSMadDF)#weights=Indy/Dep
+  TempDF%>%
+  arrange(desc(IsMadison))%>%
+  ggplot()+aes(x=Indy)+
+  geom_point(aes(y=Dep,color=IsMadison,shape=IsMadison),size=1)+
+  #geom_point(aes(y=FullDataPredict,color="Other"),size=1)+
+  #geom_point(aes(y=MadDataPredict,color="Madison"),size=1)+
+  labs(color="Observations")+#,weight=Indy/Dep
+  geom_smooth(aes(y=Dep,color=IsMadison),method="lm",formula=y~0+x,se=F)+
+  #geom_abline(slope=UnWeightedModelFull2[[1]],color="light blue")+
+  #geom_abline(slope=UnWeightedModelMad2[[1]],color="red")+
+  ggtitle("LM (N1Error~N1-1), Data=Madison Data only \n LM (N1Error~N1-1), Data=Full Data only")+ 
+  scale_shape_manual(values=c(16, 4),guide = 'none')+
+  scale_x_log10()+
+  scale_y_log10()+
+  coord_fixed()+
+  theme(legend.position = "bottom")+
+    ylab(Dependent)+
+    xlab(Independent)+
+    theme(aspect.ratio=1)
+}
+
+MadN1ErrorN1Model(Independent="N1",Dependent="N1Error")
+  # annotate("text",x=4e6, y=7e5, label=paste0("Mad Slope: ",signif(UnWeightedModelMad2[[1]],3),
+  #                                     "\nFull Slope: ",signif(UnWeightedModelMad2[[1]],3)))+
+
+
+
+
+#Spell out fit
+#Code block spells out what he needs to do
+#*-func PlotLMFig
+#using all the data
+
+
+
+#2 spans showing our best and a greater one that washes out patterns. for mad
+#If no truncation show that it overfitts on weighted points
+
+#Brian: Also give interactive 
+#Dec 21 
+#15
+#look at case file to get idea of different seasons
+
+#log()~log()
+#log(N1)/log(N1Error)
+#
+```
+
+
+```{r residue, echo=FALSE}
+UnWeightedModel1 <- lm(N1Error~N1-1,weights=rep(1,dim(LIMSFullDFM)[1]),data=LIMSFullDFM)
+
+
+VarModel1 <- lm(N1Error~N1-1,weights=N1/N1Error^2,data=LIMSFullDFM)
+
+
+SDModel1 <- lm(N1Error~N1-1,weights=N1/N1Error,data=LIMSFullDFM)
+
+TestDF2 <- LIMSFullDFM%>%
+  mutate(NoWeight=weighted.residuals(UnWeightedModel1, drop0 = FALSE),
+         N1VarWeight=weighted.residuals(VarModel1, drop0 = FALSE),
+         N1SDWeight=weighted.residuals(SDModel1, drop0 = FALSE))
+
+G1 <- TestDF2%>%
+  ggplot()+
+  aes(x=N1)+
+  geom_point(aes(y=NoWeight))+
+  ylab("Weighted Residuals")+
+  scale_x_log10()+
+  ggtitle("Constant weight Residuals")
+
+G2 <- TestDF2%>%
+  ggplot()+
+  aes(x=N1)+
+  geom_point(aes(y=N1SDWeight))+
+  ylab("Weighted Residuals")+
+  scale_x_log10()+
+  ggtitle("SE weight residuals")
+
+G3 <- TestDF2%>%
+  ggplot()+
+  aes(x=N1)+
+  geom_point(aes(y=N1VarWeight))+
+  ylab("Weighted Residuals")+
+  scale_x_log10()+
+  ggtitle("Varience weight residuals")
+
+
+
+
+SDModel2 <- lm(N1Error~N1-1,weights=1/N1,data=LIMSMadDF)
+
+TestDF2 <- LIMSMadDF%>%
+  mutate(N1SDWeight=weighted.residuals(SDModel2, drop0 = FALSE))
+
+G22 <- TestDF2%>%
+  ggplot()+
+  aes(x=N1)+
+  geom_point(aes(y=N1SDWeight))+
+  ylab("Weighted Residuals")+
+  scale_x_log10()+
+  ggtitle("Madison SE LM Residuals")
+
+ggarrange(G2,G22,common.legend = T)
+ggarrange(G1,G2,G3,common.legend = T)
+#Repeat with just SE
+#Do repeat for HF with high pop
+
+#Big ?: Bring in shedding lag distribution
+
+#View of N1 data: Bar chart loess smoothing
+
+
+#Grab all the data for it to show
+#Show LM with Weights through points
+#Given that scaling what weighting 
+#Title: Weighted LM (N1Error~N1-1)
+#Keep same color of first one
+#Prep for examination
+#takeaway-using 1/n1weight going forward
+
+  LIMSFullDFM%>%
+    ggplot()+aes(x=N1)+
+    geom_point(aes(y=N1Error),size=1)+
+    geom_smooth(aes(y=N1Error,color="1"),method="lm",se=F,formula=y~0+x)+
+    geom_smooth(aes(y=N1Error,weight=N1/N1Error,color="N1/N1Error"),method="lm",se=F,formula=y~0+x)+
+    geom_smooth(aes(y=N1Error,weight=N1/N1Error^2,color="N1/N1Error^2"),method="lm",se=F,formula=y~0+x)+
+    scale_x_log10()+
+    scale_y_log10()+
+    ggtitle("LM (N1Error ~ N1 - 1)")+
+    coord_fixed()+
+    labs(color="weight")+
+    theme(aspect.ratio=1)
+```
+
+
+```{r}
+LoessSmoothPlot(SiteS="Madison",Span=.1,min=0,max=180,HasNo=T)
+
+```
+
+
+
+
+4.  supplement:  N2; geomean
+
+
+```{r supplement}
+
+
+SimpleN1ErrorN1Model(Independent="N2",Dependent="N2Error")
+LoessSmoothPlot(SiteS="Madison",Span=.1,min=0,max=120,Independent="N2",Dependent="N2Error")
+LoessSmoothPlot(SiteS="MMSD-P2",Span=.3,max=20,Independent="N2",Dependent="N2Error")
+LoessSmoothPlot(SiteS="MMSD-P7",Span=.3,max=20,Independent="N2",Dependent="N2Error")
+LoessSmoothPlot(SiteS="MMSD-P8",Span=.3,max=20,Independent="N2",Dependent="N2Error")
+LoessSmoothPlot(SiteS="MMSD-P11",Span=.3,max=20,Independent="N2",Dependent="N2Error")
+LoessSmoothPlot(SiteS="MMSD-P18",Span=.3,max=20,Independent="N2",Dependent="N2Error")
+CasePlotMaking("MMSD-P2")
+CasePlotMaking("MMSD-P7")
+CasePlotMaking("MMSD-P8")
+CasePlotMaking("MMSD-P11")
+CasePlotMaking("MMSD-P18")
+```
+
+```{r LM Residuals}
+print("Constant Weights")
+summary(UnWeightedModel1)
+print("SE^2 Weights")
+summary(VarModel1)
+print("SE Weights")
+summary(SDModel1)
+```
