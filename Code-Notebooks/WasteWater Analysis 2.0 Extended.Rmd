@@ -186,7 +186,7 @@ SimpleN1ErrorN1Model <- function(Independent,Dependent,...){
 
 
 
-```{r SE Pred N1 Brian, width=15, fig.height = 9, fig.width = 12, echo=FALSE}
+```{r SE Pred N1 Brian, echo=FALSE}
 
 LIMSFullDFM <- LIMSFullDF%>%
   mutate(IsMadison=ifelse(Site=="Madison","Madison","Other"))
@@ -253,10 +253,6 @@ MadN1ErrorN1Model(Independent="N1",Dependent="N1Error")
 #Dec 21 
 #15
 #look at case file to get idea of different seasons
-
-#log()~log()
-#log(N1)/log(N1Error)
-#
 ```
 
 
