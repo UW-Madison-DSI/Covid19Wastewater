@@ -37,7 +37,13 @@ CovidDataPARSER= function(File1,File2,MMSDFN){
     mutate(Cases=Cases - lag(Cases, n=lag,default = NA),Tests=Tests- lag(Tests, n=lag,default = NA))%>%
     mutate(Per_pos=100*Cases/Tests)%>%
     select(Date,Site,Cases,Tests,Per_pos)
-  LatCaseDF=rbind(returnedData,MMSDdata)
+  LatCaseDF=rbind(returnedData,MMSDdata)%>%
+    mutate(Site = ifelse(Site == "MMSD P18", "MMSD-P18", Site),
+           Site = ifelse(Site == "MMSD P11", "MMSD-P11", Site),
+           Site = ifelse(Site == "MMSD P2", "MMSD-P2", Site),
+           Site = ifelse(Site == "MMSD P7", "MMSD-P7", Site),
+           Site = ifelse(Site == "MMSD P8", "MMSD-P8", Site))
+    
   return(LatCaseDF)
 }
 

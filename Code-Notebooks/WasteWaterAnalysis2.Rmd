@@ -87,28 +87,28 @@ CasePlotMaking = function(SiteS,Method="Cases"){
 }
 
 #CasePlotMaking("Madison")
-
-LatCaseDFRoll%>%
-  select(Date,Site,Cases)%>%
-  filter(Site=="MMSD P18")
-  summarise(Dur=max(Date),Min=min(Date),n=n(),dur=max(Date)-min(Date))
-LatCaseDF%>%
-  select(Date,Site,Cases)%>%
-  filter(Site=="MMSD P18")%>%
-  filter(!(Date %in% LatCaseDFRoll$Date))
-
-full_join(LatCaseDFRoll,LatCaseDF,by=c("Date","Site"),suffix=c(".Roll",".Norm"))%>%
-  select(Date,Site,Cases.Roll,Cases.Norm)%>%
-  mutate(rollingTest=(
-  lag(Cases.Norm,n=1)+
-  lag(Cases.Norm,n=2)+
-  lag(Cases.Norm,n=3)+
-  lag(Cases.Norm,n=4)+
-  lag(Cases.Norm,n=5)+
-  lag(Cases.Norm,n=6)+
-  lag(Cases.Norm,n=0))/7)%>%
-  mutate(val=Cases.Roll-rollingTest)%>%
-  filter(val!=0)
+# 
+# LatCaseDFRoll%>%
+#   select(Date,Site,Cases)%>%
+#   filter(Site=="MMSD P18")
+#   summarise(Dur=max(Date),Min=min(Date),n=n(),dur=max(Date)-min(Date))
+# LatCaseDF%>%
+#   select(Date,Site,Cases)%>%
+#   filter(Site=="MMSD P18")%>%
+#   filter(!(Date %in% LatCaseDFRoll$Date))
+# 
+# full_join(LatCaseDFRoll,LatCaseDF,by=c("Date","Site"),suffix=c(".Roll",".Norm"))%>%
+#   select(Date,Site,Cases.Roll,Cases.Norm)%>%
+#   mutate(rollingTest=(
+#   lag(Cases.Norm,n=1)+
+#   lag(Cases.Norm,n=2)+
+#   lag(Cases.Norm,n=3)+
+#   lag(Cases.Norm,n=4)+
+#   lag(Cases.Norm,n=5)+
+#   lag(Cases.Norm,n=6)+
+#   lag(Cases.Norm,n=0))/7)%>%
+#   mutate(val=Cases.Roll-rollingTest)%>%
+#   filter(val!=0)
 
 ```
 
@@ -326,50 +326,7 @@ annotate_figure(SixPlots,top = text_grob("Weighted loess smoothing with truncati
 LIMS data given does not include all the plant data. Older data given does not have N1 Error.
 
 
-```{r PMMoV, warning=FALSE, fig.width=15,fig.height=18,echo=FALSE}
-
-#PMMoV and Percent Bovine Recovery are still unclear use.
-
-
-# LIMSFullDF%>%
-#   filter(Site=="Madison")%>%
-#   ggplot()+
-#   aes(x=PMMoV,y=N1)+
-#   geom_point()+
-#   scale_y_log10()+
-#   scale_x_log10()
-# 
-# LIMSFullDF%>%
-#   filter(Site=="Madison")%>%
-#   ggplot()+
-#   aes(x=BCoV,y=N1)+
-#   geom_point()+
-#   scale_y_log10()+
-#   scale_x_log10()
-# PMMoVN1Relation <- function(Sites){
-#   LIMSFullDF%>%
-#   filter(Site==Sites)%>%
-#   ggplot()+
-#   aes(x=Date,color=PMMoV)+
-#   #scale_colour_viridis_b()+
-#   geom_point(aes(y=N1,color="N1"))+
-#   geom_point(aes(y=.005*PMMoV,color="PMMoV"))+
-#   scale_y_log10()+
-#   facet_wrap(~Site)
-# }
-
-
-# LoessSmoothPlot("Madison")
-
-# LIMSFullDF%>%
-#   group_by(Site)%>%
-#   summarise(n=n(),Min=min(Date),Dur=max(Date)-min(Date),MeanP=mean(Pop,na.rm=TRUE))%>%
-#   arrange(desc(MeanP))
-# 
-# LatWasteDF%>%
-#   group_by(Site)%>%
-#   summarise(n=n(),Min=min(Date),Dur=max(Date)-min(Date))
-
+```{r Missing LIMS, warning=FALSE, fig.width=15,fig.height=18,echo=FALSE}
 AllDataDF <- full_join(LIMSFullDF,LatWasteDF,by=c("Date","Site"))%>%
   mutate(N1=ifelse(is.na(N1.x),N1.y,N1.x),N1Error=ifelse(is.na(N1Error),1,N1Error))%>%
   select(Date,Site,N1,N1Error)%>%
@@ -387,7 +344,72 @@ annotate_figure(SixPlots,top = text_grob("Weighted loess smoothing with truncati
                                                                                 loessFit(N1 ~ Date, span=.3)", color = "black", face = "bold", size = 14))
 ```
 
+Interceptors next to cases
 
+```{r, warning=FALSE, fig.width=9,fig.height=12,echo=FALSE}
+N1CaseComp <- function(SiteS){
+  N1Plot=LoessSmoothPlot(SiteS=SiteS,Data=AllDataDF,Span=.3,max=20, Title=F,FullLim=F,NoLabel=T)+
+  theme()
+  CasePlot=CasePlotMaking(SiteS,Method="Per_pos")
+
+
+  annotate_figure(ggarrange(CasePlot,N1Plot,nrow=2,common.legend = TRUE ,align ="hv",legend="bottom"),top = text_grob("Weighted loess smoothing compared to cases)", color = "black", face = "bold", size = 14))
+}
+
+
+N1CaseComp("MMSD-P2")
+N1CaseComp("MMSD-P7")
+N1CaseComp("MMSD-P8")
+N1CaseComp("MMSD-P11")
+N1CaseComp("MMSD-P18")
+
+```
+
+
+PMMoV and percent bovine coronavirus recovery use is still unclear. Data shows very week and inconsistent trend.
+
+```{r, echo=FALSE}
+
+PMMoVN1Relation <- function(Sites){
+  LIMSFullDF%>%
+  filter(Site==Sites)%>%
+  ggplot()+
+  aes(x=N1)+
+  #scale_colour_viridis_b()+
+  geom_point(aes(y=PMMoV))+
+  scale_y_log10()+
+  scale_x_log10()+
+  facet_wrap(~Site)
+}
+BCoVN1Relation <- function(Sites){
+  LIMSFullDF%>%
+  filter(Site==Sites)%>%
+  ggplot()+
+  aes(x=N1)+
+  #scale_colour_viridis_b()+
+  geom_point(aes(y=BCoV))+
+  scale_y_log10()+
+  scale_x_log10()+
+  facet_wrap(~Site)
+}
+
+Sites=c("UW-LakeShore","MMSD-P8","MMSD-P2","MMSD-P11","Madison","MMSD-P7","MMSD-P18","Hudson","Kenosha","Wausau","Oshkosh")
+  
+#unique(LIMSFullDF$Site)
+
+lapply(Sites,BCoVN1Relation)
+lapply(Sites,PMMoVN1Relation)
+# LIMSFullDF%>%
+#   group_by(Site)%>%
+#   summarise(n=n(),Min=min(Date),Dur=max(Date)-min(Date),MeanP=mean(Pop,na.rm=TRUE))%>%
+#   arrange(desc(MeanP))
+# 
+# LatWasteDF%>%
+#   group_by(Site)%>%
+#   summarise(n=n(),Min=min(Date),Dur=max(Date)-min(Date))
+
+
+```
 
 
 

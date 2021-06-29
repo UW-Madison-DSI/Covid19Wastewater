@@ -377,7 +377,7 @@ LoessSmoothPlot(SiteS="MMSD-P7",Span=.3,max=20,Independent="N2",Dependent="N2Err
 LoessSmoothPlot(SiteS="MMSD-P8",Span=.3,max=20,Independent="N2",Dependent="N2Error")
 LoessSmoothPlot(SiteS="MMSD-P11",Span=.3,max=20,Independent="N2",Dependent="N2Error")
 LoessSmoothPlot(SiteS="MMSD-P18",Span=.3,max=20,Independent="N2",Dependent="N2Error")
-CasePlotMaking("MMSD-P2")
+CasePlotMaking("MMSD P2")
 CasePlotMaking("MMSD-P7")
 CasePlotMaking("MMSD-P8")
 CasePlotMaking("MMSD-P11")
