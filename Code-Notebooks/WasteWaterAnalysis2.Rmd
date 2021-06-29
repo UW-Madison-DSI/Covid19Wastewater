@@ -28,37 +28,6 @@ source("../Scripts/HelperFunctions.R")
 
 source("../Scripts/WasteShiny/PrepData.R", local = TRUE)
 
-
-# a=LIMSFullDF%>%
-#   select(Site,Date)%>%
-#   mutate(DataSet="LIMSData")
-# 
-# b=LatWasteDF%>%
-#   mutate(Site=ifelse(Site=="MMSD P11","MMSD-P11",Site),
-#          Site=ifelse(Site=="MMSD P18","MMSD-P18",Site),
-#          Site=ifelse(Site=="MMSD P7","MMSD-P7",Site),
-#          Site=ifelse(Site=="MMSD P8","MMSD-P8",Site),
-#          Site=ifelse(Site=="MMSD P2","MMSD-P2",Site))
-# 
-# bb=full_join(a,b,by=c("Site","Date"))%>%
-#   filter(is.na(DataSet))%>%
-#   mutate(N1Error=NA)%>%
-#   select(Date,Site,N1,N1Error)
-# 
-# bb
-# aa=LIMSFullDF%>%
-#   select(Date,Site,N1,N1Error)
-# 
-# LIMSFullDF <- full_join(aa,bb,by=c("Date","Site"))%>%
-#   mutate(N1=ifelse(is.na(N1.x),N1.y,N1.x),
-#          N1Error=N1Error.x)%>%
-#   select(Date,Site,N1,N1Error)%>%
-#   filter(is.na(N1Error))
-# 
-# LIMSFullDF%>%
-#   group_by(Site)%>%
-#   summarise(n=n(),Dur=max(Date)-min(Date))
-#LoessSmoothPlot(SiteS="MMSD-P2",Span=.1,min=0,max=120,Title = F,FullLim=F,SiteLab=F)
 ```
 
 
@@ -112,22 +81,45 @@ CasePlotMaking = function(SiteS,Method="Cases"){
       Standards=ConfigOption,
       AxisPos="bottom",
       LineColor="red",
-      Colplot=TRUE) + Header_theme(ConfigOption)
+      Colplot=TRUE) #+ Header_theme(ConfigOption)
   return(CasePlot)
   
 }
 
 #CasePlotMaking("Madison")
+
+LatCaseDFRoll%>%
+  select(Date,Site,Cases)%>%
+  filter(Site=="MMSD P18")
+  summarise(Dur=max(Date),Min=min(Date),n=n(),dur=max(Date)-min(Date))
+LatCaseDF%>%
+  select(Date,Site,Cases)%>%
+  filter(Site=="MMSD P18")%>%
+  filter(!(Date %in% LatCaseDFRoll$Date))
+
+full_join(LatCaseDFRoll,LatCaseDF,by=c("Date","Site"),suffix=c(".Roll",".Norm"))%>%
+  select(Date,Site,Cases.Roll,Cases.Norm)%>%
+  mutate(rollingTest=(
+  lag(Cases.Norm,n=1)+
+  lag(Cases.Norm,n=2)+
+  lag(Cases.Norm,n=3)+
+  lag(Cases.Norm,n=4)+
+  lag(Cases.Norm,n=5)+
+  lag(Cases.Norm,n=6)+
+  lag(Cases.Norm,n=0))/7)%>%
+  mutate(val=Cases.Roll-rollingTest)%>%
+  filter(val!=0)
+
 ```
 
 ```{r Loess Model, include=FALSE}
 #Gen Both Cases and per Pos plot
-LoessSmoothPlot <- function(SiteS,Span=.3,min=1e-5,max=1e5,BoxWidth=.5,Independent="N1",Dependent="N1Error",HasNo=F, Title=T,FullLim=F,SiteLab=T){
+LoessSmoothPlot <- function(SiteS,Data=LIMSFullDF,Span=.3,min=1e-5,max=1e5,BoxWidth=.5,Independent="N1",Dependent="N1Error",HasNo=F, Title=T,FullLim=F,SiteLab=T,NoLabel=F){
   PlaceHolder=""
   if(HasNo){
     PlaceHolder="no"
   }
-  LIMSDF=LIMSFullDF%>%
+  LIMSDF=Data%>%
     filter(Site==SiteS)%>%
     mutate(Indy=!!sym(Independent),
            Dep=!!sym(Dependent))%>%
@@ -160,18 +152,17 @@ LoessSmoothPlot <- function(SiteS,Span=.3,min=1e-5,max=1e5,BoxWidth=.5,Independe
         aes(x=Date)+
         geom_rect(aes(ymin=ErrorMin,ymax=ErrorMax,xmin=Date-BoxWidth,xmax=Date+BoxWidth),color="black",alpha=.25)+
         geom_rect(aes(ymin=Indy,ymax=Indy,xmin=Date-BoxWidth,xmax=Date+BoxWidth),color="black",alpha=.25)+
-        geom_line(aes(y=Pred1,color="1"),size=1.25)#+
+        geom_line(aes(y=Pred1,color="1"),size=1.25)+
         geom_line(aes(y=PredSE,color=paste0(Independent,"/",Dependent)),size=1.25)
   if(SiteLab){
     LoessPlot=LoessPlot+facet_wrap(~Site)
   }
   LoessPlot=LoessPlot+
-        scale_y_log10()+
         labs(color="Weights Used")+
-    ylab(Independent)+
-    Header_theme(ConfigOption)+
-      theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
-            axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
+    ylab(paste0(Independent," (GC/L)"))+
+    #Header_theme(ConfigOption)+
+      theme(axis.text = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+            axis.title = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
             plot.margin = unit(c(0,0,0,0), "cm"))+ 
     theme(legend.position = "bottom")+
     ggtitle("")
@@ -188,6 +179,14 @@ LoessSmoothPlot <- function(SiteS,Span=.3,min=1e-5,max=1e5,BoxWidth=.5,Independe
     LoessPlot <- LoessPlot+
       scale_x_date(limits = XLim)+
       scale_y_log10(limits = YLim)
+  }else{
+    LoessPlot <- LoessPlot+
+      scale_y_log10()
+  }
+  if(NoLabel){
+    LoessPlot <- LoessPlot + 
+      theme(axis.title.x=element_blank(),
+          axis.title.y=element_blank())
   }
   return(LoessPlot)
 }
@@ -200,15 +199,16 @@ To Do: Pick a set of graphs to show. %Pos or Cases
 
 ```{r,  echo=FALSE}
 
-N1Plot=LoessSmoothPlot(SiteS="Madison",Span=.1,min=0,max=120,Title = F,FullLim=F,SiteLab=F)
+N1Plot=LoessSmoothPlot(SiteS="Madison",Span=.1,min=0,max=120,Title = F,FullLim=F,SiteLab=F)+
+  theme()
 PerPosPlot=CasePlotMaking("Madison",Method="Per_pos")
 CasePlot=CasePlotMaking("Madison")
 
 #ggarrange(CasePlot,N1Plot,nrow=2,common.legend = TRUE ,align ="hv")
 #ggarrange(PerPosPlot,N1Plot,nrow=2,common.legend = TRUE,align ="hv")
 
-annotate_figure(ggarrange(CasePlot,N1Plot,nrow=2,common.legend = TRUE ,align ="hv"),top = text_grob("Weighted loess smoothing compared to cases)", color = "black", face = "bold", size = 14))
-annotate_figure(ggarrange(PerPosPlot,N1Plot,nrow=2,common.legend = TRUE,align ="hv"),top = text_grob("Weighted loess smoothing compared to percent positive)", color = "black", face = "bold", size = 14))
+annotate_figure(ggarrange(CasePlot,N1Plot,nrow=2,common.legend = TRUE ,align ="hv",legend="bottom"),top = text_grob("Weighted loess smoothing compared to cases)", color = "black", face = "bold", size = 14))
+annotate_figure(ggarrange(PerPosPlot,N1Plot,nrow=2,common.legend = TRUE,align ="hv",legend="bottom"),top = text_grob("Weighted loess smoothing compared to percent positive)", color = "black", face = "bold", size = 14))
 
 
 
@@ -249,10 +249,16 @@ SimpleN1ErrorN1Model <- function(Independent,Dependent,...){
     theme(aspect.ratio=1)
 }
 #,Weight="INDDep"
-SimpleN1ErrorN1Model(Independent="N1",Dependent="N1Error")
+SimpleN1ErrorN1Model(Independent="N1",Dependent="N1Error")+
+      theme(axis.text = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+            axis.title = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
+            plot.margin = unit(c(0,0,0,0), "cm"))
 
 #Add aspect=1
 #add slope to plot
+
+
+
 ```
 
 
@@ -266,16 +272,24 @@ Boxes represent N1 plus or minus 1 1 Error
 
 
 
-Below is the two versions of the smoothed data capturing different scales of its variations. 
+Below are the two versions of the smoothed data capturing different scales of its variations. The boxes are the concentration measured plus or minus the standard error. This gives some measure of how weighted the point is given.
+
+To DO: Redo Labels for DHS audience?
 
 
 
 ```{r SmoothPlot, echo=FALSE}
 
 
-LoessSmoothPlot(SiteS="Madison",Span=.1,min=0,max=120)
+LoessSmoothPlot(SiteS="Madison",Span=.1,min=0,max=120)+
+      theme(axis.text = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+            axis.title = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
+            plot.margin = unit(c(0,0,0,0), "cm"))
 
-LoessSmoothPlot(SiteS="Madison",Span=.3,min=0,max=120)
+LoessSmoothPlot(SiteS="Madison",Span=.3,min=0,max=120)+
+      theme(axis.text = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+            axis.title = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
+            plot.margin = unit(c(0,0,0,0), "cm"))
 
 
 
@@ -293,21 +307,82 @@ LoessSmoothPlot(SiteS="Madison",Span=.3,min=0,max=120)
 ```
 
 
-. smoothing of N1 for interceptors
+This is method is extended for the interceptors.
 
 
-```{r, echo=FALSE,include=TRUE}
-G1 <- LoessSmoothPlot(SiteS="Madison",Span=.3,max=20, Title=F,FullLim=T)
-G2 <- LoessSmoothPlot(SiteS="MMSD-P2",Span=.3,max=20, Title=F,FullLim=T)
-G3 <- LoessSmoothPlot(SiteS="MMSD-P7",Span=.3,max=20, Title=F,FullLim=T)
-G4 <- LoessSmoothPlot(SiteS="MMSD-P8",Span=.3,max=20, Title=F,FullLim=T)
-G5 <- LoessSmoothPlot(SiteS="MMSD-P11",Span=.3,max=20, Title=F,FullLim=T)
-G6 <- LoessSmoothPlot(SiteS="MMSD-P18",Span=.3,max=20, Title=F,FullLim=T)
+```{r, echo=FALSE,include=TRUE, fig.width=15,fig.height=18}
 
+MapList=lapply(c("Madison","MMSD-P2","MMSD-P7","MMSD-P8","MMSD-P11","MMSD-P18"),LoessSmoothPlot,Span=.3,max=20, Title=F,FullLim=T,NoLabel=T)
 #LoessSmoothPlot(SiteS="UW-Sellery",Span=.3,max=20)
 #LoessSmoothPlot(SiteS="UW-LakeShore",Span=.3,max=20)
 
-SixPlots=ggarrange(G1,G2,G3,G4,G5,G6, nrow=3,ncol=2, common.legend = T)
+SixPlots=ggarrange(plotlist = MapList, nrow=3,ncol=2, common.legend = T,legend="bottom")
+annotate_figure(SixPlots,top = text_grob("Weighted loess smoothing with truncation
+                                                                                loessFit(N1 ~ Date, span=.3)", color = "black", face = "bold", size = 14))
+#No date label, No N1 label
+```
+
+
+LIMS data given does not include all the plant data. Older data given does not have N1 Error.
+
+
+```{r PMMoV, warning=FALSE, fig.width=15,fig.height=18,echo=FALSE}
+
+#PMMoV and Percent Bovine Recovery are still unclear use.
+
+
+# LIMSFullDF%>%
+#   filter(Site=="Madison")%>%
+#   ggplot()+
+#   aes(x=PMMoV,y=N1)+
+#   geom_point()+
+#   scale_y_log10()+
+#   scale_x_log10()
+# 
+# LIMSFullDF%>%
+#   filter(Site=="Madison")%>%
+#   ggplot()+
+#   aes(x=BCoV,y=N1)+
+#   geom_point()+
+#   scale_y_log10()+
+#   scale_x_log10()
+# PMMoVN1Relation <- function(Sites){
+#   LIMSFullDF%>%
+#   filter(Site==Sites)%>%
+#   ggplot()+
+#   aes(x=Date,color=PMMoV)+
+#   #scale_colour_viridis_b()+
+#   geom_point(aes(y=N1,color="N1"))+
+#   geom_point(aes(y=.005*PMMoV,color="PMMoV"))+
+#   scale_y_log10()+
+#   facet_wrap(~Site)
+# }
+
+
+# LoessSmoothPlot("Madison")
+
+# LIMSFullDF%>%
+#   group_by(Site)%>%
+#   summarise(n=n(),Min=min(Date),Dur=max(Date)-min(Date),MeanP=mean(Pop,na.rm=TRUE))%>%
+#   arrange(desc(MeanP))
+# 
+# LatWasteDF%>%
+#   group_by(Site)%>%
+#   summarise(n=n(),Min=min(Date),Dur=max(Date)-min(Date))
+
+AllDataDF <- full_join(LIMSFullDF,LatWasteDF,by=c("Date","Site"))%>%
+  mutate(N1=ifelse(is.na(N1.x),N1.y,N1.x),N1Error=ifelse(is.na(N1Error),1,N1Error))%>%
+  select(Date,Site,N1,N1Error)%>%
+  filter(Date<mdy("7/1/2021"))
+
+
+
+
+MapList=lapply(c("Madison","MMSD-P2","MMSD-P7","MMSD-P8","MMSD-P11","MMSD-P18"),LoessSmoothPlot,Data=AllDataDF,Span=.3,max=20, Title=F,FullLim=T,NoLabel=T)
+#LoessSmoothPlot(SiteS="UW-Sellery",Span=.3,max=20)
+#LoessSmoothPlot(SiteS="UW-LakeShore",Span=.3,max=20)
+
+SixPlots=ggarrange(plotlist = MapList, nrow=3,ncol=2, common.legend = T,legend="bottom")
 annotate_figure(SixPlots,top = text_grob("Weighted loess smoothing with truncation
                                                                                 loessFit(N1 ~ Date, span=.3)", color = "black", face = "bold", size = 14))
 ```

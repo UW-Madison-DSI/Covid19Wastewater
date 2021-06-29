@@ -48,9 +48,14 @@ WasteWater = function(Waterfilename){
                                    sheet = 2) %>%
     select(-"...11") %>%
     mutate(TSS = NA,
-           Site = ifelse(Site == "MMSD P02", "MMSD P2", Site),
-           Site = ifelse(Site == "MMSD P07", "MMSD P7", Site),
-           Site = ifelse(Site == "MMSD P08", "MMSD P8", Site)
+           Site = ifelse(Site == "MMSD P02", "MMSD-P2", Site),
+           Site = ifelse(Site == "MMSD P07", "MMSD-P7", Site),
+           Site = ifelse(Site == "MMSD P08", "MMSD-P8", Site),
+           Site = ifelse(Site == "MMSD P18", "MMSD-P18", Site),
+           Site = ifelse(Site == "MMSD P11", "MMSD-P11", Site),
+           Site = ifelse(Site == "MMSD P2", "MMSD-P2", Site),
+           Site = ifelse(Site == "MMSD P7", "MMSD-P7", Site),
+           Site = ifelse(Site == "MMSD P8", "MMSD-P8", Site)
            #Date=mdy(Date)
     ) %>%
     select(1:5, TSS, everything())

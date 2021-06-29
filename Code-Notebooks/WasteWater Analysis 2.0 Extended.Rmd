@@ -253,6 +253,19 @@ MadN1ErrorN1Model(Independent="N1",Dependent="N1Error")
 #Dec 21 
 #15
 #look at case file to get idea of different seasons
+LIMSFullDF%>%
+  ggplot()+
+  aes(x=PMMoV,y=N1Error/N1)+
+  geom_point()+
+  scale_y_log10()+
+  scale_x_log10()
+
+LIMSFullDF%>%
+  ggplot()+
+  aes(x=BCoV,y=N1Error/N1)+
+  geom_point()+
+  scale_y_log10()+
+  scale_x_log10()
 ```
 
 
