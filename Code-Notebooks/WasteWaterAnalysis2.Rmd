@@ -323,7 +323,7 @@ annotate_figure(SixPlots,top = text_grob("Weighted loess smoothing with truncati
 ```
 
 
-LIMS data given does not include all the plant data. Older data given does not have N1 Error.
+LIMS data given does not include all the intercepter data. Older data given does not have N1 Error.
 
 
 ```{r Missing LIMS, warning=FALSE, fig.width=15,fig.height=18,echo=FALSE}
