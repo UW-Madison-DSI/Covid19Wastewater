@@ -81,7 +81,7 @@ ConfigOption=list(
 ```
 
 ```{r, include=FALSE}
-DayRolling=30
+DayRolling=7
 
 
 
@@ -117,7 +117,7 @@ CasePlotMaking = function(SiteS,Method="Cases"){
   
 }
 
-
+#CasePlotMaking("Madison")
 ```
 
 ```{r Loess Model, include=FALSE}
@@ -152,7 +152,7 @@ LoessSmoothPlot <- function(SiteS,Span=.3,min=1e-5,max=1e5,BoxWidth=.5,Independe
                        max.weight=max,
                        iterations=10)
   LIMSDF$Pred1 <- ConWeightModel$fitted
-  #LIMSDF$PredSE <- SEWeightModel$fitted
+  LIMSDF$PredSE <- SEWeightModel$fitted
   LoessPlot=LIMSDF%>%
     mutate(ErrorMin=Indy-Dep,ErrorMax=Indy+Dep)%>%
         mutate(ErrorMin=ifelse(ErrorMin>0,ErrorMin,0))%>%
@@ -161,7 +161,7 @@ LoessSmoothPlot <- function(SiteS,Span=.3,min=1e-5,max=1e5,BoxWidth=.5,Independe
         geom_rect(aes(ymin=ErrorMin,ymax=ErrorMax,xmin=Date-BoxWidth,xmax=Date+BoxWidth),color="black",alpha=.25)+
         geom_rect(aes(ymin=Indy,ymax=Indy,xmin=Date-BoxWidth,xmax=Date+BoxWidth),color="black",alpha=.25)+
         geom_line(aes(y=Pred1,color="1"),size=1.25)#+
-        #geom_line(aes(y=PredSE,color=paste0(Independent,"/",Dependent)),size=1.25)
+        geom_line(aes(y=PredSE,color=paste0(Independent,"/",Dependent)),size=1.25)
   if(SiteLab){
     LoessPlot=LoessPlot+facet_wrap(~Site)
   }
@@ -194,8 +194,9 @@ LoessSmoothPlot <- function(SiteS,Span=.3,min=1e-5,max=1e5,BoxWidth=.5,Independe
 
 ```
 
-  
-#TakeHome First
+Due to the large variations of the N1 concentration we have tried to create a smoothed version of the data set that captures the underlying shifts of the data. Below is our best attempt at smoothing the N1 concentration data. It shows relation to case data given the spread of shedding of N1. This relationship holds for N2 as well.
+
+To Do: Pick a set of graphs to show. %Pos or Cases
 
 ```{r,  echo=FALSE}
 
@@ -215,7 +216,9 @@ annotate_figure(ggarrange(PerPosPlot,N1Plot,nrow=2,common.legend = TRUE,align ="
 
 
 
-1.  Linear model show SE scales as N1
+To use standard Error measurements in our smoothing we needed to have it be an unbiased estimate given the concentration. A strong correlation between N1 and N1Error means it needs to be controlled for. Using standard error normalized by N1 gave a meaningful measurement of the consistency of the data.
+
+***No strong relationship existed between the modified standard error and other predictors like Percent bovine recovery and PMMoV***
 
 
 ```{r SE Pred N1 Gen, echo=FALSE}
@@ -263,6 +266,10 @@ Boxes represent N1 plus or minus 1 1 Error
 
 
 
+Below is the two versions of the smoothed data capturing different scales of its variations. 
+
+
+
 ```{r SmoothPlot, echo=FALSE}
 
 
@@ -280,7 +287,6 @@ LoessSmoothPlot(SiteS="Madison",Span=.3,min=0,max=120)
 #Sparse Main Plots in 1 Documents
 #auxiliary plots in other locations and loess smoothing:
 #Different weightings
-#Hircle model?
 #weighting
 #Residuals
 #Weighted loess smoothing with truncation loessFit(N1 ~ Date, span=.3)
@@ -301,9 +307,9 @@ G6 <- LoessSmoothPlot(SiteS="MMSD-P18",Span=.3,max=20, Title=F,FullLim=T)
 #LoessSmoothPlot(SiteS="UW-Sellery",Span=.3,max=20)
 #LoessSmoothPlot(SiteS="UW-LakeShore",Span=.3,max=20)
 
-
-annotate_figure(ggarrange(G1,G2,G3,G4,G5,G6, common.legend = T),top = text_grob("Weighted loess smoothing with truncation
-                                                                                loessFit(N1 ~ Date, span=.3)", color = "black", face = "bold", size = 14)
+SixPlots=ggarrange(G1,G2,G3,G4,G5,G6, nrow=3,ncol=2, common.legend = T)
+annotate_figure(SixPlots,top = text_grob("Weighted loess smoothing with truncation
+                                                                                loessFit(N1 ~ Date, span=.3)", color = "black", face = "bold", size = 14))
 ```
 
 
