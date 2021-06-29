@@ -10,10 +10,13 @@ start:
     	   figure:  some regression figure
 
     caveats;  role in analysis is limited to heuristic for choosing
+
     weights
 	however, not sufficient weights (only outliers for qPCR)
 
-    brian:  mmsd vs all data plot:
+weight		
+brian:  mmsd vs all data plot:
+    
     	    var vs SE  plusses and minuses
 	    question:  other normalizations?
 
@@ -53,9 +56,12 @@ separate)  todo: exact dates for fall end and winter start
 research  questions or future work
 	  1. shedding lag distribution: cases or N1
 	  2. better lm
+	     	    log-log model e.g.
 	  3. limma heirarchical model
-
 	  
+	  correlation case with N1
+
+	  Brian: ts package for correlation of time series;
      
 
   
