@@ -439,3 +439,34 @@ LatCaseDF%>%
 #   filter(val!=0)
 
 ```
+
+Issues with case data
+
+```{r}
+LatCaseDF%>%
+  filter(Site=="Madison")%>%
+  ggplot()+
+  aes(x=Date)+
+  geom_point(aes(y=Cases,color="Cases"))+
+  geom_point(aes(y=Tests,color="Tests"))
+
+
+LatCaseDFRoll=RollPerPos(LatCaseDF,"Cases","Tests",Facet="Site",n=DayRolling)%>%
+  select(Date,Site,CaseName,TestName,Per_pos)
+
+LatCaseDFRoll%>%
+  filter(Site=="Madison")%>%
+  ggplot()+
+  aes(x=Date)+
+  geom_point(aes(y=CaseName,color="Cases"))+
+  geom_point(aes(y=TestName,color="Tests"))
+
+LatCaseDFRoll%>%
+  filter(Site=="Madison")%>%
+  ggplot()+
+  aes(x=Date)+
+  geom_point(aes(y=100*CaseName/TestName-5,color="Cases"))+
+  geom_point(aes(y=Per_pos,color="Per_pos"))
+
+
+```

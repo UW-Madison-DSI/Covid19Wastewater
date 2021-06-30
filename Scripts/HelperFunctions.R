@@ -9,7 +9,10 @@ RollPerPos = function(RollingDF,CaseName,TestName,Facet=NA,n=7){
   FullDataFM=full_join(TDF,FulldayRange,by=c("Date","Facet"))%>%
     arrange(Facet,Date)%>%
     group_by(Facet)%>%
-    mutate(Per_pos=RollPerPosHelperFunc(CaseName,TestName,n=n),CaseName=RollAvgHelperFunc(CaseName,n=n))%>%
+    mutate(Per_pos=RollPerPosHelperFunc(CaseName,TestName,n=n),
+           CaseName=RollAvgHelperFunc(CaseName,n=n),
+           TestName=RollAvgHelperFunc(TestName,n=n)
+           )%>%
     ungroup()
   FullDataFM[[CaseName]]=FullDataFM$CaseName
   return(FullDataFM)

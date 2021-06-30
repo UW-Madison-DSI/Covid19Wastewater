@@ -1,21 +1,15 @@
 ---
 title: "WasteWater Analysis 2.0"
 author: "Steve Goldstein and Marlin Lee"
-output:
-  html_document: default
-  pdf_document: default
+output: slidy_presentation
 ---
 
 
 ```{r, include=FALSE}
 knitr::opts_chunk$set(message = FALSE,warning = FALSE)
 knitr::opts_chunk$set(fig.width=8, fig.height=5) 
-#library(shiny)
 library(ggpubr)
 library(dplyr)
-# library(shinydashboard)
-# library(shinyjqui)
-# library(shinycssloaders)
 library(limma)
 
 #Data Files and prep work
@@ -169,29 +163,31 @@ LoessSmoothPlot <- function(SiteS,Data=LIMSFullDF,Span=.3,min=1e-5,max=1e5,BoxWi
   if(NoLabel){
     LoessPlot <- LoessPlot + 
       ggtitle("")+
-      ylab("")
-      # theme(axis.title.x=element_blank(),
-      #     axis.title.y=element_blank())
+      ylab("")+
+      xlab("")
   }
   return(LoessPlot)
 }
 
 ```
 
+---
+
 Due to the large variations of the N1 concentration we have tried to create a smoothed version of the data set that captures the underlying shifts of the data. Below is our best attempt at smoothing the N1 concentration data. It shows relation to case data given the spread of shedding of N1. This relationship holds for N2 as well.
 
 
 ```{r,  echo=FALSE}
 
-N1Plot=LoessSmoothPlot(SiteS="Madison",Span=.1,min=0,max=120,Title = F,FullLim=F,SiteLab=F)+
-  theme()
-PerPosPlot=CasePlotMaking("Madison",Method="Per_pos")
+N1Plot <- LoessSmoothPlot(SiteS="Madison",Span=.1,min=0,max=120,Title = F,FullLim=F,SiteLab=F)+
+  xlab("")
+PerPosPlot <- CasePlotMaking("Madison",Method="Per_pos")
 CasePlot=CasePlotMaking("Madison")
 
-#ggarrange(CasePlot,N1Plot,nrow=2,common.legend = TRUE ,align ="hv")
-#ggarrange(PerPosPlot,N1Plot,nrow=2,common.legend = TRUE,align ="hv")
+ArrangePlot <- ggarrange(CasePlot,N1Plot,nrow=2,common.legend = TRUE ,align ="hv",legend="bottom")
 
-annotate_figure(ggarrange(CasePlot,N1Plot,nrow=2,common.legend = TRUE ,align ="hv",legend="bottom"),top = text_grob("Weighted loess smoothing compared to cases", color = "black", face = "bold", size = 16))
+PlotTitle <- text_grob("Weighted loess smoothing compared to cases", color = "black", face = "bold", size = 16)
+
+annotate_figure(ArrangePlot,top = PlotTitle)
 
 # annotate_figure(ggarrange(PerPosPlot,N1Plot,nrow=2,common.legend = TRUE,align ="hv",legend="bottom"),top = text_grob("Weighted loess smoothing compared to percent positive", color = "black", face = "bold", size = 16))
 
@@ -199,7 +195,7 @@ annotate_figure(ggarrange(CasePlot,N1Plot,nrow=2,common.legend = TRUE ,align ="h
 #princepled ways tp do
 ```
 
-
+---
 
 To use standard Error measurements in our smoothing we needed to have it be an unbiased estimate given the concentration. A strong correlation between N1 and N1Error means it needs to be controlled for. Using standard error normalized by N1 gave a meaningful measurement of the consistency of the data.
 
@@ -246,14 +242,7 @@ SimpleN1ErrorN1Model(Independent="N1",Dependent="N1Error")+
 
 ```
 
-
-
-
-
-
-
-
-
+---
 
 Below are the two versions of the smoothed data capturing different scales of its variations. The boxes are the concentration measured plus or minus the standard error. This gives some measure of how weighted the point is given.
 
@@ -286,6 +275,7 @@ LoessSmoothPlot(SiteS="Madison",Span=.3,min=0,max=120)+
 #Weighted loess smoothing with truncation loessFit(N1 ~ Date, span=.3)
 ```
 
+---
 
 This is method is extended for the interceptors.
 
@@ -302,7 +292,7 @@ annotate_figure(SixPlots,top = text_grob("Weighted loess smoothing with truncati
 #No date label, No N1 label
 ```
 
-
+---
 
 
 ```{r Missing LIMS, warning=FALSE,fig.height=18,echo=FALSE,include=FALSE}
@@ -363,11 +353,15 @@ TitleText=text_grob(paste("Case concentration comparison for",SiteS),
 }
 
 N1CaseCompDorms(SiteS="UW-Sellery")
+```
+
+---
+
+```{r, warning=FALSE,fig.height=8,echo=FALSE}
 
 N1CaseCompDorms(SiteS="UW-LakeShore")
 
 ```
-
 
 ```{r, warning=FALSE,fig.height=12,include=FALSE}
 #Per_pos
@@ -391,10 +385,12 @@ TitleText=text_grob("Weighted loess smoothing compared to cases)", color = "blac
 #Lims older data
 ```
 
-No clear use for PMMoV and percent bovine coronavirus recovery use is still unclear. Below shows that unusual they do not seem to relate to unusual N1 values
+---
+
+No clear use for PMMoV and percent bovine coronavirus recovery use is still unclear. Below shows that unusual they do not seem to relate to unusual N1 values.
 
 
-```{r fig.height = 6,echo=FALSE}
+```{r fig.height = 3,echo=FALSE , fig.width = 13}
 SiteOptions2=c("Kenosha","Madison", "Sun Prairie","Wausau")
 
 
@@ -407,17 +403,20 @@ PMMoVUseDF=HFGFrame%>%
 
 PMMoVUseDF%>%
   ggplot()+aes(x=PMMoV,y=N1,color=`PMMoV Level`)+geom_point()+scale_y_log10()+
-  scale_x_log10()+facet_wrap(~Site)+ggtitle("N1 Vs PMMoV")+
+  scale_x_log10()+facet_wrap(~Site,nrow=1)+ggtitle("N1 Vs PMMoV")+
   xlab("PMMoV (GC/L)")+ylab("N1 (GC/L)")
 
 PMMoVUseDF%>%
   ggplot()+aes(x=Date,y=N1,color=`PMMoV Level`)+geom_jitter(height=0,width=.1)+
   ylab("N1 (GC/L)")+ggtitle("PMMoV and N1 appear unrelated")+
-  scale_y_log10()+facet_wrap(~Site)
+  scale_y_log10()+facet_wrap(~Site,nrow=1)
 
 ```
 
-```{r outliers Per_Bcov, fig.height = 6,echo=FALSE}
+---
+
+
+```{r outliers Per_Bcov, fig.height = 3,echo=FALSE , fig.width = 13}
 BCoVUseDF=HFGFrame%>%
   filter(Site %in% SiteOptions2)%>%
   filter(N1<2e6)%>%
@@ -431,7 +430,7 @@ BCoVUseDF%>%
   ylab("N1 (GC/L)")+
   #scale_y_log10()+
   #scale_x_log10()+
-  facet_wrap(~Site)+
+  facet_wrap(~Site,nrow=1)+
   ggtitle("N1 Vs %Bcov recovery")
 #, scales = "free"
 #scale_x_log10()+,color=marked
@@ -441,9 +440,13 @@ BCoVUseDF%>%
   ggtitle("Percent BCoV recovery and N1 appear unrelated")+
   scale_y_log10()+
   ylab("N1 (GC/L)")+
-  facet_wrap(~Site)
+  facet_wrap(~Site,nrow=1)
 
 ```
+
+
+
+
 
 ```{r, echo=FALSE,include=FALSE}
 # PMMoV and percent bovine coronavirus recovery use is still unclear. Data shows very week and inconsistent trend.
