@@ -480,20 +480,6 @@ BCPMMN2Relation <- function(Sites){
 
 Sites=c("UW-LakeShore","MMSD-P8","MMSD-P2","MMSD-P11","Madison","MMSD-P7","MMSD-P18","Hudson","Kenosha","Wausau","Oshkosh")
   
-#unique(LIMSFullDF$Site)
-
-#lapply(Sites,BCPMMN2Relation)
-
-#lapply(Sites,PMMoVN2Relation)
-# LIMSFullDF%>%
-#   group_by(Site)%>%
-#   summarise(n=n(),Min=min(Date),Dur=max(Date)-min(Date),MeanP=mean(Pop,na.rm=TRUE))%>%
-#   arrange(desc(MeanP))
-# 
-# LatWasteDF%>%
-#   group_by(Site)%>%
-#   summarise(n=n(),Min=min(Date),Dur=max(Date)-min(Date))
-
 
 ```
 
