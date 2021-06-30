@@ -64,8 +64,10 @@ Buildplot_gen = function(vari,MainDF,Standards,Loc=NA,ColorType=NA,spanN=NA,
                           aes(xmin=Left, xmax=Right, ymin=rec_min, ymax=Inf),
                           fill='pink', alpha=Standards$alphaWeek,na.rm=TRUE)
   }
-  VarVec=workDataFrameMain$var
-  ValLimMin=min(VarVec)
+  VarVec=workDataFrameMain%>%
+    filter(Date %in% seq(DateLimits[1],DateLimits[2], by = "day"))%>%
+    pull(var)
+  ValLimMin=min(VarVec, na.rm = T)
   if (RMOutliers){
     if(log_scale){
       ValLimMax=quantile(VarVec,.995,na.rm=TRUE)[[1]]
@@ -75,7 +77,7 @@ Buildplot_gen = function(vari,MainDF,Standards,Loc=NA,ColorType=NA,spanN=NA,
     }
   }
   else{
-    ValLimMax=max(VarVec)
+    ValLimMax=max(VarVec, na.rm = T)
   }
   if(!is.na(YLabel)){
     GPlot=GPlot+ylab(YLabel)

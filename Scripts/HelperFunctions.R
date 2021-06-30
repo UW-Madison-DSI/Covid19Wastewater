@@ -3,7 +3,7 @@ RollPerPos = function(RollingDF,CaseName,TestName,Facet=NA,n=7){
   TDF=RollingDF%>%
     mutate(Facet=!!sym(Facet),CaseName=!!sym(CaseName),TestName=!!sym(TestName))
   FaucetOptions=unique(TDF$Facet)
-  FulldayRange=expand.grid(seq.Date(min(TDF$Date),max(TDF$Date),1),FaucetOptions)%>%
+  FulldayRange=expand.grid(seq.Date(min(TDF$Date),max(TDF$Date), by = "day"),FaucetOptions)%>%
     rename(Date=Var1,Facet=Var2)
   
   FullDataFM=full_join(TDF,FulldayRange,by=c("Date","Facet"))%>%

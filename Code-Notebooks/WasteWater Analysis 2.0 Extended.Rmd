@@ -266,6 +266,15 @@ LIMSFullDF%>%
   geom_point()+
   scale_y_log10()+
   scale_x_log10()
+
+LogLoglm=UnWeightedModel1 <- lm(N1Error~N1-1,weights=rep(1,dim(LIMSFullDFM)[1]),data=LIMSFullDFM)
+
+LIMSFullDF2=LIMSFullDF
+LIMSFullDF2$resid=weighted.residuals(LogLoglm)
+LIMSFullDF2%>%
+  ggplot()+
+  aes(x=N1,y=resid)+
+  geom_point()
 ```
 
 
@@ -391,4 +400,42 @@ print("SE^2 Weights")
 summary(VarModel1)
 print("SE Weights")
 summary(SDModel1)
+```
+
+
+Proof smoothing works
+```{r}
+
+LatCaseDFRoll%>%
+  select(Date,Site,Cases)%>%
+  filter(Site=="MMSD-P18")
+#summarise(Dur=max(Date),Min=min(Date),n=n(),dur=max(Date)-min(Date))
+LatCaseDF%>%
+  select(Date,Site,Cases)%>%
+  filter(Site=="MMSD-P18")%>%
+  filter(!(Date %in% LatCaseDFRoll$Date))
+
+
+
+# FaucetOptions=unique(LatCaseDF$Site)
+# FulldayRange=expand.grid(seq.Date(min(LatCaseDF$Date),max(LatCaseDF$Date), by = "day"),FaucetOptions)%>%
+#   rename(Date=Var1,Site=Var2)
+# 
+# aba=full_join(FulldayRange,LatCaseDF,by=c("Date","Site"))%>%
+#   group_by(Site)%>%
+#   arrange(Site,Date)%>%
+#   mutate(rollingTest=(
+#   lag(Cases,n=1)+
+#   lag(Cases,n=2)+
+#   lag(Cases,n=3)+
+#   lag(Cases,n=4)+
+#   lag(Cases,n=5)+
+#   lag(Cases,n=6)+
+#   lag(Cases,n=0))/7)
+# 
+# full_join(LatCaseDFRoll,aba,by=c("Date","Site"),suffix=c(".Roll",".Norm"))%>%
+#   select(Date,Site,Cases.Roll,rollingTest)%>%
+#   mutate(val=Cases.Roll-rollingTest)%>%
+#   filter(val!=0)
+
 ```
