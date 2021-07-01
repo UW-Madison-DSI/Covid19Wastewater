@@ -178,7 +178,7 @@ LoessSmoothPlot <- function(SiteS,Data=LIMSFullDF,Span=.3,min=1e-5,max=1e5,BoxWi
 
 ```
 
-Due to the large variations of the N2 concentration we have tried to create a smoothed version of the data set that captures the underlying shifts of the data. Below is our best attempt at smoothing the N2 concentration data. It shows relation to case data given the spread of shedding of N2. This relationship holds for N1 as well.
+Due to the large variations of the N2 concentration we have tried to create a smoothed version of the data set that captures the underlying shifts of the data. This is our best attempt at smoothing the N2 concentration data. It shows relation to case data given the spread of shedding of N2. This relationship holds for N1 as well.
 
 
 ```{r,  echo=FALSE}
@@ -255,7 +255,7 @@ SimpleN2ErrorN2Model(Independent="N2",Dependent="N2Error")+
 
 
 
-Below are the two versions of the smoothed data capturing different scales of its variations. The boxes are the concentration measured plus or minus the standard error. This gives some measure of how weighted the point is given.
+Below are the two versions of the smoothed data capturing different scales of its variations. The boxes are the concentration measured plus or minus the standard error. This gives some measure of how weighted the point is.
 
 
 ```{r SmoothPlot, echo=FALSE,fig.height=4}
