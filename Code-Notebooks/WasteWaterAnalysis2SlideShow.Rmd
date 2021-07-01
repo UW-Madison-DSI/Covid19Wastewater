@@ -387,7 +387,8 @@ TitleText=text_grob("Weighted loess smoothing compared to cases)", color = "blac
 
 ---
 
-No clear use for PMMoV and percent bovine coronavirus recovery use is still unclear. Below shows that unusual they do not seem to relate to unusual N1 values.
+PMMoV and percent bovine coronavirus recovery use is still unclear.
+Unusual PMMoV and percent BCoV do not seem to relate to unusual N1 values.
 
 
 ```{r fig.height = 3,echo=FALSE , fig.width = 13}
