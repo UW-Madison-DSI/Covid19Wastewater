@@ -93,6 +93,20 @@ CasePlotMaking("MMSD-P2")
 #   filter(Date %in% seq(Date_lim_long[1]+300,Date_lim_long[2], by = "day"))%>%
 #   pull(Cases)
 # max(aba,na.rm=T)
+
+LIMSFullDF%>%
+  filter(Date<mdy("12/1/2020"))%>%
+  arrange(Site)%>%
+  group_by(Site)%>%
+  summarize(n())
+  
+LatWasteDF%>%
+  filter(Date<mdy("12/1/2020"))%>%
+  arrange(Site)%>%
+  filter(Site!="Madison")%>%
+  filter(Site!="UW-LakeShore")%>%
+  filter(Site!="UW-Sellery")%>%
+  select(Site,Date)
 ```
 
 ```{r Loess Model, include=FALSE}
@@ -255,7 +269,7 @@ Below are the two versions of the smoothed data capturing different scales of it
 
 
 
-```{r SmoothPlot, echo=FALSE,fig.height=4}
+```{r SmoothPlot, echo=FALSE,fig.height=6}
 
 
 LoessSmoothPlot(SiteS="Madison",Span=.1,min=0,max=120)+
