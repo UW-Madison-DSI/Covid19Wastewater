@@ -30,7 +30,14 @@ ConfigOption=list(
   alphaWeek=.2)
 
 AllData="../../UntrackedData/WATERMICRO_WW_COVID-2021-06-07 19 05.xlsx"
-LIMSFullDF=read_excel(AllData,col_types=c(rep("guess",48),"text",rep("guess",12)))%>%
+
+missing_codes <- c("","NA","0","Undetected","Not Detected",
+                   "Field Parameters to be filled in", 
+                   "Inhibited-to be re-ran", "#DIV/0!","-","In progress")
+
+LIMSFullDF=read_excel(AllData,
+                      na = missing_codes,
+                      col_types=c(rep("guess",48),"text",rep("guess",12)))%>%
   rename(Site=wwtp_name,FlowRate=average_flow_rate,
          Cov1_below_lod=avg_sars_cov2_below_lod,cov2_conc=avg_sars_cov2_conc,
          BCoV=bcov_rec_rate,BCoVConc=bcov_spike_conc,county=county_names,
@@ -44,16 +51,18 @@ LIMSFullDF=read_excel(AllData,col_types=c(rep("guess",48),"text",rep("guess",12)
   mutate(Date=as.Date(Date),N1=as.numeric(N1),N2=as.numeric(N2),Pop=as.numeric(Pop),
          N1Error=as.numeric(N1Error),N2Error=as.numeric(N2Error),PMMoV=as.numeric(PMMoV),
          BCoV=as.numeric(BCoV))%>%
-  mutate(Site=ifelse(Site=="Madison Metro","Madison",Site))%>%
   select(Date,Site, BCoV, N1,N1Error,N2, N2Error,PMMoV,Pop)%>%
-  mutate(Site=ifelse(Site=="Covid Sewage UW DORM","UW-LakeShore",Site),
-         Site=ifelse(Site=="Covid Sewage UW Sell","UW-Sellery",Site))%>%
-  mutate(Site=ifelse(Site=="Madison-P2-Central","MMSD-P2",Site),
-         Site=ifelse(Site=="Madison-P7-SE","MMSD-P7",Site))%>%
-  mutate(Site=ifelse(Site=="Madison-P8-West","MMSD-P8",Site),
-         Site=ifelse(Site=="Madison-P11-SW","MMSD-P11",Site))%>%
-  mutate(Site=ifelse(Site=="Madison-P18-NE","MMSD-P18",Site))
-  #mutate(temp=ifelse(grep("Madison",Site)&Site!="Madison",paste("MMSD",split(Site,sep="-")[1]),Site))
+  mutate(Site=ifelse(Site=="Madison Metro","Madison",Site),
+         Site=ifelse(Site=="Covid Sewage UW DORM","UW-LakeShore",Site),
+         Site=ifelse(Site=="Covid Sewage UW Sell","UW-Sellery",Site),
+         Site=ifelse(Site=="Madison-P2-Central","MMSD-P2",Site),
+         Site=ifelse(Site=="Madison-P7-SE","MMSD-P7",Site),
+         Site=ifelse(Site=="Madison-P8-West","MMSD-P8",Site),
+         Site=ifelse(Site=="Madison-P11-SW","MMSD-P11",Site),
+         Site=ifelse(Site=="Madison-P18-NE","MMSD-P18",Site),
+         AVG = tmpfn(N1, N2),
+         wt = 2 - is.na(N1) - is.na(N2))
+
 
 
 # LatWasteDF=LIMSFullDF%>%

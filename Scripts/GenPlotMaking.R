@@ -195,12 +195,13 @@ SiteLagHeatMap = function(CaseDF,WasteDF,seqminmax,Loc,Dat,Forma){
       summarize("{i}":= cor(x = Val, y = depVal, use = "pairwise.complete.obs"))
     cor.df=cbind(cor.df,TVec)
   }
-  mincol=toString(min(seqminmax))
-  maxcol=toString(max(seqminmax))
+  mincol <- toString(min(seqminmax))
+  maxcol <- toString(max(seqminmax))
   cor.df=cor.df%>%
     select(-cor.df)%>%
     select(location,!location)%>%
     pivot_longer(mincol:maxcol,names_to="time lag",values_to = "Correlation")%>%
+    filter(!is.na(Correlation))%>%
     group_by(location)%>%
     mutate(bestCase=max(Correlation))%>%
     mutate(SiteBest=ifelse(Correlation==bestCase,location,NA))
@@ -208,7 +209,8 @@ SiteLagHeatMap = function(CaseDF,WasteDF,seqminmax,Loc,Dat,Forma){
   plotedGraph=cor.df%>%
     ggplot(aes(x=`time lag`)) + geom_tile(aes(y=location, fill= Correlation),na.rm=TRUE) + 
     geom_tile(aes(y=SiteBest),fill=NA,color="white",size=1,show.legend = FALSE,na.rm=TRUE)+
-    theme(axis.text.x = element_text(angle = 90))+ scale_fill_continuous(type = "viridis",limits=c(-1,1))+
+    theme(axis.text.x = element_text(angle = 90))+ 
+    scale_fill_continuous(type = "viridis",limits=c(-1,1))+
     geom_text(aes(y=SiteBest,label = round(Correlation, 2)),na.rm=TRUE)
   return(plotedGraph)
 }

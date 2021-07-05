@@ -21,19 +21,26 @@ library(ggpubr)
 ```{r}
 source("../Scripts/DataProccess.R")
 
+source("../Scripts/GenPlotMaking.R")
+source("../Scripts/WasteWaterDataProccess.R")
+source("../Scripts/CassesDataProccess.R")
+source("../Scripts/HelperFunctions.R")
 
-Waterfilename <- "../../UntrackedData/WW SARS-COV-2 Data V5.xlsx"
-CovidFileName = "../../UntrackedData/MMSD_Cases.csv"
-water=WasteWater(Waterfilename)%>%
-  mutate(Date=as.Date(Date))
-covidData=CovidData(CovidFileName)
+
+source("../Scripts/WasteShiny/PrepData.R", local = TRUE)
+
+TargetSites=c("Madison","Hudson","UW-Sellery","UW-LakeShore")
+
+WasteWaterDF=LIMSFullDF%>%
+  filter(Site %in%TargetSites)
+#unique(LIMSFullDF$Site)
 ```
 
 ```{r, echo=FALSE, dpi=600, fig.width=12, fig.height=8}
 myplots <- list()
 #,color="turquoise"
 myplots[[1]]=
-  ggplot(data=water)+
+  ggplot(data=WasteWaterDF)+
   aes(x=Date)+
   geom_line(aes(y=log10(PMMoV),color="PMMoV"))+
   geom_line(aes(y=log10(AVG),color="AVG"))+ scale_color_manual(values=c("red","turquoise"))+
@@ -51,13 +58,13 @@ myplots[[1]]=
   ylab("log10 marker concentration (cp/L)")+
   facet_grid(~Site)
 
-myplots[[2]]= ggplot(data=water)+
+myplots[[2]]= ggplot(data=WasteWaterDF)+
   aes(x=Date)+
-  geom_col(aes(y=Pct_BCoV))+
+  geom_col(aes(y=BCoV))+
   scale_x_date(limits = c(as.Date("2020-9-4"),as.Date("2021-1-10")),labels = date_format("%b"))+
   theme_bw() +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-  ylab("BCoV recovery (%) ")+
+  ylab("BCoV recovery (%)")+
   facet_grid(~Site) + 
 theme(
   strip.background = element_blank(),
