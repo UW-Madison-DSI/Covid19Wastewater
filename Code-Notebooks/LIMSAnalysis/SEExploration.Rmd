@@ -11,55 +11,52 @@ library(shinyjqui)
 library(shinycssloaders)
 
 #Data Files and prep work
-source("../Scripts/GenPlotMaking.R")
-source("../Scripts/WasteWaterDataProccess.R")
-source("../Scripts/CassesDataProccess.R")
-source("../Scripts/HelperFunctions.R")
+source("../../Scripts/GenPlotMaking.R")
+source("../../Scripts/WasteWaterDataProccess.R")
+source("../../Scripts/CassesDataProccess.R")
+source("../../Scripts/HelperFunctions.R")
 
 
-source("../Scripts/WasteShiny/PrepData.R", local = TRUE)
+source("../../Scripts/WasteShiny/PrepData.R", local = TRUE)
 ```
 
 
 ```{r SE reverse}
-LIMSFullDF%>%
-  select(N1,N1Error,N2,N2Error)
+
+#https://math.stackexchange.com/questions/2971315/how-do-i-combine-standard-deviations-of-two-groups
+#Correctly Merges two variance into a varience of the two samples
+CombinedVar <- function(Mean1,Mean2,Var1,Var2,N1=3,N2=3){
+  meanTot <- (N1*Mean1+N2*Mean2)/(N1+N2)
+  WeightedVar <- ((N1-1)*Var1 + (N2-1)*Var2)/(N1+N2-1)
+  MeanShift <- ((N1*N2)*(Mean1-Mean2)^2)/((N1+N2)*(N1+N2-1))
+  return(WeightedVar+MeanShift)
+}
+#Wraps first function to be useful feeding in infomation in LIMS DF
+CombinedSE <- function(Mean1,Mean2,SE1,SE2,N1=3,N2=3){
+  Var1 <- SE1^2*N1
+  Var2 <- SE2^2*N2
+  ComVar <- CombinedVar(Mean1,Mean2,Var1,Var2,N1=N1,N2=N2)
+  return(sqrt(ComVar/6))
+}
 
 LIMSFullDF%>%
   select(N1,N1Error,N2,N2Error)%>%
   filter(N1Error>=0)%>%
-  mutate(n=3)%>%
-  mutate(N1Var=(sqrt(n)*N1Error)^2,
-         N2Var=(sqrt(n)*N2Error)^2)%>%
-  mutate(MergedVar=(N1Var+N2Var+((N1-N2)^2)/2)/2)
-  
-  
-c <- c(1,4,9,16,25,36)
-b <- c(16,25,36)
-a <- c(1,4,9)
+  mutate(AVGError=CombinedSE(N1,N2,N1Error,N2Error))%>%
+  ggplot()+
+  geom_point(aes(x=N1,y=N2/N1,color=log(AVGError)))+
+  scale_y_log10()+
+  scale_x_log10()
 
-a2 <- var(a)
-b2 <- var(b)
-c2 <- var(c)
+LIMSFullDF%>%
+  ggplot()+
+  aes(x=N2/N1)+
+  geom_histogram()+
+  scale_x_log10()
 
-(a2+b2+((mean(a)-mean(b))^2)/2)/2
-var(c)
+LIMSFullDF%>%
+  summarize(MeanRatio=mean(N2/N1,na.rm=TRUE),meadianRatio=median(N2/N1,na.rm=TRUE))
 
-CombinedVar <- function(Mean1,Mean2,Var1,Var2,N1=3,N2=3){
-  meanTot=(N1*Mean1+N2*Mean2)/(N1+N2)
-  NewVar=(N1*Var1+N1*(Mean1-meanTot)^2+N2*Var2+N2*(Mean2-meanTot)^2)/(N1+N2)
-  return(NewVar)
-}
-
-CombinedVar(mean(a),mean(b),var(a),var(b))
-var(c)
-
-
-c2
-
-(mean(a)-mean(c))^2
-(mean(b)-mean(c))^2
-(var(a)+var(b))/2+((mean(a)-mean(c))^2)
-
-(N2*X1-N2*X2)/(N1+N2)
+#NH: N1 and N2 draw from same sample
+#Alt Hypothisis: They draw from diffrent samples
 ```

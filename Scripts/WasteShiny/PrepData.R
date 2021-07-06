@@ -1,26 +1,27 @@
-LatWasteFN <- "../../UntrackedData/WW SARS-COV-2 Data V5.xlsx"
-LatSpringCaseFN="../../UntrackedData/SpringSemester_CasesByDorm.tsv"
-LatFallCaseFN="../../UntrackedData/FallSemester_CasesByDorm.tsv"
-HFGWasteFN = "../../UntrackedData/HFG data for stats preliminary 3-18-21.xlsx"
-HFGCaseFN="../../UntrackedData/HighFreq_CaseData_2021-05-07.csv"
-LatMMSDFN = "../CaseData/results/2021-06-24/MMSD_Cases.csv"
+#LatWasteFN <- "../../../UntrackedData/WW SARS-COV-2 Data V5.xlsx"
 
+HFGWasteFN  <-  "../../../UntrackedData/HFG data for stats preliminary 3-18-21.xlsx"
+HFGCaseFN <- "../../../UntrackedData/HighFreq_CaseData_2021-05-07.csv"
+LatMMSDFN  <-  "../../CaseData/results/2021-06-24/MMSD_Cases.csv"
+LatSpringCaseFN <- "../../../UntrackedData/SpringSemester_CasesByDorm.tsv"
+LatFallCaseFN <- "../../../UntrackedData/FallSemester_CasesByDorm.tsv"
+LIMSFN <- "../../../UntrackedData/WATERMICRO_WW_COVID-2021-06-07 19 05.xlsx"
 
-LatCaseDF=CovidDataPARSER(LatSpringCaseFN,LatFallCaseFN,LatMMSDFN)%>%
+LatCaseDF <- CovidDataPARSER(LatSpringCaseFN,LatFallCaseFN,LatMMSDFN)%>%
   filter(!is.na(Site))%>%
   select(Date,Site,Cases,Tests,Per_pos)
 
-#return(LatCaseDF)
-LatCaseDFRoll=RollPerPos(LatCaseDF,"Cases","Tests",Facet="Site")%>%
+
+LatCaseDFRoll <- RollPerPos(LatCaseDF,"Cases","Tests",Facet="Site")%>%
   select(Date,Site,Cases,Per_pos)
 
-LatWasteDF=WasteWater(LatWasteFN)%>%
-  mutate(Date=as.Date(Date))%>%
-  filter(!is.na(Date),!is.na(N1),!is.na(Site))
+# LatWasteDF=WasteWater(LatWasteFN)%>%
+#   mutate(Date=as.Date(Date))%>%
+#   filter(!is.na(Date),!is.na(N1),!is.na(Site))
 #%>%
  # select(Date,Site,N1,N2,PMMoV,Pct_BCoV,AVG)
 
-ConfigOption=list(
+ConfigOption <- list(
   myseed=1234567890,
   XAxisLabSiz=10,
   YAxisLabSiz=15,
@@ -29,15 +30,15 @@ ConfigOption=list(
   PointSize=2,
   alphaWeek=.2)
 
-AllData="../../UntrackedData/WATERMICRO_WW_COVID-2021-06-07 19 05.xlsx"
+
 
 missing_codes <- c("","NA","0","Undetected","Not Detected",
                    "Field Parameters to be filled in", 
                    "Inhibited-to be re-ran", "#DIV/0!","-","In progress")
 
-LIMSFullDF=read_excel(AllData,
-                      na = missing_codes,
-                      col_types=c(rep("guess",48),"text",rep("guess",12)))%>%
+LIMSFullDF <- read_excel(LIMSFN,
+                      na  =  missing_codes,
+                      col_types = c(rep("guess",48),"text",rep("guess",12)))%>%
   rename(Site=wwtp_name,FlowRate=average_flow_rate,
          Cov1_below_lod=avg_sars_cov2_below_lod,cov2_conc=avg_sars_cov2_conc,
          BCoV=bcov_rec_rate,BCoVConc=bcov_spike_conc,county=county_names,
@@ -65,46 +66,44 @@ LIMSFullDF=read_excel(AllData,
 
 
 
-# LatWasteDF=LIMSFullDF%>%
-#   filter(grep("Madison",Site))
 
 
 
 #Reads Transformed HFG Data
 
-HFGFrame=HFGInfo(HFGWasteFN)%>%
+HFGFrame <- HFGInfo(HFGWasteFN)%>%
   select(Date,Site=Plant,Filter,Well,N1=N1GC,N2=N2GC,PMMoV=PMMOVGC,Pct_BCoV=BCoV,AVG)%>%
   mutate(Filter=as.character(Filter),Well=as.character(Well))%>%
   rename(`Filter replicates`=Filter)
 
 
-HFGCaseDFNoReported=HFGCasesPARSER(HFGCaseFN)
+HFGCaseDFNoReported <- HFGCasesPARSER(HFGCaseFN)
 
 #Reported Cases match census level case data
-HFGCaseDFReportedOnly=HFGCaseDFNoReported%>%
+HFGCaseDFReportedOnly <- HFGCaseDFNoReported%>%
   mutate(Date=Date+1,ReportedCases=ConfirmedCases)%>%
   select(Date,Site,ReportedCases)
 
-HFGCaseDF = full_join(HFGCaseDFReportedOnly,HFGCaseDFNoReported,by=c("Date","Site"))
+HFGCaseDF  <-  full_join(HFGCaseDFReportedOnly,HFGCaseDFNoReported,by=c("Date","Site"))
 
 
-HFGCaseDFRoll=HFGCaseDF%>%
+HFGCaseDFRoll <- HFGCaseDF%>%
   mutate(EpisodeCases=ifelse(EpisodeCases==-999,2.5,EpisodeCases))%>%
   mutate(CollectedCases=ifelse(CollectedCases==-999,2.5,CollectedCases))%>%
   mutate(ConfirmedCases=ifelse(ConfirmedCases==-999,2.5,ConfirmedCases))%>%
   RollAvg(Facet="Site")%>%
   select(Date,Site,ends_with("Cases"))
 
-HFGPop=read.csv("../../UntrackedData/HFGPop.csv.txt")%>%
+HFGPop <- read.csv("../../../UntrackedData/HFGPop.csv.txt")%>%
   select(Site=wwtp_name,Population=pop_served)%>%
   mutate(Population=Population/100000)
 
-HFGCaseDF=full_join(HFGPop,HFGCaseDF,by="Site")
+HFGCaseDF <- full_join(HFGPop,HFGCaseDF,by="Site")
 
-HFGCaseDFRoll=full_join(HFGPop,HFGCaseDFRoll,by="Site")
+HFGCaseDFRoll <- full_join(HFGPop,HFGCaseDFRoll,by="Site")
 
 #Generating the weekends starts and end dates
 #TO DO:Capture the weekend if the data intersects with it
-HFGDateRangeDF=WeekendGen(HFGCaseDF$Date)
+HFGDateRangeDF <- WeekendGen(HFGCaseDF$Date)
 
 
