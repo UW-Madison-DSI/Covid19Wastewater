@@ -1,0 +1,65 @@
+---
+title: "SE Exploration"
+output: html_notebook
+---
+```{r Prep}
+library(shiny)
+library(ggpubr)
+library(dplyr)
+library(shinydashboard)
+library(shinyjqui)
+library(shinycssloaders)
+
+#Data Files and prep work
+source("../Scripts/GenPlotMaking.R")
+source("../Scripts/WasteWaterDataProccess.R")
+source("../Scripts/CassesDataProccess.R")
+source("../Scripts/HelperFunctions.R")
+
+
+source("../Scripts/WasteShiny/PrepData.R", local = TRUE)
+```
+
+
+```{r SE reverse}
+LIMSFullDF%>%
+  select(N1,N1Error,N2,N2Error)
+
+LIMSFullDF%>%
+  select(N1,N1Error,N2,N2Error)%>%
+  filter(N1Error>=0)%>%
+  mutate(n=3)%>%
+  mutate(N1Var=(sqrt(n)*N1Error)^2,
+         N2Var=(sqrt(n)*N2Error)^2)%>%
+  mutate(MergedVar=(N1Var+N2Var+((N1-N2)^2)/2)/2)
+  
+  
+c <- c(1,4,9,16,25,36)
+b <- c(16,25,36)
+a <- c(1,4,9)
+
+a2 <- var(a)
+b2 <- var(b)
+c2 <- var(c)
+
+(a2+b2+((mean(a)-mean(b))^2)/2)/2
+var(c)
+
+CombinedVar <- function(Mean1,Mean2,Var1,Var2,N1=3,N2=3){
+  meanTot=(N1*Mean1+N2*Mean2)/(N1+N2)
+  NewVar=(N1*Var1+N1*(Mean1-meanTot)^2+N2*Var2+N2*(Mean2-meanTot)^2)/(N1+N2)
+  return(NewVar)
+}
+
+CombinedVar(mean(a),mean(b),var(a),var(b))
+var(c)
+
+
+c2
+
+(mean(a)-mean(c))^2
+(mean(b)-mean(c))^2
+(var(a)+var(b))/2+((mean(a)-mean(c))^2)
+
+(N2*X1-N2*X2)/(N1+N2)
+```
