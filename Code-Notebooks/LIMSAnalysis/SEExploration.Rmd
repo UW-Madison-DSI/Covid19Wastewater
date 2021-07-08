@@ -20,6 +20,36 @@ source("../../Scripts/HelperFunctions.R")
 source("../../Scripts/WasteShiny/PrepData.R", local = TRUE)
 ```
 
+```{r Needed Functions}
+CasePlotMaking = function(SiteS,Method="Cases"){
+  SiteCases=LatCaseDF%>%
+    filter(Site==SiteS)
+
+  SiteCasesRoll=LatCaseDFRoll%>%
+    filter(Site==SiteS)
+  
+  LIMSSiteDF=LIMSFullDF%>%
+   filter(Site==SiteS)
+
+
+  Date_lim_long=c(min(LIMSSiteDF$Date),max(LIMSSiteDF$Date))
+  
+  CasePlot <- Buildplot_gen(
+      Method,
+      MainDF=SiteCases,
+      Loc="Site",
+      LineDF=SiteCasesRoll,
+      Xfreq="30 days",
+      DateLimits=Date_lim_long,
+      Standards=ConfigOption,
+      AxisPos="bottom",
+      LineColor="red",
+      Colplot=TRUE) #+ theme(ConfigOption)
+  return(CasePlot)
+}
+
+```
+
 
 ```{r SE reverse}
 

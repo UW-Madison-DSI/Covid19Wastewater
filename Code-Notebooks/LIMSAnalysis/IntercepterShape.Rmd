@@ -1,0 +1,72 @@
+---
+title: "Intercepter Shape"
+author: "Marlin"
+date: "7/6/2021"
+output: html_document
+---
+
+```{r Prep}
+library(shiny)
+library(ggpubr)
+library(dplyr)
+library(shinydashboard)
+library(shinyjqui)
+library(shinycssloaders)
+
+#Data Files and prep work
+source("../../Scripts/GenPlotMaking.R")
+source("../../Scripts/WasteWaterDataProccess.R")
+source("../../Scripts/CassesDataProccess.R")
+source("../../Scripts/HelperFunctions.R")
+
+
+source("../../Scripts/WasteShiny/PrepData.R", local = TRUE)
+```
+
+```{r Needed Functions}
+CasePlotMaking = function(SiteS,Method="Cases"){
+  SiteCases=LatCaseDF%>%
+    filter(Site==SiteS)
+
+  SiteCasesRoll=LatCaseDFRoll%>%
+    filter(Site==SiteS)
+  
+  LIMSSiteDF=LIMSFullDF%>%
+   filter(Site==SiteS)
+
+
+  Date_lim_long=c(min(LIMSSiteDF$Date),max(LIMSSiteDF$Date))
+  
+  
+  
+ConfigOption=list(
+      myseed=1234567890,
+      XAxisLabSiz=10,
+      YAxisLabSiz=15,
+      GenFontSiz=20,
+      alphaPoint=.7,
+      PointSize=2,
+      alphaWeek=.2)
+
+  CasePlot <- Buildplot_gen(
+      Method,
+      MainDF=SiteCases,
+      Loc="Site",
+      LineDF=SiteCasesRoll,
+      Xfreq="30 days",
+      DateLimits=Date_lim_long,
+      Standards=ConfigOption,
+      AxisPos="bottom",
+      LineColor="red",
+      Colplot=TRUE) + theme(ConfigOption)
+  return(CasePlot)
+}
+
+```
+
+
+```{r}
+PlotList <- lapply(c("MMSD-P2","MMSD-P7","MMSD-P8","MMSD-P11","MMSD-P18"),CasePlotMaking)
+
+unique(LatCaseDF$Site)
+```
