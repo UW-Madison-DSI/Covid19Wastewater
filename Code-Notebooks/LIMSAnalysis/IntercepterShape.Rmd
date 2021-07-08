@@ -6,67 +6,71 @@ output: html_document
 ---
 
 ```{r Prep}
-library(shiny)
 library(ggpubr)
 library(dplyr)
-library(shinydashboard)
-library(shinyjqui)
-library(shinycssloaders)
+library(limma)
 
 #Data Files and prep work
 source("../../Scripts/GenPlotMaking.R")
 source("../../Scripts/WasteWaterDataProccess.R")
 source("../../Scripts/CassesDataProccess.R")
 source("../../Scripts/HelperFunctions.R")
-
+library("TTR")
 
 source("../../Scripts/WasteShiny/PrepData.R", local = TRUE)
 ```
 
 ```{r Needed Functions}
-CasePlotMaking = function(SiteS,Method="Cases"){
-  SiteCases=LatCaseDF%>%
-    filter(Site==SiteS)
-
-  SiteCasesRoll=LatCaseDFRoll%>%
-    filter(Site==SiteS)
-  
-  LIMSSiteDF=LIMSFullDF%>%
-   filter(Site==SiteS)
-
-
-  Date_lim_long=c(min(LIMSSiteDF$Date),max(LIMSSiteDF$Date))
-  
-  
-  
-ConfigOption=list(
-      myseed=1234567890,
-      XAxisLabSiz=10,
-      YAxisLabSiz=15,
-      GenFontSiz=20,
-      alphaPoint=.7,
-      PointSize=2,
-      alphaWeek=.2)
-
-  CasePlot <- Buildplot_gen(
-      Method,
-      MainDF=SiteCases,
-      Loc="Site",
-      LineDF=SiteCasesRoll,
-      Xfreq="30 days",
-      DateLimits=Date_lim_long,
-      Standards=ConfigOption,
-      AxisPos="bottom",
-      LineColor="red",
-      Colplot=TRUE) + theme(ConfigOption)
-  return(CasePlot)
-}
-
 ```
 
 
-```{r}
-PlotList <- lapply(c("MMSD-P2","MMSD-P7","MMSD-P8","MMSD-P11","MMSD-P18"),CasePlotMaking)
+```{r,warning=FALSE}
 
-unique(LatCaseDF$Site)
+MadSites <- c("Madison","MMSD-P2","MMSD-P7","MMSD-P8","MMSD-P11","MMSD-P18")
+
+LIMSMADDF <- LIMSFullDF%>%
+  filter(Site %in% MadSites)
+LatMadCaseDF <- LatCaseDF%>%
+  filter(Site %in% MadSites)
+RollLatMadCaseDF <- LatCaseDFRoll%>%
+  filter(Site %in% MadSites)
+
+PlotListN1 <- LIMSMADDF%>%
+  ggplot()+
+  aes(x=Date,y=N1)+
+  geom_point()+
+  geom_smooth(se=FALSE)+
+  facet_wrap(~Site)+
+  scale_y_log10()+
+  scale_x_date(limits=c(mdy("1/1/2021"),mdy("7/1/2021")))
+
+
+PlotListCases <- LatMadCaseDF%>%
+  ggplot()+
+  geom_rect(aes(ymin=0,ymax=Cases,xmin=Date-.5,
+                            xmax=Date+.5),
+                            alpha=.4,
+                            size=5,na.rm=TRUE)+
+  facet_wrap(~Site)+
+  scale_x_date(limits=c(mdy("1/1/2021"),mdy("7/1/2021")))+
+  coord_cartesian(ylim=c(0,100))+
+  geom_line(aes(x=Date,y=Cases),color="red",data=RollLatMadCaseDF)
+
+PlotListPer <- LatMadCaseDF%>%
+  ggplot()+
+  geom_rect(aes(ymin=0,ymax=Per_pos,xmin=Date-.5,
+                            xmax=Date+.5),
+                            alpha=.4,
+                            size=5,na.rm=TRUE)+
+  facet_wrap(~Site)+
+  scale_x_date(limits=c(mdy("1/1/2021"),mdy("7/1/2021")))+
+  coord_cartesian(ylim=c(0,50))+
+  geom_line(aes(x=Date,y=Per_pos),color="red",data=RollLatMadCaseDF)
+
+
+PlotListN1
+
+PlotListCases
+
+PlotListPer
 ```
