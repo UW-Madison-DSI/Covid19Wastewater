@@ -24,39 +24,209 @@ source("../../Scripts/WasteShiny/PrepData.R", local = TRUE)
 ```{r SE reverse}
 
 #https://math.stackexchange.com/questions/2971315/how-do-i-combine-standard-deviations-of-two-groups
-#Correctly Merges two variance into a varience of the two samples
-CombinedVar <- function(Mean1,Mean2,Var1,Var2,N1=3,N2=3){
-  meanTot <- (N1*Mean1+N2*Mean2)/(N1+N2)
-  WeightedVar <- ((N1-1)*Var1 + (N2-1)*Var2)/(N1+N2-1)
-  MeanShift <- ((N1*N2)*(Mean1-Mean2)^2)/((N1+N2)*(N1+N2-1))
+#Correctly Merges two variance into a variance of the two samples
+CombinedVar <- function(Mean1,Mean2,Var1,Var2,n1=3,n2=3){
+  meanTot <- (n1*Mean1+n2*Mean2)/(n1+n2)
+  WeightedVar <- ((n1-1)*Var1 + (n2-1)*Var2)/(n1+n2-1)
+  MeanShift <- ((n1*n2)*(Mean1-Mean2)^2)/((n1+n2)*(n1+n2-1))
   return(WeightedVar+MeanShift)
 }
-#Wraps first function to be useful feeding in infomation in LIMS DF
-CombinedSE <- function(Mean1,Mean2,SE1,SE2,N1=3,N2=3){
-  Var1 <- SE1^2*N1
-  Var2 <- SE2^2*N2
-  ComVar <- CombinedVar(Mean1,Mean2,Var1,Var2,N1=N1,N2=N2)
-  return(sqrt(ComVar/6))
+#Wraps first varience to be useful feeding in information in LIMS DF
+CombinedSE <- function(Mean1,Mean2,SE1,SE2,n1=3,n2=3){
+  Var1 <- SE1^2*n1
+  Var2 <- SE2^2*n2
+  ComVar <- CombinedVar(Mean1,Mean2,Var1,Var2,n1=n1,n2=n2)
+  return(sqrt(ComVar/(n1+n2)))
 }
 
-LIMSFullDF%>%
+
+
+#Create sample data that repersents data with given mean and SE
+DataGen3Points <- function(Mean,SE){
+  n=3
+  A=rnorm(n=1,mean=Mean,sd=SE*sqrt(n))
+  B=rnorm(n=1,mean=Mean,sd=SE*sqrt(n))
+  C=NA
+  C=Mean*3-A-B
+  tempSE=sd(c(A,B,C))/sqrt(n)
+  A <- Mean+(A-Mean)/tempSE
+  B <- Mean+(B-Mean)/tempSE
+  C <- Mean+(C-Mean)/tempSE
+  return(c(A,B,C))
+}
+
+```
+
+
+```{r N1 Vs N2}
+MadLIMS <- LIMSFullDF%>%
+  filter(Site=="Madison")%>%
+  filter(N1>0)%>%
+  filter(N2>0)%>%
+  mutate(Date=as.numeric(Date))
+
+N1Mod <- loess(log(N1)~Date,span=.2,data=MadLIMS)
+N2Mod <- loess(log(N2)~Date,span=.2,data=MadLIMS)
+
+MadLIMS$ResidN1 <- resid(a)
+  
+MadLIMS$ResidN2 <- resid(b)
+
+MadLIMS <- MadLIMS%>%
+  mutate(Date=as.Date(Date,origin="1970-01-01"))
+
+t.test(log(MadLIMS$ResidN1),log(MadLIMS$ResidN2),paired=TRUE)
+
+MadLIMS%>%
+  ggplot()+
+  aes(x=Date)+
+  geom_point(aes(y=N1-N2))
+MadLIMS%>%
+  ggplot()+
+  aes(x=Date)+
+  geom_point(aes(y=log(N1)-log(N2)))
+
+```
+
+```{r}
+
+MadLIMS%>%
+  ggplot()+
+  aes(x=Date)+
+  #geom_point(aes(y=log(N1)),color="blue")+
+  geom_line(aes(y=log(N1)-ResidN1),color="blue")+
+  #geom_point(aes(y=log(N2)),color="red")+
+  geom_line(aes(y=log(N2)-ResidN2),color="red")
+  
+CasePlotMaking("Madison")+
+    theme(axis.text.x = element_text(angle=0, hjust = 0,size=10))+                          scale_x_date(date_labels = "%b")
+
+
+CasePlotMaking("Madison",Method="Per_pos")+
+    theme(axis.text.x = element_text(angle=0, hjust = 0,size=10))+                          scale_x_date(date_labels = "%b")
+```
+
+
+```{r N1 N2 Relation}
+LIMSNoNullDF <- LIMSFullDF%>%
+  filter(!is.na(N1),!is.na(N2))
+
+
+LIMSNoNullDF%>%
   select(N1,N1Error,N2,N2Error)%>%
   filter(N1Error>=0)%>%
   mutate(AVGError=CombinedSE(N1,N2,N1Error,N2Error))%>%
   ggplot()+
-  geom_point(aes(x=N1,y=N2/N1,color=log(AVGError)))+
-  scale_y_log10()+
+  geom_point(aes(x=N1,y=N2/N1,color=log(AVGError)),cex=.1)+
+  #scale_y_log10()+
   scale_x_log10()
 
-LIMSFullDF%>%
+LIMSNoNullDF%>%
   ggplot()+
   aes(x=N2/N1)+
   geom_histogram()+
   scale_x_log10()
 
-LIMSFullDF%>%
+LIMSNoNullDF%>%
   summarize(MeanRatio=mean(N2/N1,na.rm=TRUE),meadianRatio=median(N2/N1,na.rm=TRUE))
 
+
+LIMSNoNullDF%>%
+  mutate(Ratio=N2/N1)%>%
+  filter(Ratio<2)%>%
+  ggplot()+
+  geom_point(aes(x=N1,y=Ratio),cex=.1)+
+  #scale_y_log10()+
+  scale_x_log10()
+2924/3483
 #NH: N1 and N2 draw from same sample
-#Alt Hypothisis: They draw from diffrent samples
+#Alt Hypothesis: They draw from different samples
+
+
+LIMSNoNullDF%>%
+  ggplot()+
+  aes(x=log(N1)-log(N2))+
+  geom_histogram()+
+  scale_x_log10()
+
+
+LIMSNoNullDF%>%
+  filter(!is.na(N1),!is.na(N2))%>%
+  mutate(Ratio=N2/N1)%>%
+  summarise(meanRat=mean(Ratio),ratMean=mean(N2)/mean(N1))
+
+LIMSNoNullDF%>%
+  ggplot()+
+  aes(x=N1,y=N2)+
+  geom_point()+
+  geom_smooth(method="lm")+
+  scale_y_log10()+
+  scale_x_log10()
+
+
+
+N1N2LM=lm(log(N2)~log(N1),data=LIMSNoNullDF)
+LIMSNoNullDF%>%
+  mutate(Resid=resid(N1N2LM))%>%
+  ggplot()+
+  aes(x=log(N2),y=Resid)+
+  geom_point()
+
+LIMSNoNullDF%>%
+  mutate(Resid=resid(N1N2LM))%>%
+  ggplot()+
+  aes(x=log(N1),y=Resid)+
+  geom_point()
+
+summary(N1N2LM)
+
+
+LIMSNoNullDF%>%
+  select(N1,N2,N1Error)%>%
+  mutate(WithinError=abs(N1-N2)<2*N1Error*sqrt(3))%>%
+  summarise(mean(WithinError))
+
+LIMSNoNullDF%>%
+  select(N1,N2,N2Error)%>%
+  mutate(WithinError=abs(N1-N2)<2*N2Error*sqrt(3))%>%
+  summarise(mean(WithinError))
+
+
+#Paired T test
+
+#both samples need to be normal
+
+LIMSNoNullDF%>%
+  ggplot()+
+  aes(x=log(N1))+
+  geom_histogram()
+
+LIMSNoNullDF%>%
+  ggplot()+
+  aes(x=log(N2))+
+  geom_histogram()
+
+#Log of concentration is normal
+
+LIMSNoNullDF%>%
+  select(N1,N2)%>%
+  mutate(dif=log(N2)-log(N1),
+         meanDif=mean(dif),
+         SEDif=sd(dif)/sqrt(n()))
+
+t.test(log(LIMSNoNullDF$N1),log(LIMSNoNullDF$N2),paired=TRUE)
+
+LIMSNoNullDF%>%
+  pivot_longer(cols=c(N1,N2))%>%
+  ggplot()+
+  aes(x=name,y=log(value))+
+  geom_violin()
+
+LIMSNoNullDF%>%
+  ggplot()+
+  geom_histogram(aes(x=log(N1)))+
+  geom_histogram(aes(x=log(N2)),fill="red",alpha=.5)
+
+
+
 ```
