@@ -3,12 +3,9 @@ title: "SE Exploration"
 output: html_notebook
 ---
 ```{r Prep}
-library(shiny)
 library(ggpubr)
 library(dplyr)
-library(shinydashboard)
-library(shinyjqui)
-library(shinycssloaders)
+
 
 #Data Files and prep work
 source("../../Scripts/GenPlotMaking.R")
@@ -18,6 +15,7 @@ source("../../Scripts/HelperFunctions.R")
 
 
 source("../../Scripts/WasteShiny/PrepData.R", local = TRUE)
+
 ```
 
 ```{r Needed Functions}
@@ -52,16 +50,27 @@ CasePlotMaking = function(SiteS,Method="Cases"){
 
 
 ```{r SE reverse}
+#instead of grabbing arithmetic mean grab geo mean it could work
+# geom mean for 3 n1 is close to arithmetic mean of 3 n1
+# closeness of geo mean and arithmetic mean when SE is small
+#look into converting arithmetic mean
+
+#sample mean n1 and SE get 3 points and get geo mean
+#boot strap to see distribution
+
 
 #https://math.stackexchange.com/questions/2971315/how-do-i-combine-standard-deviations-of-two-groups
 #Correctly Merges two variance into a variance of the two samples
 CombinedVar <- function(Mean1,Mean2,Var1,Var2,n1=3,n2=3){
+  #New Mean
   meanTot <- (n1*Mean1+n2*Mean2)/(n1+n2)
+  #Simple new variance if they had same mean
   WeightedVar <- ((n1-1)*Var1 + (n2-1)*Var2)/(n1+n2-1)
+  #extra variance from having different means
   MeanShift <- ((n1*n2)*(Mean1-Mean2)^2)/((n1+n2)*(n1+n2-1))
   return(WeightedVar+MeanShift)
 }
-#Wraps first varience to be useful feeding in information in LIMS DF
+#Wraps first variance to be useful feeding in information in LIMS DF
 CombinedSE <- function(Mean1,Mean2,SE1,SE2,n1=3,n2=3){
   Var1 <- SE1^2*n1
   Var2 <- SE2^2*n2
@@ -69,14 +78,14 @@ CombinedSE <- function(Mean1,Mean2,SE1,SE2,n1=3,n2=3){
   return(sqrt(ComVar/(n1+n2)))
 }
 
+LIMSAVGSEDF <- LIMSNoNullDF%>%
+  mutate(AVGSE=CombinedSE(N1,N2,N1Error,N2Error))
 
-
-#Create sample data that repersents data with given mean and SE
+#Create sample data that represents data with given mean and SE
 DataGen3Points <- function(Mean,SE){
   n=3
   A=rnorm(n=1,mean=Mean,sd=SE*sqrt(n))
   B=rnorm(n=1,mean=Mean,sd=SE*sqrt(n))
-  C=NA
   C=Mean*3-A-B
   tempSE=sd(c(A,B,C))/sqrt(n)
   A <- Mean+(A-Mean)/tempSE
@@ -88,8 +97,14 @@ DataGen3Points <- function(Mean,SE){
 ```
 
 
-```{r N1 Vs N2}
-MadLIMS <- LIMSFullDF%>%
+```{r N1 vs N2 overview, warning=FALSE,message =FALSE}
+#having N1 be a rep to N2 is good
+
+LIMSNoNullDF <- LIMSFullDF%>%
+  #filter(Date>mdy("1/1/2021"))%>%
+  filter(!is.na(N1),!is.na(N2))
+
+MadLIMS <- LIMSNoNullDF%>%
   filter(Site=="Madison")%>%
   filter(N1>0)%>%
   filter(N2>0)%>%
@@ -97,49 +112,123 @@ MadLIMS <- LIMSFullDF%>%
 
 N1Mod <- loess(log(N1)~Date,span=.2,data=MadLIMS)
 N2Mod <- loess(log(N2)~Date,span=.2,data=MadLIMS)
+AVGMod <- loess(log(AVG)~Date,span=.2,data=MadLIMS)
 
-MadLIMS$ResidN1 <- resid(a)
+MadLIMS$ResidN1 <- resid(N1Mod)
   
-MadLIMS$ResidN2 <- resid(b)
+MadLIMS$ResidN2 <- resid(N2Mod)
+
+MadLIMS$ResidAVG <- resid(AVGMod)
 
 MadLIMS <- MadLIMS%>%
   mutate(Date=as.Date(Date,origin="1970-01-01"))
 
-t.test(log(MadLIMS$ResidN1),log(MadLIMS$ResidN2),paired=TRUE)
-
 MadLIMS%>%
   ggplot()+
   aes(x=Date)+
-  geom_point(aes(y=N1-N2))
-MadLIMS%>%
-  ggplot()+
-  aes(x=Date)+
-  geom_point(aes(y=log(N1)-log(N2)))
-
-```
-
-```{r}
-
-MadLIMS%>%
-  ggplot()+
-  aes(x=Date)+
-  #geom_point(aes(y=log(N1)),color="blue")+
-  geom_line(aes(y=log(N1)-ResidN1),color="blue")+
-  #geom_point(aes(y=log(N2)),color="red")+
-  geom_line(aes(y=log(N2)-ResidN2),color="red")
+  #geom_point(aes(y=log(N1),color="N1"))+
+  geom_line(aes(y=log(N1)-ResidN1,color="N1"))+
+  #geom_point(aes(y=log(N2),color="N2"))+
+  geom_line(aes(y=log(N2)-ResidN2,color="N2"))+
+  #geom_point(aes(y=log(AVG),color="AVG"))+
+  #geom_line(aes(y=log(AVG)-ResidAVG,color="AVG"))+
+  facet_wrap(~Site)+
+  ylab("Smoothed log concentration")+
+  theme(legend.position="bottom")
   
 CasePlotMaking("Madison")+
-    theme(axis.text.x = element_text(angle=0, hjust = 0,size=10))+                          scale_x_date(date_labels = "%b")
+    theme(axis.text.x = element_text(angle=0, hjust = 0,size=10))+                          scale_x_date(date_labels = "%b")+
+    theme_grey()
 
 
 CasePlotMaking("Madison",Method="Per_pos")+
-    theme(axis.text.x = element_text(angle=0, hjust = 0,size=10))+                          scale_x_date(date_labels = "%b")
+    theme(axis.text.x = element_text(angle=0, hjust = 0,size=10))+                          scale_x_date(date_labels = "%b")+
+    theme_grey()
+
+#relationship between N1-N2 should be constant
+#is smoothing good? dec jan- suspect - error in N1N2 assay are throwing off
+
+#N1 and N2 are linked - both RNA - within cell N1 N2 are equal in number
+#look at N1 N2 ratio when filtering older dates
+```
+
+```{r Messuring same thing?}
+
+#not IID: how important for test: correcting for this-
+#TS T test?
+
+t.test(log(LIMSNoNullDF$N1),log(LIMSNoNullDF$N2)  ,paired=TRUE)
+#+ 0.2730466
+
+LIMSNoNullDF%>%
+  ggplot()+
+  geom_density(aes(x=log(N1),fill="N1"))+
+  geom_density(aes(x=log(N2)+ 0.2730466,fill="N2"),alpha=.5)
+#+.2
+#/1.1+1.2
+#Different distribution imply measuring different things
+#todo: gen number and smooth plot
+var(log(LIMSNoNullDF$N2))
+var(log(LIMSNoNullDF$N1))
+mean(log(LIMSNoNullDF$N2))
+mean(log(LIMSNoNullDF$N1))
+
+#Don't need to solve N1 N2 problem
+#Present smoothing
 ```
 
 
+```{r N1 Vs N2}
+
+t.test(log(MadLIMS$ResidN1),log(MadLIMS$ResidN2),paired=TRUE)
+
+MadLIMS%>%
+  ggplot(aes(x=Date))+
+  geom_point(aes(y=abs(ResidN1),color="N1"))+
+  geom_point(aes(y=abs(ResidN2),color="N2"))+
+  ggtitle("Residual plot")
+MadLIMS%>%
+  ggplot(aes(x=Date))+
+  geom_point(aes(y=abs(ResidN1)-abs(ResidN2)))+
+  ggtitle("Dif of residuals")
+
+# MadLIMS%>%
+#   ggplot()+
+#   aes(x=Date)+
+#   geom_point(aes(y=N1-N2))
+# MadLIMS%>%
+#   ggplot()+
+#   aes(x=Date)+
+#   geom_point(aes(y=log(N1)-log(N2)))
+
+
+#Measuring different signals
+#Similar errors
+#Data before jan is messy-after more clear
+#N1 vs N2 is easier after jan
+#HFD  using old data
+#defer to get the rest of clean data - look at data after jan otherwise
+#plots show that data before jan are to messy to analysis
+#
+#error happens at sampling process
+#
+#Sickness, Cases, N1
+#Sickness -> N1
+#Sickness -> tightness ->Cases
+
+#Cases ->smooth -> N1   :Easier to interpret - inferred infected number of people
+#N1 -> tightness -> Cases   :harder to mathout - gives same relationship - if I got N1 for last 7 weeks remove old cases concentrations- if was higher recently: expect to grow- use in loess - better smoothing - gen of loess 
+
+#4 pm 
+#get rough idea of where I am going
+```
+
+
+
+
+
+
 ```{r N1 N2 Relation}
-LIMSNoNullDF <- LIMSFullDF%>%
-  filter(!is.na(N1),!is.na(N2))
 
 
 LIMSNoNullDF%>%
@@ -236,26 +325,8 @@ LIMSNoNullDF%>%
   aes(x=log(N2))+
   geom_histogram()
 
-#Log of concentration is normal
 
-LIMSNoNullDF%>%
-  select(N1,N2)%>%
-  mutate(dif=log(N2)-log(N1),
-         meanDif=mean(dif),
-         SEDif=sd(dif)/sqrt(n()))
 
-t.test(log(LIMSNoNullDF$N1),log(LIMSNoNullDF$N2),paired=TRUE)
-
-LIMSNoNullDF%>%
-  pivot_longer(cols=c(N1,N2))%>%
-  ggplot()+
-  aes(x=name,y=log(value))+
-  geom_violin()
-
-LIMSNoNullDF%>%
-  ggplot()+
-  geom_histogram(aes(x=log(N1)))+
-  geom_histogram(aes(x=log(N2)),fill="red",alpha=.5)
 
 
 
