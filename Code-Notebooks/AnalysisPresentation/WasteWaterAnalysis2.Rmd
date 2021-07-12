@@ -19,13 +19,13 @@ library(dplyr)
 library(limma)
 
 #Data Files and prep work
-source("../Scripts/GenPlotMaking.R")
-source("../Scripts/WasteWaterDataProccess.R")
-source("../Scripts/CassesDataProccess.R")
-source("../Scripts/HelperFunctions.R")
+source("../../Scripts/GenPlotMaking.R")
+source("../../Scripts/WasteWaterDataProccess.R")
+source("../../Scripts/CassesDataProccess.R")
+source("../../Scripts/HelperFunctions.R")
 
 
-source("../Scripts/WasteShiny/PrepData.R", local = TRUE)
+source("../../Scripts/WasteShiny/PrepData.R", local = TRUE)
 
 ```
 
@@ -33,7 +33,7 @@ source("../Scripts/WasteShiny/PrepData.R", local = TRUE)
 
 ```{r start up, include=FALSE}
 
-HFGPop=read.csv("../../UntrackedData/HFGPop.csv.txt")%>%
+HFGPop=read.csv("../../../UntrackedData/HFGPop.csv.txt")%>%
   select(Site=wwtp_name,Population=pop_served)
 
 
@@ -41,8 +41,8 @@ HFGPop=read.csv("../../UntrackedData/HFGPop.csv.txt")%>%
 ConfigOption=list(
       myseed=1234567890,
       XAxisLabSiz=10,
-      YAxisLabSiz=15,
-      GenFontSiz=20,
+      YAxisLabSiz=10,
+      GenFontSiz=12,
       alphaPoint=.7,
       PointSize=2,
       alphaWeek=.2)
@@ -87,15 +87,7 @@ CasePlotMaking = function(SiteS,Method="Cases"){
   return(CasePlot)
 }
 
-CasePlotMaking("MMSD-P2")
 
-# LIMSSiteDF=LatCaseDF%>%
-#   filter(Site=="Madison")
-# Date_lim_long=c(min(LIMSSiteDF$Date),max(LIMSSiteDF$Date))
-# aba=LatCaseDF%>%
-#   filter(Date %in% seq(Date_lim_long[1]+300,Date_lim_long[2], by = "day"))%>%
-#   pull(Cases)
-# max(aba,na.rm=T)
 
 LIMSFullDF%>%
   filter(Date<mdy("12/1/2020"))%>%
@@ -103,13 +95,7 @@ LIMSFullDF%>%
   group_by(Site)%>%
   summarize(n())
   
-LatWasteDF%>%
-  filter(Date<mdy("12/1/2020"))%>%
-  arrange(Site)%>%
-  filter(Site!="Madison")%>%
-  filter(Site!="UW-LakeShore")%>%
-  filter(Site!="UW-Sellery")%>%
-  select(Site,Date)
+
 ```
 
 ```{r Loess Model, include=FALSE}
@@ -129,7 +115,7 @@ LoessSmoothPlot <- function(SiteS,Data=LIMSFullDF,Span=.3,min=1e-5,max=1e5,BoxWi
            Indy>0)
     
   DFSize=dim(LIMSDF)[1]
-  ConWeightModel=loessFit(y=LIMSDF$Indy,
+  ConWeightModel=loessFit(y=log(LIMSDF$Indy),
                        x=LIMSDF$Date,
                        weights=rep(1,DFSize),
                        span=Span,
@@ -137,14 +123,14 @@ LoessSmoothPlot <- function(SiteS,Data=LIMSFullDF,Span=.3,min=1e-5,max=1e5,BoxWi
                        max.weight=max,
                        iterations=10)
 
-  SEWeightModel=loessFit(y=LIMSDF$Indy,
+  SEWeightModel=loessFit(y=log(LIMSDF$Indy),
                        x=LIMSDF$Date,
                        weights=LIMSDF$Indy/LIMSDF$Dep,
                        span=Span,min.weight=min,
                        max.weight=max,
                        iterations=10)
-  LIMSDF$Pred1 <- ConWeightModel$fitted
-  LIMSDF$PredSE <- SEWeightModel$fitted
+  LIMSDF$Pred1 <- exp(ConWeightModel$fitted)
+  LIMSDF$PredSE <- exp(SEWeightModel$fitted)
   LoessPlot=LIMSDF%>%
     mutate(ErrorMin=Indy-Dep,ErrorMax=Indy+Dep)%>%
         mutate(ErrorMin=ifelse(ErrorMin>0,ErrorMin,0))%>%
@@ -186,7 +172,8 @@ LoessSmoothPlot <- function(SiteS,Data=LIMSFullDF,Span=.3,min=1e-5,max=1e5,BoxWi
   if(NoLabel){
     LoessPlot <- LoessPlot + 
       ggtitle("")+
-      ylab("")
+      ylab("")+
+      xlab("")
       # theme(axis.title.x=element_blank(),
       #     axis.title.y=element_blank())
   }
@@ -195,15 +182,17 @@ LoessSmoothPlot <- function(SiteS,Data=LIMSFullDF,Span=.3,min=1e-5,max=1e5,BoxWi
 
 ```
 
+
+
 Due to the large variations of the N1 concentration we have tried to create a smoothed version of the data set that captures the underlying shifts of the data. Below is our best attempt at smoothing the N1 concentration data. It shows relation to case data given the spread of shedding of N1. This relationship holds for N2 as well.
 
 
 ```{r,  echo=FALSE}
 
 N1Plot=LoessSmoothPlot(SiteS="Madison",Span=.1,min=0,max=120,Title = F,FullLim=F,SiteLab=F)+
-  theme()
+  theme()+xlab("")
 PerPosPlot=CasePlotMaking("Madison",Method="Per_pos")
-CasePlot=CasePlotMaking("Madison")
+CasePlot=CasePlotMaking("Madison")+xlab("")
 
 #ggarrange(CasePlot,N1Plot,nrow=2,common.legend = TRUE ,align ="hv")
 #ggarrange(PerPosPlot,N1Plot,nrow=2,common.legend = TRUE,align ="hv")
@@ -213,7 +202,7 @@ annotate_figure(ggarrange(CasePlot,N1Plot,nrow=2,common.legend = TRUE ,align ="h
 # annotate_figure(ggarrange(PerPosPlot,N1Plot,nrow=2,common.legend = TRUE,align ="hv",legend="bottom"),top = text_grob("Weighted loess smoothing compared to percent positive", color = "black", face = "bold", size = 16))
 
 
-#princepled ways tp do
+
 ```
 
 
@@ -298,6 +287,44 @@ LoessSmoothPlot(SiteS="Madison",Span=.3,min=0,max=120)+
 #weighting
 #Residuals
 #Weighted loess smoothing with truncation loessFit(N1 ~ Date, span=.3)
+```
+
+This model offers similar 
+
+
+```{r data quality}
+MadLIMS <- LIMSFullDF%>%
+  filter(Site=="Madison")%>%
+  filter(N1>0)%>%
+  filter(N2>0)%>%
+  filter(!is.na(N1),!is.na(N2))%>%
+  mutate(Date=as.numeric(Date))
+
+N1Mod <- loess(log(N1)~Date,span=.2,data=MadLIMS)
+N2Mod <- loess(log(N2)~Date,span=.2,data=MadLIMS)
+
+
+MadLIMS$ResidN1 <- resid(N1Mod)
+  
+MadLIMS$ResidN2 <- resid(N2Mod)
+
+
+
+MadLIMS%>%
+  ggplot(aes(x=Date))+
+  geom_point(aes(y=abs(ResidN1),color="N1"))+
+  geom_point(aes(y=abs(ResidN2),color="N2"))+
+  ggtitle("Residual plot")
+MadLIMS%>%
+  ggplot(aes(x=Date))+
+  geom_point(aes(y=abs(ResidN1)-abs(ResidN2)))+
+  ggtitle("Dif of residuals")
+MadLIMS%>%
+  ggplot(aes(x=Date))+
+  geom_point(aes(y=(ResidN1)-(ResidN2)))+
+  ggtitle("Dif of residuals")
+
+
 ```
 
 

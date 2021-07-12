@@ -108,6 +108,7 @@ MadLIMS <- LIMSNoNullDF%>%
   filter(Site=="Madison")%>%
   filter(N1>0)%>%
   filter(N2>0)%>%
+  filter(!is.na(N1),!is.na(N2))%>%
   mutate(Date=as.numeric(Date))
 
 N1Mod <- loess(log(N1)~Date,span=.2,data=MadLIMS)

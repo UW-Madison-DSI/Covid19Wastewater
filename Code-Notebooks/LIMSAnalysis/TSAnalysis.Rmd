@@ -5,4 +5,33 @@ date: "7/9/2021"
 output: html_document
 ---
 
+```{r Start enviroment}
+library(ggpubr)
+library(dplyr)
+library(forecast)
+library(lmtest)
 
+
+#Data Files and prep work
+source("../../Scripts/GenPlotMaking.R")
+source("../../Scripts/WasteWaterDataProccess.R")
+source("../../Scripts/CassesDataProccess.R")
+source("../../Scripts/HelperFunctions.R")
+
+
+source("../../Scripts/WasteShiny/PrepData.R", local = TRUE)
+A=LIMSFullDF%>%
+  filter(Site=="Madison")
+B=LatCaseDF%>%
+  filter(Site=="Madison")
+grangertest(A$N1,B$Cases)
+#looking for analysis and a number of relationship rigorously with TS
+#Get some measure of how good the relationship
+auto.arima()
+
+
+library(lmtest)
+LIMSMadDF=LIMSFullDF%>%
+  filter(Site=="Madison")
+grangertest(formula=log(N1)~log(N2),data=LIMSMadDF)
+```
