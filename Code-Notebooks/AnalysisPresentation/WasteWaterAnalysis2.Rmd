@@ -115,7 +115,7 @@ LoessSmoothPlot <- function(SiteS,Data=LIMSFullDF,Span=.3,min=1e-5,max=1e5,BoxWi
            Indy>0)
     
   DFSize=dim(LIMSDF)[1]
-  ConWeightModel=loessFit(y=log(LIMSDF$Indy),
+  ConWeightModel=loessFit(y=LIMSDF$Indy,
                        x=LIMSDF$Date,
                        weights=rep(1,DFSize),
                        span=Span,
@@ -123,14 +123,15 @@ LoessSmoothPlot <- function(SiteS,Data=LIMSFullDF,Span=.3,min=1e-5,max=1e5,BoxWi
                        max.weight=max,
                        iterations=10)
 
-  SEWeightModel=loessFit(y=log(LIMSDF$Indy),
+  SEWeightModel=loessFit(y=LIMSDF$Indy,
                        x=LIMSDF$Date,
                        weights=LIMSDF$Indy/LIMSDF$Dep,
-                       span=Span,min.weight=min,
+                       span=Span,
+                       min.weight=min,
                        max.weight=max,
                        iterations=10)
-  LIMSDF$Pred1 <- exp(ConWeightModel$fitted)
-  LIMSDF$PredSE <- exp(SEWeightModel$fitted)
+  LIMSDF$Pred1 <- (ConWeightModel$fitted)
+  LIMSDF$PredSE <- (SEWeightModel$fitted)
   LoessPlot=LIMSDF%>%
     mutate(ErrorMin=Indy-Dep,ErrorMax=Indy+Dep)%>%
         mutate(ErrorMin=ifelse(ErrorMin>0,ErrorMin,0))%>%
@@ -179,7 +180,12 @@ LoessSmoothPlot <- function(SiteS,Data=LIMSFullDF,Span=.3,min=1e-5,max=1e5,BoxWi
   }
   return(LoessPlot)
 }
-
+#ts.intersect
+#ccf
+#library(lmtest)
+#LIMSMadDF=LIMSFullDF%>%
+#  filter(Site=="Madison")
+#grangertest(formula=log(N1)~log(N2),data=LIMSMadDF)
 ```
 
 
@@ -190,9 +196,11 @@ Due to the large variations of the N1 concentration we have tried to create a sm
 ```{r,  echo=FALSE}
 
 N1Plot=LoessSmoothPlot(SiteS="Madison",Span=.1,min=0,max=120,Title = F,FullLim=F,SiteLab=F)+
-  theme()+xlab("")
+  theme()+xlab("")+theme(
+        axis.title.y = element_text(size=12)) 
 PerPosPlot=CasePlotMaking("Madison",Method="Per_pos")
-CasePlot=CasePlotMaking("Madison")+xlab("")
+CasePlot=CasePlotMaking("Madison")+xlab("")+theme(
+        axis.title.y = element_text(size=12)) 
 
 #ggarrange(CasePlot,N1Plot,nrow=2,common.legend = TRUE ,align ="hv")
 #ggarrange(PerPosPlot,N1Plot,nrow=2,common.legend = TRUE,align ="hv")
@@ -289,10 +297,10 @@ LoessSmoothPlot(SiteS="Madison",Span=.3,min=0,max=120)+
 #Weighted loess smoothing with truncation loessFit(N1 ~ Date, span=.3)
 ```
 
-This model offers similar 
+This smoothing model offers similar residuals for N1 and N2 with the residuals agreeing after December. This indicates that the data is being cleaned and some older data points have greater day to day variation then the best sample of the filter.
 
 
-```{r data quality}
+```{r data quality, echo = FALSE}
 MadLIMS <- LIMSFullDF%>%
   filter(Site=="Madison")%>%
   filter(N1>0)%>%
@@ -308,27 +316,28 @@ MadLIMS$ResidN1 <- resid(N1Mod)
   
 MadLIMS$ResidN2 <- resid(N2Mod)
 
-
+MadLIMS <- MadLIMS%>%
+  mutate(Date=as.Date(Date,origin="1970-01-01"))
 
 MadLIMS%>%
   ggplot(aes(x=Date))+
-  geom_point(aes(y=abs(ResidN1),color="N1"))+
-  geom_point(aes(y=abs(ResidN2),color="N2"))+
+  geom_point(aes(y=(ResidN1),color="N1"),size=1)+
+  geom_point(aes(y=(ResidN2),color="N2"),size=1)+
   ggtitle("Residual plot")
 MadLIMS%>%
   ggplot(aes(x=Date))+
-  geom_point(aes(y=abs(ResidN1)-abs(ResidN2)))+
+  geom_point(aes(y=abs(ResidN1)-abs(ResidN2)),size=1)+
   ggtitle("Dif of residuals")
 MadLIMS%>%
   ggplot(aes(x=Date))+
-  geom_point(aes(y=(ResidN1)-(ResidN2)))+
+  geom_point(aes(y=(ResidN1)-(ResidN2)),size=1)+
   ggtitle("Dif of residuals")
 
 
 ```
 
 
-This is method is extended for the interceptors.
+This is method is extended for the interceptors. Data from before January is missing due to it not being in the LIMS system. older version of that data is not used because it is missing the standard error for N1 and includes data that has been reran
 
 
 ```{r, echo=FALSE,include=TRUE,fig.height=18,fig.width=14}
@@ -337,7 +346,7 @@ MapList=lapply(c("Madison","MMSD-P2","MMSD-P7","MMSD-P8","MMSD-P11","MMSD-P18"),
 #LoessSmoothPlot(SiteS="UW-Sellery",Span=.3,max=20)
 #LoessSmoothPlot(SiteS="UW-LakeShore",Span=.3,max=20)
 
-SixPlots=ggarrange(plotlist = MapList, nrow=3,ncol=2, common.legend = T,legend="bottom")
+SixPlots=ggarrange(plotlist = MapList, nrow=3,ncol=2, common.legend = T,legend="bottom",align="hv")
 annotate_figure(SixPlots,top = text_grob("Weighted loess smoothing with truncation
      loessFit(N1 ~ Date, span=.3)", color = "black", face = "bold", size = 18))
 #No date label, No N1 label
@@ -352,7 +361,7 @@ annotate_figure(SixPlots,top = text_grob("Weighted loess smoothing with truncati
 # LIMS data given does not include all the interceptor data. Older data given does not have N1 Error.
 ```
 
-Also extended to UW data
+Also extended to UW data. This offers the clearest image that N1 has a wider distribution than cases.
 
 ```{r, warning=FALSE,fig.height=8,echo=FALSE}
 #LIMSFullDF
@@ -433,10 +442,11 @@ TitleText=text_grob("Weighted loess smoothing compared to cases)", color = "blac
 ```
 
 PMMoV and percent bovine coronavirus recovery use is still unclear.
-Unusual PMMoV and percent BCoV do not seem to relate to unusual N1 values.
+Unusual PMMoV and percent BCoV do not seem to relate to unusual N1 values. 
+This is most clearly shown in the high frequency data due to the replicates.
 
 
-```{r fig.height = 6,echo=FALSE}
+```{r fig.height = 6,fig.width = 10,echo=FALSE}
 SiteOptions2=c("Kenosha","Madison", "Sun Prairie","Wausau")
 
 
@@ -447,44 +457,56 @@ PMMoVUseDF=HFGFrame%>%
   mutate(`PMMoV Level`=ifelse(PMMoV>1*10^8,"High",`PMMoV Level`))%>%
   mutate(`PMMoV Level`=factor(`PMMoV Level`,levels=c("High","Medium","Low")))
 
-PMMoVUseDF%>%
-  ggplot()+aes(x=PMMoV,y=N1,color=`PMMoV Level`)+geom_point()+scale_y_log10()+
-  scale_x_log10()+facet_wrap(~Site)+ggtitle("N1 Vs PMMoV")+
+PMMoVN1 <- PMMoVUseDF%>%
+  ggplot()+aes(x=PMMoV,y=N1,color=`PMMoV Level`)+
+  geom_point()+
+  scale_y_log10()+
+  scale_x_log10()+
+  facet_wrap(~Site,nrow=1)+
+  ggtitle("High PMMoV levels do not clearly relate to high N1 Levels")+
   xlab("PMMoV (GC/L)")+ylab("N1 (GC/L)")
 
-PMMoVUseDF%>%
-  ggplot()+aes(x=Date,y=N1,color=`PMMoV Level`)+geom_jitter(height=0,width=.1)+
-  ylab("N1 (GC/L)")+ggtitle("PMMoV and N1 appear unrelated")+
-  scale_y_log10()+facet_wrap(~Site)
+DateN1 <- PMMoVUseDF%>%
+  ggplot()+aes(x=Date,y=N1,color=`PMMoV Level`)+
+  geom_jitter(height=0,width=.1)+
+  #ylab("N1 (GC/L)")+
+  #ggtitle("PMMoV and N1 appear unrelated")+
+  scale_y_log10()+
+  facet_wrap(~Site,nrow=1)
+
+ggarrange(PMMoVN1,DateN1,nrow=2,align="hv")
 
 ```
 
-```{r outliers Per_Bcov, fig.height = 6,echo=FALSE}
+```{r outliers Per_Bcov, fig.height = 6,fig.width = 10,echo=FALSE}
 BCoVUseDF=HFGFrame%>%
   filter(Site %in% SiteOptions2)%>%
   filter(N1<2e6)%>%
-  mutate(`Percent BCoV Recovery`=ifelse(Pct_BCoV<.5,"Low","Medium"))%>%
-  mutate(`Percent BCoV Recovery`=ifelse(Pct_BCoV>10,"High",`Percent BCoV Recovery`))%>%
-  mutate(`Percent BCoV Recovery`=factor(`Percent BCoV Recovery`,levels=c("High","Medium","Low")))
+  mutate(`% BCoV Rec`=ifelse(Pct_BCoV<.5,"Low","Medium"))%>%
+  mutate(`% BCoV Rec`=ifelse(Pct_BCoV>10,"High",`% BCoV Rec`))%>%
+  mutate(`% BCoV Rec`=factor(`% BCoV Rec`,levels=c("High","Medium","Low")))
 
-BCoVUseDF%>%
-  ggplot()+aes(x=Pct_BCoV,y=N1,color=`Percent BCoV Recovery`)+geom_point()+
-  xlab("Percent Bcov Recovery")+
-  ylab("N1 (GC/L)")+
+BCoVN1 <- BCoVUseDF%>%
+  ggplot()+aes(x=Pct_BCoV,y=N1,color=`% BCoV Rec`)+
+  geom_point()+
+  xlab("% BCoV Rec")+
+  #ylab("N1 (GC/L)")+
   #scale_y_log10()+
   #scale_x_log10()+
-  facet_wrap(~Site)+
+  facet_wrap(~Site,nrow=1)+
   ggtitle("N1 Vs %Bcov recovery")
 #, scales = "free"
 #scale_x_log10()+,color=marked
 
-BCoVUseDF%>%
-  ggplot()+aes(x=Date,y=N1,color=`Percent BCoV Recovery`)+geom_jitter(height=0,width=.1)+
-  ggtitle("Percent BCoV recovery and N1 appear unrelated")+
+DateN1BC <- BCoVUseDF%>%
+  ggplot()+aes(x=Date,y=N1,color=`% BCoV Rec`)+
+  geom_jitter(height=0,width=.1)+
+  #ggtitle("% BCoV Rec and N1 appear unrelated")+
   scale_y_log10()+
   ylab("N1 (GC/L)")+
-  facet_wrap(~Site)
+  facet_wrap(~Site,nrow=1)
 
+ggarrange(BCoVN1,DateN1BC,nrow=2,align="hv")
 ```
 
 ```{r, echo=FALSE,include=FALSE}
@@ -516,7 +538,7 @@ BCoVN1Relation <- function(Sites){
 BCPMMN1Relation <- function(Sites){
   P1=BCoVN1Relation(Sites)
   B1=PMMoVN1Relation(Sites)
-  FinPlot=ggarrange(P1,B1,nrow=2)
+  FinPlot=ggarrange(P1,B1,nrow=2,align="hv")
   return(FinPlot)
 }
 
