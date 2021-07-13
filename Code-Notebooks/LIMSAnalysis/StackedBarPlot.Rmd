@@ -178,6 +178,8 @@ myplots[[3]]=ggplot() +
 
 
 myplots[[1]]
+
+#look at this in smoothing?
 ```
 
 ```{r, echo=FALSE, dpi=600, fig.width=12, fig.height=8}

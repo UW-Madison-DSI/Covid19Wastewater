@@ -10,12 +10,8 @@ output:
 ```{r, include=FALSE}
 knitr::opts_chunk$set(message = FALSE,warning = FALSE)
 knitr::opts_chunk$set(fig.width=8, fig.height=5) 
-#library(shiny)
 library(ggpubr)
 library(dplyr)
-# library(shinydashboard)
-# library(shinyjqui)
-# library(shinycssloaders)
 library(limma)
 
 #Data Files and prep work
@@ -99,86 +95,98 @@ LIMSFullDF%>%
 ```
 
 ```{r Loess Model, include=FALSE}
-#Gen Both Cases and per Pos plot
-LoessSmoothPlot <- function(SiteS,Data=LIMSFullDF,Span=.3,min=1e-5,max=1e5,BoxWidth=.5,Independent="N1",Dependent="N1Error",HasNo=F, Title=T,FullLim=F,SiteLab=T,NoLabel=F){
-  PlaceHolder=""
-  if(HasNo){
-    PlaceHolder="no"
+LoessGenerater <- function(Data,weights,Span,min,max){
+  if(weights=="Constant"){
+    WeightList=rep(1,dim(Data)[1])
+  } else if(weights=="N/NSE"){
+    WeightList=Data$Indy/Data$Dep
   }
-  LIMSDF=Data%>%
-    filter(Site==SiteS)%>%
-    mutate(Indy=!!sym(Independent),
-           Dep=!!sym(Dependent))%>%
-    filter(!is.na(Dep),
-           !is.na(Indy),
-           Dep>0,
-           Indy>0)
-    
-  DFSize=dim(LIMSDF)[1]
-  ConWeightModel=loessFit(y=LIMSDF$Indy,
-                       x=LIMSDF$Date,
-                       weights=rep(1,DFSize),
-                       span=Span,
-                       min.weight=min,
-                       max.weight=max,
-                       iterations=10)
+  
+  
+  loessModel=loessFit(y=Data$Indy,
+                         x=Data$Date,
+                         weights=WeightList,
+                         span=Span,
+                         min.weight=min,
+                         max.weight=max,
+                         iterations=10)
+  return(loessModel$fitted)
+}
 
-  SEWeightModel=loessFit(y=LIMSDF$Indy,
-                       x=LIMSDF$Date,
-                       weights=LIMSDF$Indy/LIMSDF$Dep,
-                       span=Span,
-                       min.weight=min,
-                       max.weight=max,
-                       iterations=10)
-  LIMSDF$Pred1 <- (ConWeightModel$fitted)
-  LIMSDF$PredSE <- (SEWeightModel$fitted)
-  LoessPlot=LIMSDF%>%
-    mutate(ErrorMin=Indy-Dep,ErrorMax=Indy+Dep)%>%
-        mutate(ErrorMin=ifelse(ErrorMin>0,ErrorMin,0))%>%
-        ggplot()+
-        aes(x=Date)+
-        geom_rect(aes(ymin=ErrorMin,ymax=ErrorMax,xmin=Date-BoxWidth,xmax=Date+BoxWidth),color="black",alpha=.25)+
-        geom_rect(aes(ymin=Indy,ymax=Indy,xmin=Date-BoxWidth,xmax=Date+BoxWidth),color="black",alpha=.25)+
-        geom_line(aes(y=Pred1,color="1"),size=1.25)+
-        geom_line(aes(y=PredSE,color=paste0(Independent,"/",Dependent)),size=1.25)
-  if(SiteLab){
-    LoessPlot=LoessPlot+facet_wrap(~Site)
-  }
-  LoessPlot=LoessPlot+
-        labs(color="Weights Used")+
-    ylab(paste0(Independent," (GC/L)"))+
-    #Header_theme(ConfigOption)+
-      theme(axis.text = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
-            axis.title = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
-            plot.margin = unit(c(0,0,0,0), "cm"))+ 
-    theme(legend.position = "bottom")+
-    ggtitle("")
-  if(Title){
+
+
+LoessSmoothPlot <- function(SiteS="Madison",
+                            Data=LIMSFullDF,
+                            Independent="N1",Dependent="N1Error",
+                            weights=c("Constant","N/NSE"),
+                            Span=.3,min=1e-5,max=1e5,
+                            BoxWidth=.5,
+                            HasNo=F, Title=T,FullLim=F,SiteLab=T,NoLabel=F){
+
+  LimitLIMSDF=Data%>%
+      filter(Site==SiteS)%>%
+      mutate(Indy=!!sym(Independent),
+             Dep=!!sym(Dependent))%>%
+      filter(!is.na(Dep),
+             !is.na(Indy),
+             Dep>0,
+             Indy>0)
+
+    
+    LimitLIMSDF$Pred1 <- LoessGenerater(LimitLIMSDF,weights=weights[[1]],Span=Span,min = min,max = max)
+    LimitLIMSDF$PredSE <- LoessGenerater(LimitLIMSDF,weights=weights[[2]],Span=Span,min = min,max = max)
+    LoessPlot=LimitLIMSDF%>%
+      mutate(ErrorMin=Indy-Dep,ErrorMax=Indy+Dep)%>%
+          mutate(ErrorMin=ifelse(ErrorMin>0,ErrorMin,0))%>%
+          ggplot()+
+          aes(x=Date)+
+          geom_rect(aes(ymin=ErrorMin,ymax=ErrorMax,xmin=Date-BoxWidth,xmax=Date+BoxWidth),color="black",alpha=.25)+
+          geom_rect(aes(ymin=Indy,ymax=Indy,xmin=Date-BoxWidth,xmax=Date+BoxWidth),color="black",alpha=.25)+
+          geom_line(aes(y=Pred1,color="1"),size=1.25)+
+          geom_line(aes(y=PredSE,color=paste0(Independent,"/",Dependent)),size=1.25)
+    if(SiteLab){
+      LoessPlot=LoessPlot+facet_wrap(~Site)
+    }
     LoessPlot=LoessPlot+
-      ggtitle(paste0("Weighted loess smoothing with ",PlaceHolder," truncation 
-                   loessFit(",Independent, " ~ Date, span=",Span,")"))
-  }
-  if(FullLim){
-    XVar=LIMSFullDF$Date
-    YVar=pull(LIMSFullDF,Independent)
-    XLim <- c(min(XVar),max(XVar))
-    YLim <- c(min(YVar[YVar!=0]),max(YVar))
-    LoessPlot <- LoessPlot+
-      scale_x_date(limits = XLim)+
-      scale_y_log10(limits = YLim)
-  }else{
-    LoessPlot <- LoessPlot+
-      scale_y_log10()
-  }
-  if(NoLabel){
-    LoessPlot <- LoessPlot + 
-      ggtitle("")+
-      ylab("")+
-      xlab("")
-      # theme(axis.title.x=element_blank(),
-      #     axis.title.y=element_blank())
-  }
-  return(LoessPlot)
+          labs(title="", y=paste0(Independent," (GC/L)"),
+               color="Weights Used")+
+      #Header_theme(ConfigOption)+
+        theme(axis.text = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+              axis.title = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
+              plot.margin = unit(c(0,0,0,0), "cm"))+ 
+      theme(legend.position = "bottom")
+    
+    #Formatting code
+    
+    PlaceHolder=""
+    if(HasNo){
+      PlaceHolder="no"
+    }
+    
+    if(Title){
+      LoessPlot=LoessPlot+
+        ggtitle(paste0("Weighted loess smoothing with ",PlaceHolder," truncation 
+                     loessFit(",Independent, " ~ Date, span=",Span,")"))
+    }
+    if(FullLim){
+      XVar=LIMSFullDF$Date
+      YVar=pull(LIMSFullDF,Independent)
+      XLim <- c(min(XVar),max(XVar))
+      YLim <- c(min(YVar[YVar!=0]),max(YVar))
+      LoessPlot <- LoessPlot+
+        scale_x_date(limits = XLim)+
+        scale_y_log10(limits = YLim)
+    }else{
+      LoessPlot <- LoessPlot+
+        scale_y_log10()
+    }
+    if(NoLabel){
+      LoessPlot <- LoessPlot + 
+        labs(title="",x="",y="")
+        # theme(axis.title.x=element_blank(),
+        #     axis.title.y=element_blank())
+    }
+    return(LoessPlot)
 }
 #ts.intersect
 #ccf
@@ -186,30 +194,164 @@ LoessSmoothPlot <- function(SiteS,Data=LIMSFullDF,Span=.3,min=1e-5,max=1e5,BoxWi
 #LIMSMadDF=LIMSFullDF%>%
 #  filter(Site=="Madison")
 #grangertest(formula=log(N1)~log(N2),data=LIMSMadDF)
+
 ```
+
+
+```{r unused, include=FALSE}
+  
+# N1PlotGraphic=Buildplot_gen(
+#   "N1",
+#   MainDF=RelWasteData,
+#   LineDF =meanOfN1,
+#   Loc="Site",
+#   YLabel = "N1 (GC/L)",
+#   log_scale=T,
+#   ColorType="Filter replicates",
+#   DateLimits=Date_lim_HFG,
+#   RMOutliers=T,
+#   AxisPos="bottom",
+#   Standards=ConfigOption,
+#   Xfreq="14 days",
+#   nrow=2)+ 
+#   Header_theme(ConfigOption)+
+#       theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+#             axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
+#             plot.margin = unit(c(.5,0,0,0), "cm"))+
+#   xlab("")
+# 
+# N1PlotGraphic
+
+```
+
+
+
+To give some measure of the variation of the data we look at the high frequency data. It shows that outliers often clump with the other filter replicates
+
+
+```{r HFD VarPrep, echo=FALSE}
+SiteOptions2=c("Kenosha","Madison", "Sun Prairie","Wausau")
+LimitedHFData=HFGFrame%>%
+  filter(Site %in% SiteOptions2)%>%
+  group_by(Site,Date,`Filter replicates`)%>%
+  mutate(n=n())%>%
+  filter(n==3)%>%
+  ungroup()%>%
+  select(-n)
+meanOfN1=LimitedHFData%>%
+  group_by(Site,Date)%>%
+  summarise(N1=exp(mean(log(N1),na.rm=T)))%>%
+  select(Date,Site,N1)%>%
+  mutate(lower=N1-2*0.2199*N1)%>%
+  mutate(Upper=N1+2*0.2199*N1)
+```
+
+```{r HFD variance,echo=TRUE}
+
+N1PlotGraphic <- ggplot()+
+  geom_jitter(aes(x=Date,y=N1,color=`Filter replicates`),width=.2,data=LimitedHFData)+
+  geom_line(aes(x=Date,y=N1,linetype ="geometric mean of 9 daily replicates"),
+            size=1,data=meanOfN1)+
+  facet_wrap(~Site)+
+  scale_y_log10()
+```
+```{r HFD variance Fin,fig.height=6,fig.width=15,echo=FALSE}
+N1PlotGraphic+
+  theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
+     axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
+     plot.margin = unit(c(.5,0,0,0), "cm"))+
+  labs(title="High frequency filter and well replicates have low variance",y="N1 (GC/L)",x="",linetype="")
+```
+
+PMMoV and percent bovine coronavirus recovery use is unclear.
+Unusual PMMoV and percent BCoV do not seem to relate to unusual N1 values.
+
+```{r PMMoV gen, echo=TRUE}
+PMMoVUseDF=LimitedHFData%>%
+  mutate(`PMMoV Level`=ifelse(PMMoV<1*10^7,"Low","Medium"))%>%
+  mutate(`PMMoV Level`=ifelse(PMMoV>1*10^8,"High",`PMMoV Level`))%>%
+  mutate(`PMMoV Level`=factor(`PMMoV Level`,levels=c("High","Medium","Low")))
+```
+
+```{r fig.height = 6,fig.width = 10,echo=FALSE}
+PMMoVN1 <- PMMoVUseDF%>%
+  ggplot()+aes(x=PMMoV,y=N1,color=`PMMoV Level`)+
+  geom_point()+
+  scale_y_log10()+
+  scale_x_log10()+
+  facet_wrap(~Site,nrow=1)+
+  labs(title="High PMMoV levels do not clearly relate to high N1 Levels",
+      x="PMMoV (GC/L)",
+      y="N1 (GC/L)")
+
+
+DateN1 <- PMMoVUseDF%>%
+  ggplot()+aes(x=Date,y=N1,color=`PMMoV Level`)+
+  geom_jitter(height=0,width=.1)+
+  scale_y_log10()+
+  facet_wrap(~Site,nrow=1)
+
+ggarrange(PMMoVN1,DateN1,nrow=2,align="hv")
+
+```
+
+```{r Per_Bcov gen, fig.height = 6,fig.width = 10,echo=TRUE}
+BCoVUseDF=LimitedHFData%>%
+  filter(N1<2e6)%>%
+  mutate(`% BCoV Rec`=ifelse(Pct_BCoV<.5,"Low","Medium"))%>%
+  mutate(`% BCoV Rec`=ifelse(Pct_BCoV>10,"High",`% BCoV Rec`))%>%
+  mutate(`% BCoV Rec`=factor(`% BCoV Rec`,levels=c("High","Medium","Low")))
+
+
+```
+
+```{r Per_Bcov, fig.height = 6,fig.width = 10,echo=FALSE}
+BCoVN1 <- BCoVUseDF%>%
+  ggplot()+aes(x=Pct_BCoV,y=N1,color=`% BCoV Rec`)+
+  geom_point()+
+  labs(x="% BCoV Rec",title="N1 Vs %Bcov recovery")+
+  facet_wrap(~Site,nrow=1)
+
+
+DateN1BC <- BCoVUseDF%>%
+  ggplot()+aes(x=Date,y=N1,color=`% BCoV Rec`)+
+  geom_jitter(height=0,width=.1)+
+  scale_y_log10()+
+  ylab("N1 (GC/L)")+
+  facet_wrap(~Site,nrow=1)
+
+ggarrange(BCoVN1,DateN1BC,nrow=2,align="hv")
+```
+
 
 
 
 Due to the large variations of the N1 concentration we have tried to create a smoothed version of the data set that captures the underlying shifts of the data. Below is our best attempt at smoothing the N1 concentration data. It shows relation to case data given the spread of shedding of N1. This relationship holds for N2 as well.
 
 
-```{r,  echo=FALSE}
+```{r,echo=TRUE}
 
-N1Plot=LoessSmoothPlot(SiteS="Madison",Span=.1,min=0,max=120,Title = F,FullLim=F,SiteLab=F)+
-  theme()+xlab("")+theme(
+N1Plot <- LoessSmoothPlot(SiteS="Madison",Span=.1,min=0,max=120,weights=c("Constant","N/NSE"),
+                          Title = F,FullLim=F,SiteLab=F) 
+
+CasePlot <- CasePlotMaking("Madison")
+
+
+```
+
+```{r,echo=FALSE}
+
+N1Plot <- N1Plot+
+  theme()+xlab("Madison Longitudinal Data")+theme(
         axis.title.y = element_text(size=12)) 
-PerPosPlot=CasePlotMaking("Madison",Method="Per_pos")
-CasePlot=CasePlotMaking("Madison")+xlab("")+theme(
+
+PerPosPlot <- CasePlotMaking("Madison",Method="Per_pos")
+
+CasePlot <- CasePlot+theme(
         axis.title.y = element_text(size=12)) 
 
-#ggarrange(CasePlot,N1Plot,nrow=2,common.legend = TRUE ,align ="hv")
-#ggarrange(PerPosPlot,N1Plot,nrow=2,common.legend = TRUE,align ="hv")
-
-annotate_figure(ggarrange(CasePlot,N1Plot,nrow=2,common.legend = TRUE ,align ="hv",legend="bottom"),top = text_grob("Weighted loess smoothing compared to cases", color = "black", face = "bold", size = 16))
-
-# annotate_figure(ggarrange(PerPosPlot,N1Plot,nrow=2,common.legend = TRUE,align ="hv",legend="bottom"),top = text_grob("Weighted loess smoothing compared to percent positive", color = "black", face = "bold", size = 16))
-
-
+ArrangePlot <- ggarrange(CasePlot,N1Plot,nrow=2,common.legend = TRUE ,align ="hv",legend="right",heights=c(1,1.3))
+annotate_figure(ArrangePlot,top = text_grob("Weighted loess smoothing of N1 compared to cases", color = "black", face = "bold", size = 16))
 
 ```
 
@@ -218,13 +360,13 @@ annotate_figure(ggarrange(CasePlot,N1Plot,nrow=2,common.legend = TRUE ,align ="h
 To use standard Error measurements in our smoothing we needed to have it be an unbiased estimate given the concentration. A strong correlation between N1 and N1Error means it needs to be controlled for. Using standard error normalized by N1 gave a meaningful measurement of the consistency of the data.
 
 
-```{r SE Pred N1 Gen, echo=FALSE}
+```{r SE Pred N1 Prep, echo=FALSE}
 # ***No strong relationship existed between the modified standard error and other predictors #like Percent bovine recovery and PMMoV***
 
 
 #ToDo: add custom Weighting
 #How to deal with -N2Errors
-SimpleN1ErrorN1Model <- function(Independent,Dependent,...){
+SimpleNErrorNModel <- function(Independent,Dependent,...){
   TempDF <- LIMSFullDF%>%
     mutate(Indy=!!sym(Independent),
            Dep=!!sym(Dependent))%>%
@@ -242,22 +384,26 @@ SimpleN1ErrorN1Model <- function(Independent,Dependent,...){
     #geom_point(aes(y=FullDataPredict,color="Predicted"),size=1)+
     scale_x_log10()+
     scale_y_log10()+
-    ggtitle("lm(N1Error ~ N1 - 1)")+
-    ylab(Dependent)+
-    xlab(Independent)+
+    labs(title="lm(N1Error ~ N1 - 1)",
+         x=Dependent,
+         y=Independent)+
     theme(aspect.ratio=1)
 }
-#,Weight="INDDep"
-SimpleN1ErrorN1Model(Independent="N1",Dependent="N1Error")+
+```
+
+
+```{r SE Pred N1 Gen, echo=TRUE}
+
+N1ErrorN1Plot <- SimpleNErrorNModel(Independent="N1",Dependent="N1Error")
+
+```
+
+```{r SE Pred N1 fin, echo=FALSE}
+
+N1ErrorN1Plot+
       theme(axis.text = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
             axis.title = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
             plot.margin = unit(c(0,0,0,0), "cm"))
-
-#Add aspect=1
-#add slope to plot
-
-
-
 ```
 
 
@@ -269,38 +415,35 @@ Below are the two versions of the smoothed data capturing different scales of it
 
 
 
-```{r SmoothPlot, echo=FALSE,fig.height=6}
+```{r SmoothPlot, echo = TRUE}
+LowSpanPlot <- LoessSmoothPlot(SiteS="Madison",Span=.1, weights=c("Constant","N/NSE"),
+                               min=0,max=120)
 
+HighSpanPlot <- LoessSmoothPlot(SiteS="Madison",Span=.3, weights=c("Constant","N/NSE"),
+                                min=0,max=120)
 
-LoessSmoothPlot(SiteS="Madison",Span=.1,min=0,max=120)+
+```
+
+```{r SmoothPlot Fin, echo = FALSE,fig.height=6}
+
+LowSpanPlot+
       theme(axis.text = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
             axis.title = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
-            plot.margin = unit(c(0,0,0,0), "cm"))+ theme(plot.title = element_text(size=16))
+            plot.margin = unit(c(0,0,0,0), "cm"))+ theme(plot.title = element_text(size=16))+
+      xlab("")
 
-LoessSmoothPlot(SiteS="Madison",Span=.3,min=0,max=120)+
+HighSpanPlot+
       theme(axis.text = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
             axis.title = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
-            plot.margin = unit(c(0,0,0,0), "cm"))+ theme(plot.title = element_text(size=16))
+            plot.margin = unit(c(0,0,0,0), "cm"))+ theme(plot.title = element_text(size=16))+
+      xlab("")
 
-
-
-#Text explaining boxes
-#Boxes are N1 +-N1Error
-#make boxes stand out less
-
-
-#Sparse Main Plots in 1 Documents
-#auxiliary plots in other locations and loess smoothing:
-#Different weightings
-#weighting
-#Residuals
-#Weighted loess smoothing with truncation loessFit(N1 ~ Date, span=.3)
 ```
 
 This smoothing model offers similar residuals for N1 and N2 with the residuals agreeing after December. This indicates that the data is being cleaned and some older data points have greater day to day variation then the best sample of the filter.
 
 
-```{r data quality, echo = FALSE}
+```{r data quality prep, echo = FALSE}
 MadLIMS <- LIMSFullDF%>%
   filter(Site=="Madison")%>%
   filter(N1>0)%>%
@@ -318,21 +461,23 @@ MadLIMS$ResidN2 <- resid(N2Mod)
 
 MadLIMS <- MadLIMS%>%
   mutate(Date=as.Date(Date,origin="1970-01-01"))
+```
 
+```{r data quality, echo = TRUE}
 MadLIMS%>%
   ggplot(aes(x=Date))+
+  geom_segment(aes(y=ResidN1,yend=ResidN2,xend=Date),alpha=.2)+
   geom_point(aes(y=(ResidN1),color="N1"),size=1)+
   geom_point(aes(y=(ResidN2),color="N2"),size=1)+
-  ggtitle("Residual plot")
-MadLIMS%>%
-  ggplot(aes(x=Date))+
-  geom_point(aes(y=abs(ResidN1)-abs(ResidN2)),size=1)+
-  ggtitle("Dif of residuals")
+  labs(title="Residuals of N1 and N2 loess smoothing",
+       x="",y="Residuals")
+
+
 MadLIMS%>%
   ggplot(aes(x=Date))+
   geom_point(aes(y=(ResidN1)-(ResidN2)),size=1)+
-  ggtitle("Dif of residuals")
-
+  labs(title="",
+       x="",y="N1 Residual - N2 Residual")
 
 ```
 
@@ -340,16 +485,19 @@ MadLIMS%>%
 This is method is extended for the interceptors. Data from before January is missing due to it not being in the LIMS system. older version of that data is not used because it is missing the standard error for N1 and includes data that has been reran
 
 
+```{r, echo=TRUE,include=TRUE}
+
+MapList=lapply(c("Madison","MMSD-P2","MMSD-P7","MMSD-P8","MMSD-P11","MMSD-P18"),
+               LoessSmoothPlot,
+               Span=.3,max=20,weights=c("Constant","N/NSE"),
+               Title=F,FullLim=T,NoLabel=T)
+```
+
 ```{r, echo=FALSE,include=TRUE,fig.height=18,fig.width=14}
-
-MapList=lapply(c("Madison","MMSD-P2","MMSD-P7","MMSD-P8","MMSD-P11","MMSD-P18"),LoessSmoothPlot,Span=.3,max=20, Title=F,FullLim=T,NoLabel=T)
-#LoessSmoothPlot(SiteS="UW-Sellery",Span=.3,max=20)
-#LoessSmoothPlot(SiteS="UW-LakeShore",Span=.3,max=20)
-
 SixPlots=ggarrange(plotlist = MapList, nrow=3,ncol=2, common.legend = T,legend="bottom",align="hv")
 annotate_figure(SixPlots,top = text_grob("Weighted loess smoothing with truncation
      loessFit(N1 ~ Date, span=.3)", color = "black", face = "bold", size = 18))
-#No date label, No N1 label
+
 ```
 
 
@@ -363,33 +511,30 @@ annotate_figure(SixPlots,top = text_grob("Weighted loess smoothing with truncati
 
 Also extended to UW data. This offers the clearest image that N1 has a wider distribution than cases.
 
-```{r, warning=FALSE,fig.height=8,echo=FALSE}
-#LIMSFullDF
-N1CaseCompDorms <- function(SiteS){
-  #Dec 21 
-  #15
+```{r, warning=FALSE,echo=FALSE}
+N1CaseCompDorms <- function(SiteS,Span=.5,Max=20,Weights=c("Constant","N/NSE")){
+
   MinConc=min(LIMSFullDF$Date)
   MaxConc=max(LIMSFullDF$Date)
   
   FallRange=c(MinConc,mdy("12/11/2020"))
   SpringRange=c(mdy("1/25/2021"),MaxConc)
   
+  FallData=LIMSFullDF%>%
+    filter(Date >= FallRange[1] & Date <= FallRange[2])
   
-  N1PlotFull=LoessSmoothPlot(SiteS=SiteS,Data=LIMSFullDF,Span=.3,max=20, Title=F,FullLim=F,NoLabel=T,SiteLab=F)+
-    xlab("")
-    
-  N1PlotSpring=N1PlotFull+
-    coord_cartesian(xlim=SpringRange)+
-    ggtitle("Spring Semester")+
+  N1PlotFall <- LoessSmoothPlot(SiteS=SiteS,Data=FallData,weights=Weights,Span=Span,max=Max, Title=F,FullLim=F,NoLabel=T,SiteLab=F)+
+    labs(title="Fall Semester",x="",y="N1 (GC/L)")
+    theme(plot.margin = unit(c(0,-1,0,0), "cm"))
+  
+  SpringData=LIMSFullDF%>%
+    filter(Date >= SpringRange[1] & Date <= SpringRange[2])
+  
+  N1PlotSpring <- LoessSmoothPlot(SiteS=SiteS,Data=SpringData,weights=Weights,Span=Span,max=Max, Title=F,FullLim=F,NoLabel=T,SiteLab=F)+
+    labs(title="Spring Semester",x="",y="")
     theme(axis.text.y = element_blank())+
     theme(plot.margin = unit(c(0,-1,0,-1), "cm"))
-  
-  
-  N1PlotFall=N1PlotFull+
-    coord_cartesian(xlim=FallRange)+
-    ggtitle("Fall Semester")+
-    ylab("N1 (GC/L)")+
-    theme(plot.margin = unit(c(0,-1,0,0), "cm"))
+
   
   CasePlotFull=CasePlotMaking(SiteS,Method="Cases")
   
@@ -412,11 +557,17 @@ TitleText=text_grob(paste("Case concentration comparison for",SiteS),
   annotate_figure(ArrangePlot,top = TitleText)
 }
 
-N1CaseCompDorms(SiteS="UW-Sellery")
+```
 
-N1CaseCompDorms(SiteS="UW-LakeShore")
+```{r, warning=FALSE,fig.height=8,echo=TRUE}
+
+N1CaseCompDorms(SiteS="UW-Sellery",Span=.5,Max=25,Weights=c("Constant","N/NSE"))
+
+N1CaseCompDorms(SiteS="UW-LakeShore",Span=.5,Max=25,Weights=c("Constant","N/NSE"))
 
 ```
+
+
 
 
 ```{r, warning=FALSE,fig.height=12,include=FALSE}
@@ -441,73 +592,7 @@ TitleText=text_grob("Weighted loess smoothing compared to cases)", color = "blac
 #Lims older data
 ```
 
-PMMoV and percent bovine coronavirus recovery use is still unclear.
-Unusual PMMoV and percent BCoV do not seem to relate to unusual N1 values. 
-This is most clearly shown in the high frequency data due to the replicates.
 
-
-```{r fig.height = 6,fig.width = 10,echo=FALSE}
-SiteOptions2=c("Kenosha","Madison", "Sun Prairie","Wausau")
-
-
-#PMMoV (GC/L)
-PMMoVUseDF=HFGFrame%>%
-  filter(Site %in% SiteOptions2)%>%
-  mutate(`PMMoV Level`=ifelse(PMMoV<1*10^7,"Low","Medium"))%>%
-  mutate(`PMMoV Level`=ifelse(PMMoV>1*10^8,"High",`PMMoV Level`))%>%
-  mutate(`PMMoV Level`=factor(`PMMoV Level`,levels=c("High","Medium","Low")))
-
-PMMoVN1 <- PMMoVUseDF%>%
-  ggplot()+aes(x=PMMoV,y=N1,color=`PMMoV Level`)+
-  geom_point()+
-  scale_y_log10()+
-  scale_x_log10()+
-  facet_wrap(~Site,nrow=1)+
-  ggtitle("High PMMoV levels do not clearly relate to high N1 Levels")+
-  xlab("PMMoV (GC/L)")+ylab("N1 (GC/L)")
-
-DateN1 <- PMMoVUseDF%>%
-  ggplot()+aes(x=Date,y=N1,color=`PMMoV Level`)+
-  geom_jitter(height=0,width=.1)+
-  #ylab("N1 (GC/L)")+
-  #ggtitle("PMMoV and N1 appear unrelated")+
-  scale_y_log10()+
-  facet_wrap(~Site,nrow=1)
-
-ggarrange(PMMoVN1,DateN1,nrow=2,align="hv")
-
-```
-
-```{r outliers Per_Bcov, fig.height = 6,fig.width = 10,echo=FALSE}
-BCoVUseDF=HFGFrame%>%
-  filter(Site %in% SiteOptions2)%>%
-  filter(N1<2e6)%>%
-  mutate(`% BCoV Rec`=ifelse(Pct_BCoV<.5,"Low","Medium"))%>%
-  mutate(`% BCoV Rec`=ifelse(Pct_BCoV>10,"High",`% BCoV Rec`))%>%
-  mutate(`% BCoV Rec`=factor(`% BCoV Rec`,levels=c("High","Medium","Low")))
-
-BCoVN1 <- BCoVUseDF%>%
-  ggplot()+aes(x=Pct_BCoV,y=N1,color=`% BCoV Rec`)+
-  geom_point()+
-  xlab("% BCoV Rec")+
-  #ylab("N1 (GC/L)")+
-  #scale_y_log10()+
-  #scale_x_log10()+
-  facet_wrap(~Site,nrow=1)+
-  ggtitle("N1 Vs %Bcov recovery")
-#, scales = "free"
-#scale_x_log10()+,color=marked
-
-DateN1BC <- BCoVUseDF%>%
-  ggplot()+aes(x=Date,y=N1,color=`% BCoV Rec`)+
-  geom_jitter(height=0,width=.1)+
-  #ggtitle("% BCoV Rec and N1 appear unrelated")+
-  scale_y_log10()+
-  ylab("N1 (GC/L)")+
-  facet_wrap(~Site,nrow=1)
-
-ggarrange(BCoVN1,DateN1BC,nrow=2,align="hv")
-```
 
 ```{r, echo=FALSE,include=FALSE}
 # PMMoV and percent bovine coronavirus recovery use is still unclear. Data shows very week and inconsistent trend.
