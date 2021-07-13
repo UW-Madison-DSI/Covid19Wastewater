@@ -27,11 +27,39 @@ B=LatCaseDF%>%
 grangertest(A$N1,B$Cases)
 #looking for analysis and a number of relationship rigorously with TS
 #Get some measure of how good the relationship
-auto.arima()
+#auto.arima()
 
 
 library(lmtest)
+library(astsa)
 LIMSMadDF=LIMSFullDF%>%
   filter(Site=="Madison")
 grangertest(formula=log(N1)~log(N2),data=LIMSMadDF)
+
+
+MadCasedat=LatCaseDF%>%
+  filter(Site=="Madison")%>%
+  filter(Cases>0,Tests>0,Per_pos>0)
+
+MadLIMsdata=LIMSFullDF%>%
+  filter(Site=="Madison")%>%
+  select(Date,N1,N2,PMMoV,BCoV)%>%
+  filter(N1>0,N2>0,PMMoV>0,BCoV>0)
+
+TSMadLIMS=ts(MadLIMsdata)
+N1TSVector=TSMadLIMS[,2]
+N2TSVector=TSMadLIMS[,3]
+PMMoVTSVector=TSMadLIMS[,4]
+BCoVTSVector=TSMadLIMS[,5]
+
+TSMadCase=ts(MadCasedat)
+CasesTSVector=TSMadCase[,3]
+TestsTSVector=TSMadCase[,4]
+Per_posTSVector=TSMadCase[,5]
+
+ccfvalues = ccf(N1TSVector,Per_posTSVector)
+ccfvalues
+
+lag2.plot (TSMadLIMS[,2], TSMadLIMS[,5], 10)
+
 ```

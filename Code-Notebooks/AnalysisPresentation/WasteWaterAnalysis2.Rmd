@@ -289,7 +289,8 @@ DateN1 <- PMMoVUseDF%>%
   ggplot()+aes(x=Date,y=N1,color=`PMMoV Level`)+
   geom_jitter(height=0,width=.1)+
   scale_y_log10()+
-  facet_wrap(~Site,nrow=1)
+  facet_wrap(~Site,nrow=1)+
+  ylab("N1 (GC/L)")
 
 ggarrange(PMMoVN1,DateN1,nrow=2,align="hv")
 
@@ -309,7 +310,9 @@ BCoVUseDF=LimitedHFData%>%
 BCoVN1 <- BCoVUseDF%>%
   ggplot()+aes(x=Pct_BCoV,y=N1,color=`% BCoV Rec`)+
   geom_point()+
-  labs(x="% BCoV Rec",title="N1 Vs %Bcov recovery")+
+  labs(x="% BCoV Rec",
+       title="High % BCoV levels do not clearly relate to high N1 Levels",
+       y="N1 (GC/L)")+
   facet_wrap(~Site,nrow=1)
 
 
@@ -403,7 +406,8 @@ N1ErrorN1Plot <- SimpleNErrorNModel(Independent="N1",Dependent="N1Error")
 N1ErrorN1Plot+
       theme(axis.text = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
             axis.title = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
-            plot.margin = unit(c(0,0,0,0), "cm"))
+            plot.margin = unit(c(0,0,0,0), "cm"))+
+  ylab("N1 (GC/L)")
 ```
 
 
