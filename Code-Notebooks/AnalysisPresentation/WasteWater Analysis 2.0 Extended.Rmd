@@ -11,29 +11,26 @@ output:
 ```{r, include=FALSE}
 knitr::opts_chunk$set(message = FALSE,warning = FALSE)
 
-#library(shiny)
+
 library(ggpubr)
 library(dplyr)
-# library(shinydashboard)
-# library(shinyjqui)
-# library(shinycssloaders)
 library(limma)
 
 #Data Files and prep work
-source("../Scripts/GenPlotMaking.R")
-source("../Scripts/WasteWaterDataProccess.R")
-source("../Scripts/CassesDataProccess.R")
-source("../Scripts/HelperFunctions.R")
+source("../../Scripts/GenPlotMaking.R")
+source("../../Scripts/WasteWaterDataProccess.R")
+source("../../Scripts/CassesDataProccess.R")
+source("../../Scripts/HelperFunctions.R")
 
 
-source("../Scripts/WasteShiny/PrepData.R", local = TRUE)
+source("../../Scripts/WasteShiny/PrepData.R", local = TRUE)
 ```
 
 
 
 ```{r start up, include=FALSE}
 
-HFGPop=read.csv("../../UntrackedData/HFGPop.csv.txt")%>%
+HFDPop=read.csv("../../../UntrackedData/HFGPop.csv.txt")%>%
   select(Site=wwtp_name,Population=pop_served)
 
 
@@ -269,7 +266,8 @@ LIMSFullDF%>%
 
 LogLoglm=UnWeightedModel1 <- lm(N1Error~N1-1,weights=rep(1,dim(LIMSFullDFM)[1]),data=LIMSFullDFM)
 
-LIMSFullDF2=LIMSFullDF
+LIMSFullDF2=LIMSFullDF%>%
+  filter(!is.na(N1),!(is.na(N1Error)))
 LIMSFullDF2$resid=weighted.residuals(LogLoglm)
 LIMSFullDF2%>%
   ggplot()+
@@ -279,6 +277,9 @@ LIMSFullDF2%>%
 
 
 ```{r residue, echo=FALSE}
+LIMSFullDFM <- LIMSFullDFM%>%
+  filter(N1Error>0,N1>0)
+
 UnWeightedModel1 <- lm(N1Error~N1-1,weights=rep(1,dim(LIMSFullDFM)[1]),data=LIMSFullDFM)
 
 
@@ -288,6 +289,7 @@ VarModel1 <- lm(N1Error~N1-1,weights=N1/N1Error^2,data=LIMSFullDFM)
 SDModel1 <- lm(N1Error~N1-1,weights=N1/N1Error,data=LIMSFullDFM)
 
 TestDF2 <- LIMSFullDFM%>%
+  filter(N1Error>0,N1>0)%>%
   mutate(NoWeight=weighted.residuals(UnWeightedModel1, drop0 = FALSE),
          N1VarWeight=weighted.residuals(VarModel1, drop0 = FALSE),
          N1SDWeight=weighted.residuals(SDModel1, drop0 = FALSE))
@@ -386,7 +388,7 @@ LoessSmoothPlot(SiteS="MMSD-P7",Span=.3,max=20,Independent="N2",Dependent="N2Err
 LoessSmoothPlot(SiteS="MMSD-P8",Span=.3,max=20,Independent="N2",Dependent="N2Error")
 LoessSmoothPlot(SiteS="MMSD-P11",Span=.3,max=20,Independent="N2",Dependent="N2Error")
 LoessSmoothPlot(SiteS="MMSD-P18",Span=.3,max=20,Independent="N2",Dependent="N2Error")
-CasePlotMaking("MMSD P2")
+CasePlotMaking("MMSD-P2")
 CasePlotMaking("MMSD-P7")
 CasePlotMaking("MMSD-P8")
 CasePlotMaking("MMSD-P11")
