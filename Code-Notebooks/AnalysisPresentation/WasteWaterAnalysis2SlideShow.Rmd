@@ -1,6 +1,7 @@
 ---
 title: "WasteWater Analysis 2.0"
 author: "Steve Goldstein and Marlin Lee"
+date: "7/13/2021"
 output: slidy_presentation
 ---
 
@@ -260,6 +261,8 @@ N1PlotGraphic+
      axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
      plot.margin = unit(c(.5,0,0,0), "cm"))+
   labs(title="High frequency filter and well replicates have low variance",y="N1 (GC/L)",x="",linetype="")
+
+
 ```
 
 ---
@@ -344,7 +347,7 @@ ggarrange(BCoVN1,DateN1BC,nrow=2,align="hv",common.legend = TRUE,legend="right")
 
 ---
 
-Due to the large variations of the N1 concentration we have tried to create a smoothed version of the data set that captures the underlying shifts of the data. Below is our best attempt at smoothing the N1 concentration data. It shows relation to case data given the spread of shedding of N1. This relationship holds for N2 as well.
+Due to the large daily variation of the N1 concentration we have tried to create a smoothed version of the data set that captures the N1 concentration. Below is our best attempt at smoothing. N2 shows a similar patern.
 
 
 ```{r,echo=TRUE}
@@ -375,8 +378,8 @@ annotate_figure(ArrangePlot,top = text_grob("Weighted loess smoothing of N1 comp
 
 ---
 
-To use standard Error measurements in our smoothing we needed to have it be an unbiased estimate given the concentration. A strong correlation between N1 and N1Error means it needs to be controlled for. Using standard error normalized by N1 gave a meaningful measurement of the consistency of the data.
-
+To use standard error in our smoothing we need an error estimate independent of the concentration. 
+SE/N1 is an effective weighting factor.
 
 ```{r SE Pred N1 Prep, echo=FALSE}
 # ***No strong relationship existed between the modified standard error and other predictors #like Percent bovine recovery and PMMoV***
@@ -461,8 +464,7 @@ HighSpanPlot+
 
 ---
 
-This smoothing model offers similar residuals for N1 and N2 with the residuals agreeing after December. This indicates that the data is being cleaned and some older data points have greater day to day variation then the best sample of the filter.
-
+Analysis of loess residuals suggest in progress data cleaning
 
 ```{r data quality prep, echo = FALSE}
 MadLIMS <- LIMSFullDF%>%
@@ -503,13 +505,13 @@ MadLIMS%>%
 ```
 
 
----
 
+```{r, echo=TRUE,include=FALSE}
+# ---
+# 
+# 
+# This method is extended for the interceptors. Data from before January is missing due to it not being in the LIMS system. older version of that data is not used because it is missing the standard error for N1 and includes data that has been reran
 
-This is method is extended for the interceptors. Data from before January is missing due to it not being in the LIMS system. older version of that data is not used because it is missing the standard error for N1 and includes data that has been reran
-
-
-```{r, echo=TRUE,include=TRUE}
 
 MapList=lapply(c("Madison","MMSD-P2","MMSD-P7","MMSD-P8","MMSD-P11","MMSD-P18"),
                LoessSmoothPlot,
@@ -517,7 +519,7 @@ MapList=lapply(c("Madison","MMSD-P2","MMSD-P7","MMSD-P8","MMSD-P11","MMSD-P18"),
                Title=F,FullLim=T,NoLabel=T)
 ```
 
-```{r, echo=FALSE,include=TRUE,fig.height=8,fig.width=14}
+```{r, echo=FALSE,include=FALSE,fig.height=8,fig.width=14}
 SixPlots=ggarrange(plotlist = MapList, nrow=2,ncol=3, common.legend = T,legend="bottom",align="hv")
 annotate_figure(SixPlots,top = text_grob("Weighted loess smoothing with truncation
      loessFit(N1 ~ Date, span=.3)", color = "black", face = "bold", size = 18))
@@ -525,7 +527,7 @@ annotate_figure(SixPlots,top = text_grob("Weighted loess smoothing with truncati
 
 ---
 
-Also extended to UW data. This offers the clearest image that N1 has a wider distribution than cases.
+This weighted smoothing is also applied to the UW data
 
 ```{r, warning=FALSE,echo=FALSE}
 N1CaseCompDorms <- function(SiteS,Span=.5,Max=20,Weights=c("Constant","N/NSE")){

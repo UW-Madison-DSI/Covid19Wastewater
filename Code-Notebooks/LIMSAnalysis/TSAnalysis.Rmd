@@ -30,6 +30,9 @@ grangertest(A$N1,B$Cases)
 #auto.arima()
 
 
+
+
+
 library(lmtest)
 library(astsa)
 LIMSMadDF=LIMSFullDF%>%
@@ -44,22 +47,182 @@ MadCasedat=LatCaseDF%>%
 MadLIMsdata=LIMSFullDF%>%
   filter(Site=="Madison")%>%
   select(Date,N1,N2,PMMoV,BCoV)%>%
-  filter(N1>0,N2>0,PMMoV>0,BCoV>0)
+  filter(N1>0,N2>0,PMMoV>0,BCoV>0)#%>%
+  #mutate(N1=N1-lag(N1))%>%
+  #filter(!is.na(N1))
+
 
 TSMadLIMS=ts(MadLIMsdata)
-N1TSVector=TSMadLIMS[,2]
-N2TSVector=TSMadLIMS[,3]
-PMMoVTSVector=TSMadLIMS[,4]
-BCoVTSVector=TSMadLIMS[,5]
+N1TSVec=TSMadLIMS[,2]
+N2TSVec=TSMadLIMS[,3]
+PMMoVTSVec=TSMadLIMS[,4]
+BCoVTSVec=TSMadLIMS[,5]
 
 TSMadCase=ts(MadCasedat)
-CasesTSVector=TSMadCase[,3]
-TestsTSVector=TSMadCase[,4]
-Per_posTSVector=TSMadCase[,5]
+CasesTSVec=TSMadCase[,3]
+TestsTSVec=TSMadCase[,4]
+Per_posTSVec=TSMadCase[,5]
+```
 
-ccfvalues = ccf(N1TSVector,Per_posTSVector)
-ccfvalues
+```{r}
+acf(log(MadLIMsdata$N1))
+pacf(log(MadLIMsdata$N1))
+cor(log(MadLIMsdata$N1),log(MadLIMsdata$N2))
+ccfvalues = ccf(log(N1TSVec),log(N2TSVec),type = c("correlation"))
+#covariance
+#correlation
 
-lag2.plot (TSMadLIMS[,2], TSMadLIMS[,5], 10)
+# MadLIMsdata%>%
+#   ggplot()+
+#   geom_point(aes(x=Date,y=N1-lag(N1)))
+```
 
+
+
+```{r}
+# N1TSVec
+# N2TSVec
+# PMMoVTSVec
+# BCoVTSVec
+# CasesTSVec
+# TestsTSVec
+# Per_posTSVec
+
+
+ccfvalues = ccf(Per_posTSVec,N1TSVec,type = c("correlation"))
+
+lag2.plot(Per_posTSVec,N1TSVec, 20)
+
+alldata=ts.intersect(Per_posTSVec,N1TSVec,N1A=stats::lag(N1TSVec,6),N1B=stats::lag(N1TSVec,13), N1C=stats::lag(N1TSVec,15), N1D=stats::lag(N1TSVec,1))
+
+
+tryit = lm(Per_posTSVec~N1A+N1B+N1C, data = alldata)
+
+summary(tryit)
+
+acf2(residuals(tryit))
+
+plot(Per_posTSVec)
+plot(N1TSVec)
+
+```
+
+```{r}
+N1TSVecDif=N1TSVec-stats::lag(N1TSVec,1)
+  
+plot(N1TSVecDif)
+
+ccfvalues = ccf(Per_posTSVec,N1TSVecDif,type = c("correlation"))
+
+lag2.plot(Per_posTSVec,N1TSVecDif, 20)
+
+alldata=ts.intersect(Per_posTSVec,N1TSVecDif,N1A=stats::lag(N1TSVecDif,5),N1B=stats::lag(N1TSVecDif,6), N1C=stats::lag(N1TSVecDif,14), N1D=stats::lag(N1TSVecDif,15))
+
+
+tryit = lm(Per_posTSVec~N1A+N1B+N1C+N1D, data = alldata)
+
+summary(tryit)
+
+acf2(residuals(tryit))
+```
+
+```{r}
+Per_posTSVecDif=Per_posTSVec-stats::lag(Per_posTSVec,1)
+
+plot(Per_posTSVecDif)
+  
+ccfvalues = ccf(Per_posTSVecDif,N1TSVecDif,type = c("correlation"))
+
+lag2.plot(Per_posTSVecDif,N1TSVecDif, 20)
+
+alldata=ts.intersect(Per_posTSVecDif,
+                     N1TSVecDif,
+                     N1A=stats::lag(N1TSVecDif,5),
+                     N1B=stats::lag(N1TSVecDif,6), 
+                     N1C=stats::lag(N1TSVecDif,7), 
+                     N1D=stats::lag(N1TSVecDif,8),
+                     N1E=stats::lag(N1TSVecDif,13),
+                     N1F=stats::lag(N1TSVecDif,14),
+                     N1G=stats::lag(N1TSVecDif,15),
+                     N1H=stats::lag(N1TSVecDif,16))
+
+
+tryit = lm(Per_posTSVecDif~N1A+N1B+N1C+N1D+N1E+N1F+N1G+N1H, data = alldata)
+
+summary(tryit)
+
+acf2(residuals(tryit))
+```
+
+```{r}
+TSDF=ts.intersect(Per_posTSVec,N1TSVec)
+Per_posTSVec2=TSDF[,1]
+N1TSVec2=TSDF[,2]
+regmodel=lm(Per_posTSVec2~time(Per_posTSVec2)+N1TSVec2)
+dtx = residuals(lm(N1TSVec2~time(N1TSVec2)))
+regmodel2= lm(Per_posTSVec2~time(Per_posTSVec2)+dtx)
+summary(regmodel)
+acf2(resid(regmodel))
+
+```
+
+
+
+
+
+```
+SimpleMerge=inner_join(MadLIMsdata,MadCasedat,by=c("Date"))
+SimpleMerge%>%
+  ggplot()+
+    geom_point(aes(x=Cases,y=N1/PMMoV))
+  scale_y_log10()+
+  scale_x_log10()
+SimpLM=lm(Cases~log(N1),data=SimpleMerge)
+summary(SimpLM)
+SimpleMerge$Resid=residuals(SimpLM)
+
+
+acf2(ts(residuals(SimpLM)))
+summary(sarima (residuals(SimpLM), 1,0,0, no.constant=F))
+```
+
+
+
+
+
+```{r}
+HFGFrame%>%
+  filter(!is.na(N1),!is.na(Date),!is.na(`Filter replicates`),!is.na(Site))%>%
+  group_by(Site,Date,`Filter replicates`)%>%
+  summarize(var=var(N1))%>%
+  filter(!is.na(var))%>%
+  ungroup()%>%
+  summarize(meanvar=mean(var))
+2.01290406020e+11
+
+
+HFGFrame%>%
+  filter(!is.na(N1),!is.na(Date),!is.na(Site))%>%
+  group_by(Site,Date)%>%
+  summarize(var=var(N1))%>%
+  filter(!is.na(var))%>%
+  ungroup()%>%
+  summarize(meanvar=mean(var))
+3.659164e+13
+
+HFGFrame%>%
+  group_by(Date,Site)%>%
+  summarize(N1=mean(N1))%>%
+  mutate(Pre1=lag(N1,n=1),Nxt1=lead(N1,n=1))%>%
+  filter(!is.na(Nxt1),!is.na(Pre1))%>%
+  pivot_longer(N1:Nxt1)%>%
+  summarize(var=var(value))%>%
+  filter(!is.na(var))%>%
+  ungroup()%>%
+  summarize(meanvar=mean(var))
+1.65189700548e+1
+
+# library(nlme)
+# interaction.plot (HFGFrame$Date, factor(HFGFrame$Site), HFGFrame$N1, lty=c(1:3),lwd=2,ylab="mean of Y", xlab="time", trace.label="Treatment")
+# nestinginfo <- groupedData(N1 ~ Site | `Filter replicates`, data= HFGFrame)
 ```
