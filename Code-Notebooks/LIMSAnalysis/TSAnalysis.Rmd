@@ -80,13 +80,9 @@ ccfvalues = ccf(log(N1TSVec),log(N2TSVec),type = c("correlation"))
 
 
 ```{r}
-# N1TSVec
-# N2TSVec
-# PMMoVTSVec
-# BCoVTSVec
-# CasesTSVec
-# TestsTSVec
-# Per_posTSVec
+
+plot(Per_posTSVec)
+plot(N1TSVec)
 
 
 ccfvalues = ccf(Per_posTSVec,N1TSVec,type = c("correlation"))
@@ -96,14 +92,12 @@ lag2.plot(Per_posTSVec,N1TSVec, 20)
 alldata=ts.intersect(Per_posTSVec,N1TSVec,N1A=stats::lag(N1TSVec,6),N1B=stats::lag(N1TSVec,13), N1C=stats::lag(N1TSVec,15), N1D=stats::lag(N1TSVec,1))
 
 
-tryit = lm(Per_posTSVec~N1A+N1B+N1C, data = alldata)
+tryit1 = lm(Per_posTSVec~N1A+N1B+N1C, data = alldata)
 
-summary(tryit)
+summary(tryit1)
 
-acf2(residuals(tryit))
+acf2(residuals(tryit1))
 
-plot(Per_posTSVec)
-plot(N1TSVec)
 
 ```
 
@@ -119,18 +113,44 @@ lag2.plot(Per_posTSVec,N1TSVecDif, 20)
 alldata=ts.intersect(Per_posTSVec,N1TSVecDif,N1A=stats::lag(N1TSVecDif,5),N1B=stats::lag(N1TSVecDif,6), N1C=stats::lag(N1TSVecDif,14), N1D=stats::lag(N1TSVecDif,15))
 
 
-tryit = lm(Per_posTSVec~N1A+N1B+N1C+N1D, data = alldata)
+tryit2 = lm(Per_posTSVec~N1A+N1B+N1C+N1D, data = alldata)
 
-summary(tryit)
+summary(tryit2)
 
-acf2(residuals(tryit))
+acf2(residuals(tryit2))
 ```
+
 
 ```{r}
 Per_posTSVecDif=Per_posTSVec-stats::lag(Per_posTSVec,1)
 
 plot(Per_posTSVecDif)
   
+ccfvalues = ccf(Per_posTSVecDif,N1TSVec,type = c("correlation"))
+
+lag2.plot(Per_posTSVecDif,N1TSVecDif, 20)
+
+alldata=ts.intersect(Per_posTSVecDif,
+                     N1TSVecDif,
+                     N1A=stats::lag(N1TSVecDif,5),
+                     N1B=stats::lag(N1TSVecDif,6), 
+                     N1C=stats::lag(N1TSVecDif,7), 
+                     N1D=stats::lag(N1TSVecDif,8),
+                     N1E=stats::lag(N1TSVecDif,13),
+                     N1F=stats::lag(N1TSVecDif,14),
+                     N1G=stats::lag(N1TSVecDif,15),
+                     N1H=stats::lag(N1TSVecDif,16))
+
+
+tryit3 = lm(Per_posTSVecDif~N1C+N1D+N1G+N1H, data = alldata)
+
+summary(tryit3)
+
+acf2(residuals(tryit3))
+```
+
+```{r}
+
 ccfvalues = ccf(Per_posTSVecDif,N1TSVecDif,type = c("correlation"))
 
 lag2.plot(Per_posTSVecDif,N1TSVecDif, 20)
@@ -147,11 +167,11 @@ alldata=ts.intersect(Per_posTSVecDif,
                      N1H=stats::lag(N1TSVecDif,16))
 
 
-tryit = lm(Per_posTSVecDif~N1A+N1B+N1C+N1D+N1E+N1F+N1G+N1H, data = alldata)
+tryit4 = lm(Per_posTSVecDif~N1A+N1B+N1C+N1D+N1E+N1F+N1G+N1H, data = alldata)
 
-summary(tryit)
+summary(tryit4)
 
-acf2(residuals(tryit))
+acf2(residuals(tryit4))
 ```
 
 ```{r}
