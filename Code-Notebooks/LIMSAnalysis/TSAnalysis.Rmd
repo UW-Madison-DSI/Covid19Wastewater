@@ -31,14 +31,11 @@ grangertest(A$N1,B$Cases)
 
 
 
-
-
 library(lmtest)
 library(astsa)
 LIMSMadDF=LIMSFullDF%>%
   filter(Site=="Madison")
 grangertest(formula=log(N1)~log(N2),data=LIMSMadDF)
-
 
 MadCasedat=LatCaseDF%>%
   filter(Site=="Madison")%>%
@@ -81,6 +78,8 @@ ccfvalues = ccf(log(N1TSVec),log(N2TSVec),type = c("correlation"))
 
 ```{r}
 
+
+
 plot(Per_posTSVec)
 plot(N1TSVec)
 
@@ -99,6 +98,19 @@ summary(tryit1)
 acf2(residuals(tryit1))
 
 
+#waiting on updated hfd to do rigorous variance analysis
+#
+#weekly fluctuations
+#AR PACF version of CCF
+#unweekend the effect
+#weekend effect means
+#Model weekend effect on individual data then subtract it
+#ccf of data with presmoothings
+#Retry on smoothed data
+
+#PACF account for changing mean
+#Pre
+#dif()
 ```
 
 ```{r}
@@ -118,6 +130,32 @@ tryit2 = lm(Per_posTSVec~N1A+N1B+N1C+N1D, data = alldata)
 summary(tryit2)
 
 acf2(residuals(tryit2))
+#outliers might cause correlation spikiness
+
+#7 day bins
+#7 day rolling average
+#regression prediction
+#some way to remove day of week effect
+
+
+#N1 ccf with step function 7 days
+#ccf with weekly effect
+#seasonality
+#season vs spiking
+#desecrate seasonality?
+#More research
+
+#need to do more then first step
+#show clear day of week effect
+#Start simple-find best simple model-no normalizing-find issue, try to fix it-read or find hack, should give similar answers
+#ccf between cases and %Pos
+#looking for something to grab-place to grow from
+#don't waste time on dead ends
+#Madison -> everywhere
+
+
+#7days
+#weekend effect
 ```
 
 
