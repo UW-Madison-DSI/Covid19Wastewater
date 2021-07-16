@@ -5,8 +5,9 @@ HFGCaseFN <- "../../../UntrackedData/HighFreq_CaseData_2021-05-07.csv"
 LatMMSDFN  <-  "../../CaseData/results/2021-06-24/MMSD_Cases.csv"
 LatSpringCaseFN <- "../../../UntrackedData/SpringSemester_CasesByDorm.tsv"
 LatFallCaseFN <- "../../../UntrackedData/FallSemester_CasesByDorm.tsv"
-LIMSFN <- "../../../UntrackedData/WATERMICRO_WW_COVID-2021-06-07 19 05.xlsx"
-
+LIMSFN <- "../../../UntrackedData/WATERMICRO_WW_COVID-2021-06-30 17 40.xlsx"
+LIMSFN2 <- "../../../UntrackedData/WATERMICRO_WW_COVID-2021-06-07 19 05.xlsx"
+#WATERMICRO_WW_COVID-2021-06-30 17 40
 LatCaseDF <- CovidDataPARSER(LatSpringCaseFN,LatFallCaseFN,LatMMSDFN)%>%
   filter(!is.na(Site))%>%
   select(Date,Site,Cases,Tests,Per_pos)
@@ -52,7 +53,7 @@ LIMSFullDF <- read_excel(LIMSFN,
   mutate(Date=as.Date(Date),N1=as.numeric(N1),N2=as.numeric(N2),Pop=as.numeric(Pop),
          N1Error=as.numeric(N1Error),N2Error=as.numeric(N2Error),PMMoV=as.numeric(PMMoV),
          BCoV=as.numeric(BCoV),FlowRate=as.numeric(FlowRate))%>%
-  select(Date,Site, BCoV, N1,N1Error,N2, N2Error,PMMoV,Pop,FlowRate)%>%
+  #select(Date,Site, BCoV, N1,N1Error,N2, N2Error,PMMoV,Pop,FlowRate)%>%
   mutate(Site=ifelse(Site=="Madison Metro","Madison",Site),
          Site=ifelse(Site=="Covid Sewage UW DORM","UW-LakeShore",Site),
          Site=ifelse(Site=="Covid Sewage UW Sell","UW-Sellery",Site),

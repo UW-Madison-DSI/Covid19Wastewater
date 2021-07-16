@@ -20,15 +20,16 @@ source("../../Scripts/HelperFunctions.R")
 
 
 source("../../Scripts/WasteShiny/PrepData.R", local = TRUE)
-A=LIMSFullDF%>%
+A<-LIMSFullDF%>%
   filter(Site=="Madison")
-B=LatCaseDF%>%
+B<-LatCaseDF%>%
   filter(Site=="Madison")
 grangertest(A$N1,B$Cases)
 #looking for analysis and a number of relationship rigorously with TS
 #Get some measure of how good the relationship
 #auto.arima()
 
+#three diffrent date options
 ```
 
 ```{r weekend effect proof}
@@ -38,15 +39,15 @@ WeekdayDF <- LIMSFullDF%>%
 WeekdayDF$weekday <- factor(WeekdayDF$weekday,
                         levels= c("Monday", "Tuesday", "Wednesday", "Thursday","Friday","Saturday","Sunday"))
 
-# WeekdayDF%>%
-#   group_by(weekday)%>%
-#   summarize(N1M=mean(N1),N1weekvar=var(N1),N1ErrorM=mean(N1Error),N1Errorweekvar=var(N1Error))
-#t.test(filter(WeekdayDF,weekday=="Monday")$N1,filter(WeekdayDF,weekday=="Thursday")$N1)
+WeekdayDF%>%
+  group_by(weekday)%>%
+  summarize(N1M=mean(N1),n())
+# t.test(filter(WeekdayDF,weekday=="Tuesday")$N1,filter(WeekdayDF,weekday=="Saturday")$N1)
 
 summary(aov(N1~weekday+Site,data=WeekdayDF))
 #24/34/45/47/67
 
-WeekdaySmoothedDF <- RollAvg(LIMSFullDF,var=c("N1","N2","PMMoV"))%>%
+WeekdaySmoothedDF <- RollAvg(LIMSFullDF,var=c("N1","N1Error","PMMoV"))%>%
   mutate(weekday=weekdays(Date))%>%
   filter(N1>0,N1Error>0)
 
@@ -54,31 +55,33 @@ WeekdaySmoothedDF$weekday <- factor(WeekdaySmoothedDF$weekday,
                         levels= c("Monday", "Tuesday", "Wednesday", "Thursday","Friday","Saturday","Sunday"))
 
 summary(aov(N1~weekday+Site,data=WeekdaySmoothedDF))
+
+
 ```
 
 ```{r smoothed analyis}
-WeekdayDF <- LatCaseDF%>%
+WeekdayCaseDF <- LatCaseDF%>%
   mutate(weekday=weekdays(Date))%>%
   filter(Cases>0,Per_pos>0)
 WeekdayDF$weekday <- factor(WeekdayDF$weekday,
                         levels= c("Monday", "Tuesday", "Wednesday", "Thursday","Friday","Saturday","Sunday"))
 
-# WeekdayDF%>%
-#   group_by(weekday)%>%
-#   summarize(CasesM=mean(Cases),Per_posM=mean(Per_pos))
+WeekdayCaseDF%>%
+  group_by(weekday)%>%
+  summarize(CasesM=mean(Cases),Per_posM=mean(Per_pos),n())
 #t.test(filter(WeekdayDF,weekday=="Monday")$N1,filter(WeekdayDF,weekday=="Thursday")$N1)
 
-summary(aov(Per_pos~weekday+Site,data=WeekdayDF))
+summary(aov(Per_pos~weekday+Site,data=WeekdayCaseDF))
 #24/34/45/47/67
 
-WeekdaySmoothedDF <- RollPerPos(LatCaseDF,"Cases","Tests",Facet="Site")%>%
+WeekdaySmoothedCaseDF <- RollPerPos(LatCaseDF,"Cases","Tests",Facet="Site")%>%
   mutate(weekday=weekdays(Date))%>%
   filter(Cases>0,Per_pos>0)
 
-WeekdaySmoothedDF$weekday <- factor(WeekdaySmoothedDF$weekday,
+WeekdaySmoothedCaseDF$weekday <- factor(WeekdaySmoothedCaseDF$weekday,
                         levels= c("Monday", "Tuesday", "Wednesday", "Thursday","Friday","Saturday","Sunday"))
 
-summary(aov(Per_pos~weekday+Site,data=WeekdaySmoothedDF))
+summary(aov(Per_pos~weekday+Site,data=WeekdaySmoothedCaseDF))
 
 ```
 
@@ -91,11 +94,11 @@ library(astsa)
 #   filter(Site=="Madison")
 # grangertest(formula=log(N1)~log(N2),data=LIMSMadDF)
 
-MadCasedat=RollPerPos(LatCaseDF,"Cases","Tests",Facet="Site")%>%
+MadCasedat<-RollPerPos(LatCaseDF,"Cases","Tests",Facet="Site")%>%
   filter(Site=="Madison")%>%
   filter(Cases>0,Tests>0,Per_pos>0)
 
-MadLIMsdata=RollAvg(LIMSFullDF,var=c("N1","N2","PMMoV"))%>%
+MadLIMsdata<-RollAvg(LIMSFullDF,var=c("N1","N2","PMMoV"))%>%
   filter(Site=="Madison")%>%
   select(Date,N1,N2,PMMoV,BCoV)%>%
   filter(N1>0,N2>0,PMMoV>0,BCoV>0)#%>%
@@ -103,16 +106,16 @@ MadLIMsdata=RollAvg(LIMSFullDF,var=c("N1","N2","PMMoV"))%>%
   #filter(!is.na(N1))
 
 
-TSMadLIMS=ts(MadLIMsdata)
-N1TSVec=TSMadLIMS[,2]
-N2TSVec=TSMadLIMS[,3]
-PMMoVTSVec=TSMadLIMS[,4]
-BCoVTSVec=TSMadLIMS[,5]
+TSMadLIMS <- ts(MadLIMsdata)
+N1TSVec <- TSMadLIMS[,2]
+N2TSVec <- TSMadLIMS[,3]
+PMMoVTSVec <- TSMadLIMS[,4]
+BCoVTSVec <- TSMadLIMS[,5]
 
-TSMadCase=ts(MadCasedat)
-CasesTSVec=TSMadCase[,3]
-TestsTSVec=TSMadCase[,4]
-Per_posTSVec=TSMadCase[,5]
+TSMadCase <- ts(MadCasedat)
+CasesTSVec <- TSMadCase[,3]
+TestsTSVec <- TSMadCase[,4]
+Per_posTSVec <- TSMadCase[,5]
 ```
 
 ```{r}
@@ -121,7 +124,7 @@ plot(Per_posTSVec)
 plot(log(N1TSVec))
 
 
-ccfvalues = ccf(Per_posTSVec,N1TSVec,type = c("correlation"))
+ccfvalues1  <-  ccf(Per_posTSVec,N1TSVec,type = c("correlation"))
 ```
 
 
@@ -131,53 +134,57 @@ plot(CasesTSVec)
 plot(log(N1TSVec))
 
 
-ccfvalues = ccf(CasesTSVec,log(N1TSVec),type = c("correlation"))
+ccfvalues2  <-  ccf(CasesTSVec,log(N1TSVec),type = c("correlation"))
+
+alldata2 <- ts.intersect(CasesTSVec,log(N1TSVec),N1A=stats::lag(log(N1TSVec),1),N1B=stats::lag(log(N1TSVec),-12), N1C <- stats::lag(log(N1TSVec),-11), N1D=stats::lag(log(N1TSVec),-10))
+
+
+tryit2  <- lm(CasesTSVec~N1A+N1D, data = alldata)
+
+summary(tryit2)
+
+acf2(residuals(tryit2))
 ```
 
-```{r}
-plot(CasesTSVec)
-plot(log(N1TSVec))
 
-
-ccfvalues = ccf(CasesTSVec,log(N1TSVec),type = c("correlation"))
-```
 
 ```{r}
-SellCasedat=RollPerPos(LatCaseDF,"Cases","Tests",Facet="Site")%>%
+SellCasedat <- RollPerPos(LatCaseDF,"Cases","Tests",Facet="Site")%>%
   filter(Site=="UW-Sellery")%>%
   filter(Cases>0,Tests>0,Per_pos>0)
 
-SellLIMsdata=RollAvg(LIMSFullDF,var=c("N1","N2","PMMoV"))%>%
+SellLIMsdata <- RollAvg(LIMSFullDF,var=c("N1","N2","PMMoV"))%>%
   filter(Site=="UW-Sellery")%>%
   select(Date,N1,N2,PMMoV,BCoV)%>%
   filter(N1>0,N2>0,PMMoV>0,BCoV>0)#%>%
 
 
-TSSellLIMS=ts(SellLIMsdata)
-N1TSVec=TSSellLIMS[,2]
-PMMoVTSVec=TSSellLIMS[,4]
-BCoVTSVec=TSSellLIMS[,5]
+TSSellLIMS2 <- ts(SellLIMsdata)
+N1TSVec2 <- TSSellLIMS[,2]
+PMMoVTSVec2 <- TSSellLIMS[,4]
+BCoVTSVec2 <- TSSellLIMS[,5]
 
-TSSellCase=ts(SellCasedat)
-CasesTSVec=TSSellCase[,3]
-Per_posTSVec=TSSellCase[,5]
+TSSellCase2 <- ts(SellCasedat)
+CasesTSVec2 <- TSSellCase[,3]
+Per_posTSVec2 <- TSSellCase[,5]
 
-plot(Per_posTSVec)
-plot(log(N1TSVec))
+plot(Per_posTSVec2)
+plot(log(N1TSVec2))
 
-ccfvalues = ccf(Per_posTSVec,N1TSVec,type = c("correlation"))
+ccfvalues3  <-  ccf(Per_posTSVec2,log(N1TSVec2),type = c("correlation"))
 
 
 #lag2.plot(Per_posTSVec,N1TSVec, 5)
 
-alldata=ts.intersect(Per_posTSVec,N1TSVec,N1A=stats::lag(N1TSVec,-4),N1B=stats::lag(N1TSVec,-12), N1C=stats::lag(N1TSVec,-11), N1D=stats::lag(N1TSVec,-10))
+alldata3 <- ts.intersect(Per_posTSVec2,N1TSVec2,N1A=stats::lag(N1TSVec2,-4),N1B=stats::lag(N1TSVec2,-12), N1C <- stats::lag(N1TSVec2,-11), N1D=stats::lag(N1TSVec2,-10))
 
 
-tryit1 = lm(Per_posTSVec~N1A+N1B, data = alldata)
+tryit3  <-  lm(Per_posTSVec2~N1B, data = alldata)
 
-summary(tryit1)
+summary(tryit3)
 
-acf2(residuals(tryit1))
+acf2(residuals(tryit3))
+
 ```
 
 
@@ -191,15 +198,15 @@ acf2(residuals(tryit1))
 
 
 ```{r}
-SimpleMerge=inner_join(MadLIMsdata,MadCasedat,by=c("Date"))
+SimpleMerge<-inner_join(MadLIMsdata,MadCasedat,by=c("Date"))
 SimpleMerge%>%
   ggplot()+
     geom_point(aes(x=Cases,y=N1/PMMoV))+
   scale_y_log10()+
   scale_x_log10()
-SimpLM=lm(Cases~log(N1),data=SimpleMerge)
+SimpLM<-lm(Cases~log(N1),data=SimpleMerge)
 summary(SimpLM)
-SimpleMerge$Resid=residuals(SimpLM)
+SimpleMerge$Resid<-residuals(SimpLM)
 
 
 acf2(ts(residuals(SimpLM)))
@@ -214,7 +221,7 @@ summary(sarima (residuals(SimpLM), 1,0,0, no.constant=F))
 acf(log(MadLIMsdata$N1))
 pacf(log(MadLIMsdata$N1))
 cor(log(MadLIMsdata$N1),log(MadLIMsdata$N2))
-ccfvalues = ccf(log(N1TSVec),log(N2TSVec),type = c("correlation"))
+ccfvalues <- ccf(log(N1TSVec),log(N2TSVec),type = c("correlation"))
 #covariance
 #correlation
 
