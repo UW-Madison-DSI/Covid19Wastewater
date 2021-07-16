@@ -127,8 +127,8 @@ HFGInfo = function(data){
            AVG = tmpfn(N1GC, N2GC))
   
   #hack fixing inconstancy
-  HFGInfo = HFGInfo.PreHack%>%
-    mutate(Date=if_else(repName=="Platteville (T) rep 3"&Date==as.Date("2021-02-03"),as.Date("2021-02-02"),Date))%>%
-    mutate(Date=if_else(repName=="Hudson (T) rep 1"&Date==as.Date("2021-02-01"),as.Date("2021-02-02"),Date))
+  HFGInfo = HFGInfo.PreHack#%>%
+  #  mutate(Date=if_else(repName=="Platteville (T) rep 3"&Date==as.Date("2021-02-03"),as.Date("2021-02-02"),Date))%>%
+  #  mutate(Date=if_else(repName=="Hudson (T) rep 1"&Date==as.Date("2021-02-01"),as.Date("2021-02-02"),Date))
   return(HFGInfo)
 }

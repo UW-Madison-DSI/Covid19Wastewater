@@ -121,10 +121,25 @@ Per_posTSVec <- TSMadCase[,5]
 ```{r}
 
 plot(Per_posTSVec)
-plot(log(N1TSVec))
+plot(CasesTSVec)
+plot(N1TSVec)
 
 
 ccfvalues1  <-  ccf(Per_posTSVec,N1TSVec,type = c("correlation"))
+
+# alldata1 <- ts.intersect(CasesTSVec,log(N1TSVec),
+#                          N1A=stats::lag(log(N1TSVec),1),
+#                          N1B=stats::lag(log(N1TSVec),-8),
+#                          N1C=stats::lag(log(N1TSVec),-10),
+#                          N1D=stats::lag(log(N1TSVec),-20))
+# 
+# 
+# tryit1  <- lm(CasesTSVec~N1D, data = alldata2)
+# 
+# summary(tryit1)
+# 
+# acf2(residuals(tryit1))
+R2=0.01555
 ```
 
 
@@ -136,19 +151,30 @@ plot(log(N1TSVec))
 
 ccfvalues2  <-  ccf(CasesTSVec,log(N1TSVec),type = c("correlation"))
 
-alldata2 <- ts.intersect(CasesTSVec,log(N1TSVec),N1A=stats::lag(log(N1TSVec),1),N1B=stats::lag(log(N1TSVec),-12), N1C <- stats::lag(log(N1TSVec),-11), N1D=stats::lag(log(N1TSVec),-10))
+# alldata2 <- ts.intersect(CasesTSVec,log(N1TSVec),
+#                          N1A=stats::lag(log(N1TSVec),1),
+#                          N1B=stats::lag(log(N1TSVec),-8),
+#                          N1C=stats::lag(log(N1TSVec),-10),
+#                          N1D=stats::lag(log(N1TSVec),-9))
+# 
+# 
+# tryit2  <- lm(CasesTSVec~N1D, data = alldata2)
+# 
+# summary(tryit2)
+# 
+# acf2(residuals(tryit2))
 
-
-tryit2  <- lm(CasesTSVec~N1A+N1D, data = alldata)
-
-summary(tryit2)
-
-acf2(residuals(tryit2))
+R2= 0.01555
 ```
 
 
 
 ```{r}
+#CasesTSVec2 <- TSSellCase[,3]
+#PMMoVTSVec2 <- TSSellLIMS[,4]
+#BCoVTSVec2 <- TSSellLIMS[,5]
+
+
 SellCasedat <- RollPerPos(LatCaseDF,"Cases","Tests",Facet="Site")%>%
   filter(Site=="UW-Sellery")%>%
   filter(Cases>0,Tests>0,Per_pos>0)
@@ -156,35 +182,116 @@ SellCasedat <- RollPerPos(LatCaseDF,"Cases","Tests",Facet="Site")%>%
 SellLIMsdata <- RollAvg(LIMSFullDF,var=c("N1","N2","PMMoV"))%>%
   filter(Site=="UW-Sellery")%>%
   select(Date,N1,N2,PMMoV,BCoV)%>%
-  filter(N1>0,N2>0,PMMoV>0,BCoV>0)#%>%
+  filter(N1>0)#%>%
+
+TSSellLIMS <- ts(SellLIMsdata)
+N1TSVecSell <- TSSellLIMS[,2]
 
 
-TSSellLIMS2 <- ts(SellLIMsdata)
-N1TSVec2 <- TSSellLIMS[,2]
-PMMoVTSVec2 <- TSSellLIMS[,4]
-BCoVTSVec2 <- TSSellLIMS[,5]
+TSSellCase <- ts(SellCasedat)
+Per_posTSVecSell <- TSSellCase[,5]
 
-TSSellCase2 <- ts(SellCasedat)
-CasesTSVec2 <- TSSellCase[,3]
-Per_posTSVec2 <- TSSellCase[,5]
+plot(Per_posTSVecSell)
+plot(log(N1TSVecSell))
 
-plot(Per_posTSVec2)
-plot(log(N1TSVec2))
-
-ccfvalues3  <-  ccf(Per_posTSVec2,log(N1TSVec2),type = c("correlation"))
+ccfvaluesSell  <-  ccf(Per_posTSVecSell,log(N1TSVecSell),type = c("correlation"))
 
 
 #lag2.plot(Per_posTSVec,N1TSVec, 5)
 
-alldata3 <- ts.intersect(Per_posTSVec2,N1TSVec2,N1A=stats::lag(N1TSVec2,-4),N1B=stats::lag(N1TSVec2,-12), N1C <- stats::lag(N1TSVec2,-11), N1D=stats::lag(N1TSVec2,-10))
+alldataSell <- ts.intersect(Per_posTSVecSell,N1TSVecSell,
+                         N1A=stats::lag(N1TSVecSell,-4),
+                         N1B=stats::lag(N1TSVecSell,-12),
+                         N1C=stats::lag(N1TSVecSell,18),
+                         N1D=stats::lag(N1TSVecSell,-8))
 
 
-tryit3  <-  lm(Per_posTSVec2~N1B, data = alldata)
+tryitSell  <-  lm(Per_posTSVecSell~N1D+N1C, data = alldataSell)
 
-summary(tryit3)
+summary(tryitSell)
 
-acf2(residuals(tryit3))
+acf2(residuals(tryitSell))
+R2=0.7616
+```
 
+
+```{r by season}
+MinConc=min(LIMSFullDF$Date)
+MaxConc=max(LIMSFullDF$Date)
+  
+FallRange=c(MinConc,mdy("12/11/2020"))
+SpringRange=c(mdy("1/25/2021"),MaxConc)
+
+SellLIMsdataSpring <- SellLIMsdata%>%
+    filter(Date >= SpringRange[1] & Date <= SpringRange[2])
+SellCasedatSpring <- SellCasedat%>%
+    filter(Date >= SpringRange[1] & Date <= SpringRange[2])
+
+
+TSSellLIMS <- ts(SellLIMsdataSpring)
+N1TSVecSellSpring <- TSSellLIMS[,2]
+
+
+TSSellCase <- ts(SellCasedatSpring)
+
+Per_posTSVecSellSpring <- TSSellCase[,5]
+
+plot(Per_posTSVecSellSpring)
+plot(log(N1TSVecSellSpring))
+
+ccfvaluesSellSpring  <-  ccf(Per_posTSVecSellSpring,log(N1TSVecSellSpring),type = c("correlation"))
+
+alldataSellSpring <- ts.intersect(Per_posTSVecSellSpring,N1TSVecSellSpring,
+                         N1A=stats::lag(N1TSVecSellSpring,-13),
+                         N1B=stats::lag(N1TSVecSellSpring,6),
+                         N1C <- stats::lag(N1TSVecSellSpring,-11),
+                         N1D=stats::lag(N1TSVecSellSpring,-8))
+
+
+tryitSellSpring  <-  lm(Per_posTSVecSellSpring~N1A+N1B, data = alldataSellSpring)
+
+summary(tryitSellSpring)
+
+acf2(residuals(tryitSellSpring))
+
+
+R2=0.5051
+```
+
+```{r by season Fall}
+SellLIMsdataFall <- SellLIMsdata%>%
+    filter(Date >= FallRange[1] & Date <= FallRange[2])
+SellCasedatFall <- SellCasedat%>%
+    filter(Date >= FallRange[1] & Date <= FallRange[2])
+
+
+TSSellLIMS <- ts(SellLIMsdataFall)
+N1TSVecSellFall <- TSSellLIMS[,2]
+
+
+TSSellCase <- ts(SellCasedatFall)
+
+Per_posTSVecSellFall <- TSSellCase[,5]
+
+plot(Per_posTSVecSellFall)
+plot(log(N1TSVecSellFall))
+
+ccfvaluesSellFall  <-  ccf(Per_posTSVecSellFall,log(N1TSVecSellFall),type = c("correlation"))
+
+alldataSellFall <- ts.intersect(Per_posTSVecSellFall,N1TSVecSellFall,
+                         N1A=stats::lag(N1TSVecSellFall,-8),
+                         N1B=stats::lag(N1TSVecSellFall,-6),
+                         N1C <- stats::lag(N1TSVecSellFall,-11),
+                         N1D=stats::lag(N1TSVecSellFall,-8))
+
+
+tryitSellFall  <-  lm(Per_posTSVecSellFall~N1A, data = alldataSellFall)
+
+summary(tryitSellFall)
+
+acf2(residuals(tryitSellFall))
+
+R2=0.227
 ```
 
 
@@ -198,19 +305,19 @@ acf2(residuals(tryit3))
 
 
 ```{r}
-SimpleMerge<-inner_join(MadLIMsdata,MadCasedat,by=c("Date"))
-SimpleMerge%>%
-  ggplot()+
-    geom_point(aes(x=Cases,y=N1/PMMoV))+
-  scale_y_log10()+
-  scale_x_log10()
-SimpLM<-lm(Cases~log(N1),data=SimpleMerge)
-summary(SimpLM)
-SimpleMerge$Resid<-residuals(SimpLM)
-
-
-acf2(ts(residuals(SimpLM)))
-summary(sarima (residuals(SimpLM), 1,0,0, no.constant=F))
+# SimpleMerge<-inner_join(MadLIMsdata,MadCasedat,by=c("Date"))
+# SimpleMerge%>%
+#   ggplot()+
+#     geom_point(aes(x=Cases,y=N1/PMMoV))+
+#   scale_y_log10()+
+#   scale_x_log10()
+# SimpLM<-lm(Cases~log(N1),data=SimpleMerge)
+# summary(SimpLM)
+# SimpleMerge$Resid<-residuals(SimpLM)
+# 
+# 
+# acf2(ts(residuals(SimpLM)))
+# summary(sarima (residuals(SimpLM), 1,0,0, no.constant=F))
 ```
 
 
@@ -218,10 +325,10 @@ summary(sarima (residuals(SimpLM), 1,0,0, no.constant=F))
 
 
 ```{r}
-acf(log(MadLIMsdata$N1))
-pacf(log(MadLIMsdata$N1))
-cor(log(MadLIMsdata$N1),log(MadLIMsdata$N2))
-ccfvalues <- ccf(log(N1TSVec),log(N2TSVec),type = c("correlation"))
+# acf(log(MadLIMsdata$N1))
+# pacf(log(MadLIMsdata$N1))
+# cor(log(MadLIMsdata$N1),log(MadLIMsdata$N2))
+# ccfvalues <- ccf(log(N1TSVec),log(N2TSVec),type = c("correlation"))
 #covariance
 #correlation
 

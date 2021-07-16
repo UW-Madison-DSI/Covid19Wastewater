@@ -6,7 +6,7 @@ LatMMSDFN  <-  "../../CaseData/results/2021-06-24/MMSD_Cases.csv"
 LatSpringCaseFN <- "../../../UntrackedData/SpringSemester_CasesByDorm.tsv"
 LatFallCaseFN <- "../../../UntrackedData/FallSemester_CasesByDorm.tsv"
 LIMSFN <- "../../../UntrackedData/WATERMICRO_WW_COVID-2021-06-30 17 40.xlsx"
-LIMSFN2 <- "../../../UntrackedData/WATERMICRO_WW_COVID-2021-06-07 19 05.xlsx"
+#LIMSFN2 <- "../../../UntrackedData/WATERMICRO_WW_COVID-2021-06-07 19 05.xlsx"
 #WATERMICRO_WW_COVID-2021-06-30 17 40
 LatCaseDF <- CovidDataPARSER(LatSpringCaseFN,LatFallCaseFN,LatMMSDFN)%>%
   filter(!is.na(Site))%>%
@@ -71,12 +71,10 @@ LIMSFullDF <- read_excel(LIMSFN,
 
 
 #Reads Transformed HFG Data
-print("HFGFrame")
 HFGFrame <- HFGInfo(HFGWasteFN)%>%
   select(Date,Site=Plant,Filter,Well,N1=N1GC,N2=N2GC,PMMoV=PMMOVGC,Pct_BCoV=BCoV,AVG)%>%
   mutate(Filter=as.character(Filter),Well=as.character(Well))%>%
   rename(`Filter replicates`=Filter)
-print("HFGFrame")
 
 
 

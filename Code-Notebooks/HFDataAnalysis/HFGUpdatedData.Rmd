@@ -1,0 +1,139 @@
+---
+title: "HFGUpdatedData"
+author: "Marlin"
+date: "7/16/2021"
+output: html_document
+---
+
+```{r Start enviroment}
+library(ggpubr)
+library(dplyr)
+library(forecast)
+library(lmtest)
+library(lubridate)
+
+#Data Files and prep work
+source("../../Scripts/GenPlotMaking.R")
+source("../../Scripts/WasteWaterDataProccess.R")
+source("../../Scripts/CassesDataProccess.R")
+source("../../Scripts/HelperFunctions.R")
+source("../../Scripts/WasteShiny/PrepData.R", local = TRUE)
+
+  missing_codes <- c("","NA","0","Undetected","Not Detected",
+                     "Field Parameters to be filled in", 
+                     "Inhibited-to be re-ran", "#DIV/0!",
+                     "Undetermined", "LA")
+
+
+OldHFG <- read_excel("../../../UntrackedData/HFG data for stats preliminary 3-18-21.xlsx",
+                                                 na = missing_codes,
+                                                 col_types = c("text","text", "date", rep("numeric", 4),"text",rep("numeric", 2),"text",rep("numeric", 3)),
+                                                 sheet = 1)%>%
+    rename(repName="...2",
+           Date="Collection Date",
+           N1Ct="N1 CT",
+           N1GC="N1 GC/L",
+           N1LOD="N1 <LOD",
+           N2Ct="N2 CT",
+           N2GC="N2 GC/L",
+           N2LOD="N2 <LOD",
+           PMMOVCT="PMMOV CT",
+           PMMOVGC="PMMOV GC/L",
+           BCoV="BCoV% recovery",
+           Filter = "Filter Rep",
+           Well = "Well Rep")%>%
+    mutate(N1LOD=N1LOD=="Y",
+           N2LOD=N2LOD=="Y",
+           Date=as.Date(Date),
+           AVG = tmpfn(N1GC, N2GC))%>%
+  select(Date,Site=Plant,Filter,Well,N1=N1GC,N2=N2GC)%>%
+  mutate(Filter=as.character(Filter),Well=as.character(Well))
+
+HFGFrameUp <- HFGFrame%>%
+  select(Date,Site,Filter=`Filter replicates`,Well,N1,N2)
+```
+
+
+```{r Comp data,message=FALSE}
+
+MergedFullData <- full_join(OldHFG,HFGFrameUp,by=c("Date","Site","Filter","Well"),suffix=c(".Old",".New"))%>%
+  mutate(Diff=abs(N1.Old-N1.New))
+
+  
+  
+MergedFullData%>%
+  group_by(Date,Site)%>%
+  summarize(N1.Old=mean(log(N1.Old)),N1.New=mean(log(N1.New)))%>%
+  # ungroup()%>%
+  # filter(!is.na(N1.Old),!is.na(N1.New))%>%
+  # summarize(max(N1.Old),max(N1.New))
+  ggplot()+
+  aes(x=Date)+
+  geom_point(aes(y=N1.Old,color="old"),size=1)+
+  geom_point(aes(y=N1.New,color="new"),size=1)+
+  # aes(x=Date,color=Filter)+
+  # geom_point(aes(y=Diff))+
+  labs(y="N1",color="Data")+
+  facet_wrap(~Site)
+
+MergedFullDataTD <- MergedFullData%>%
+  pivot_longer(N1.Old:N1.New,values_to="N1")
+
+
+anovaModel <- aov(terms(N1~Site+Site:Date+Site:Date:Filter+name+Site:Date:Filter:name+Date:Site:name, keep.order = TRUE),data=MergedFullDataTD)
+
+summary(anovaModel)
+```
+
+```{r}
+DaySum <- MergedFullData%>%
+  group_by(Date,Site)%>%
+  summarize(DayMean.Old=mean(log(N1.Old)),DayVar.Old=var(log(N1.Old)),
+            DayMean.New=mean(log(N1.New)),DayVar.New=var(log(N1.New)))%>%
+  ungroup()
+FillterSum <- MergedFullData%>%
+  group_by(Date,Site,Filter)%>%
+  summarize(DayMean.Old=mean(log(N1.Old)),DayVar.Old=var(log(N1.Old)),
+            DayMean.New=mean(log(N1.New)),DayVar.New=var(log(N1.New)))%>%
+  ungroup()
+
+t.test(DaySum$DayVar.Old,DaySum$DayVar.New,paired=T)
+
+t.test(FillterSum$DayVar.Old,FillterSum$DayVar.New,paired=T)
+
+
+```
+
+```{r}
+DaySum <- HFGFrameUp%>%
+  filter(N2>0)%>%
+  group_by(Date,Site)%>%
+  summarize(DayVarN1=var(log(N1)),DayVarN2=var(log(N2)),
+            DayMeanN1=mean(log(N1)),DayMeanN2=var(log(N2)))%>%
+  ungroup()
+
+FillterSum <- HFGFrameUp%>%
+  filter(N2>0)%>%
+  group_by(Date,Site,Filter)%>%
+  summarize(DayVarN1=var(log(N1)),DayVarN2=var(log(N2)),
+            DayMeanN1=mean(log(N1)),DayMeanN2=var(log(N2)))%>%
+  ungroup()
+
+
+t.test(DaySum$DayMeanN1,DaySum$DayMeanN2,paired=T,alternative="greater")
+
+t.test(FillterSum$DayMeanN1,FillterSum$DayMeanN2,paired=T,alternative="greater")
+
+
+
+DaySumNorm <- DaySum%>%
+  mutate(DayVarN1=DayVarN1/DayMeanN1,DayVarN2=DayVarN2/DayMeanN2)
+
+FillterSumNorm <- FillterSum%>%
+  mutate(DayVarN1=DayVarN1/DayMeanN1,DayVarN2=DayVarN2/DayMeanN2)
+
+t.test(DaySum$DayVarN1,DaySum$DayVarN2,paired=T,alternative="less")
+
+t.test(FillterSum$DayVarN1,FillterSum$DayVarN2,paired=T,alternative="less")
+```
+
