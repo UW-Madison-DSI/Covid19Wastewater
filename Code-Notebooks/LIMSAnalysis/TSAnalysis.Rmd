@@ -10,7 +10,7 @@ library(ggpubr)
 library(dplyr)
 library(forecast)
 library(lmtest)
-
+library(lubridate)
 
 #Data Files and prep work
 source("../../Scripts/GenPlotMaking.R")
@@ -29,19 +29,73 @@ grangertest(A$N1,B$Cases)
 #Get some measure of how good the relationship
 #auto.arima()
 
+```
+
+```{r weekend effect proof}
+WeekdayDF <- LIMSFullDF%>%
+  mutate(weekday=weekdays(Date))%>%
+  filter(N1>0,N1Error>0)
+WeekdayDF$weekday <- factor(WeekdayDF$weekday,
+                        levels= c("Monday", "Tuesday", "Wednesday", "Thursday","Friday","Saturday","Sunday"))
+
+# WeekdayDF%>%
+#   group_by(weekday)%>%
+#   summarize(N1M=mean(N1),N1weekvar=var(N1),N1ErrorM=mean(N1Error),N1Errorweekvar=var(N1Error))
+#t.test(filter(WeekdayDF,weekday=="Monday")$N1,filter(WeekdayDF,weekday=="Thursday")$N1)
+
+summary(aov(N1~weekday+Site,data=WeekdayDF))
+#24/34/45/47/67
+
+WeekdaySmoothedDF <- RollAvg(LIMSFullDF,var=c("N1","N2","PMMoV"))%>%
+  mutate(weekday=weekdays(Date))%>%
+  filter(N1>0,N1Error>0)
+
+WeekdaySmoothedDF$weekday <- factor(WeekdaySmoothedDF$weekday,
+                        levels= c("Monday", "Tuesday", "Wednesday", "Thursday","Friday","Saturday","Sunday"))
+
+summary(aov(N1~weekday+Site,data=WeekdaySmoothedDF))
+```
+
+```{r smoothed analyis}
+WeekdayDF <- LatCaseDF%>%
+  mutate(weekday=weekdays(Date))%>%
+  filter(Cases>0,Per_pos>0)
+WeekdayDF$weekday <- factor(WeekdayDF$weekday,
+                        levels= c("Monday", "Tuesday", "Wednesday", "Thursday","Friday","Saturday","Sunday"))
+
+# WeekdayDF%>%
+#   group_by(weekday)%>%
+#   summarize(CasesM=mean(Cases),Per_posM=mean(Per_pos))
+#t.test(filter(WeekdayDF,weekday=="Monday")$N1,filter(WeekdayDF,weekday=="Thursday")$N1)
+
+summary(aov(Per_pos~weekday+Site,data=WeekdayDF))
+#24/34/45/47/67
+
+WeekdaySmoothedDF <- RollPerPos(LatCaseDF,"Cases","Tests",Facet="Site")%>%
+  mutate(weekday=weekdays(Date))%>%
+  filter(Cases>0,Per_pos>0)
+
+WeekdaySmoothedDF$weekday <- factor(WeekdaySmoothedDF$weekday,
+                        levels= c("Monday", "Tuesday", "Wednesday", "Thursday","Friday","Saturday","Sunday"))
+
+summary(aov(Per_pos~weekday+Site,data=WeekdaySmoothedDF))
+
+```
 
 
+
+```{r Start}
 library(lmtest)
 library(astsa)
-LIMSMadDF=LIMSFullDF%>%
-  filter(Site=="Madison")
-grangertest(formula=log(N1)~log(N2),data=LIMSMadDF)
+# LIMSMadDF=LIMSFullDF%>%
+#   filter(Site=="Madison")
+# grangertest(formula=log(N1)~log(N2),data=LIMSMadDF)
 
-MadCasedat=LatCaseDF%>%
+MadCasedat=RollPerPos(LatCaseDF,"Cases","Tests",Facet="Site")%>%
   filter(Site=="Madison")%>%
   filter(Cases>0,Tests>0,Per_pos>0)
 
-MadLIMsdata=LIMSFullDF%>%
+MadLIMsdata=RollAvg(LIMSFullDF,var=c("N1","N2","PMMoV"))%>%
   filter(Site=="Madison")%>%
   select(Date,N1,N2,PMMoV,BCoV)%>%
   filter(N1>0,N2>0,PMMoV>0,BCoV>0)#%>%
@@ -62,177 +116,85 @@ Per_posTSVec=TSMadCase[,5]
 ```
 
 ```{r}
-acf(log(MadLIMsdata$N1))
-pacf(log(MadLIMsdata$N1))
-cor(log(MadLIMsdata$N1),log(MadLIMsdata$N2))
-ccfvalues = ccf(log(N1TSVec),log(N2TSVec),type = c("correlation"))
-#covariance
-#correlation
 
-# MadLIMsdata%>%
-#   ggplot()+
-#   geom_point(aes(x=Date,y=N1-lag(N1)))
+plot(Per_posTSVec)
+plot(log(N1TSVec))
+
+
+ccfvalues = ccf(Per_posTSVec,N1TSVec,type = c("correlation"))
 ```
 
 
 
 ```{r}
+plot(CasesTSVec)
+plot(log(N1TSVec))
 
 
+ccfvalues = ccf(CasesTSVec,log(N1TSVec),type = c("correlation"))
+```
+
+```{r}
+plot(CasesTSVec)
+plot(log(N1TSVec))
+
+
+ccfvalues = ccf(CasesTSVec,log(N1TSVec),type = c("correlation"))
+```
+
+```{r}
+SellCasedat=RollPerPos(LatCaseDF,"Cases","Tests",Facet="Site")%>%
+  filter(Site=="UW-Sellery")%>%
+  filter(Cases>0,Tests>0,Per_pos>0)
+
+SellLIMsdata=RollAvg(LIMSFullDF,var=c("N1","N2","PMMoV"))%>%
+  filter(Site=="UW-Sellery")%>%
+  select(Date,N1,N2,PMMoV,BCoV)%>%
+  filter(N1>0,N2>0,PMMoV>0,BCoV>0)#%>%
+
+
+TSSellLIMS=ts(SellLIMsdata)
+N1TSVec=TSSellLIMS[,2]
+PMMoVTSVec=TSSellLIMS[,4]
+BCoVTSVec=TSSellLIMS[,5]
+
+TSSellCase=ts(SellCasedat)
+CasesTSVec=TSSellCase[,3]
+Per_posTSVec=TSSellCase[,5]
 
 plot(Per_posTSVec)
-plot(N1TSVec)
-
+plot(log(N1TSVec))
 
 ccfvalues = ccf(Per_posTSVec,N1TSVec,type = c("correlation"))
 
-lag2.plot(Per_posTSVec,N1TSVec, 20)
 
-alldata=ts.intersect(Per_posTSVec,N1TSVec,N1A=stats::lag(N1TSVec,6),N1B=stats::lag(N1TSVec,13), N1C=stats::lag(N1TSVec,15), N1D=stats::lag(N1TSVec,1))
+#lag2.plot(Per_posTSVec,N1TSVec, 5)
+
+alldata=ts.intersect(Per_posTSVec,N1TSVec,N1A=stats::lag(N1TSVec,-4),N1B=stats::lag(N1TSVec,-12), N1C=stats::lag(N1TSVec,-11), N1D=stats::lag(N1TSVec,-10))
 
 
-tryit1 = lm(Per_posTSVec~N1A+N1B+N1C, data = alldata)
+tryit1 = lm(Per_posTSVec~N1A+N1B, data = alldata)
 
 summary(tryit1)
 
 acf2(residuals(tryit1))
-
-
-#waiting on updated hfd to do rigorous variance analysis
-#
-#weekly fluctuations
-#AR PACF version of CCF
-#unweekend the effect
-#weekend effect means
-#Model weekend effect on individual data then subtract it
-#ccf of data with presmoothings
-#Retry on smoothed data
-
-#PACF account for changing mean
-#Pre
-#dif()
 ```
 
-```{r}
-N1TSVecDif=N1TSVec-stats::lag(N1TSVec,1)
-  
-plot(N1TSVecDif)
-
-ccfvalues = ccf(Per_posTSVec,N1TSVecDif,type = c("correlation"))
-
-lag2.plot(Per_posTSVec,N1TSVecDif, 20)
-
-alldata=ts.intersect(Per_posTSVec,N1TSVecDif,N1A=stats::lag(N1TSVecDif,5),N1B=stats::lag(N1TSVecDif,6), N1C=stats::lag(N1TSVecDif,14), N1D=stats::lag(N1TSVecDif,15))
 
 
-tryit2 = lm(Per_posTSVec~N1A+N1B+N1C+N1D, data = alldata)
-
-summary(tryit2)
-
-acf2(residuals(tryit2))
-#outliers might cause correlation spikiness
-
-#7 day bins
-#7 day rolling average
-#regression prediction
-#some way to remove day of week effect
 
 
-#N1 ccf with step function 7 days
-#ccf with weekly effect
-#seasonality
-#season vs spiking
-#desecrate seasonality?
-#More research
-
-#need to do more then first step
-#show clear day of week effect
-#Start simple-find best simple model-no normalizing-find issue, try to fix it-read or find hack, should give similar answers
-#ccf between cases and %Pos
-#looking for something to grab-place to grow from
-#don't waste time on dead ends
-#Madison -> everywhere
 
 
-#7days
-#weekend effect
-```
+
+
 
 
 ```{r}
-Per_posTSVecDif=Per_posTSVec-stats::lag(Per_posTSVec,1)
-
-plot(Per_posTSVecDif)
-  
-ccfvalues = ccf(Per_posTSVecDif,N1TSVec,type = c("correlation"))
-
-lag2.plot(Per_posTSVecDif,N1TSVecDif, 20)
-
-alldata=ts.intersect(Per_posTSVecDif,
-                     N1TSVecDif,
-                     N1A=stats::lag(N1TSVecDif,5),
-                     N1B=stats::lag(N1TSVecDif,6), 
-                     N1C=stats::lag(N1TSVecDif,7), 
-                     N1D=stats::lag(N1TSVecDif,8),
-                     N1E=stats::lag(N1TSVecDif,13),
-                     N1F=stats::lag(N1TSVecDif,14),
-                     N1G=stats::lag(N1TSVecDif,15),
-                     N1H=stats::lag(N1TSVecDif,16))
-
-
-tryit3 = lm(Per_posTSVecDif~N1C+N1D+N1G+N1H, data = alldata)
-
-summary(tryit3)
-
-acf2(residuals(tryit3))
-```
-
-```{r}
-
-ccfvalues = ccf(Per_posTSVecDif,N1TSVecDif,type = c("correlation"))
-
-lag2.plot(Per_posTSVecDif,N1TSVecDif, 20)
-
-alldata=ts.intersect(Per_posTSVecDif,
-                     N1TSVecDif,
-                     N1A=stats::lag(N1TSVecDif,5),
-                     N1B=stats::lag(N1TSVecDif,6), 
-                     N1C=stats::lag(N1TSVecDif,7), 
-                     N1D=stats::lag(N1TSVecDif,8),
-                     N1E=stats::lag(N1TSVecDif,13),
-                     N1F=stats::lag(N1TSVecDif,14),
-                     N1G=stats::lag(N1TSVecDif,15),
-                     N1H=stats::lag(N1TSVecDif,16))
-
-
-tryit4 = lm(Per_posTSVecDif~N1A+N1B+N1C+N1D+N1E+N1F+N1G+N1H, data = alldata)
-
-summary(tryit4)
-
-acf2(residuals(tryit4))
-```
-
-```{r}
-TSDF=ts.intersect(Per_posTSVec,N1TSVec)
-Per_posTSVec2=TSDF[,1]
-N1TSVec2=TSDF[,2]
-regmodel=lm(Per_posTSVec2~time(Per_posTSVec2)+N1TSVec2)
-dtx = residuals(lm(N1TSVec2~time(N1TSVec2)))
-regmodel2= lm(Per_posTSVec2~time(Per_posTSVec2)+dtx)
-summary(regmodel)
-acf2(resid(regmodel))
-
-```
-
-
-
-
-
-```
 SimpleMerge=inner_join(MadLIMsdata,MadCasedat,by=c("Date"))
 SimpleMerge%>%
   ggplot()+
-    geom_point(aes(x=Cases,y=N1/PMMoV))
+    geom_point(aes(x=Cases,y=N1/PMMoV))+
   scale_y_log10()+
   scale_x_log10()
 SimpLM=lm(Cases~log(N1),data=SimpleMerge)
@@ -249,6 +211,22 @@ summary(sarima (residuals(SimpLM), 1,0,0, no.constant=F))
 
 
 ```{r}
+acf(log(MadLIMsdata$N1))
+pacf(log(MadLIMsdata$N1))
+cor(log(MadLIMsdata$N1),log(MadLIMsdata$N2))
+ccfvalues = ccf(log(N1TSVec),log(N2TSVec),type = c("correlation"))
+#covariance
+#correlation
+
+# MadLIMsdata%>%
+#   ggplot()+
+#   geom_point(aes(x=Date,y=N1-lag(N1)))
+```
+
+
+
+
+```{r}
 HFGFrame%>%
   filter(!is.na(N1),!is.na(Date),!is.na(`Filter replicates`),!is.na(Site))%>%
   group_by(Site,Date,`Filter replicates`)%>%
@@ -256,7 +234,7 @@ HFGFrame%>%
   filter(!is.na(var))%>%
   ungroup()%>%
   summarize(meanvar=mean(var))
-2.01290406020e+11
+2.5075450674e+10
 
 
 HFGFrame%>%
@@ -266,7 +244,8 @@ HFGFrame%>%
   filter(!is.na(var))%>%
   ungroup()%>%
   summarize(meanvar=mean(var))
-3.659164e+13
+2.756624e+12				
+
 
 HFGFrame%>%
   group_by(Date,Site)%>%
@@ -278,7 +257,7 @@ HFGFrame%>%
   filter(!is.na(var))%>%
   ungroup()%>%
   summarize(meanvar=mean(var))
-1.65189700548e+1
+5.5569708129e+10
 
 # library(nlme)
 # interaction.plot (HFGFrame$Date, factor(HFGFrame$Site), HFGFrame$N1, lty=c(1:3),lwd=2,ylab="mean of Y", xlab="time", trace.label="Treatment")

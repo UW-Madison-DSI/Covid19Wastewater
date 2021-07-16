@@ -16,63 +16,18 @@ knitr::opts_chunk$set(
 
 
 ```{r Importing, include=FALSE}
-library(shiny)
 library(ggpubr)
 library(dplyr)
-library(shinydashboard)
-library(shinyjqui)
-library(shinycssloaders)
 
 #Data Files and prepwork
-source("../Scripts/GenPlotMaking.R")
-source("../Scripts/WasteWaterDataProccess.R")
-source("../Scripts/CassesDataProccess.R")
-source("../Scripts/HelperFunctions.R")
-LatWasteFN <- "../../UntrackedData/WW SARS-COV-2 Data V5.xlsx"
-LatSpringCaseFN="../../UntrackedData/SpringSemester_CasesByDorm.tsv"
-LatFallCaseFN="../../UntrackedData/FallSemester_CasesByDorm.tsv"
-HFGWasteFN = "../../UntrackedData/HFG data for stats preliminary 3-18-21.xlsx"
-HFGCaseFN="../../UntrackedData/HighFreq_CaseData_2021-05-07.csv"
-LatMMSDFN = "../../UntrackedData/MMSD_Cases.2021-05-21.csv"
-
+source("../../Scripts/GenPlotMaking.R")
+source("../../Scripts/WasteWaterDataProccess.R")
+source("../../Scripts/CassesDataProccess.R")
+source("../../Scripts/HelperFunctions.R")
+source("../../Scripts/WasteShiny/PrepData.R", local = TRUE)
+#"../../../HFG data for stats corrected 071421.xlsx"
 ```
 
-```{r start up, include=FALSE}
-# HFGFrame=HFGInfo(HFGWasteFN)%>%
-#   select(Date,Site=Plant,'Filter replicates',Well,N1=N1GC,N2=N2GC,PMMoV=PMMOVGC,Pct_BCoV=BCoV,everything())%>%
-#   mutate('Filter replicates'=as.character('Filter replicates'),Well=as.character(Well))%>%
-#   na.omit()
-# 
-# 
-# HFGCaseDF=HFGCasesPARSER(HFGCaseFN)
-# Fullday=data.frame(Date=seq.Date(min(HFGCaseDF$Date),max(HFGCaseDF$Date),1))
-# HFGCaseDF=full_join(HFGCaseDF,Fullday,by=c("Date"))
-# 
-# # HFGCaseDF2=HFGCaseDF%>%
-# #       mutate(isna=ifelse(EpisodeCases==-999,"True","false"))%>%
-# #       mutate(EpisodeCases=ifelse(EpisodeCases==-999,NA,EpisodeCases))%>%
-# #       mutate(CollectedCases=ifelse(CollectedCases==-999,NA,CollectedCases))%>%
-# #       mutate(ConfirmedCases=ifelse(ConfirmedCases==-999,NA,ConfirmedCases))
-# # 
-# # HFGCaseDFroll2=HFGCaseDF2%>%
-# #       filter(!is.na(Site))%>%
-# #       arrange(Site,Date)%>%
-# #       group_by(Site)%>%
-# #       mutate(CollectedCases2=RollAvg(CollectedCases),EpisodeCases2=RollAvg(EpisodeCases),ConfirmedCases2=RollAvg(ConfirmedCases))%>%
-# #       ungroup()
-# 
-# 
-# LatCaseDF=CovidDataPARSER(LatSpringCaseFN,LatFallCaseFN,LatMMSDFN)
-# 
-# LatWasteDF=WasteWater(LatWasteFN)%>%
-#   mutate(Date=as.Date(Date))%>%
-#   filter(!is.na(Date),!is.na(N1),!is.na(Site))%>%
-#   filter(Date<mdy("6/5/2021"))%>%
-#   select(Date,Site,N1,N2,PMMoV,Pct_BCoV,AVG)
-
-
-source("../Scripts/WasteShiny/PrepData.R", local = TRUE)
-```
 
 
 
@@ -92,7 +47,8 @@ HFGFrame%>%
 HFGVarNine=HFGFrame%>%
   select(Date,Site,'Filter replicates',N1)%>%
   group_by(Site,Date)%>%
-  summarize(mN1=mean(N1),vN1=var(N1))
+  summarize(mN1=mean(N1),vN1=var(N1))%>%
+  filter(!is.na(mN1),!is.na(vN1))
 
 
 cor(HFGVarNine$mN1,sqrt(HFGVarNine$vN1))
@@ -102,7 +58,9 @@ HFGFrame%>%
   group_by(Site,Date,'Filter replicates')%>%
   summarize(mN1=mean(N1),vN1=var(N1))%>%
   ggplot()+geom_point(aes(x=mN1,y=sqrt(vN1),color=Site))+
-  scale_y_log10()+scale_x_log10()+ggtitle("Mean vs Standard deviation of 3 points")
+  scale_y_log10()+
+  scale_x_log10()+
+  ggtitle("Mean vs Standard deviation of 3 points")
 
 
 

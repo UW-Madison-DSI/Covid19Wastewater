@@ -115,17 +115,17 @@ N1Fixer = function(data){
     select(-temp)
   return(data)
 }
-HFGInfo = function(data){
+HFGInfo = function(dataFN){
   missing_codes <- c("","NA","0","Undetected","Not Detected",
                      "Field Parameters to be filled in", 
                      "Inhibited-to be re-ran", "#DIV/0!",
                      "Undetermined", "LA")
   
-  HFGInfo.PreHack <- suppressMessages(read_excel(data,
+  HFGInfo.PreHack <- suppressMessages(read_excel(dataFN,
                                 na = missing_codes,
                                 col_types = c("text","text", "date", rep("numeric", 4),"text",rep("numeric", 2),"text",rep("numeric", 3)),
                                 sheet = 1))%>%
-    rename(repName="...2",
+    rename(repName="qpCR Sample Name",
            Date="Collection Date",
            N1Ct="N1 CT",
            N1GC="N1 GC/L",
@@ -143,8 +143,8 @@ HFGInfo = function(data){
            Date=as.Date(Date))
   
   #hack fixing inconstancy
-  HFGInfo = HFGInfo.PreHack%>%
-    mutate(Date=if_else(repName=="Platteville (T) rep 3"&Date==as.Date("2021-02-03"),as.Date("2021-02-02"),Date))%>%
-    mutate(Date=if_else(repName=="Hudson (T) rep 1"&Date==as.Date("2021-02-01"),as.Date("2021-02-02"),Date))
+  HFGInfo = HFGInfo.PreHack#%>%
+  #  mutate(Date=if_else(repName=="Platteville (T) rep 3"&Date==as.Date("2021-02-03"),as.Date("2021-02-02"),Date))%>%
+  #  mutate(Date=if_else(repName=="Hudson (T) rep 1"&Date==as.Date("2021-02-01"),as.Date("2021-02-02"),Date))
   return(HFGInfo)
 }

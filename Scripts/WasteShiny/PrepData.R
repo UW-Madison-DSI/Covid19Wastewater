@@ -1,6 +1,6 @@
 #LatWasteFN <- "../../../UntrackedData/WW SARS-COV-2 Data V5.xlsx"
 
-HFGWasteFN  <-  "../../../UntrackedData/HFG data for stats preliminary 3-18-21.xlsx"
+HFGWasteFN  <-  "../../../UntrackedData/HFG data for stats corrected 071421.xlsx"
 HFGCaseFN <- "../../../UntrackedData/HighFreq_CaseData_2021-05-07.csv"
 LatMMSDFN  <-  "../../CaseData/results/2021-06-24/MMSD_Cases.csv"
 LatSpringCaseFN <- "../../../UntrackedData/SpringSemester_CasesByDorm.tsv"
@@ -70,11 +70,13 @@ LIMSFullDF <- read_excel(LIMSFN,
 
 
 #Reads Transformed HFG Data
-
+print("HFGFrame")
 HFGFrame <- HFGInfo(HFGWasteFN)%>%
   select(Date,Site=Plant,Filter,Well,N1=N1GC,N2=N2GC,PMMoV=PMMOVGC,Pct_BCoV=BCoV,AVG)%>%
   mutate(Filter=as.character(Filter),Well=as.character(Well))%>%
   rename(`Filter replicates`=Filter)
+print("HFGFrame")
+
 
 
 HFGCaseDFNoReported <- HFGCasesPARSER(HFGCaseFN)

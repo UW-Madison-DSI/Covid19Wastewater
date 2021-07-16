@@ -1,14 +1,12 @@
 ---
-output:
-  pdf_document: default
-  html_document: default
-editor_options: 
-  chunk_output_type: console
+title: "HFG Variance"
+author: "Marlin"
+date: "7/9/2021"
+output: html_document
 ---
-```{r warning = FALSE, message = FALSE,echo = FALSE}
-source("../Scripts/DataProccess.R")
 
-HFGData="../../UntrackedData/HFG data for stats preliminary 3-18-21.xlsx"
+```{r warning = FALSE, message = FALSE,echo = FALSE}
+source("../../Scripts/DataProccess.R")
 
 HFGFrame=HFGInfo(HFGData)%>%
   mutate(Filter=as.character(Filter),Well=as.character(Well))%>%
