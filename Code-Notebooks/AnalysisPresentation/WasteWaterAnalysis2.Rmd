@@ -245,7 +245,7 @@ meanOfN1=LimitedHFData%>%
   mutate(Upper=N1+2*0.2199*N1)
 ```
 
-```{r HFD variance,echo=TRUE}
+```{r HFG variance,echo=TRUE}
 
 N1PlotGraphic <- ggplot()+
   geom_jitter(aes(x=Date,y=N1,color=`Filter replicates`),width=.2,data=LimitedHFData)+
@@ -255,7 +255,7 @@ N1PlotGraphic <- ggplot()+
   scale_y_log10()
 ```
 
-```{r HFD variance Fin,fig.height = 6,fig.width = 12,echo=FALSE}
+```{r HFG variance Fin,fig.height = 6,fig.width = 12,echo=FALSE}
 N1PlotGraphic+
   theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
      axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),

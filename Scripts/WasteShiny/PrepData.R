@@ -53,7 +53,7 @@ LIMSFullDF <- read_excel(LIMSFN,
   mutate(Date=as.Date(Date),N1=as.numeric(N1),N2=as.numeric(N2),Pop=as.numeric(Pop),
          N1Error=as.numeric(N1Error),N2Error=as.numeric(N2Error),PMMoV=as.numeric(PMMoV),
          BCoV=as.numeric(BCoV),FlowRate=as.numeric(FlowRate))%>%
-  #select(Date,Site, BCoV, N1,N1Error,N2, N2Error,PMMoV,Pop,FlowRate)%>%
+  select(Date,Site, BCoV, N1,N1Error,N2, N2Error,PMMoV,Pop,FlowRate)%>%
   mutate(Site=ifelse(Site=="Madison Metro","Madison",Site),
          Site=ifelse(Site=="Covid Sewage UW DORM","UW-LakeShore",Site),
          Site=ifelse(Site=="Covid Sewage UW Sell","UW-Sellery",Site),

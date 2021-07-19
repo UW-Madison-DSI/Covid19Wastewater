@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ```{r warning = FALSE, message = FALSE,echo = FALSE}
-source("../../Scripts/DataProccess.R")
+source("../../../../Scripts/DataProccess.R")
 
 HFGFrame=HFGInfo(HFGData)%>%
   mutate(Filter=as.character(Filter),Well=as.character(Well))%>%

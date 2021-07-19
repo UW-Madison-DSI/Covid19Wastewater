@@ -22,16 +22,16 @@ library(dplyr)
 
 
 #Data Files and prepwork
-source("../../Scripts/GenPlotMaking.R")
-source("../../Scripts/WasteWaterDataProccess.R")
-source("../../Scripts/CassesDataProccess.R")
-source("../../Scripts/HelperFunctions.R")
-LatWasteFN <- "../../../UntrackedData/WW SARS-COV-2 Data V5.xlsx"
-LatSpringCaseFN="../../../UntrackedData/SpringSemester_CasesByDorm.tsv"
-LatFallCaseFN="../../../UntrackedData/FallSemester_CasesByDorm.tsv"
-HFGWasteFN = "../../../UntrackedData/HFG data for stats preliminary 3-18-21.xlsx"
-HFGCaseFN="../../../UntrackedData/HighFreq_CaseData_2021-05-07.csv"
-LatMMSDFN = "../../../UntrackedData/MMSD_Cases.2021-05-21.csv"
+source("../../../Scripts/GenPlotMaking.R")
+source("../../../Scripts/WasteWaterDataProccess.R")
+source("../../../Scripts/CassesDataProccess.R")
+source("../../../Scripts/HelperFunctions.R")
+LatWasteFN <- "../../../../UntrackedData/WW SARS-COV-2 Data V5.xlsx"
+LatSpringCaseFN="../../../../UntrackedData/SpringSemester_CasesByDorm.tsv"
+LatFallCaseFN="../../../../UntrackedData/FallSemester_CasesByDorm.tsv"
+HFGWasteFN = "../../../../UntrackedData/HFG data for stats corrected 071421.xlsx"
+HFGCaseFN="../../../../UntrackedData/HighFreq_CaseData_2021-05-07.csv"
+LatMMSDFN = "../../../../UntrackedData/MMSD_Cases.2021-05-21.csv"
 
 ```
 
@@ -53,7 +53,7 @@ HFGCaseDFRoll=HFGCaseDF%>%
   RollAvg(Facet="Site")%>%
   select(Date,Site,ends_with("Cases"))
 
-HFGPop=read.csv("../../../UntrackedData/HFGPop.csv.txt")%>%
+HFGPop=read.csv("../../../../UntrackedData/HFGPop.csv.txt")%>%
   select(Site=wwtp_name,Population=pop_served)
 
 HFGCaseDF=full_join(HFGPop,HFGCaseDF,by="Site")
@@ -140,23 +140,21 @@ RelWasteData=HFGFrame%>%
     filter(!is.na(Site))%>%
     filter(Site %in% SiteOptions2)
 
-Data_mean_var = reactive({
-  HFGSiteMean=filtered_data_P()%>%
+Data_mean_var = HFGSiteMean=filtered_data_P()%>%
     group_by(Date,Site)%>%
     summarise(N1=exp(mean(log(N1),na.rm = T)),
               N2=exp(mean(log(N2),na.rm = T)),
               PMMoV=exp(mean(log(PMMoV),na.rm = T)),
               Pct_BCoV=exp(mean(log(Pct_BCoV),na.rm = T)))
-})
+
 #Data of the means of each Filter
-Filter_mean_var = reactive({
-  HFGFilterMean=filtered_data_P()%>%
+Filter_mean_var = HFGFilterMean=filtered_data_P()%>%
     group_by(Date,Site,`Filter replicates`)%>%
     summarise(N1=exp(mean(log(N1),na.rm = T)),
               N2=exp(mean(log(N2),na.rm = T)),
               PMMoV=exp(mean(log(PMMoV),na.rm = T)),
               Pct_BCoV=exp(mean(log(Pct_BCoV),na.rm = T)))
-})
+
 source("../../Scripts/GenPlotMaking.R")
 ```
 

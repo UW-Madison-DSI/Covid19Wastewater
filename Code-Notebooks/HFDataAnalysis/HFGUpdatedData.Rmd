@@ -49,8 +49,131 @@ OldHFG <- read_excel("../../../UntrackedData/HFG data for stats preliminary 3-18
   select(Date,Site=Plant,Filter,Well,N1=N1GC,N2=N2GC)%>%
   mutate(Filter=as.character(Filter),Well=as.character(Well))
 
-HFGFrameUp <- HFGFrame%>%
-  select(Date,Site,Filter=`Filter replicates`,Well,N1,N2)
+HFGFrameUp <- HFGFrame
+```
+
+
+
+```{r HFG Lims Comp,message=FALSE}
+HFGFrameMad <- HFGFrameUp%>%
+  filter(Site == "Madison")%>%
+  select(Date,Site,Filter=`Filter replicates`,Well,N1,N2)%>%
+  group_by(Date,Site)%>%
+  filter(!is.na(N1))%>%
+  mutate(N=n())%>%
+  filter(Filter!="4")#,N==9)
+LIMSMadDF <- LIMSFullDF%>%
+  filter(Site == "Madison")%>%
+  select(-PMMoV,-BCoV,-FlowRate,-Pop,-AVG,-wt)
+
+ggplot()+
+  aes(x=Date,y=N1)+
+  geom_point(aes(color = Filter),data = HFGFrameMad)+
+  geom_point(data = LIMSMadDF,shape=18,size=3)+
+  facet_wrap(~Site)+
+  scale_y_log10()+
+  scale_x_date(limits = c(mdy("1/20/2021"),mdy("3/14/2021")))
+#mdy("1/20/2021"),mdy("3/14/2021")
+#mdy("2/10/2021"),mdy("2/18/2021")
+
+
+
+HFGFrameMadSum <- HFGFrameMad%>%
+  group_by(Date,Site)%>%
+  summarize(MN1=mean(N1,na.rm = TRUE),MN2=mean(N2,na.rm = TRUE),
+            seN1=sqrt(var(N1,na.rm = TRUE)/n()),seN2=sqrt(var(N2,na.rm = TRUE)/n()),N=n())
+
+# HFGFrameMad%>%
+#   filter(Date>mdy("2/10/2021"),Date<mdy("2/18/2021"))
+
+
+HFGLimsComp <- inner_join(HFGFrameMadSum,LIMSMadDF,by=c("Date","Site"))%>%
+  mutate(difN1=round(MN1)-N1,difN2=round(MN2)-N2,
+         diffN1Error=round(seN1)-N1Error,diffN2Error=round(seN2)-N2Error)#%>%
+  #filter(abs(difN1)>10)%>%
+  #select(Date,Site,difN1,diffN1Error,difN2,diffN2Error)
+
+HFGLimsComp
+
+HFGLimsComp%>%
+  ggplot()+
+  aes(x=Date)+
+  geom_point(aes(y=abs(difN1),color="N1 concentration Difference"))+
+  geom_point(aes(y=abs(diffN1Error),color="N1Error concentration Difference"))+
+  ggtitle("Difference between HFG and LIMS")
+
+
+	
+```
+```{r PMMoV Analysis}
+SiteOptions2=c("Kenosha","Madison", "Sun Prairie","Wausau")
+
+# HFGFrameUp%>%
+#   filter(Site %in% SiteOptions2)%>%
+#   ggplot()+
+#   aes(x=PMMoV,y=N1)+
+#   geom_point()+
+#   scale_y_log10()+
+#   scale_x_log10()
+
+
+PMMoVUseDF=HFGFrameUp%>%
+  filter(Site %in% SiteOptions2)%>%
+  mutate(`PMMoV Level`=ifelse(PMMoV<1*10^7,"Low","Medium"))%>%
+  mutate(`PMMoV Level`=ifelse(PMMoV>1*10^8,"High",`PMMoV Level`))%>%
+  mutate(`PMMoV Level`=factor(`PMMoV Level`,levels=c("High","Medium","Low")))
+
+PMMoVUseDF%>%
+  ggplot()+aes(x=PMMoV,y=N1,color=`PMMoV Level`)+geom_point()+scale_y_log10()+
+  scale_x_log10()+facet_wrap(~Site)+ggtitle("N1 Vs PMMoV")+ Header_theme(ConfigOption)+
+  xlab("PMMoV (GC/L)")+ylab("N1 (GC/L)")
+
+PMMoVUseDF%>%
+  ggplot()+aes(x=Date,y=N1,color=`PMMoV Level`)+ Header_theme(ConfigOption)+geom_point()+
+  ylab("N1 (GC/L)")+ggtitle("PMMoV and N1 appear unrelated")+
+  scale_y_log10()+facet_wrap(~Site)
+
+cor(log(HFGFrameUp$N1),log(HFGFrameUp$PMMoV),use="pairwise.complete.obs")
+```
+
+
+```{r PMMoV Analysis}
+
+BCoVUseDF=HFGFrame%>%
+  filter(Site %in% SiteOptions2)%>%
+  filter(N1<2e6)%>%
+  mutate(`Percent BCoV Recovery`=ifelse(Pct_BCoV<.5,"Low","Medium"))%>%
+  mutate(`Percent BCoV Recovery`=ifelse(Pct_BCoV>10,"High",`Percent BCoV Recovery`))%>%
+  mutate(`Percent BCoV Recovery`=factor(`Percent BCoV Recovery`,levels=c("High","Medium","Low")))
+
+BCoVUseDF%>%
+  ggplot()+aes(x=Pct_BCoV,y=N1,color=`Percent BCoV Recovery`)+geom_point()+
+  xlab("Percent Bcov Recovery")+
+  ylab("N1 (GC/L)")+
+  scale_y_log10()+
+  scale_x_log10()+
+  facet_wrap(~Site)+
+  ggtitle("N1 Vs %Bcov recovery")
+
+
+BCoVUseDF%>%
+  ggplot()+aes(x=Date,y=N1,color=`Percent BCoV Recovery`)+geom_point()+
+  ggtitle("Percent BCoV recovery and N1 appear unrelated")+
+  scale_y_log10()+facet_wrap(~Site)
+
+cor(log(HFGFrameUp$N1),log(HFGFrameUp$Pct_BCoV),use="pairwise.complete.obs")
+```
+
+```{r Recreate}
+
+HFGFrameUp
+
+```
+
+```{r covarients}
+
+HFGFrameUp
+
 ```
 
 
@@ -63,7 +186,7 @@ MergedFullData <- full_join(OldHFG,HFGFrameUp,by=c("Date","Site","Filter","Well"
   
 MergedFullData%>%
   group_by(Date,Site)%>%
-  summarize(N1.Old=mean(log(N1.Old)),N1.New=mean(log(N1.New)))%>%
+  summarize(N1.Old=mean(log10(N1.Old)),N1.New=mean(log10(N1.New)))%>%
   # ungroup()%>%
   # filter(!is.na(N1.Old),!is.na(N1.New))%>%
   # summarize(max(N1.Old),max(N1.New))
@@ -79,10 +202,29 @@ MergedFullData%>%
 MergedFullDataTD <- MergedFullData%>%
   pivot_longer(N1.Old:N1.New,values_to="N1")
 
-
-anovaModel <- aov(terms(N1~Site+Site:Date+Site:Date:Filter+name+Site:Date:Filter:name+Date:Site:name, keep.order = TRUE),data=MergedFullDataTD)
+#+name+Site:Date:Filter:name+Date:Site:name
+anovaModel <- aov(terms(N1~Site+Site:Date+Site:Date:Filter, keep.order = TRUE),data=MergedFullDataTD)
 
 summary(anovaModel)
+
+#mean of filters
+#9 well rep are not iid
+#3 wells are assumed iid
+#Brian anova 
+
+#To do HFG
+#look at covarience
+#high population figures
+#6) look at other covarients 
+#5) Reproduce old work in HFG
+#4)  N1 Vs N2 vs avg var
+#3)  PMMoV %BCoV
+#2) look overall to see if its less noisy
+#1)  Madison longitudinal data - see if data is cleaner / does arithmetic mean agree with LIMs N1 / see if SE agrees
+#ask for all 10 treatment plants
+#?) look at case data if it looks great
+#?) water treatment at other stations
+
 ```
 
 ```{r}
@@ -100,8 +242,6 @@ FillterSum <- MergedFullData%>%
 t.test(DaySum$DayVar.Old,DaySum$DayVar.New,paired=T)
 
 t.test(FillterSum$DayVar.Old,FillterSum$DayVar.New,paired=T)
-
-
 ```
 
 ```{r}

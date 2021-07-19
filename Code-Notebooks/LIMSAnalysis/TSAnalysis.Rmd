@@ -140,6 +140,20 @@ ccfvalues1  <-  ccf(Per_posTSVec,N1TSVec,type = c("correlation"))
 # 
 # acf2(residuals(tryit1))
 R2=0.01555
+#Check for geo mean
+#N1 vs %Pos
+
+#not sure on analysis
+#look at assumptions
+#sliding window package
+#DMCA baked in rolling
+#many are doing the same things with different goals
+#at least same idea
+#Other approaches
+
+#should be standard but it seems not to be
+#not very complicated - how to pick right simple thing
+#Chris - what he knows about TS
 ```
 
 
@@ -165,6 +179,12 @@ ccfvalues2  <-  ccf(CasesTSVec,log(N1TSVec),type = c("correlation"))
 # acf2(residuals(tryit2))
 
 R2= 0.01555
+
+#ACF
+#CCF
+#did it +/-
+#need to control for stationary
+#
 ```
 
 
@@ -256,6 +276,9 @@ acf2(residuals(tryitSellSpring))
 
 
 R2=0.5051
+#small numbers mean low confidence in results
+#Stationary
+#
 ```
 
 ```{r by season Fall}
