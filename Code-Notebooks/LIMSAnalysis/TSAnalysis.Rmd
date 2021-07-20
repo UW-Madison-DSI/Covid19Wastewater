@@ -95,51 +95,83 @@ library(astsa)
 # grangertest(formula=log(N1)~log(N2),data=LIMSMadDF)
 
 MadCasedat<-RollPerPos(LatCaseDF,"Cases","Tests",Facet="Site")%>%
+  filter(Site=="Madison")
+
+MadLIMsdata<-RollAvg(LIMSFullDF,var=c("N1","N2","PMMoV","BCoV"))%>%
   filter(Site=="Madison")%>%
-  filter(Cases>0,Tests>0,Per_pos>0)
+  select(Site,Date,N1,N2,PMMoV,BCoV)
 
-MadLIMsdata<-RollAvg(LIMSFullDF,var=c("N1","N2","PMMoV"))%>%
-  filter(Site=="Madison")%>%
-  select(Date,N1,N2,PMMoV,BCoV)%>%
-  filter(N1>0,N2>0,PMMoV>0,BCoV>0)#%>%
-  #mutate(N1=N1-lag(N1))%>%
-  #filter(!is.na(N1))
+Maddata <- inner_join(MadCasedat,MadLIMsdata,by=c("Date","Site"))
 
 
-TSMadLIMS <- ts(MadLIMsdata)
-N1TSVec <- TSMadLIMS[,2]
-N2TSVec <- TSMadLIMS[,3]
-PMMoVTSVec <- TSMadLIMS[,4]
-BCoVTSVec <- TSMadLIMS[,5]
+TSMad <- ts(Maddata)
+N1TSVec <- TSMad[,6]
+N2TSVec <- TSMad[,7]
+PMMoVTSVec <- TSMad[,8]
+BCoVTSVec <- TSMad[,9]
 
-TSMadCase <- ts(MadCasedat)
-CasesTSVec <- TSMadCase[,3]
-TestsTSVec <- TSMadCase[,4]
-Per_posTSVec <- TSMadCase[,5]
+
+CasesTSVec <- TSMad[,3]
+TestsTSVec <- TSMad[,4]
+Per_posTSVec <- TSMad[,5]
+
+```
+
+
+```{r PMMoV&BCoV CCF}
+
+plot(log(PMMoVTSVec))
+plot(log(BCoVTSVec))
+
+ccf(PMMoVTSVec,N1TSVec,type = c("correlation"),na.action = na.pass)
+ccf(BCoVTSVec,N1TSVec,type = c("correlation"),na.action = na.pass)
+
+ccf(log(PMMoVTSVec),log(N1TSVec),type = c("correlation"),na.action = na.pass)
+ccf(log(BCoVTSVec),log(N1TSVec),type = c("correlation"),na.action = na.pass)
+
+ccf(PMMoVTSVec,BCoVTSVec,type = c("correlation"),na.action = na.pass)
+ccf(log(PMMoVTSVec),log(BCoVTSVec),type = c("correlation"),na.action = na.pass)
+
+#might be leading one or lagging the other
+#what is the relationship between N1 and PMMoV with high ccf
+#weighting? of weird values
+#window - outliers - trend
+
+#ccf of loess smooth for N1 and PMMoV over values of span
+#detrend N1?
+
+
+#PMMoV trend
+acf(PMMoVTSVec,na.action = na.pass)
+pacf(PMMoVTSVec,na.action = na.pass)
+
+
+MadLIMsdata
+LIMSFullDF%>%
+  filter(Site=="Madison")
 ```
 
 ```{r}
 
 plot(Per_posTSVec)
-plot(CasesTSVec)
 plot(N1TSVec)
 
 
-ccfvalues1  <-  ccf(Per_posTSVec,N1TSVec,type = c("correlation"))
+ccfvalues1  <-  ccf(Per_posTSVec,N1TSVec,type = c("correlation"),na.action = na.pass)
 
-# alldata1 <- ts.intersect(CasesTSVec,log(N1TSVec),
-#                          N1A=stats::lag(log(N1TSVec),1),
-#                          N1B=stats::lag(log(N1TSVec),-8),
-#                          N1C=stats::lag(log(N1TSVec),-10),
-#                          N1D=stats::lag(log(N1TSVec),-20))
-# 
-# 
-# tryit1  <- lm(CasesTSVec~N1D, data = alldata2)
-# 
-# summary(tryit1)
-# 
-# acf2(residuals(tryit1))
-R2=0.01555
+alldata1 <- ts.intersect(CasesTSVec,log(N1TSVec),
+                         N1A=stats::lag(log(N1TSVec),1),
+                         N1B=stats::lag(log(N1TSVec),-20),
+                         N1C=stats::lag(log(N1TSVec),-10),
+                         N1D=stats::lag(log(N1TSVec),20))
+
+
+tryit1  <- lm(CasesTSVec~N1D+N1C+N1B, data = alldata1)
+
+PerN1ModSum <- summary(tryit1)
+
+#PerN1ACFResid <- acf2(residuals(tryit1))
+R2=0.4442
 #Check for geo mean
 #N1 vs %Pos
 
@@ -160,31 +192,27 @@ R2=0.01555
 
 ```{r}
 plot(CasesTSVec)
-plot(log(N1TSVec))
+plot(N1TSVec)
 
 
-ccfvalues2  <-  ccf(CasesTSVec,log(N1TSVec),type = c("correlation"))
+ccfvalues2  <-  ccf(CasesTSVec,N1TSVec,type = c("correlation"),na.action = na.pass)
 
-# alldata2 <- ts.intersect(CasesTSVec,log(N1TSVec),
-#                          N1A=stats::lag(log(N1TSVec),1),
-#                          N1B=stats::lag(log(N1TSVec),-8),
-#                          N1C=stats::lag(log(N1TSVec),-10),
-#                          N1D=stats::lag(log(N1TSVec),-9))
-# 
-# 
-# tryit2  <- lm(CasesTSVec~N1D, data = alldata2)
-# 
-# summary(tryit2)
-# 
-# acf2(residuals(tryit2))
+alldata2 <- ts.intersect(CasesTSVec,log(N1TSVec),
+                         N1A=stats::lag(log(N1TSVec),1),
+                         N1B=stats::lag(log(N1TSVec),-8),
+                         N1C=stats::lag(log(N1TSVec),-20),
+                         N1D=stats::lag(log(N1TSVec),20))
 
-R2= 0.01555
 
-#ACF
-#CCF
-#did it +/-
-#need to control for stationary
-#
+tryit2  <- lm(CasesTSVec~N1C+N1D, data = alldata2)
+
+CaseN1ModSum <- summary(tryit2)
+
+CaseN1ACFResid <- acf2(residuals(tryit2))
+
+R2= 0.4441
+
+
 ```
 
 
@@ -196,42 +224,41 @@ R2= 0.01555
 
 
 SellCasedat <- RollPerPos(LatCaseDF,"Cases","Tests",Facet="Site")%>%
-  filter(Site=="UW-Sellery")%>%
-  filter(Cases>0,Tests>0,Per_pos>0)
+  filter(Site=="UW-Sellery")
 
 SellLIMsdata <- RollAvg(LIMSFullDF,var=c("N1","N2","PMMoV"))%>%
   filter(Site=="UW-Sellery")%>%
-  select(Date,N1,N2,PMMoV,BCoV)%>%
-  filter(N1>0)#%>%
-
-TSSellLIMS <- ts(SellLIMsdata)
-N1TSVecSell <- TSSellLIMS[,2]
+  select(Date,N1,N2,PMMoV,BCoV)
 
 
-TSSellCase <- ts(SellCasedat)
-Per_posTSVecSell <- TSSellCase[,5]
+Selldata <- inner_join(SellCasedat,SellLIMsdata,by=c("Date"))
+
+TSSell <- ts(Selldata)
+N1TSVecSell <- TSSell[,6]
+Per_posTSVecSell <- TSSell[,5]
 
 plot(Per_posTSVecSell)
 plot(log(N1TSVecSell))
 
-ccfvaluesSell  <-  ccf(Per_posTSVecSell,log(N1TSVecSell),type = c("correlation"))
+ccfvaluesSell  <-  ccf(Per_posTSVecSell,log(N1TSVecSell),type = c("correlation"),na.action = na.pass)
 
 
 #lag2.plot(Per_posTSVec,N1TSVec, 5)
 
 alldataSell <- ts.intersect(Per_posTSVecSell,N1TSVecSell,
-                         N1A=stats::lag(N1TSVecSell,-4),
+                         N1A=stats::lag(log(N1TSVecSell),-3),
                          N1B=stats::lag(N1TSVecSell,-12),
-                         N1C=stats::lag(N1TSVecSell,18),
-                         N1D=stats::lag(N1TSVecSell,-8))
+                         N1C=stats::lag(log(N1TSVecSell),-11),
+                         N1D=stats::lag(log(N1TSVecSell),13))
 
 
-tryitSell  <-  lm(Per_posTSVecSell~N1D+N1C, data = alldataSell)
+tryitSell  <-  lm(Per_posTSVecSell~N1C+N1D+N1A, data = alldataSell)
 
 summary(tryitSell)
 
 acf2(residuals(tryitSell))
 R2=0.7616
+
 ```
 
 
@@ -242,24 +269,18 @@ MaxConc=max(LIMSFullDF$Date)
 FallRange=c(MinConc,mdy("12/11/2020"))
 SpringRange=c(mdy("1/25/2021"),MaxConc)
 
-SellLIMsdataSpring <- SellLIMsdata%>%
-    filter(Date >= SpringRange[1] & Date <= SpringRange[2])
-SellCasedatSpring <- SellCasedat%>%
+SellSpringdata <- Selldata%>%
     filter(Date >= SpringRange[1] & Date <= SpringRange[2])
 
 
-TSSellLIMS <- ts(SellLIMsdataSpring)
-N1TSVecSellSpring <- TSSellLIMS[,2]
-
-
-TSSellCase <- ts(SellCasedatSpring)
-
-Per_posTSVecSellSpring <- TSSellCase[,5]
+TSSellSpring <- ts(SellSpringdata)
+N1TSVecSellSpring <- TSSellSpring[,6]
+Per_posTSVecSellSpring <- TSSellSpring[,5]
 
 plot(Per_posTSVecSellSpring)
 plot(log(N1TSVecSellSpring))
 
-ccfvaluesSellSpring  <-  ccf(Per_posTSVecSellSpring,log(N1TSVecSellSpring),type = c("correlation"))
+ccfvaluesSellSpring  <-  ccf(Per_posTSVecSellSpring,log(N1TSVecSellSpring),type = c("correlation"),na.action = na.pass)
 
 alldataSellSpring <- ts.intersect(Per_posTSVecSellSpring,N1TSVecSellSpring,
                          N1A=stats::lag(N1TSVecSellSpring,-13),
@@ -275,34 +296,29 @@ summary(tryitSellSpring)
 acf2(residuals(tryitSellSpring))
 
 
-R2=0.5051
+R2=0.439
 #small numbers mean low confidence in results
 #Stationary
 #
+
 ```
 
 ```{r by season Fall}
-SellLIMsdataFall <- SellLIMsdata%>%
-    filter(Date >= FallRange[1] & Date <= FallRange[2])
-SellCasedatFall <- SellCasedat%>%
+FallSpringdata <- Selldata%>%
     filter(Date >= FallRange[1] & Date <= FallRange[2])
 
 
-TSSellLIMS <- ts(SellLIMsdataFall)
-N1TSVecSellFall <- TSSellLIMS[,2]
-
-
-TSSellCase <- ts(SellCasedatFall)
-
-Per_posTSVecSellFall <- TSSellCase[,5]
+TSSellSpring <- ts(SellSpringdata)
+N1TSVecSellFall <- TSSellSpring[,6]
+Per_posTSVecSellFall <- TSSellSpring[,5]
 
 plot(Per_posTSVecSellFall)
 plot(log(N1TSVecSellFall))
 
-ccfvaluesSellFall  <-  ccf(Per_posTSVecSellFall,log(N1TSVecSellFall),type = c("correlation"))
+ccfvaluesSellFall  <-  ccf(Per_posTSVecSellFall,log(N1TSVecSellFall),type = c("correlation"),na.action = na.pass)
 
 alldataSellFall <- ts.intersect(Per_posTSVecSellFall,N1TSVecSellFall,
-                         N1A=stats::lag(N1TSVecSellFall,-8),
+                         N1A=stats::lag(N1TSVecSellFall,8),
                          N1B=stats::lag(N1TSVecSellFall,-6),
                          N1C <- stats::lag(N1TSVecSellFall,-11),
                          N1D=stats::lag(N1TSVecSellFall,-8))

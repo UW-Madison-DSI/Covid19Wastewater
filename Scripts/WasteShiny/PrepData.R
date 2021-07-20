@@ -63,7 +63,9 @@ LIMSFullDF <- read_excel(LIMSFN,
          Site=ifelse(Site=="Madison-P11-SW","MMSD-P11",Site),
          Site=ifelse(Site=="Madison-P18-NE","MMSD-P18",Site),
          AVG = tmpfn(N1, N2),
-         wt = 2 - is.na(N1) - is.na(N2))
+         wt = 2 - is.na(N1) - is.na(N2))%>%
+  #converting -1 meaning missing data to NA
+         mutate(N1=ifelse(N1==-1,NA,N1),N2=ifelse(N2==-1,NA,N2),PMMoV=ifelse(PMMoV==-1,NA,PMMoV),BCoV=ifelse(BCoV==-1,NA,BCoV))
 
 
 
@@ -72,7 +74,7 @@ LIMSFullDF <- read_excel(LIMSFN,
 
 #Reads Transformed HFG Data
 HFGFrame <- HFGInfo(HFGWasteFN)%>%
-  select(Date,Site=Plant,Filter,Well,N1=N1GC,N2=N2GC,PMMoV=PMMOVGC,Pct_BCoV=BCoV,AVG)%>%
+  rename(Site=Plant,N1=N1GC,N2=N2GC,PMMoV=PMMOVGC,Pct_BCoV=BCoV)%>%
   mutate(Filter=as.character(Filter),Well=as.character(Well))%>%
   rename(`Filter replicates`=Filter)
 

@@ -49,7 +49,53 @@ OldHFG <- read_excel("../../../UntrackedData/HFG data for stats preliminary 3-18
   select(Date,Site=Plant,Filter,Well,N1=N1GC,N2=N2GC)%>%
   mutate(Filter=as.character(Filter),Well=as.character(Well))
 
-HFGFrameUp <- HFGFrame
+HFGFrameUp <- HFGFrame%>%
+  select(Date,Site,Well,N1,N2,PMMoV,Pct_BCoV,AVG,`Filter replicates`)
+
+
+HFGFrameUp%>%
+  group_by(Date,Site)%>%
+  summarize(geoN1=exp(mean(log(N1))),geoN2=exp(mean(log(N2))),geoAVG=exp(mean(log(AVG))),
+            SEN1=sqrt(var(log(N1))/n()),SEN2=sqrt(var(log(N2))/n()),SEAVG=sqrt(var(log(AVG))/n()),
+            SEN1N=sqrt(var(N1)/n()),SEN2N=sqrt(var(N2)/n()),SEAVGN=sqrt(var(AVG)/n()))%>%
+  ggplot()+
+  geom_point(aes(x=geoN1,y=SEN1N))+
+  scale_y_log10()+scale_x_log10()
+
+
+
+modeltransform <- function(Vector){
+  return(log(Vector))
+}
+
+HFGTran <- HFGFrameUp%>%
+  group_by(Site,Date)%>%
+  mutate(GeoMean=exp(mean(log(N1))),
+         ArthMean=mean(N1))
+
+HFGTran%>%
+  ggplot()+
+  aes(x=modeltransform(GeoMean),y=modeltransform(N1))+
+  geom_point()+
+  geom_smooth(method="lm")
+
+
+HFGTranSummer <- HFGTran%>%
+  summarise(GeoMean=exp(mean(log(modeltransform(N1)))),
+            SE=sqrt(var(modeltransform(N1))/n()))
+            
+HFGTranSummer%>%
+  ggplot()+
+  aes(x=GeoMean,y=SE)+
+  geom_point()+
+  geom_smooth(method="lm")
+
+
+summary(lm(SE~GeoMean,data=HFGTranSummer))
+
+
+
+#Vector auto regressive models
 ```
 
 
@@ -69,10 +115,11 @@ LIMSMadDF <- LIMSFullDF%>%
 ggplot()+
   aes(x=Date,y=N1)+
   geom_point(aes(color = Filter),data = HFGFrameMad)+
-  geom_point(data = LIMSMadDF,shape=18,size=3)+
+  geom_line(data = LIMSMadDF)+
   facet_wrap(~Site)+
   scale_y_log10()+
   scale_x_date(limits = c(mdy("1/20/2021"),mdy("3/14/2021")))
+  #geom_vline(xintercept=ymd("2021-02-12"))
 #mdy("1/20/2021"),mdy("3/14/2021")
 #mdy("2/10/2021"),mdy("2/18/2021")
 
@@ -89,8 +136,8 @@ HFGFrameMadSum <- HFGFrameMad%>%
 
 HFGLimsComp <- inner_join(HFGFrameMadSum,LIMSMadDF,by=c("Date","Site"))%>%
   mutate(difN1=round(MN1)-N1,difN2=round(MN2)-N2,
-         diffN1Error=round(seN1)-N1Error,diffN2Error=round(seN2)-N2Error)#%>%
-  #filter(abs(difN1)>10)%>%
+         diffN1Error=round(seN1)-N1Error,diffN2Error=round(seN2)-N2Error)%>%
+  filter(abs(difN1)>10)
   #select(Date,Site,difN1,diffN1Error,difN2,diffN2Error)
 
 HFGLimsComp
@@ -102,19 +149,17 @@ HFGLimsComp%>%
   geom_point(aes(y=abs(diffN1Error),color="N1Error concentration Difference"))+
   ggtitle("Difference between HFG and LIMS")
 
-
-	
+#try to understand correlation of data
+#use geometric line instead: bounce less?
+#weight by error
+#loess smoothing better idea of weights?
 ```
+
+
 ```{r PMMoV Analysis}
 SiteOptions2=c("Kenosha","Madison", "Sun Prairie","Wausau")
 
-# HFGFrameUp%>%
-#   filter(Site %in% SiteOptions2)%>%
-#   ggplot()+
-#   aes(x=PMMoV,y=N1)+
-#   geom_point()+
-#   scale_y_log10()+
-#   scale_x_log10()
+
 
 
 PMMoVUseDF=HFGFrameUp%>%
@@ -125,11 +170,11 @@ PMMoVUseDF=HFGFrameUp%>%
 
 PMMoVUseDF%>%
   ggplot()+aes(x=PMMoV,y=N1,color=`PMMoV Level`)+geom_point()+scale_y_log10()+
-  scale_x_log10()+facet_wrap(~Site)+ggtitle("N1 Vs PMMoV")+ Header_theme(ConfigOption)+
+  scale_x_log10()+facet_wrap(~Site)+ggtitle("N1 Vs PMMoV")+
   xlab("PMMoV (GC/L)")+ylab("N1 (GC/L)")
 
 PMMoVUseDF%>%
-  ggplot()+aes(x=Date,y=N1,color=`PMMoV Level`)+ Header_theme(ConfigOption)+geom_point()+
+  ggplot()+aes(x=Date,y=N1,color=`PMMoV Level`)+geom_point()+
   ylab("N1 (GC/L)")+ggtitle("PMMoV and N1 appear unrelated")+
   scale_y_log10()+facet_wrap(~Site)
 
@@ -159,21 +204,68 @@ BCoVUseDF%>%
 BCoVUseDF%>%
   ggplot()+aes(x=Date,y=N1,color=`Percent BCoV Recovery`)+geom_point()+
   ggtitle("Percent BCoV recovery and N1 appear unrelated")+
-  scale_y_log10()+facet_wrap(~Site)
+  scale_y_log10()+
+  facet_wrap(~Site)
 
 cor(log(HFGFrameUp$N1),log(HFGFrameUp$Pct_BCoV),use="pairwise.complete.obs")
+
+#CCF to find best measurement
+#detrended
+#if we have full analysis done we  can compare the results of the three
+#know N1 N2 are highly correlated (and so is AVG) so anything is ok
+#outliers
+#
 ```
 
-```{r Recreate}
+```{r N1vN2vAVG}
 
-HFGFrameUp
+test <- HFGFrameUp%>%
+  group_by(Site,Date)%>%
+  mutate(seN1=sqrt(var(N1)/n()),seN2=sqrt(var(N2)/n()),seAVG=sqrt(var(AVG)/n()))%>%
+  mutate(a=N1/seN1,b=N2/seN2,c=AVG/seAVG)
 
+Alp=.1
+test%>%
+  ggplot()+
+  geom_point(aes(x=N1,y=seN1,color="N1"),alpha=Alp)+
+  geom_point(aes(x=N2,y=seN2,color="N2"),alpha=Alp)+
+  geom_point(aes(x=AVG,y=seAVG,color="AVG"),alpha=Alp)+
+  scale_y_log10()+
+  scale_x_log10()+
+  facet_wrap(~Site)
+
+  
+t.test(test$c,test$a)
+
+
+HFGFrameUp%>%
+  group_by(Date,Site)%>%
+  mutate(N=n())%>%
+  filter(N!=9)#,N!=12)%>%
+  filter(Site=="Madison")
 ```
 
 ```{r covarients}
 
-HFGFrameUp
+CoverHFG <- HFGFrame%>%
+  select(-N1Ct,-N2Ct,-PMMOVCT)
 
+CoverHFG%>%
+  ggplot()+
+  geom_point(aes(x=Date,y=N1,color=N1LOD))+
+  scale_y_log10()+
+  geom_hline(yintercept = 4*10e3)
+  facet_wrap(~Site)
+
+
+# CoverHFG%>%
+#   filter(N1LOD==TRUE)%>%
+#   filter(N1>4*10e3)
+# CoverHFG%>%
+#   filter(N1LOD==FALSE)%>%
+#   filter(N1<4*10e3)
+
+4*10e3
 ```
 
 
