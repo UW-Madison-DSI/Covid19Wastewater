@@ -99,8 +99,11 @@ MadCasedat<-RollPerPos(LatCaseDF,"Cases","Tests",Facet="Site")%>%
 MadLIMsdata<-RollAvg(LIMSFullDF,var=c("N1","N2","PMMoV","BCoV"))%>%
   filter(Site=="Madison")%>%
   select(Site,Date,N1,N2,PMMoV,BCoV)
+LIMSFullDFAllRows <- LIMSFullDFAllRows%>%
+  select(-N1,-N2,-PMMoV,-BCoV)
+MadLIMsdata2 <- inner_join(MadLIMsdata,LIMSFullDFAllRows,by=c("Date","Site"))
 
-Maddata <- inner_join(MadCasedat,MadLIMsdata,by=c("Date","Site"))
+Maddata <- inner_join(MadCasedat,MadLIMsdata2,by=c("Date","Site"))
 
 
 TSMad <- ts(Maddata)
@@ -108,11 +111,18 @@ N1TSVec <- TSMad[,6]
 N2TSVec <- TSMad[,7]
 PMMoVTSVec <- TSMad[,8]
 BCoVTSVec <- TSMad[,9]
-
+FlowRateTSVec <- TSMad[,11]
+ConductivityTSVec <- TSMad[,21]
+temperatureTSVec <- TSMad[,57]
+tssTSVec <- TSMad[,59]
 
 CasesTSVec <- TSMad[,3]
 TestsTSVec <- TSMad[,4]
 Per_posTSVec <- TSMad[,5]
+
+
+ccf(N1TSVec,FlowRateTSVec)
+
 ```
 
 ```{r cover testing}
@@ -290,7 +300,11 @@ plot(CasesTSVec)
 
 plot(log(N1TSVec))
 
-ts.plot(CasesTSVec,(-51.901*stats::lag(log(N1TSVec),-20)+65.434*stats::lag(log(N1TSVec),20)-60.471))
+ts.plot(CasesTSVec,(-51.901*stats::lag(log(N1TSVec),-20)+65.434*stats::lag(log(N1TSVec),20)-60.471),
+        col=c("red","blue"), #auto.legend = TRUE,
+        gpars=list(xlab="Time (Days)", ylab="Cases"))
+legend("bottomleft", legend=c("N1 TS Model","Cases"), col=1:3, lty=1, cex=1)
+
 ts.plot(CasesTSVec-(-51.901*stats::lag(log(N1TSVec),-20)+65.434*stats::lag(log(N1TSVec),20)-60.471))
 
 
@@ -311,7 +325,7 @@ ts.plot(CasesTSVec-(-51.901*stats::lag(log(N1TSVec),-20)+65.434*stats::lag(log(N
 # Model3 <- define.model(kvar=2, ar=ar, ma=ma, rem.var=c(0), reg.var=c(0))
 # 
 # MarimaMod <- marima(TSMad[,c(3,6)],means=1, ar.pattern=Model3$ar.pattern,
-#   ma.pattern=Model3$ma.pattern, Check=FALSE, Plot=TRUE, penalty=0)
+#   ma.pattern=Model3$ma.pattern, Check=FALSE, Plot=TRUE, penalty=1)
 # 
 # MarimaMod$ma.fvalues
 ```

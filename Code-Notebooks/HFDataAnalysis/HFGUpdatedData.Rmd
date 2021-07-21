@@ -5,7 +5,7 @@ date: "7/16/2021"
 output: html_document
 ---
 
-```{r Start enviroment}
+```{r Start enviroment, message=FALSE, Warning =FALSE}
 library(ggpubr)
 library(dplyr)
 library(forecast)
@@ -18,7 +18,10 @@ source("../../Scripts/WasteWaterDataProccess.R")
 source("../../Scripts/CassesDataProccess.R")
 source("../../Scripts/HelperFunctions.R")
 source("../../Scripts/WasteShiny/PrepData.R", local = TRUE)
+```
 
+
+```{r, message=FALSE, Warning =FALSE}
   missing_codes <- c("","NA","0","Undetected","Not Detected",
                      "Field Parameters to be filled in", 
                      "Inhibited-to be re-ran", "#DIV/0!",
@@ -110,7 +113,7 @@ HFGFrameMad <- HFGFrameUp%>%
   filter(Filter!="4")#,N==9)
 LIMSMadDF <- LIMSFullDF%>%
   filter(Site == "Madison")%>%
-  select(-PMMoV,-BCoV,-FlowRate,-Pop,-AVG,-wt)
+  select(-PMMoV,-BCoV,-FlowRate,-Pop)
 
 ggplot()+
   aes(x=Date,y=N1)+
@@ -182,7 +185,7 @@ cor(log(HFGFrameUp$N1),log(HFGFrameUp$PMMoV),use="pairwise.complete.obs")
 ```
 
 
-```{r PMMoV Analysis}
+```{r PMMoV Analysis 2}
 
 BCoVUseDF=HFGFrame%>%
   filter(Site %in% SiteOptions2)%>%
@@ -329,6 +332,9 @@ CoverHFG%>%
 
 
 ```{r Comp data,message=FALSE}
+
+HFGFrameUp <- HFGFrameUp%>%
+  rename(Filter = `Filter replicates`)
 
 MergedFullData <- full_join(OldHFG,HFGFrameUp,by=c("Date","Site","Filter","Well"),suffix=c(".Old",".New"))%>%
   mutate(Diff=abs(N1.Old-N1.New))
