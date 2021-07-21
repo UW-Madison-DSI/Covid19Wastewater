@@ -37,7 +37,7 @@ missing_codes <- c("","NA","0","Undetected","Not Detected",
                    "Field Parameters to be filled in", 
                    "Inhibited-to be re-ran", "#DIV/0!","-","In progress")
 
-LIMSFullDF <- read_excel(LIMSFN,
+LIMSFullDFAllRows <- read_excel(LIMSFN,
                       na  =  missing_codes,
                       col_types = c(rep("guess",48),"text",rep("guess",12)))%>%
   rename(Site=wwtp_name,FlowRate=average_flow_rate,
@@ -53,7 +53,6 @@ LIMSFullDF <- read_excel(LIMSFN,
   mutate(Date=as.Date(Date),N1=as.numeric(N1),N2=as.numeric(N2),Pop=as.numeric(Pop),
          N1Error=as.numeric(N1Error),N2Error=as.numeric(N2Error),PMMoV=as.numeric(PMMoV),
          BCoV=as.numeric(BCoV),FlowRate=as.numeric(FlowRate))%>%
-  select(Date,Site, BCoV, N1,N1Error,N2, N2Error,PMMoV,Pop,FlowRate)%>%
   mutate(Site=ifelse(Site=="Madison Metro","Madison",Site),
          Site=ifelse(Site=="Covid Sewage UW DORM","UW-LakeShore",Site),
          Site=ifelse(Site=="Covid Sewage UW Sell","UW-Sellery",Site),
@@ -67,7 +66,8 @@ LIMSFullDF <- read_excel(LIMSFN,
   #converting -1 meaning missing data to NA
          mutate(N1=ifelse(N1==-1,NA,N1),N2=ifelse(N2==-1,NA,N2),PMMoV=ifelse(PMMoV==-1,NA,PMMoV),BCoV=ifelse(BCoV==-1,NA,BCoV))
 
-
+LIMSFullDF <- LIMSFullDFAllRows%>%
+  select(Date,Site, BCoV, N1,N1Error,N2, N2Error,PMMoV,Pop,FlowRate)
 
 
 

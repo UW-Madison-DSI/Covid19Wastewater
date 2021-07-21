@@ -5,7 +5,7 @@ date: "7/9/2021"
 output: html_document
 ---
 
-```{r Start enviroment}
+```{r Start enviroment, message=FALSE, warning=FALSE}
 library(ggpubr)
 library(dplyr)
 library(forecast)
@@ -55,7 +55,6 @@ WeekdaySmoothedDF$weekday <- factor(WeekdaySmoothedDF$weekday,
                         levels= c("Monday", "Tuesday", "Wednesday", "Thursday","Friday","Saturday","Sunday"))
 
 summary(aov(N1~weekday+Site,data=WeekdaySmoothedDF))
-
 
 ```
 
@@ -114,22 +113,99 @@ BCoVTSVec <- TSMad[,9]
 CasesTSVec <- TSMad[,3]
 TestsTSVec <- TSMad[,4]
 Per_posTSVec <- TSMad[,5]
+```
 
+```{r cover testing}
+#PH
+LIMSFullDFAllRows%>%
+  mutate(ph=as.numeric(ph))%>%
+  filter(ph<100)%>%
+  ggplot()+
+  geom_point(aes(x=ph,y=N1,color="N1"))+
+  geom_point(aes(x=ph,y=N1Error,color="N1Error"))+
+  scale_y_log10()+
+  ggtitle("No clear relation between ph and N1/N1Error")
+
+#FlowRate
+LIMSFullDFAllRows%>%
+  mutate(FlowRate=as.numeric(FlowRate))%>%
+  select(FlowRate,!FlowRate)%>%
+  group_by(Site)%>%
+  summarise(FlowRateS=mean(FlowRate,na.rm=TRUE),Pop=mean(Pop,na.rm=TRUE))%>%
+  ggplot()+
+  geom_point(aes(x=Pop,y=FlowRateS))+
+  ggtitle("Nearly Perfect linear relation between Pop and Flowrate")
+
+LIMSFullDFAllRows%>%
+  group_by(Site)%>%
+  summarise(SE1=mean(N1Error,na.rm=TRUE),N1S=mean(N1,na.rm=TRUE),Pop=mean(Pop,na.rm=TRUE))%>%
+  ggplot()+
+  geom_point(aes(x=Pop,y=SE1))+
+  scale_x_log10()+
+  ggtitle("no clear relationship between N1/N1Error and Pop")
+
+#capacity_mgdS 
+LIMSFullDFAllRows%>%
+  mutate(capacity_mgd=as.numeric(capacity_mgd))%>%
+  select(capacity_mgd,!capacity_mgd)%>%
+  group_by(Site)%>%
+  summarise(capacity_mgdS=mean(capacity_mgd,na.rm=TRUE),Pop=mean(Pop,na.rm=TRUE))%>%
+  ggplot()+
+  geom_point(aes(x=Pop,y=capacity_mgdS))+
+  ggtitle("Nearly Perfect linear relation between Pop and capacity_mgdS")
+#TO DO capacity_mgd variance within Site
+
+#conductivity 
+LIMSFullDFAllRows%>%
+  mutate(conductivity=as.numeric(conductivity))%>%
+  select(conductivity,!conductivity)%>%
+  group_by(Site)%>%
+  ggplot()+
+  geom_point(aes(x=conductivity,y=N1Error))+
+  scale_y_log10()+
+  ggtitle("no clear relation between N1Error and conductivity")
+#TO DO conductivity variance within Site
+
+#sample_collect_time 
+LIMSFullDFAllRows%>%
+  mutate(sample_collect_time=as.POSIXct(sample_collect_time,format="%H:%M"))%>%
+  select(sample_collect_time,!sample_collect_time)%>%
+  ggplot()+
+  geom_point(aes(x=sample_collect_time,y=N1Error))+
+  scale_y_log10()+
+  ggtitle("no clear relation between sample_collect_time and N1Se")
+#TO DO conductivity variance within Site
+
+LIMSFullDFAllRows%>%
+  group_by(sample_type)%>%
+  summarise(N1=mean(N1,na.rm=TRUE),N1SE=mean(N1Error,na.rm=TRUE))
+
+LIMSFullDFAllRows%>%
+  mutate(tss=as.numeric(tss))%>%
+  select(tss,!tss)%>%
+  ggplot()+
+  geom_point(aes(x=tss,y=N1Error))+
+  scale_y_log10()+
+  ggtitle("no clear relation between sample_collect_time and N1Se")
+
+
+LIMSFullDFAllRows%>%
+  mutate(temperature=as.numeric(temperature))%>%
+  select(temperature,!temperature)%>%
+  ggplot()+
+  geom_point(aes(x=temperature,y=N1Error))+
+  scale_y_log10()+
+  ggtitle("no clear relation between sample_collect_time and N1Se")
 ```
 
 
 ```{r PMMoV&BCoV CCF}
-
+plot(log(N1TSVec))
 plot(log(PMMoVTSVec))
 plot(log(BCoVTSVec))
 
-ccf(PMMoVTSVec,N1TSVec,type = c("correlation"),na.action = na.pass)
-ccf(BCoVTSVec,N1TSVec,type = c("correlation"),na.action = na.pass)
-
 ccf(log(PMMoVTSVec),log(N1TSVec),type = c("correlation"),na.action = na.pass)
 ccf(log(BCoVTSVec),log(N1TSVec),type = c("correlation"),na.action = na.pass)
-
-ccf(PMMoVTSVec,BCoVTSVec,type = c("correlation"),na.action = na.pass)
 ccf(log(PMMoVTSVec),log(BCoVTSVec),type = c("correlation"),na.action = na.pass)
 
 #might be leading one or lagging the other
@@ -154,31 +230,30 @@ LIMSFullDF%>%
 ```{r}
 
 plot(Per_posTSVec)
-plot(N1TSVec)
+plot(log(N1TSVec))
 
 
-ccfvalues1  <-  ccf(Per_posTSVec,N1TSVec,type = c("correlation"),na.action = na.pass)
+ccfvalues1  <-  ccf(Per_posTSVec,log(N1TSVec),type = c("correlation"),na.action = na.pass)
 
-alldata1 <- ts.intersect(CasesTSVec,log(N1TSVec),
+alldata1 <- ts.intersect(Per_posTSVec,log(N1TSVec),
                          N1A=stats::lag(log(N1TSVec),1),
                          N1B=stats::lag(log(N1TSVec),-20),
-                         N1C=stats::lag(log(N1TSVec),-10),
+                         N1C=stats::lag(log(N1TSVec),10),
                          N1D=stats::lag(log(N1TSVec),20))
 
 
-tryit1  <- lm(CasesTSVec~N1D+N1C+N1B, data = alldata1)
+tryit1  <- lm(Per_posTSVec~N1D+N1C, data = alldata1)
 
 PerN1ModSum <- summary(tryit1)
 
 #PerN1ACFResid <- acf2(residuals(tryit1))
-R2=0.4442
+R2=0.2849
 #Check for geo mean
 #N1 vs %Pos
 
 #not sure on analysis
 #look at assumptions
 #sliding window package
-#DMCA baked in rolling
 #many are doing the same things with different goals
 #at least same idea
 #Other approaches
@@ -191,17 +266,16 @@ R2=0.4442
 
 
 ```{r}
-plot(CasesTSVec)
-plot(N1TSVec)
-
-
+#-stats::lag(CasesTSVec,1)
 ccfvalues2  <-  ccf(CasesTSVec,N1TSVec,type = c("correlation"),na.action = na.pass)
 
 alldata2 <- ts.intersect(CasesTSVec,log(N1TSVec),
                          N1A=stats::lag(log(N1TSVec),1),
                          N1B=stats::lag(log(N1TSVec),-8),
                          N1C=stats::lag(log(N1TSVec),-20),
-                         N1D=stats::lag(log(N1TSVec),20))
+                         N1D=stats::lag(log(N1TSVec),20),
+                         N1E=stats::lag(N1TSVec,-20),
+                         N1F=stats::lag(N1TSVec,20))
 
 
 tryit2  <- lm(CasesTSVec~N1C+N1D, data = alldata2)
@@ -212,7 +286,33 @@ CaseN1ACFResid <- acf2(residuals(tryit2))
 
 R2= 0.4441
 
+plot(CasesTSVec)
 
+plot(log(N1TSVec))
+
+ts.plot(CasesTSVec,(-51.901*stats::lag(log(N1TSVec),-20)+65.434*stats::lag(log(N1TSVec),20)-60.471))
+ts.plot(CasesTSVec-(-51.901*stats::lag(log(N1TSVec),-20)+65.434*stats::lag(log(N1TSVec),20)-60.471))
+
+
+#library(SlidingWindows)
+#plot(dmca.SlidingWindows(CasesTSVec,N1TSVec)$dmca)
+
+# Maddata2 <- Maddata%>%
+#   filter(!is.na(N1),!is.na(Cases))
+# TSMad2 <- ts(Maddata2)
+# N1TSVec2 <- TSMad2[,6]
+# CasesTSVec2 <- TSMad2[,3]
+# library(testcorr)
+# cc.test(x=N1TSVec2,y=CasesTSVec2, max.lag=14)
+
+library(marima)
+
+ar<-c(1)
+ma<-c(1)
+Model3 <- define.model(kvar=9, ar=ar, ma=ma, rem.var=c(0), reg.var=c(0))
+
+marima(TSMad,means=1, ar.pattern=Model3$ar.pattern,
+  ma.pattern=Model3$ma.pattern, Check=FALSE, Plot=TRUE, penalty=0)
 ```
 
 
@@ -257,8 +357,17 @@ tryitSell  <-  lm(Per_posTSVecSell~N1C+N1D+N1A, data = alldataSell)
 summary(tryitSell)
 
 acf2(residuals(tryitSell))
-R2=0.7616
+R2=.4758
 
+
+ts.plot(Per_posTSVecSell,( -0.02383*stats::lag(log(N1TSVecSell),-3)
+                           -0.35840*stats::lag(log(N1TSVecSell),-11)
+                           +0.10305*stats::lag(log(N1TSVecSell),13)
+                           +4.25384))
+ts.plot(Per_posTSVecSell-( -0.02383*stats::lag(log(N1TSVecSell),-3)
+                           -0.35840*stats::lag(log(N1TSVecSell),-11)
+                           +0.10305*stats::lag(log(N1TSVecSell),13)
+                           +4.25384))
 ```
 
 

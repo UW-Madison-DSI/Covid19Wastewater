@@ -209,40 +209,98 @@ BCoVUseDF%>%
 
 cor(log(HFGFrameUp$N1),log(HFGFrameUp$Pct_BCoV),use="pairwise.complete.obs")
 
-#CCF to find best measurement
-#detrended
-#if we have full analysis done we  can compare the results of the three
-#know N1 N2 are highly correlated (and so is AVG) so anything is ok
-#outliers
-#
+
+```
+
+```{r}
+HFGFrame
+
+HFGPop=read.csv("../../../UntrackedData/HFGPop.csv.txt")%>%
+  select(Site=wwtp_name,Population=pop_served)
+
+
+HFGSEPop <- full_join(HFGPop,HFGFrame, by=c("Site"))%>%
+  group_by(Site,Date)%>%
+  summarise(seN1=sqrt(var(N1)/n()),seN2=sqrt(var(N2)/n()),seAVG=sqrt(var(AVG)/18),Pop=mean(Population,na.rm=TRUE))%>%
+  ungroup()%>%
+  group_by(Site)%>%
+  summarise(SeMean=mean(seN1,na.rm=TRUE),Pop=mean(Pop,na.rm=TRUE))%>%
+  arrange(Pop)
+
+HFGSEPop
+
+HFGSEPop%>%
+  ggplot()+
+  aes(x=Pop,y=SeMean)+
+  geom_point()
+
+
+#no clear relationship between population and variation of the 9 samples
+
 ```
 
 ```{r N1vN2vAVG}
 
-test <- HFGFrameUp%>%
+SEHFGDF <- HFGFrameUp%>%
   group_by(Site,Date)%>%
-  mutate(seN1=sqrt(var(N1)/n()),seN2=sqrt(var(N2)/n()),seAVG=sqrt(var(AVG)/n()))%>%
-  mutate(a=N1/seN1,b=N2/seN2,c=AVG/seAVG)
+  mutate(seN1=sqrt(var(N1)/n()),seN2=sqrt(var(N2)/n()),seAVG=sqrt(var(AVG)/18))
 
-Alp=.1
-test%>%
+
+
+Alp=.5
+SEHFGDF%>%
   ggplot()+
-  geom_point(aes(x=N1,y=seN1,color="N1"),alpha=Alp)+
-  geom_point(aes(x=N2,y=seN2,color="N2"),alpha=Alp)+
-  geom_point(aes(x=AVG,y=seAVG,color="AVG"),alpha=Alp)+
+  geom_histogram(aes(x=seN1,fill="N1"),alpha=Alp)+
+  geom_histogram(aes(x=seN2,fill="N2"),alpha=Alp)+
+  geom_histogram(aes(x=seAVG,fill="AVG"),alpha=Alp)+
   scale_y_log10()+
-  scale_x_log10()+
-  facet_wrap(~Site)
+  scale_x_log10()
+
+
+
+SEHFGDFSum <- HFGFrameUp%>%
+  group_by(Site,Date)%>%
+  summarise(seN1=sqrt(var(N1)/n()),seN2=sqrt(var(N2)/n()),seAVG=sqrt(var(AVG)/18))
+
+SEHFGDFSum%>%
+  ggplot()+
+  geom_histogram(aes(x=log(seN1)-log(seN2)))
 
   
-t.test(test$c,test$a)
+
+SEHFGDFSum%>%
+  ungroup()%>%
+  summarise(mean(log(seN1),na.rm = TRUE),mean(log(seN2),na.rm = TRUE),mean(log(seAVG),na.rm = TRUE))
+
+t.test(log(SEHFGDFSum$seN1),log(SEHFGDFSum$seN2))
+t.test(log(SEHFGDFSum$seN1),log(SEHFGDFSum$seAVG))
+t.test(log(SEHFGDFSum$seAVG),log(SEHFGDFSum$seN2))
+
+```
 
 
-HFGFrameUp%>%
-  group_by(Date,Site)%>%
-  mutate(N=n())%>%
-  filter(N!=9)#,N!=12)%>%
-  filter(Site=="Madison")
+```{r cases}
+MaskedDataRange="1-4 Cases"
+inner_join(HFGFrame,HFGCaseDF,by=c("Site","Date"))%>%
+  mutate(PHI_masking = ifelse(ReportedCases<0,MaskedDataRange,"Reported values"),
+          ReportedCases = ifelse(ReportedCases<0,2.5,ReportedCases))%>%
+  filter(!is.na(PHI_masking))%>%
+  group_by(Site)%>%
+  filter(sum(PHI_masking=="Reported values")>120)%>%
+  ggplot()+
+  geom_rect(aes(xmin=Date-.5,xmax=Date+.5,ymin=0,ymax=ReportedCases,fill=PHI_masking),color="black")+
+  facet_wrap(~Site,scales = "free")+ 
+      scale_fill_manual(values=c("light blue","gray"))
+
+```
+
+
+```{r include=FALSE}
+# HFGFrameUp%>%
+#   group_by(Date,Site)%>%
+#   mutate(N=n())%>%
+#   filter(N!=9)#,N!=12)%>%
+#   #filter(Site=="Madison")
 ```
 
 ```{r covarients}
@@ -299,23 +357,7 @@ anovaModel <- aov(terms(N1~Site+Site:Date+Site:Date:Filter, keep.order = TRUE),d
 
 summary(anovaModel)
 
-#mean of filters
-#9 well rep are not iid
-#3 wells are assumed iid
-#Brian anova 
 
-#To do HFG
-#look at covarience
-#high population figures
-#6) look at other covarients 
-#5) Reproduce old work in HFG
-#4)  N1 Vs N2 vs avg var
-#3)  PMMoV %BCoV
-#2) look overall to see if its less noisy
-#1)  Madison longitudinal data - see if data is cleaner / does arithmetic mean agree with LIMs N1 / see if SE agrees
-#ask for all 10 treatment plants
-#?) look at case data if it looks great
-#?) water treatment at other stations
 
 ```
 
