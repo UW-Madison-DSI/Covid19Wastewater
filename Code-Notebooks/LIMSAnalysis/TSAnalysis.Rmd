@@ -5,6 +5,14 @@ date: "7/9/2021"
 output: html_document
 ---
 
+```{r}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
 ```{r Start enviroment, message=FALSE, warning=FALSE}
 library(ggpubr)
 library(dplyr)
@@ -99,9 +107,9 @@ MadCasedat<-RollPerPos(LatCaseDF,"Cases","Tests",Facet="Site")%>%
 MadLIMsdata<-RollAvg(LIMSFullDF,var=c("N1","N2","PMMoV","BCoV"))%>%
   filter(Site=="Madison")%>%
   select(Site,Date,N1,N2,PMMoV,BCoV)
-LIMSFullDFAllRows <- LIMSFullDFAllRows%>%
+LIMSFullDFAllRows2 <- LIMSFullDFAllRows%>%
   select(-N1,-N2,-PMMoV,-BCoV)
-MadLIMsdata2 <- inner_join(MadLIMsdata,LIMSFullDFAllRows,by=c("Date","Site"))
+MadLIMsdata2 <- inner_join(MadLIMsdata,LIMSFullDFAllRows2,by=c("Date","Site"))
 
 Maddata <- inner_join(MadCasedat,MadLIMsdata2,by=c("Date","Site"))
 
@@ -122,6 +130,51 @@ Per_posTSVec <- TSMad[,5]
 
 
 ccf(N1TSVec,FlowRateTSVec)
+
+
+anovaModel <- aov(terms(N1~Site:Date+N2, keep.order = TRUE),data=Maddata)
+
+summary(anovaModel)
+
+
+#n1_sars_cov2_units == "Gene copies/L" NA             
+#capacity_mgd == Site dependent
+#composite_freq == NA  "24hr-FWCmp" "24hr-TWCmp"
+#concentration_method == "filtMgCl2" NA  
+#extraction_method == PromegaHT
+#hf183_conc == NA
+#inhibition_adjust == "No" 
+#inhibition_detect == "No"
+#inhibition_method == "BRSV-RNA"
+#lod_ref == "Klymus19"
+#n1_num_no_target_control == "3" or 9
+#n1_num_ntc_amplify ==NA
+#n1_sars_cov2_units == "Gene copies/L"
+#n2_num_ntc_amplify == NA
+#n2_sars_cov2_units == "Gene copies/L"
+#pcr_type == qPCR
+#quant_stan_ref == IDT
+#quant_stan_type == DNA-plasm
+#sample_location == influent "upstream"
+#sample_location_specify == intercepters?
+#sample_matrix == Influent (Untreated Waste H2O)
+#sample_type == composite
+#state == WI
+
+#n1_ntc_amplify
+#
+unique(LIMSFullDFAllRows$state)
+
+UniqueLIMS=LIMSFullDFAllRows%>%
+  summarise(across(.cols = everything(),.fns=~length(unique(.x))))%>%
+  select(Cov1_below_lod,bod,composite_freq,concentration_method,
+         extraction_method,hf183_conc,inhibition_adjust,inhibition_detect,
+         inhibition_method,lod_ref,n1_ntc_amplify,n1_num_no_target_control,
+         n1_num_ntc_amplify,n1_sars_cov2_lod,n1_sars_cov2_units,n2_ntc_amplify,
+         n2_num_no_target_control, n2_num_ntc_amplify,n2_sars_cov2_lod,
+         n2_sars_cov2_units, pcr_type, quant_stan_ref, quant_stan_type,
+         sample_location, sample_matrix, sample_type, state
+)
 
 ```
 
@@ -378,11 +431,11 @@ R2=.4758
 ts.plot(Per_posTSVecSell,( -0.02383*stats::lag(log(N1TSVecSell),-3)
                            -0.35840*stats::lag(log(N1TSVecSell),-11)
                            +0.10305*stats::lag(log(N1TSVecSell),13)
-                           +4.25384))
-ts.plot(Per_posTSVecSell-( -0.02383*stats::lag(log(N1TSVecSell),-3)
-                           -0.35840*stats::lag(log(N1TSVecSell),-11)
-                           +0.10305*stats::lag(log(N1TSVecSell),13)
-                           +4.25384))
+                           +4.25384),
+        col=c("red","blue"), 
+        gpars=list(xlab="Time (Days)", ylab="% Pos"))
+
+legend("topright", legend=c("N1 TS Model","Cases"), col=1:3, lty=1, cex=1)
 ```
 
 

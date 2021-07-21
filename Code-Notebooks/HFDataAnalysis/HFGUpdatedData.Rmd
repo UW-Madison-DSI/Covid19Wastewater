@@ -5,6 +5,14 @@ date: "7/16/2021"
 output: html_document
 ---
 
+```{r}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
 ```{r Start enviroment, message=FALSE, Warning =FALSE}
 library(ggpubr)
 library(dplyr)
