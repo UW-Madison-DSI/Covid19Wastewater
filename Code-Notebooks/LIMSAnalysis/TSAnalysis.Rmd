@@ -305,14 +305,15 @@ ts.plot(CasesTSVec-(-51.901*stats::lag(log(N1TSVec),-20)+65.434*stats::lag(log(N
 # library(testcorr)
 # cc.test(x=N1TSVec2,y=CasesTSVec2, max.lag=14)
 
-library(marima)
-
-ar<-c(1)
-ma<-c(1)
-Model3 <- define.model(kvar=9, ar=ar, ma=ma, rem.var=c(0), reg.var=c(0))
-
-marima(TSMad,means=1, ar.pattern=Model3$ar.pattern,
-  ma.pattern=Model3$ma.pattern, Check=FALSE, Plot=TRUE, penalty=0)
+# library(marima)
+# ar<-c(1:20)
+# ma<-c(1:20)
+# Model3 <- define.model(kvar=2, ar=ar, ma=ma, rem.var=c(0), reg.var=c(0))
+# 
+# MarimaMod <- marima(TSMad[,c(3,6)],means=1, ar.pattern=Model3$ar.pattern,
+#   ma.pattern=Model3$ma.pattern, Check=FALSE, Plot=TRUE, penalty=0)
+# 
+# MarimaMod$ma.fvalues
 ```
 
 
