@@ -76,20 +76,20 @@ CasePlot <- ggplot()+
   xlab("")+
   theme(axis.title.y = element_text(size=12))
 
-N1Plot <- LIMSMadDF%>%
-    ggplot()+
-    aes(x=Date,y=N1)+
-    geom_point()+
-    geom_smooth(se=FALSE,span=.1)+
-  scale_y_log10()
+# N1Plot <- LIMSMadDF%>%
+#     ggplot()+
+#     aes(x=Date,y=N1)+
+#     geom_point()+
+#     geom_smooth(se=FALSE,span=.1)+
+#   scale_y_log10()
 
 
-# N1Plot <-LoessSmoothPlot(SiteS="Madison",Span=.1,min=0,max=120,weights=c("Constant","Constant"),
-#                           Title = F,FullLim=F,SiteLab=F,Data = LIMSMadDF) +
-#   coord_cartesian(xlim = c(min(LIMSMadDF$Date),max(LIMSMadDF$Date)))+
-#   xlab("")+ 
-#   theme(legend.position = "none",
-#         axis.title.y = element_text(size=12))
+N1Plot <-LoessSmoothPlot(SiteS="Madison",Span=.1,min=0,max=120,weights=c("Constant","Constant"),
+                          Title = F,FullLim=F,SiteLab=F,Data = LIMSMadDF) +
+  coord_cartesian(xlim = c(min(LIMSMadDF$Date),max(LIMSMadDF$Date)))+
+  xlab("")+
+  theme(legend.position = "none",
+        axis.title.y = element_text(size=12))
   
 ggarrange(CasePlot,N1Plot,nrow=2)
 ```
