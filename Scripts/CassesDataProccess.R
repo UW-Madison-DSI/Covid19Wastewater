@@ -18,34 +18,67 @@ CovidData = function(CovidFileName){
 }
 
 
-CovidDataPARSER= function(File1,File2,MMSDFN){
-  CaseData1=read.csv(File1,sep = "",header = T)
-  CaseData2=read.csv(File2,sep = "",header = T)
-  returnedData=rbind(CaseData1,CaseData2)
-  returnedData=returnedData%>%
-    mutate(Tests=Negative	+Positive,Per_pos=100*Positive/Tests)%>%
-    mutate( Site = ifelse(Site == "UW_D", "UW-LakeShore", "UW-Sellery"))%>%
-    mutate(Date=mdy(Date))%>%
-    rename(Cases=Positive)%>%
-    select(Date,Site,Cases,Tests,Per_pos)
-  
-  lag=1
-  MMSDdata = read.csv(MMSDFN)%>%
-    mutate(ServiceID = ifelse(ServiceID=="MMSD","Madison",paste("MMSD-P",ServiceID,sep="")),Date = as.Date(Date))%>%
-    rename(Site=ServiceID)%>%
-    group_by(Site)%>%
-    mutate(Cases=Cases - lag(Cases, n=lag,default = NA),Tests=Tests- lag(Tests, n=lag,default = NA))%>%
-    mutate(Per_pos=100*Cases/Tests)%>%
-    select(Date,Site,Cases,Tests,Per_pos)
-  LatCaseDF=rbind(returnedData,MMSDdata)%>%
+CovidDataPARSER= function(File1=NA,File2=NA,MMSDFN=NA){
+  if(is.na(File1)&&is.na(File2)&&is.na(MMSDFN)){
+    return(NA)
+  }
+  DormDF <- NA
+  if(!is.na(File1)){
+    DormDF <- DormCaseDataPARSER(File1)
+  }
+  if(!is.na(File2)){
+    DormDF2 <- DormCaseDataPARSER(File2)
+  }
+  if(!is.na(File2)&&!is.na(File1)){
+    DormDF=rbind(DormDF,DormDF2)
+  }else if(!is.na(File2)){
+    DormDF=DormDF2
+  }
+  if(!is.na(MMSDFN)){
+    lag=1
+    MMSDdata = read.csv(MMSDFN)%>%
+      rename(Site=ServiceID)%>%
+      mutate(Site = ifelse(Site=="MMSD","Madison",paste("MMSD-P",Site,sep="")),
+             Date = as.Date(Date))%>%
+      group_by(Site)%>%
+      mutate(Cases=Cases - lag(Cases, n=lag,default = NA),Tests=Tests- lag(Tests, n=lag,default = NA))%>%
+      mutate(Per_pos=100*Cases/Tests)
+  } else {
+    FullData <- DormDF
+    MMSDdata <- NA
+  }
+  if(!is.na(DormDF)&&!is.na(MMSDdata)){
+      FullData <- rbind(DormDF,MMSDdata)
+  } else if(is.na(DormDF)){
+    FullData <- MMSDdata 
+  }
+      
+  FullData <- FullData%>%
     mutate(Site = ifelse(Site == "MMSD P18", "MMSD-P18", Site),
            Site = ifelse(Site == "MMSD P11", "MMSD-P11", Site),
            Site = ifelse(Site == "MMSD P2", "MMSD-P2", Site),
            Site = ifelse(Site == "MMSD P7", "MMSD-P7", Site),
            Site = ifelse(Site == "MMSD P8", "MMSD-P8", Site))
     
-  return(LatCaseDF)
+  return(FullData)
 }
+#%>%select(Date,Site,Cases,Tests,Per_pos)
+
+
+
+DormCaseDataPARSER <- function(FileName){
+  CSVDF <- read.csv(FileName,sep = "",header = T)%>%
+    mutate(Tests=Negative	+Positive,Per_pos=100*Positive/Tests)%>%
+    mutate(Site = ifelse(Site == "UW_D", "UW-LakeShore", Site))%>%
+    mutate(Site = ifelse(Site == "UW_S", "UW-UW-Sellery", Site))%>%
+    mutate(Date=mdy(Date))%>%
+    rename(Cases=Positive)%>%
+    select(-Negative)%>%
+    mutate(Population=NA)
+  return(CSVDF)
+}
+
+
 
 
 HFGCasesPARSER = function(data){
