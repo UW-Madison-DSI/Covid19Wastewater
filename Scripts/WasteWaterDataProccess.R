@@ -17,7 +17,7 @@ MissingCode <- function(){
 }
 
 
-HFGDataPARSER = function(data){
+HFGWastePARSER = function(data){
   missing_codes <- MissingCode()
   
   HFGInfo.PreHack <- suppressMessages(read_excel(data,
