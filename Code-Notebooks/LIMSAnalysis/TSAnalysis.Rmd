@@ -35,8 +35,7 @@ LatMMSDFN  <-  "../../CaseData/results/2021-06-24/MMSD_Cases.csv"
 LatSpringCaseFN <- "../../../UntrackedData/SpringSemester_CasesByDorm.tsv"
 LatFallCaseFN <- "../../../UntrackedData/FallSemester_CasesByDorm.tsv"
 LIMSFN <- "../../../UntrackedData/WATERMICRO_WW_COVID-2021-06-30 17 40.xlsx"
-#LIMSFN2 <- "../../../UntrackedData/WATERMICRO_WW_COVID-2021-06-07 19 05.xlsx"
-#WATERMICRO_WW_COVID-2021-06-30 17 40
+
 LatCaseDF <- CovidDataPARSER(LatSpringCaseFN,LatFallCaseFN,LatMMSDFN)%>%
   filter(!is.na(Site))%>%
   select(Date,Site,Cases,Tests,Per_pos)
@@ -45,98 +44,16 @@ LatCaseDF <- CovidDataPARSER(LatSpringCaseFN,LatFallCaseFN,LatMMSDFN)%>%
 LatCaseDFRoll <- RollPerPos(LatCaseDF,"Cases","Tests",Facet="Site")%>%
   select(Date,Site,Cases,Per_pos)
 
-# LatWasteDF=WasteWater(LatWasteFN)%>%
-#   mutate(Date=as.Date(Date))%>%
-#   filter(!is.na(Date),!is.na(N1),!is.na(Site))
-#%>%
- # select(Date,Site,N1,N2,PMMoV,Pct_BCoV,AVG)
-
-ConfigOption <- list(
-  myseed=1234567890,
-  XAxisLabSiz=10,
-  YAxisLabSiz=15,
-  GenFontSiz=20,
-  alphaPoint=.7,
-  PointSize=2,
-  alphaWeek=.2)
-
 
 
 missing_codes <- c("","NA","0","Undetected","Not Detected",
                    "Field Parameters to be filled in", 
                    "Inhibited-to be re-ran", "#DIV/0!","-","In progress")
 
-LIMSFullDFAllRows <- read_excel(LIMSFN,
-                      na  =  missing_codes,
-                      col_types = c(rep("guess",48),"text",rep("guess",12)))%>%
-  rename(Site=wwtp_name,FlowRate=average_flow_rate,
-         Cov1_below_lod=avg_sars_cov2_below_lod,cov2_conc=avg_sars_cov2_conc,
-         BCoV=bcov_rec_rate,BCoVConc=bcov_spike_conc,county=county_names,
-         Date=unformatted_collectdate,
-         N1=n1_sars_cov2_conc,
-         N1Error=n1_sars_cov2_error,
-         N2=n2_sars_cov2_conc,
-         N2Error=n2_sars_cov2_error,
-         PMMoV=pmmov_conc,
-         Pop=population_served)%>%
-  mutate(Date=as.Date(Date),N1=as.numeric(N1),N2=as.numeric(N2),Pop=as.numeric(Pop),
-         N1Error=as.numeric(N1Error),N2Error=as.numeric(N2Error),PMMoV=as.numeric(PMMoV),
-         BCoV=as.numeric(BCoV),FlowRate=as.numeric(FlowRate))%>%
-  mutate(Site=ifelse(Site=="Madison Metro","Madison",Site),
-         Site=ifelse(Site=="Covid Sewage UW DORM","UW-LakeShore",Site),
-         Site=ifelse(Site=="Covid Sewage UW Sell","UW-Sellery",Site),
-         Site=ifelse(Site=="Madison-P2-Central","MMSD-P2",Site),
-         Site=ifelse(Site=="Madison-P7-SE","MMSD-P7",Site),
-         Site=ifelse(Site=="Madison-P8-West","MMSD-P8",Site),
-         Site=ifelse(Site=="Madison-P11-SW","MMSD-P11",Site),
-         Site=ifelse(Site=="Madison-P18-NE","MMSD-P18",Site),
-         AVG = tmpfn(N1, N2),
-         wt = 2 - is.na(N1) - is.na(N2))%>%
-  #converting -1 meaning missing data to NA
-         mutate(N1=ifelse(N1==-1,NA,N1),N2=ifelse(N2==-1,NA,N2),PMMoV=ifelse(PMMoV==-1,NA,PMMoV),BCoV=ifelse(BCoV==-1,NA,BCoV))
+LIMSFullDFAllRows <- LIMSDataPARSER(LIMSFN)
 
 LIMSFullDF <- LIMSFullDFAllRows%>%
   select(Date,Site, BCoV, N1,N1Error,N2, N2Error,PMMoV,Pop,FlowRate)
-
-
-
-
-#Reads Transformed HFG Data
-HFGFrame <- HFGInfo(HFGWasteFN)%>%
-  rename(Site=Plant,N1=N1GC,N2=N2GC,PMMoV=PMMOVGC,Pct_BCoV=BCoV)%>%
-  mutate(Filter=as.character(Filter),Well=as.character(Well))%>%
-  rename(`Filter replicates`=Filter)
-
-
-
-HFGCaseDFNoReported <- HFGCasesPARSER(HFGCaseFN)
-
-#Reported Cases match census level case data
-HFGCaseDFReportedOnly <- HFGCaseDFNoReported%>%
-  mutate(Date=Date+1,ReportedCases=ConfirmedCases)%>%
-  select(Date,Site,ReportedCases)
-
-HFGCaseDF  <-  full_join(HFGCaseDFReportedOnly,HFGCaseDFNoReported,by=c("Date","Site"))
-
-
-HFGCaseDFRoll <- HFGCaseDF%>%
-  mutate(EpisodeCases=ifelse(EpisodeCases==-999,2.5,EpisodeCases))%>%
-  mutate(CollectedCases=ifelse(CollectedCases==-999,2.5,CollectedCases))%>%
-  mutate(ConfirmedCases=ifelse(ConfirmedCases==-999,2.5,ConfirmedCases))%>%
-  RollAvg(Facet="Site")%>%
-  select(Date,Site,ends_with("Cases"))
-
-HFGPop <- read.csv("../../../UntrackedData/HFGPop.csv.txt")%>%
-  select(Site=wwtp_name,Population=pop_served)%>%
-  mutate(Population=Population/100000)
-
-HFGCaseDF <- full_join(HFGPop,HFGCaseDF,by="Site")
-
-HFGCaseDFRoll <- full_join(HFGPop,HFGCaseDFRoll,by="Site")
-
-#Generating the weekends starts and end dates
-#TO DO:Capture the weekend if the data intersects with it
-HFGDateRangeDF <- WeekendGen(HFGCaseDF$Date)
 
 
 
@@ -208,7 +125,7 @@ library(astsa)
 MadCasedat<-RollPerPos(LatCaseDF,"Cases","Tests",Facet="Site")%>%
   filter(Site=="Madison")
 
-MadLIMsdata<-RollAvg(LIMSFullDF,var=c("N1","N2","PMMoV","BCoV"))%>%
+MadLIMsdata<-RollAvg(LIMSFullDF,var=c("N1","N2","AVG","PMMoV","BCoV"))%>%
   filter(Site=="Madison")%>%
   select(Site,Date,N1,N2,PMMoV,BCoV)
 LIMSFullDFAllRows2 <- LIMSFullDFAllRows%>%
@@ -221,6 +138,7 @@ Maddata <- inner_join(MadCasedat,MadLIMsdata2,by=c("Date","Site"))
 TSMad <- ts(Maddata)
 N1TSVec <- TSMad[,6]
 N2TSVec <- TSMad[,7]
+AVGTSVec <- TSMad[,65]
 PMMoVTSVec <- TSMad[,8]
 BCoVTSVec <- TSMad[,9]
 FlowRateTSVec <- TSMad[,11]
@@ -232,13 +150,21 @@ CasesTSVec <- TSMad[,3]
 TestsTSVec <- TSMad[,4]
 Per_posTSVec <- TSMad[,5]
 
+ts.plot(log(N1TSVec),log(N2TSVec),log(AVGTSVec),
+        col=c("red","blue", "green"), 
+        gpars=list(xlab="Time (Days)", ylab="% Pos"))
 
-ccf(N1TSVec,FlowRateTSVec)
+
+var.test(log(N1TSVec),log(N2TSVec))
+var.test(log(N1TSVec[50:214]),log(N2TSVec[50:214]))
+
+```
 
 
-anovaModel <- aov(terms(N1~Site:Date+N2, keep.order = TRUE),data=Maddata)
+```
+#anovaModel <- aov(terms(N1~Site:Date+N2, keep.order = TRUE),data=Maddata)
 
-summary(anovaModel)
+#summary(anovaModel)
 
 
 #n1_sars_cov2_units == "Gene copies/L" NA             
@@ -434,35 +360,51 @@ R2=0.2849
 
 ```{r}
 #-stats::lag(CasesTSVec,1)
-ccfvalues2  <-  ccf(CasesTSVec,N1TSVec,type = c("correlation"),na.action = na.pass)
+ccfvalues2  <-  ccf(CasesTSVec,log(N1TSVec),type = c("correlation"),na.action = na.pass)
 
 alldata2 <- ts.intersect(CasesTSVec,log(N1TSVec),
                          N1A=stats::lag(log(N1TSVec),1),
                          N1B=stats::lag(log(N1TSVec),-8),
                          N1C=stats::lag(log(N1TSVec),-20),
                          N1D=stats::lag(log(N1TSVec),20),
-                         N1E=stats::lag(N1TSVec,-20),
-                         N1F=stats::lag(N1TSVec,20))
+                         N1E=stats::lag(log(N1TSVec),-5),
+                         N1F=stats::lag(log(N1TSVec),5))
 
 
-tryit2  <- lm(CasesTSVec~N1C+N1D, data = alldata2)
+tryit2  <- lm(CasesTSVec~N1E+N1F, data = alldata2)
 
 CaseN1ModSum <- summary(tryit2)
 
 CaseN1ACFResid <- acf2(residuals(tryit2))
 
-R2= 0.4441
+R2= 0.3487#0.2621 for smaller windows
 
 plot(CasesTSVec)
 
-plot(log(N1TSVec))
+plot(log(N1TSVec/BCoVTSVec))
 
+#TwentLagPlot
 ts.plot(CasesTSVec,(-51.901*stats::lag(log(N1TSVec),-20)+65.434*stats::lag(log(N1TSVec),20)-60.471),
         col=c("red","blue"), #auto.legend = TRUE,
-        gpars=list(xlab="Time (Days)", ylab="Cases"))
+        gpars=list(xlab="Time (Days)", ylab="Cases",main="20 day model"))
 legend("bottomleft", legend=c("N1 TS Model","Cases"), col=1:3, lty=1, cex=1)
 
-ts.plot(CasesTSVec-(-51.901*stats::lag(log(N1TSVec),-20)+65.434*stats::lag(log(N1TSVec),20)-60.471))
+#tenLagPlot
+ts.plot(CasesTSVec,(-43.482*stats::lag(log(N1TSVec),-10)+45.307*stats::lag(log(N1TSVec),10)+79.706),
+        col=c("red","blue"), #auto.legend = TRUE,
+        gpars=list(xlab="Time (Days)", ylab="Cases",main="10 day model"))
+legend("bottomleft", legend=c("N1 TS Model","Cases"), col=1:3, lty=1, cex=1)
+
+
+#fiveLagPlot
+ts.plot(CasesTSVec,(-50.95*stats::lag(log(N1TSVec),-5)+51.95*stats::lag(log(N1TSVec),5)+92.40),
+        col=c("red","blue"), #auto.legend = TRUE,
+        gpars=list(xlab="Time (Days)", ylab="Cases",main="5 day model"))
+legend("bottomleft", legend=c("N1 TS Model","Cases"), col=1:3, lty=1, cex=1)
+
+
+
+
 ```
 
 
@@ -671,42 +613,3 @@ R2=0.227
 ```
 
 
-
-
-```{r}
-HFGFrame%>%
-  filter(!is.na(N1),!is.na(Date),!is.na(`Filter replicates`),!is.na(Site))%>%
-  group_by(Site,Date,`Filter replicates`)%>%
-  summarize(var=var(N1))%>%
-  filter(!is.na(var))%>%
-  ungroup()%>%
-  summarize(meanvar=mean(var))
-2.5075450674e+10
-
-
-HFGFrame%>%
-  filter(!is.na(N1),!is.na(Date),!is.na(Site))%>%
-  group_by(Site,Date)%>%
-  summarize(var=var(N1))%>%
-  filter(!is.na(var))%>%
-  ungroup()%>%
-  summarize(meanvar=mean(var))
-2.756624e+12				
-
-
-HFGFrame%>%
-  group_by(Date,Site)%>%
-  summarize(N1=mean(N1))%>%
-  mutate(Pre1=lag(N1,n=1),Nxt1=lead(N1,n=1))%>%
-  filter(!is.na(Nxt1),!is.na(Pre1))%>%
-  pivot_longer(N1:Nxt1)%>%
-  summarize(var=var(value))%>%
-  filter(!is.na(var))%>%
-  ungroup()%>%
-  summarize(meanvar=mean(var))
-5.5569708129e+10
-
-# library(nlme)
-# interaction.plot (HFGFrame$Date, factor(HFGFrame$Site), HFGFrame$N1, lty=c(1:3),lwd=2,ylab="mean of Y", xlab="time", trace.label="Treatment")
-# nestinginfo <- groupedData(N1 ~ Site | `Filter replicates`, data= HFGFrame)
-```

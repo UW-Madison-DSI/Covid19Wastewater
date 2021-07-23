@@ -63,9 +63,8 @@ HFGCaseDFRoll <- HFGCaseDF%>%
   RollAvg(Facet="Site")%>%
   select(Date,Site,ends_with("Cases"))
 
-HFGPop <- read.csv("../../../UntrackedData/HFGPop.csv.txt")%>%
-  select(Site=wwtp_name,Population=pop_served)%>%
-  mutate(Population=Population/100000)
+HFGPop <- read.csv(paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/HFGPop.csv"))%>%
+  select(Site=wwtp_name,Population=pop_served)
 
 HFGCaseDF <- full_join(HFGPop,HFGCaseDF,by="Site")
 
@@ -105,7 +104,7 @@ OldHFG <- read_excel("../../../UntrackedData/HFG data for stats preliminary 3-18
     mutate(N1LOD=N1LOD=="Y",
            N2LOD=N2LOD=="Y",
            Date=as.Date(Date),
-           AVG = tmpfn(N1GC, N2GC))%>%
+           AVG = AVGGenFN(N1GC, N2GC))%>%
   select(Date,Site=Plant,Filter,Well,N1=N1GC,N2=N2GC)%>%
   mutate(Filter=as.character(Filter),Well=as.character(Well))
 
@@ -157,8 +156,6 @@ summary(lm(SE~GeoMean,data=HFGTranSummer))
 
 #Vector auto regressive models
 ```
-
-
 
 ```{r HFG Lims Comp,message=FALSE}
 HFGFrameMad <- HFGFrameUp%>%
@@ -273,12 +270,6 @@ cor(log(HFGFrameUp$N1),log(HFGFrameUp$Pct_BCoV),use="pairwise.complete.obs")
 ```
 
 ```{r}
-HFGFrame
-
-HFGPop=read.csv("../../../UntrackedData/HFGPop.csv.txt")%>%
-  select(Site=wwtp_name,Population=pop_served)
-
-
 HFGSEPop <- full_join(HFGPop,HFGFrame, by=c("Site"))%>%
   group_by(Site,Date)%>%
   summarise(seN1=sqrt(var(N1)/n()),seN2=sqrt(var(N2)/n()),seAVG=sqrt(var(AVG)/18),Pop=mean(Population,na.rm=TRUE))%>%

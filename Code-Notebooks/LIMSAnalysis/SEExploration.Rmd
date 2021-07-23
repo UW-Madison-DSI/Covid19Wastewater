@@ -207,8 +207,6 @@ MadLIMS%>%
 #Similar errors
 #Data before jan is messy-after more clear
 #N1 vs N2 is easier after jan
-#HFD  using old data
-#defer to get the rest of clean data - look at data after jan otherwise
 #plots show that data before jan are to messy to analysis
 #
 #error happens at sampling process
@@ -219,9 +217,6 @@ MadLIMS%>%
 
 #Cases ->smooth -> N1   :Easier to interpret - inferred infected number of people
 #N1 -> tightness -> Cases   :harder to mathout - gives same relationship - if I got N1 for last 7 weeks remove old cases concentrations- if was higher recently: expect to grow- use in loess - better smoothing - gen of loess 
-
-#4 pm 
-#get rough idea of where I am going
 ```
 
 

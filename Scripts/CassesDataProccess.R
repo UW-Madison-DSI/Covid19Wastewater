@@ -70,7 +70,7 @@ DormCaseDataPARSER <- function(FileName){
   CSVDF <- read.csv(FileName,sep = "",header = T)%>%
     mutate(Tests=Negative	+Positive,Per_pos=100*Positive/Tests)%>%
     mutate(Site = ifelse(Site == "UW_D", "UW-LakeShore", Site))%>%
-    mutate(Site = ifelse(Site == "UW_S", "UW-UW-Sellery", Site))%>%
+    mutate(Site = ifelse(Site == "UW_S", "UW-Sellery", Site))%>%
     mutate(Date=mdy(Date))%>%
     rename(Cases=Positive)%>%
     select(-Negative)%>%

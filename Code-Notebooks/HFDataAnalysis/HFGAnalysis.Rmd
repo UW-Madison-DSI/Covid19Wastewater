@@ -13,7 +13,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r Start enviroment, message=FALSE, Warning =FALSE}
+```{r Start enviroment, message=FALSE, Warning=FALSE}
 library(ggpubr)
 library(dplyr)
 library(forecast)
@@ -63,9 +63,8 @@ HFGCaseDFRoll <- HFGCaseDF%>%
   RollAvg(Facet="Site")%>%
   select(Date,Site,ends_with("Cases"))
 
-HFGPop <- read.csv("../../../UntrackedData/HFGPop.csv.txt")%>%
-  select(Site=wwtp_name,Population=pop_served)%>%
-  mutate(Population=Population/100000)
+HFGPop <- read.csv(paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/HFGPop.csv"))%>%
+  select(Site=wwtp_name,Population=pop_served)
 
 HFGCaseDF <- full_join(HFGPop,HFGCaseDF,by="Site")
 
@@ -76,3 +75,312 @@ HFGCaseDFRoll <- full_join(HFGPop,HFGCaseDFRoll,by="Site")
 HFGDateRangeDF <- WeekendGen(HFGCaseDF$Date)
 ```
 
+
+
+```{r HFG current}
+
+HFGFrameWeekend <- HFGFrame%>%
+  mutate(weekday=factor(weekdays(Date),levels=c("Monday","Tuesday","Wednesday" ,"Thursday",  "Friday" , "Saturday" ,"Sunday")))%>%
+  filter(!is.na(weekday))%>%
+  group_by(weekday)%>%
+  mutate(Number=n())
+  
+unique(HFGFrameWeekend$weekday)
+
+HFGFrameWeekend%>%
+  group_by(weekday)%>%
+  summarise(N1Mean=mean(N1,na.rm = TRUE),N1median=median(N1,na.rm = TRUE),N=n())%>%
+  #arrange(weekday)%>%
+  ggplot()+
+  aes(x=weekday)+
+  geom_col(aes(y=N1Mean,fill="mean"),alpha=.8)+
+  geom_col(aes(y=N1median,fill="median"),alpha=.8)
+
+HFGFrameWeekend%>%
+  group_by(weekday)%>%
+  summarise(N1Mean=mean(N1,na.rm = TRUE),N1median=median(N1,na.rm = TRUE),N=n())%>%
+  #arrange(weekday)%>%
+  ggplot()+
+  aes(x=weekday)+
+  geom_col(aes(y=log(N1Mean),fill="mean"),alpha=.8)+
+  geom_col(aes(y=log(N1median),fill="median"),alpha=.8)
+
+
+HFGFrameWeekend%>%
+  ggplot()+
+  aes(x=log(N1))+
+  #stat_bin(aes(y=..count..,x=N1,fill=weekday))+
+  stat_bin(aes(y=..count..,fill=weekday))
+
+#Pct_BCoV
+#PMMoV
+summary(aov(terms(log(N1)~weekday+Site+Site:Date:`Filter replicates`,keep.order = TRUE),
+              data=HFGFrameWeekend))
+
+```
+
+
+```{r, message=FALSE, Warning =FALSE}
+
+HFGFrameUp <- HFGFrame%>%
+  select(Date,Site,Well,N1,N2,PMMoV,Pct_BCoV,AVG,`Filter replicates`)
+
+
+HFGFrameUp%>%
+  group_by(Date,Site)%>%
+  summarize(geoN1=exp(mean(log(N1))),
+            geoN2=exp(mean(log(N2))),
+            geoAVG=exp(mean(log(AVG))),
+            SEN1=sqrt(var(log(N1))/n()),
+            SEN2=sqrt(var(log(N2))/n()),
+            SEAVG=sqrt(var(log(AVG))/n()),
+            SEN1N=sqrt(var(N1)/n()),
+            SEN2N=sqrt(var(N2)/n()),
+            SEAVGN=sqrt(var(AVG)/n()))%>%
+  ggplot()+
+  geom_point(aes(x=geoN1,y=SEN1N))+
+  scale_y_log10()+scale_x_log10()
+
+
+
+modeltransform <- function(Vector){
+  return(log(Vector))
+}
+
+HFGTran <- HFGFrameUp%>%
+  group_by(Site,Date)%>%
+  mutate(GeoMean=exp(mean(log(N1))),
+         ArthMean=mean(N1))
+
+
+HFGTranSummer <- HFGTran%>%
+  summarise(GeoMean=exp(mean(log(modeltransform(N1)))),
+            SE=sqrt(var(modeltransform(N1))/n()))
+            
+HFGTranSummer%>%
+  ggplot()+
+  aes(x=GeoMean,y=SE)+
+  geom_point()+
+  geom_smooth(method="lm")
+
+
+summary(lm(SE~GeoMean,data=HFGTranSummer))
+
+
+
+#Vector auto regressive models
+```
+
+
+
+
+
+
+```{r PMMoV Analysis}
+SiteOptions2=c("Kenosha","Madison", "Sun Prairie","Wausau")
+
+
+
+
+PMMoVUseDF=HFGFrameUp%>%
+  filter(Site %in% SiteOptions2)%>%
+  mutate(`PMMoV Level`=ifelse(PMMoV<1*10^7,"Low","Medium"))%>%
+  mutate(`PMMoV Level`=ifelse(PMMoV>1*10^8,"High",`PMMoV Level`))%>%
+  mutate(`PMMoV Level`=factor(`PMMoV Level`,levels=c("High","Medium","Low")))
+
+PMMoVUseDF%>%
+  ggplot()+aes(x=PMMoV,y=N1,color=`PMMoV Level`)+geom_point()+scale_y_log10()+
+  scale_x_log10()+facet_wrap(~Site)+ggtitle("N1 Vs PMMoV")+
+  xlab("PMMoV (GC/L)")+ylab("N1 (GC/L)")
+
+PMMoVUseDF%>%
+  ggplot()+aes(x=Date,y=N1,color=`PMMoV Level`)+geom_point()+
+  ylab("N1 (GC/L)")+ggtitle("PMMoV and N1 appear unrelated")+
+  scale_y_log10()+facet_wrap(~Site)
+
+cor(log(HFGFrameUp$N1),log(HFGFrameUp$PMMoV),use="pairwise.complete.obs")
+```
+
+
+```{r PMMoV Analysis 2}
+
+BCoVUseDF=HFGFrame%>%
+  filter(Site %in% SiteOptions2)%>%
+  filter(N1<2e6)%>%
+  mutate(`Percent BCoV Recovery`=ifelse(Pct_BCoV<.5,"Low","Medium"))%>%
+  mutate(`Percent BCoV Recovery`=ifelse(Pct_BCoV>10,"High",`Percent BCoV Recovery`))%>%
+  mutate(`Percent BCoV Recovery`=factor(`Percent BCoV Recovery`,levels=c("High","Medium","Low")))
+
+BCoVUseDF%>%
+  ggplot()+aes(x=Pct_BCoV,y=N1,color=`Percent BCoV Recovery`)+geom_point()+
+  xlab("Percent Bcov Recovery")+
+  ylab("N1 (GC/L)")+
+  scale_y_log10()+
+  scale_x_log10()+
+  facet_wrap(~Site)+
+  ggtitle("N1 Vs %Bcov recovery")
+
+
+BCoVUseDF%>%
+  ggplot()+aes(x=Date,y=N1,color=`Percent BCoV Recovery`)+geom_point()+
+  ggtitle("Percent BCoV recovery and N1 appear unrelated")+
+  scale_y_log10()+
+  facet_wrap(~Site)
+
+cor(log(HFGFrameUp$N1),log(HFGFrameUp$Pct_BCoV),use="pairwise.complete.obs")
+
+
+```
+
+```{r}
+
+HFGSEPop <- full_join(HFGPop,HFGFrame, by=c("Site"))%>%
+  group_by(Site,Date)%>%
+  summarise(seN1=sqrt(var(N1)/n()),
+            seN2=sqrt(var(N2)/n()),
+            seAVG=sqrt(var(AVG)/18),
+            Pop=mean(Population,na.rm=TRUE))%>%
+  ungroup()%>%
+  group_by(Site)%>%
+  summarise(SeMean=mean(seN1,na.rm=TRUE),Pop=mean(Pop,na.rm=TRUE))%>%
+  arrange(Pop)
+
+HFGSEPop
+
+HFGSEPop%>%
+  ggplot()+
+  aes(x=Pop,y=SeMean)+
+  geom_point()+
+  scale_y_log10()+
+  scale_x_log10()
+
+
+#no clear relationship between population and variation of the 9 samples
+
+```
+
+```{r N1vN2vAVG}
+
+SEHFGDF <- HFGFrameUp%>%
+  group_by(Site,Date)%>%
+  mutate(seN1=sqrt(var(N1)/n()),seN2=sqrt(var(N2)/n()),seAVG=sqrt(var(AVG)/18))
+
+
+
+Alp=.5
+SEHFGDF%>%
+  ggplot()+
+  geom_histogram(aes(x=seN1,fill="N1"),alpha=Alp)+
+  geom_histogram(aes(x=seN2,fill="N2"),alpha=Alp)+
+  geom_histogram(aes(x=seAVG,fill="AVG"),alpha=Alp)+
+  scale_y_log10()+
+  scale_x_log10()
+
+
+
+SEHFGDFSum <- HFGFrameUp%>%
+  group_by(Site,Date)%>%
+  summarise(seN1=sqrt(var(N1)/n()),seN2=sqrt(var(N2)/n()),seAVG=sqrt(var(AVG)/18))
+
+SEHFGDFSum%>%
+  ggplot()+
+  geom_histogram(aes(x=log(seN1)-log(seN2)))
+
+  
+
+SEHFGDFSum%>%
+  ungroup()%>%
+  summarise(mean(log(seN1),na.rm = TRUE),mean(log(seN2),na.rm = TRUE),mean(log(seAVG),na.rm = TRUE))
+
+t.test(log(SEHFGDFSum$seN1),log(SEHFGDFSum$seN2))
+t.test(log(SEHFGDFSum$seN1),log(SEHFGDFSum$seAVG))
+t.test(log(SEHFGDFSum$seAVG),log(SEHFGDFSum$seN2))
+
+```
+
+
+```{r cases}
+MaskedDataRange="1-4 Cases"
+inner_join(HFGFrame,HFGCaseDF,by=c("Site","Date"))%>%
+  mutate(PHI_masking = ifelse(ReportedCases<0,MaskedDataRange,"Reported values"),
+          ReportedCases = ifelse(ReportedCases<0,2.5,ReportedCases))%>%
+  filter(!is.na(PHI_masking))%>%
+  group_by(Site)%>%
+  filter(sum(PHI_masking=="Reported values")>120)%>%
+  ggplot()+
+  geom_rect(aes(xmin=Date-.5,xmax=Date+.5,ymin=0,ymax=ReportedCases/(Population),fill=PHI_masking),color="black")+
+  geom_point(aes(x=Date,y=log(N1)*3-25))+
+  facet_wrap(~Site,scales = "free", nrow=3)+ 
+      scale_fill_manual(values=c("light blue","gray"))
+
+```
+
+
+```{r include=FALSE}
+# HFGFrameUp%>%
+#   group_by(Date,Site)%>%
+#   mutate(N=n())%>%
+#   filter(N!=9)#,N!=12)%>%
+#   #filter(Site=="Madison")
+```
+
+```{r covarients}
+
+CoverHFG <- HFGFrame%>%
+  select(-N1Ct,-N2Ct,-PMMOVCT)
+
+CoverHFG%>%
+  ggplot()+
+  geom_point(aes(x=Date,y=N1,color=N1LOD))+
+  scale_y_log10()+
+  geom_hline(yintercept = 4*10e3)
+  facet_wrap(~Site)
+
+
+# CoverHFG%>%
+#   filter(N1LOD==TRUE)%>%
+#   filter(N1>4*10e3)
+# CoverHFG%>%
+#   filter(N1LOD==FALSE)%>%
+#   filter(N1<4*10e3)
+
+4*10e3
+```
+
+```{r}
+HFGFrame%>%
+  filter(!is.na(N1),!is.na(Date),!is.na(`Filter replicates`),!is.na(Site))%>%
+  group_by(Site,Date,`Filter replicates`)%>%
+  summarize(var=var(N1))%>%
+  filter(!is.na(var))%>%
+  ungroup()%>%
+  summarize(meanvar=mean(var))
+2.5075450674e+10
+
+
+HFGFrame%>%
+  filter(!is.na(N1),!is.na(Date),!is.na(Site))%>%
+  group_by(Site,Date)%>%
+  summarize(var=var(N1))%>%
+  filter(!is.na(var))%>%
+  ungroup()%>%
+  summarize(meanvar=mean(var))
+2.756624e+12				
+
+
+HFGFrame%>%
+  group_by(Date,Site)%>%
+  summarize(N1=mean(N1))%>%
+  mutate(Pre1=lag(N1,n=1),Nxt1=lead(N1,n=1))%>%
+  filter(!is.na(Nxt1),!is.na(Pre1))%>%
+  pivot_longer(N1:Nxt1)%>%
+  summarize(var=var(value))%>%
+  filter(!is.na(var))%>%
+  ungroup()%>%
+  summarize(meanvar=mean(var))
+5.5569708129e+10
+
+# library(nlme)
+# interaction.plot (HFGFrame$Date, factor(HFGFrame$Site), HFGFrame$N1, lty=c(1:3),lwd=2,ylab="mean of Y", xlab="time", trace.label="Treatment")
+# nestinginfo <- groupedData(N1 ~ Site | `Filter replicates`, data= HFGFrame)
+```
