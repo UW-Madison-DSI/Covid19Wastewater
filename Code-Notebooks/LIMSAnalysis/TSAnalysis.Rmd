@@ -365,7 +365,7 @@ temp <- ts(WeightedPred)
 
 #-stats::lag(CasesTSVec,1)
 
-ccfvalues2  <-  ccf(CasesTSVec,temp,type = c("correlation"),na.action = na.pass)
+ccfvalues2  <-  ccf(log(N1TSVec),temp,type = c("correlation"),na.action = na.pass)
 plot(temp)
 plot(log(N1TSVec))
 ```

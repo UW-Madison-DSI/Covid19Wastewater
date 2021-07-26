@@ -14,21 +14,77 @@ knitr::opts_chunk$set(
 
 ```{r Start enviroment, message=FALSE, warning=FALSE}
 library(ggpubr)
-library(dplyr)
+library(tidyverse)
 library(forecast)
 library(lmtest)
 library(lubridate)
 
 #Data Files and prep work
-source("../../Scripts/GenPlotMaking.R")
-source("../../Scripts/WasteWaterDataProccess.R")
-source("../../Scripts/CassesDataProccess.R")
-source("../../Scripts/HelperFunctions.R")
+source("../Scripts/GenPlotMaking.R")
+source("../Scripts/WasteWaterDataProccess.R")
+source("../Scripts/CassesDataProccess.R")
+source("../Scripts/HelperFunctions.R")
 ```
 ```{r DF Set Up}
-#LatWasteFN <- "../../../UntrackedData/WW SARS-COV-2 Data V5.xlsx"
+PathStarter="Z:/"
+
+SigWasteFN <- paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/TimeSeriesDataforStats072321.csv")
+
+SigDecayDF <- read.csv(SigWasteFN)%>%
+  rename(collectionDate = Collection.Date,
+         FilteredDate = Filtered.Date)%>%
+  mutate(collectionDate = mdy(collectionDate),
+         TimePassed = mdy(FilteredDate)-collectionDate,
+         N1.CT = as.numeric(N1.CT))
+
+```
+```{r data discription}
+
+SigDecayDF%>%
+  group_by(WWTP,collectionDate)%>%
+  summarise(n())
+
+SigDecayDF%>%
+  group_by(WWTP,TimePassed)%>%
+  summarise(n())
+
+```
 
 
 
+```{r ploting comp, warning=FALSE, message=FALSE}
+SigDecayDF%>%
+  ggplot()+
+  aes(x=TimePassed,y=N1.GC.L)+
+  geom_point()+
+  geom_smooth(method = "lm", se=FALSE)+
+  facet_wrap(~WWTP,nrow=3,scales = "free")
 
+SigDecayDF%>%
+  group_by(WWTP,TimePassed)%>%
+  summarise(N1=mean(log(N1.GC.L),na.rm = TRUE))%>%
+  ggplot()+
+  aes(x=TimePassed,y=N1)+
+  geom_point()+
+  geom_smooth(method = "lm", se=FALSE)+
+  facet_wrap(~WWTP,nrow=3,scales = "free")
+
+
+SigDecayDF%>%
+  group_by(WWTP,TimePassed)%>%
+  summarise(BCoV=mean(BCoV.percent.recovery,na.rm = TRUE))%>%
+  ggplot()+
+  aes(x=TimePassed,y=BCoV)+
+  geom_point()+
+  geom_smooth(method = "lm", se=FALSE)+
+  facet_wrap(~WWTP,nrow=3,scales = "free")
+
+SigDecayDF%>%
+  group_by(WWTP,TimePassed)%>%
+  summarise(PMMoV=mean(log(PMMoV.GC.L),na.rm = TRUE))%>%
+  ggplot()+
+  aes(x=TimePassed,y=PMMoV)+
+  geom_point()+
+  geom_smooth(method = "lm", se=FALSE)+
+  facet_wrap(~WWTP,nrow=3,scales = "free")
 ```
