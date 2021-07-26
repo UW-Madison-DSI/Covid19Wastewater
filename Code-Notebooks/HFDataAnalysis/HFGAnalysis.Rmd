@@ -168,7 +168,46 @@ summary(lm(SE~GeoMean,data=HFGTranSummer))
 
 
 
+summary(aov(terms(log(N1)~Site+Site:Date:`Filter replicates`,keep.order = TRUE),
+              data=HFGFrameWeekend))
+
 #Vector auto regressive models
+DailyHFGFrame <- HFGFrame%>%
+  group_by(Site,Date)%>%
+  summarise(N1Mean=mean(N1))%>%
+  filter(Site=="Madison")
+
+FilterHFGFrame <- HFGFrame%>%
+  group_by(Site,Date,`Filter replicates`)%>%
+  summarise(N1Mean=exp(mean(log(N1))))%>%
+  filter(Site=="Madison")
+            
+HFGFrame%>%
+  filter(Site=="Madison")%>%
+  ggplot()+
+  
+    geom_rect(aes(xmin=Date-.4,xmax=Date+.9,ymin=exp(log(N1Mean)-.1874749	),  ymax=exp(log(N1Mean)+.1874749	)),
+            fill="black",alpha=.3,data=DailyHFGFrame)+
+  
+  geom_point(aes(x=Date,y=N1Mean,color=`Filter replicates`),data=FilterHFGFrame)+
+  
+  geom_rect(aes(xmin=Date-.4,xmax=Date+.4,ymin=exp(log(N1Mean)-.1874749	),  ymax=exp(log(N1Mean)+.1874749	),fill=`Filter replicates`),
+            alpha=.4,data=FilterHFGFrame)+
+  
+  scale_y_log10()
+
+#1562385135
+#633922501
+  
+HFGFrame%>%
+  filter(!is.na(N1),!is.na(Date),!is.na(Site))%>%
+  group_by(Site,Date,`Filter replicates`)%>%
+  summarize(var=var(log(N1)))%>%
+  filter(!is.na(var))%>%
+  ungroup()%>%
+  summarize(meanvar=mean(var))
+
+
 ```
 
 
@@ -296,6 +335,8 @@ t.test(log(SEHFGDFSum$seN1),log(SEHFGDFSum$seN2))
 t.test(log(SEHFGDFSum$seN1),log(SEHFGDFSum$seAVG))
 t.test(log(SEHFGDFSum$seAVG),log(SEHFGDFSum$seN2))
 
+
+#
 ```
 
 
@@ -354,7 +395,7 @@ HFGFrame%>%
   summarize(var=var(N1))%>%
   filter(!is.na(var))%>%
   ungroup()%>%
-  summarize(meanvar=mean(var))
+  summarize(meanvar=median(var))
 2.5075450674e+10
 
 
@@ -364,7 +405,7 @@ HFGFrame%>%
   summarize(var=var(N1))%>%
   filter(!is.na(var))%>%
   ungroup()%>%
-  summarize(meanvar=mean(var))
+  summarize(meanvar=median(var))
 2.756624e+12				
 
 

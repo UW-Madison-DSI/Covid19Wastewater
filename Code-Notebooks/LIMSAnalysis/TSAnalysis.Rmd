@@ -28,9 +28,6 @@ source("../../Scripts/HelperFunctions.R")
 ```
 ```{r DF Set Up}
 #LatWasteFN <- "../../../UntrackedData/WW SARS-COV-2 Data V5.xlsx"
-
-HFGWasteFN  <-  "../../../UntrackedData/HFG data for stats corrected 071421.xlsx"
-HFGCaseFN <- "../../../UntrackedData/HighFreq_CaseData_2021-05-07.csv"
 LatMMSDFN  <-  "../../CaseData/results/2021-06-24/MMSD_Cases.csv"
 LatSpringCaseFN <- "../../../UntrackedData/SpringSemester_CasesByDorm.tsv"
 LatFallCaseFN <- "../../../UntrackedData/FallSemester_CasesByDorm.tsv"
@@ -41,9 +38,6 @@ LatCaseDF <- CovidDataPARSER(LatSpringCaseFN,LatFallCaseFN,LatMMSDFN)%>%
   select(Date,Site,Cases,Tests,Per_pos)
 
 
-LatCaseDFRoll <- RollPerPos(LatCaseDF,"Cases","Tests",Facet="Site")%>%
-  select(Date,Site,Cases,Per_pos)
-
 
 
 missing_codes <- c("","NA","0","Undetected","Not Detected",
@@ -53,7 +47,7 @@ missing_codes <- c("","NA","0","Undetected","Not Detected",
 LIMSFullDFAllRows <- LIMSDataPARSER(LIMSFN)
 
 LIMSFullDF <- LIMSFullDFAllRows%>%
-  select(Date,Site, BCoV, N1,N1Error,N2, N2Error,PMMoV,Pop,FlowRate)
+  select(Date,Site, BCoV, N1,N1Error,N2, N2Error, AVG,PMMoV,Pop,FlowRate)
 
 
 
@@ -122,14 +116,16 @@ library(astsa)
 #   filter(Site=="Madison")
 # grangertest(formula=log(N1)~log(N2),data=LIMSMadDF)
 
-MadCasedat<-RollPerPos(LatCaseDF,"Cases","Tests",Facet="Site")%>%
+MadCasedat<-RollPerPos(LatCaseDF,"Cases","Tests",Facet="Site",n=14)%>%
   filter(Site=="Madison")
 
-MadLIMsdata<-RollAvg(LIMSFullDF,var=c("N1","N2","AVG","PMMoV","BCoV"))%>%
+MadLIMsdata<-RollAvg(LIMSFullDF,var=c("N1","N2","AVG","PMMoV","BCoV"),n=14)%>%
   filter(Site=="Madison")%>%
-  select(Site,Date,N1,N2,PMMoV,BCoV)
+  select(Site,Date,N1,N2,PMMoV,BCoV,AVG)
+
 LIMSFullDFAllRows2 <- LIMSFullDFAllRows%>%
-  select(-N1,-N2,-PMMoV,-BCoV)
+  select(-N1,-N2,-PMMoV,-BCoV,-AVG)
+
 MadLIMsdata2 <- inner_join(MadLIMsdata,LIMSFullDFAllRows2,by=c("Date","Site"))
 
 Maddata <- inner_join(MadCasedat,MadLIMsdata2,by=c("Date","Site"))
@@ -138,21 +134,21 @@ Maddata <- inner_join(MadCasedat,MadLIMsdata2,by=c("Date","Site"))
 TSMad <- ts(Maddata)
 N1TSVec <- TSMad[,6]
 N2TSVec <- TSMad[,7]
-AVGTSVec <- TSMad[,65]
+AVGTSVec <- TSMad[,10]
 PMMoVTSVec <- TSMad[,8]
 BCoVTSVec <- TSMad[,9]
-FlowRateTSVec <- TSMad[,11]
-ConductivityTSVec <- TSMad[,21]
-temperatureTSVec <- TSMad[,57]
-tssTSVec <- TSMad[,59]
+FlowRateTSVec <- TSMad[,12]
+ConductivityTSVec <- TSMad[,22]
+temperatureTSVec <- TSMad[,58]
+tssTSVec <- TSMad[,60]
 
 CasesTSVec <- TSMad[,3]
 TestsTSVec <- TSMad[,4]
 Per_posTSVec <- TSMad[,5]
 
 ts.plot(log(N1TSVec),log(N2TSVec),log(AVGTSVec),
-        col=c("red","blue", "green"), 
-        gpars=list(xlab="Time (Days)", ylab="% Pos"))
+        col=c("red","blue", "dark green"), 
+        gpars=list(xlab="Time (Days)", ylab="N Conc"))
 
 
 var.test(log(N1TSVec),log(N2TSVec))
@@ -161,12 +157,7 @@ var.test(log(N1TSVec[50:214]),log(N2TSVec[50:214]))
 ```
 
 
-```
-#anovaModel <- aov(terms(N1~Site:Date+N2, keep.order = TRUE),data=Maddata)
-
-#summary(anovaModel)
-
-
+```{r redundent LIMS Data}
 #n1_sars_cov2_units == "Gene copies/L" NA             
 #capacity_mgd == Site dependent
 #composite_freq == NA  "24hr-FWCmp" "24hr-TWCmp"
@@ -359,8 +350,25 @@ R2=0.2849
 
 
 ```{r}
+library(limma)
+
+WeightedPred <- loessFit(y=log(Maddata$N1),
+                      x=Maddata$Date,
+                      span=.11,
+                      min.weight=0,
+                      max.weight=1e8,
+                      iterations=10)$fitted
+  
+  
+temp <- ts(WeightedPred)
+
+
 #-stats::lag(CasesTSVec,1)
-ccfvalues2  <-  ccf(CasesTSVec,log(N1TSVec),type = c("correlation"),na.action = na.pass)
+
+ccfvalues2  <-  ccf(CasesTSVec,temp,type = c("correlation"),na.action = na.pass)
+plot(temp)
+plot(log(N1TSVec))
+```
 
 alldata2 <- ts.intersect(CasesTSVec,log(N1TSVec),
                          N1A=stats::lag(log(N1TSVec),1),
@@ -379,9 +387,7 @@ CaseN1ACFResid <- acf2(residuals(tryit2))
 
 R2= 0.3487#0.2621 for smaller windows
 
-plot(CasesTSVec)
 
-plot(log(N1TSVec/BCoVTSVec))
 
 #TwentLagPlot
 ts.plot(CasesTSVec,(-51.901*stats::lag(log(N1TSVec),-20)+65.434*stats::lag(log(N1TSVec),20)-60.471),
@@ -402,9 +408,13 @@ ts.plot(CasesTSVec,(-50.95*stats::lag(log(N1TSVec),-5)+51.95*stats::lag(log(N1TS
         gpars=list(xlab="Time (Days)", ylab="Cases",main="5 day model"))
 legend("bottomleft", legend=c("N1 TS Model","Cases"), col=1:3, lty=1, cex=1)
 
-
-
-
+#research drive first
+#separate work:
+#cross correlation most important
+#Heuristic work with moving average
+#correlation of moving average
+#7 day is too bumpy - features are not real - larger smoothing or loess -diffrent N1
+#-2 week moving average = standard univaraiate on N1 for smoothing. auto regessive corrective smoothing
 ```
 
 

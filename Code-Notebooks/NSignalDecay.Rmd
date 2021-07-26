@@ -1,0 +1,34 @@
+---
+title: "NSignalDecay"
+author: "Marlin"
+date: "7/25/2021"
+output: html_document
+---
+```{r}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+```{r Start enviroment, message=FALSE, warning=FALSE}
+library(ggpubr)
+library(dplyr)
+library(forecast)
+library(lmtest)
+library(lubridate)
+
+#Data Files and prep work
+source("../../Scripts/GenPlotMaking.R")
+source("../../Scripts/WasteWaterDataProccess.R")
+source("../../Scripts/CassesDataProccess.R")
+source("../../Scripts/HelperFunctions.R")
+```
+```{r DF Set Up}
+#LatWasteFN <- "../../../UntrackedData/WW SARS-COV-2 Data V5.xlsx"
+
+
+
+
+```
