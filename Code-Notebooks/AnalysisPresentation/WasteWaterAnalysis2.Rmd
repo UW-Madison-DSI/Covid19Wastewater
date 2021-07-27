@@ -6,7 +6,8 @@ output: html_document
 
 
 
-```{r, include=FALSE}
+```{r , include=FALSE}
+
 knitr::opts_chunk$set(message = FALSE,warning = FALSE)
 knitr::opts_chunk$set(fig.width=8, fig.height=5) 
 library(ggpubr)
@@ -132,8 +133,10 @@ LoessSmoothPlot <- function(SiteS="Madison",
              Indy>0)
 
     
-    LimitLIMSDF$Pred1 <- LoessGenerater(LimitLIMSDF,weights=weights[[1]],Span=Span,min = min,max = max)
-    LimitLIMSDF$PredSE <- LoessGenerater(LimitLIMSDF,weights=weights[[2]],Span=Span,min = min,max = max)
+    LimitLIMSDF$Pred1 <- LoessGenerater(LimitLIMSDF,weights=weights[[1]],
+    Span=Span,min = min,max = max)
+    LimitLIMSDF$PredSE <- LoessGenerater(LimitLIMSDF,weights=weights[[2]],
+    Span=Span,min = min,max = max)
     LoessPlot=LimitLIMSDF%>%
       mutate(ErrorMin=Indy-Dep,ErrorMax=Indy+Dep)%>%
           mutate(ErrorMin=ifelse(ErrorMin>0,ErrorMin,0))%>%
@@ -350,7 +353,7 @@ CasePlot <- CasePlotMaking("Madison")
 
 ```
 
-```{r,echo=FALSE}
+```{r ,echo=FALSE}
 
 N1Plot <- N1Plot+
   theme()+xlab("Madison Longitudinal Data")+theme(

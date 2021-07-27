@@ -18,13 +18,14 @@ library(tidyverse)
 library(forecast)
 library(lmtest)
 library(lubridate)
-
+library(lme4)
 #Data Files and prep work
 source("../Scripts/GenPlotMaking.R")
 source("../Scripts/WasteWaterDataProccess.R")
 source("../Scripts/CassesDataProccess.R")
 source("../Scripts/HelperFunctions.R")
 ```
+
 ```{r DF Set Up}
 PathStarter="Z:/"
 
@@ -34,7 +35,8 @@ SigDecayDF <- read.csv(SigWasteFN)%>%
   rename(collectionDate = Collection.Date,
          FilteredDate = Filtered.Date)%>%
   mutate(collectionDate = mdy(collectionDate),
-         TimePassed = mdy(FilteredDate)-collectionDate,
+         FilteredDate = mdy(FilteredDate),
+         TimePassed = FilteredDate-collectionDate,
          N1.CT = as.numeric(N1.CT))
 
 ```
@@ -53,38 +55,131 @@ SigDecayDF%>%
 
 
 ```{r ploting comp, warning=FALSE, message=FALSE}
-SigDecayDF%>%
-  ggplot()+
-  aes(x=TimePassed,y=N1.GC.L)+
-  geom_point()+
-  geom_smooth(method = "lm", se=FALSE)+
-  facet_wrap(~WWTP,nrow=3,scales = "free")
+summary(lm(N1.GC.L~TimePassed+WWTP,data=SigDecayDF))
+summary(aov(log(N1.GC.L)~TimePassed*WWTP*Filter.Replicate,data=SigDecayDF))
+
+#add filter rep to model
+#find signif of coef
+#N1 ~ Passed|
+#A + BT + Noise + Noise_Plant + Noise_Rep
+#different slope and intercept for data
+#just different intercepts
+#
+
+#sig with a ton a vars
+#for PMM N1/2 %BCoV significance slope less then 0 jitter
+#this plot plus significance number
+#plot (geo(N1)+geo(N2))
+#log(N1)+log(N2) on left side
+#Rep:
+#Put everything in a model 
+
+# Difference between filter a and b - if no deg then you would expect constant 
+# /some scaling first
+
+# variance over time / 
+#
+
+DecayPlot <- function(Var){
+  GraphPlot <- SigDecayDF%>%
+    ggplot()+
+    aes(x=TimePassed,y=!!sym(Var),color=Filter.Replicate)+
+    geom_jitter(width = .2)+
+    geom_smooth(method = "lm", se=FALSE)+
+    facet_wrap(~WWTP,nrow=3,scales = "free_y")+
+    scale_y_log10()
+  Sig<- summary(lm(log(N1.GC.L)~ Filter.Replicate * WWTP * TimePassed ,data=SigDecayDF))[[4]][41]
+  return(annotate_figure(GraphPlot,top = text_grob(paste("Significance:",signif(Sig,3)))))
+}
+
+hierarchicalCorrelation <- function(Var){
+  TopLevel <- SigDecayDF%>%
+  summarise(Cor=cor(log(!!sym(Var)),as.numeric(TimePassed),use="complete.obs"),
+            CorPvalue = cor.test(log(N1.GC.L),
+                                 as.numeric(TimePassed),use="complete.obs")[[3]])%>%
+  mutate(WWTP = "ALL",Filter.Replicate = "Both")
+SiteLevel <- SigDecayDF%>%
+  group_by(WWTP)%>%
+  summarise(Cor=cor(log(!!sym(Var)),as.numeric(TimePassed),use="complete.obs"),
+            CorPvalue = cor.test(log(N1.GC.L),
+                                 as.numeric(TimePassed),use="complete.obs")[[3]])%>%
+  mutate(Filter.Replicate = "Both")
+BotLevel <- SigDecayDF%>%
+  group_by(WWTP,Filter.Replicate)%>%
+  summarise(Cor=cor(log(!!sym(Var)),as.numeric(TimePassed),use="complete.obs"),
+            CorPvalue = cor.test(log(N1.GC.L),
+                                 as.numeric(TimePassed),use="complete.obs")[[3]])
+rbind(TopLevel,SiteLevel,BotLevel)%>%
+  mutate(IsSig=CorPvalue<.05)%>%
+  select(WWTP,Filter.Replicate,Cor,CorPvalue,IsSig)
+}
+
+DecayPlot("N1.GC.L")
+hierarchicalCorrelation("PMMoV.GC.L")
+DecayPlot("N1.GC.L")
+hierarchicalCorrelation("N1.GC.L")
+hierarchicalCorrelation("N2.GC.L")
+
+cor.test(log(SigDecayDF$N1.GC.L),as.numeric(SigDecayDF$TimePassed),use="complete.obs")[[3]]
+
+#hierarchicalCorrelation
+#correlation need to be independent
+#think about it and make it more rigorous
+
+#look at non parametric test
+#look at range for low number of points
+#Order by time / values
+#1 d observations -> label dates test to see if the organized ranks are non random
+#non parametric test require iid
+#spearman look at pro and con of non parametric tests
+DecayPlot("N1.GC.L")
+#show direction
+#hetroskdaski - fails
+#truncate - stabilize variance
+#almost key figure - rigorous visualization of hiarc model. give model 2
+#2: variance also increaces. show conc
+```
+
+```{r}
+  GraphPlot <- SigDecayDF%>%
+    ggplot()+
+    aes(x=TimePassed,y=log(N1.GC.L)+log(N2.GC.L),color=Filter.Replicate)+
+    geom_jitter(width = .2)+
+    geom_smooth(method = "lm", se=FALSE)+
+    facet_wrap(~WWTP,nrow=3,scales = "free")+
+    scale_y_log10()
+
+Sig <- summary(lm(log(N1.GC.L)+log(N2.GC.L)~ Filter.Replicate * WWTP * TimePassed ,data=SigDecayDF))
+
+GraphPlot
+Sig
+
 
 SigDecayDF%>%
-  group_by(WWTP,TimePassed)%>%
-  summarise(N1=mean(log(N1.GC.L),na.rm = TRUE))%>%
-  ggplot()+
-  aes(x=TimePassed,y=N1)+
-  geom_point()+
-  geom_smooth(method = "lm", se=FALSE)+
-  facet_wrap(~WWTP,nrow=3,scales = "free")
+  group_by(WWTP,Filter.Replicate,TimePassed)%>%
+  summarise(N1Var=var(N1.GC.L))%>%
+    ggplot()+
+    aes(x=TimePassed,y=N1Var,color=Filter.Replicate)+
+    geom_jitter(width = .2)+
+    geom_smooth(method = "lm", se=FALSE)+
+    facet_wrap(~WWTP,nrow=3,scales = "free")+
+    scale_y_log10()
+#color ramp for time
 
+#some weighted based on lag time
 
-SigDecayDF%>%
-  group_by(WWTP,TimePassed)%>%
-  summarise(BCoV=mean(BCoV.percent.recovery,na.rm = TRUE))%>%
-  ggplot()+
-  aes(x=TimePassed,y=BCoV)+
-  geom_point()+
-  geom_smooth(method = "lm", se=FALSE)+
-  facet_wrap(~WWTP,nrow=3,scales = "free")
+#Formal Hiar fixed = time ,=filter site dependent=N1,N2,PMMoV,BCoV
 
-SigDecayDF%>%
-  group_by(WWTP,TimePassed)%>%
-  summarise(PMMoV=mean(log(PMMoV.GC.L),na.rm = TRUE))%>%
-  ggplot()+
-  aes(x=TimePassed,y=PMMoV)+
-  geom_point()+
-  geom_smooth(method = "lm", se=FALSE)+
-  facet_wrap(~WWTP,nrow=3,scales = "free")
+#Replicate
+#BCoV.percent.recovery Sig
+#log(PMMoV.GC.L) Sig
+#log(N1.GC.L) Not Sig
+#log(N2.GC.L) Not Sig
+SigDecayDF2 <- SigDecayDF%>%
+  mutate(SiteFilter = paste( WWTP ,Filter.Replicate))
+
+MixedEffectModel <- lmer(log(N1.GC.L) ~ TimePassed + (TimePassed| WWTP/Filter.Replicate), 
+                         data = SigDecayDF2)
+summary(MixedEffectModel)
+confint(MixedEffectModel)
 ```

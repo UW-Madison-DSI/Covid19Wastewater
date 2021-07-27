@@ -12,8 +12,8 @@ RollPerPos = function(RollingDF,CaseName,TestName,Facet=NA,n=7){
     arrange(Facet,Date)%>%
     group_by(Facet)%>%
     mutate(Per_pos=RollPerPosHelperFunc(Case,Test,n=n),
-           Case=RollAvgHelperFunc(Case,n=n),
-           Test=RollAvgHelperFunc(Test,n=n)
+           Case=RollAvgHelperFunc(Case,N=n,Method="AR"),
+           Test=RollAvgHelperFunc(Test,N=n,Method="AR")
            )%>%
     ungroup()
   FullDataFM[[CaseName]]=FullDataFM$Case
@@ -42,7 +42,7 @@ RollPerPosHelperFunc = function(vectorCases,vectorTests,n=7){
   return(SlideMeanVec)
 }
 
-RollAvg = function(RollingDF,FacetName="Site",n=7,var=c("ReportedCases","EpisodeCases","CollectedCases","ConfirmedCases")){
+RollAvg = function(RollingDF,FacetName="Site",n=21,method="Geo",var=c("ReportedCases","EpisodeCases","CollectedCases","ConfirmedCases")){
   TDF=RollingDF%>%
     mutate(Facet=!!sym(FacetName))
   FaucetOptions=unique(TDF$Facet)
@@ -52,7 +52,7 @@ RollAvg = function(RollingDF,FacetName="Site",n=7,var=c("ReportedCases","Episode
   FullDataFM=full_join(TDF,FulldayRange,by=c("Date","Facet"))%>%
     arrange(Facet,Date)%>%
     group_by(Facet)%>%
-    mutate(across(any_of(var),RollAvgHelperFunc,n=n))%>%
+    mutate(across(any_of(var),RollAvgHelperFunc,N=n,Method=method))%>%
     ungroup()
   FullDataFM[[FacetName]]=FullDataFM$Facet
   FullDataFM=FullDataFM%>%
@@ -60,12 +60,19 @@ RollAvg = function(RollingDF,FacetName="Site",n=7,var=c("ReportedCases","Episode
   return(FullDataFM)
 }
 
-RollAvgHelperFunc = function(vectorCases,n=7){
-  CurrNumCase = rep(NA,n)
+RollAvgHelperFunc = function(vectorCases,N=14,Method="Geo"){
+  CurrNumCase = rep(NA,N)
   SlideMeanVec=vector(mode="double", length=length(vectorCases))
   for (i in 1:length(vectorCases)){
-    CurrNumCase[(i-1)%%n+1]=vectorCases[i]
-    SlideMeanVec[i]=mean(CurrNumCase,na.rm=T)
+    CurrNumCase[(i-1)%%N+1]=vectorCases[i]
+    if(Method == "Geo"){
+      slider = exp(mean(log(CurrNumCase),na.rm=T))
+    } else{
+      slider = mean(CurrNumCase,na.rm=T)
+    }
+    SlideMeanVec[i]=slider
+    #exp(mean(log(CurrNumCase),na.rm=T))
+    #mean(CurrNumCase,na.rm=T)
   }
   return(SlideMeanVec)
 }
