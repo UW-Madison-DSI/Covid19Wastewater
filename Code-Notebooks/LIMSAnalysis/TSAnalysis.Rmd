@@ -116,10 +116,11 @@ RAN <- 14
 #   filter(Site=="Madison")
 # grangertest(formula=log(N1)~log(N2),data=LIMSMadDF)
 
-MadCasedat<-RollPerPos(LatCaseDF,"Cases","Tests",Facet="Site",n=RAN)%>%
+MadCasedat<-DFSmoothingFN(LatCaseDF)%>%
   filter(Site=="Madison")
 #filter(abs(N1.x-N1.y)>500000)
 #select(filter(LIMSFullDF,Site=="Madison"),Date,N1)
+
 MadLIMsdata<-LIMSFullDF%>%
   RollAvg(var=c("N1","N2","AVG","PMMoV","BCoV"),n=RAN)%>%
   filter(Site=="Madison")%>%
@@ -143,27 +144,25 @@ Maddata <- inner_join(MadCasedat,MadLIMsdata2,by=c("Date","Site"))%>%
 #,start=min(Maddata$Date),end=max(Maddata$Date)
 
 TSMad <- ts(Maddata)
-N1TSVec <- TSMad[,6]
-N2TSVec <- TSMad[,7]
-AVGTSVec <- TSMad[,10]
-PMMoVTSVec <- TSMad[,8]
-BCoVTSVec <- TSMad[,9]
-FlowRateTSVec <- TSMad[,12]
-ConductivityTSVec <- TSMad[,22]
-temperatureTSVec <- TSMad[,58]
-tssTSVec <- TSMad[,60]
+N1TSVec <- TSMad[,7]
+N2TSVec <- TSMad[,8]
+AVGTSVec <- TSMad[,11]
+PMMoVTSVec <- TSMad[,9]
+BCoVTSVec <- TSMad[,10]
+FlowRateTSVec <- TSMad[,13]
+ConductivityTSVec <- TSMad[,23]
+temperatureTSVec <- TSMad[,59]
+tssTSVec <- TSMad[,61]
 
-CasesTSVec <- TSMad[,3]
+CasesTSVec <- TSMad[,6]
+UnSmoothedCasesTSVec <- TSMad[,3]
 TestsTSVec <- TSMad[,4]
 Per_posTSVec <- TSMad[,5]
 
 # ts.plot(log(N1TSVec),log(N2TSVec),log(AVGTSVec),
 #         col=c("red","blue", "dark green"), 
 #         gpars=list(xlab="Time (Days)", ylab="N Conc"))
-ts.plot(CasesTSVec)
-ts.plot(log(N1TSVec))
-# var.test(log(N1TSVec),log(N2TSVec))
-# var.test(log(N1TSVec[50:214]),log(N2TSVec[50:214]))
+
 
 #summary(arima(CasesTSVec,c(2,2,2),xreg = log(N1TSVec)))
 #TSMadLim <- ts(select(Maddata,Cases,N1),start=min(Maddata$Date),end=max(Maddata$Date))
@@ -180,11 +179,10 @@ library(dse)
 # informationTests(model1)
 # tfplot(model1)
 # checkResiduals(model1)
-MadLIMsdata2%>%
-  ggplot()+
-  geom_point(aes(x=Date,y=N1UnSmoothed))+
-  geom_line(aes(x=Date,y=N1),color="red")+
-  scale_y_log10()
+
+ts.plot(CasesTSVec)
+ts.plot(UnSmoothedCasesTSVec)
+ts.plot(N1TSVec)
 ```
 
 
@@ -233,7 +231,7 @@ TrueMadData <- full_join(FullDayDF,TrueMadData, by = c("Date"))%>%
 
 WeightedPred <- loessFit(y=log(TrueMadData$N1),
                       x=TrueMadData$Date,
-                      span=.15,
+                      span=.125,
                       min.weight=0,
                       max.weight=1e5,
                       iterations=10)$fitted
@@ -248,6 +246,28 @@ ts.plot(CasesTSVec,
          col=c("red","blue", "dark green"), 
          gpars=list(xlab="Time (Days)", ylab="Cases"))
  legend("topright", legend=c(paste(RAN,"MA Cases"),"Loess Smoothing",paste(RAN, "MA N1")), col=c(2,4,3), lty=1, cex=1)
+ 
+
+```
+
+
+
+```{r Loess SLD CCF}
+ccfvalues2  <-  ccf(loessPred,CasesTSVec,type = c("correlation"),na.action = na.pass)
+
+alldata1 <- ts.intersect(CasesTSVec,loessPred,
+                         N1TSVec,
+                         N1A=stats::lag(loessPred,20),
+                         N1B=stats::lag(loessPred,7),
+                         N1C=stats::lag(loessPred,-20))
+
+
+tryit1a  <- lm(CasesTSVec~N1A+N1B+N1C, data = alldata1)
+
+summary(tryit1a)
+
+ts.plot(predict(tryit1a))
+plot(CasesTSVec)
 ```
 
 ```{r Loess CCF}
@@ -277,10 +297,6 @@ plot(CasesTSVec)
 #- look at documentation of geom_smooth(method=lm)
 #variance models
 #Short write up - meet and communicate
-
-#gamma - read and extract gamma dist from emailed paper
-#add to shedding lag files - see if it fixes issues in TS
-#
 ```
 
 ```{r MA}
@@ -289,20 +305,20 @@ ccfvalues2  <-  ccf(log(N1TSVec),CasesTSVec,type = c("correlation"),na.action = 
 
 alldata1 <- ts.intersect(CasesTSVec,
                          N1TSVec,
-                         N1A=stats::lag(N1TSVec,-20),
-                         N1B=stats::lag(N1TSVec,20),
-                         N1C=stats::lag(N1TSVec,10),
+                         N1A=stats::lag(log(N1TSVec),-20),
+                         N1B=stats::lag(log(N1TSVec),10),
+                         N1C=stats::lag(log(N1TSVec),0),
                          N1D=stats::lag(log(N1TSVec),-20))
 
 
-tryit1b  <- lm(CasesTSVec~N1A+N1B, data = alldata1)
+tryit1b  <- lm(CasesTSVec~N1A+N1B+N1C, data = alldata1)
 
 summary(tryit1b)
 
 ts.plot(predict(tryit1b))
 plot(CasesTSVec)
 ```
-
+```{r}
 alldata2 <- ts.intersect(CasesTSVec,log(N1TSVec),
                          N1A=stats::lag(log(N1TSVec),1),
                          N1B=stats::lag(log(N1TSVec),-8),

@@ -34,7 +34,7 @@ SigWasteFN <- paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/TimeSerie
 SigDecayDF <- read.csv(SigWasteFN)%>%
   rename(collectionDate = Collection.Date,
          FilteredDate = Filtered.Date)%>%
-  mutate(collectionDate = mdy(collectionDate),
+  mutate(collectionDate = mdy(collectionDate), 
          FilteredDate = mdy(FilteredDate),
          TimePassed = FilteredDate-collectionDate,
          N1.CT = as.numeric(N1.CT))
@@ -43,13 +43,60 @@ SigDecayDF <- read.csv(SigWasteFN)%>%
 ```{r data discription}
 
 SigDecayDF%>%
-  group_by(WWTP,collectionDate)%>%
+  group_by(WWTP,collectionDate,Filter.Replicate)%>%
   summarise(n())
 
 SigDecayDF%>%
-  group_by(WWTP,TimePassed)%>%
-  summarise(n())
+  ggplot()+
+  aes(x=TimePassed,y=log(N1.GC.L),color=paste(WWTP,Filter.Replicate))+
+  geom_point()+
+  geom_smooth(method="lm")
 
+
+SigDecayDF%>%
+  group_by(WWTP,Filter.Replicate,TimePassed)%>%
+  summarise(N1=mean(log(N1.GC.L),na.rm=TRUE),Var=var(log(N1.GC.L),na.rm=TRUE))%>%
+  ggplot()+
+  aes(x=TimePassed,color=Filter.Replicate)+
+  geom_rect(aes(xmin=TimePassed-.2,xmax=TimePassed+.2,
+                ymin=N1-Var,ymax=N1+Var),fill=NA)+
+  geom_point(aes(y=N1))+
+  facet_wrap(~WWTP,nrow=3)
+```
+```{r, warning=FALSE}
+aba <- SigDecayDF%>%
+  filter(WWTP=="Kenosha",Filter.Replicate=="Rep A",
+         !is.na(N1.GC.L))
+
+aba$Pred <- predict(lm(log(N1.GC.L)~ TimePassed ,data=aba))
+
+
+full_join(SigDecayDF,aba,by=c("WWTP","Filter.Replicate","TimePassed","N1.GC.L"))%>%
+  ggplot()+
+    aes(x=TimePassed,y=log(N1.GC.L),color=Filter.Replicate)+
+    geom_jitter(width = .2)+
+    geom_smooth(method = "lm", se=FALSE)+
+    geom_line(aes(y=Pred))+
+    facet_wrap(~WWTP,nrow=3,scales = "free_y")+
+    scale_y_log10()
+
+SigDecayDF3 <- SigDecayDF%>%
+  filter(!is.na(N1.GC.L))
+
+
+
+SigDecayDF3$Pred <- predict(lm(log(N1.GC.L)~ TimePassed + 
+                                TimePassed:WWTP:Filter.Replicate+WWTP:Filter.Replicate+
+                                TimePassed:WWTP+WWTP,
+                                data=SigDecayDF3))
+
+SigDecayDF3%>%
+  ggplot()+
+    aes(x=TimePassed,y=log(N1.GC.L))+
+    geom_jitter(width = .2)+
+    #geom_smooth(method = "lm", se=FALSE)+
+    geom_line(aes(y=Pred))+
+    facet_grid(Filter.Replicate~WWTP)
 ```
 
 
@@ -62,9 +109,6 @@ summary(aov(log(N1.GC.L)~TimePassed*WWTP*Filter.Replicate,data=SigDecayDF))
 #find signif of coef
 #N1 ~ Passed|
 #A + BT + Noise + Noise_Plant + Noise_Rep
-#different slope and intercept for data
-#just different intercepts
-#
 
 #sig with a ton a vars
 #for PMM N1/2 %BCoV significance slope less then 0 jitter
@@ -83,103 +127,120 @@ summary(aov(log(N1.GC.L)~TimePassed*WWTP*Filter.Replicate,data=SigDecayDF))
 DecayPlot <- function(Var){
   GraphPlot <- SigDecayDF%>%
     ggplot()+
-    aes(x=TimePassed,y=!!sym(Var),color=Filter.Replicate)+
+    aes(x=TimePassed,y=!!sym(Var))+
     geom_jitter(width = .2)+
     geom_smooth(method = "lm", se=FALSE)+
-    facet_wrap(~WWTP,nrow=3,scales = "free_y")+
+    facet_grid(Filter.Replicate~WWTP)+
     scale_y_log10()
+  
   Sig<- summary(lm(log(N1.GC.L)~ Filter.Replicate * WWTP * TimePassed ,data=SigDecayDF))[[4]][41]
-  return(annotate_figure(GraphPlot,top = text_grob(paste("Significance:",signif(Sig,3)))))
+  return(annotate_figure(GraphPlot,top = text_grob(paste("Significance:",signif(0,3)))))
 }
 
-hierarchicalCorrelation <- function(Var){
-  TopLevel <- SigDecayDF%>%
-  summarise(Cor=cor(log(!!sym(Var)),as.numeric(TimePassed),use="complete.obs"),
-            CorPvalue = cor.test(log(N1.GC.L),
-                                 as.numeric(TimePassed),use="complete.obs")[[3]])%>%
-  mutate(WWTP = "ALL",Filter.Replicate = "Both")
-SiteLevel <- SigDecayDF%>%
-  group_by(WWTP)%>%
-  summarise(Cor=cor(log(!!sym(Var)),as.numeric(TimePassed),use="complete.obs"),
-            CorPvalue = cor.test(log(N1.GC.L),
-                                 as.numeric(TimePassed),use="complete.obs")[[3]])%>%
-  mutate(Filter.Replicate = "Both")
-BotLevel <- SigDecayDF%>%
-  group_by(WWTP,Filter.Replicate)%>%
-  summarise(Cor=cor(log(!!sym(Var)),as.numeric(TimePassed),use="complete.obs"),
-            CorPvalue = cor.test(log(N1.GC.L),
-                                 as.numeric(TimePassed),use="complete.obs")[[3]])
-rbind(TopLevel,SiteLevel,BotLevel)%>%
-  mutate(IsSig=CorPvalue<.05)%>%
-  select(WWTP,Filter.Replicate,Cor,CorPvalue,IsSig)
+SpearmanTest <- function(Var){
+    SigDecayDF%>%
+      group_by(WWTP,Filter.Replicate)%>%
+      summarise(Cor=cor(log(!!sym(Var)),
+                    method="spearman",
+                    as.numeric(TimePassed),
+                    use="complete.obs"),
+                CorPvalue = cor.test(log(!!sym(Var)),
+                                     method="spearman",
+                               as.numeric(TimePassed),
+                               use="complete.obs")[[3]])
 }
 
-DecayPlot("N1.GC.L")
-hierarchicalCorrelation("PMMoV.GC.L")
-DecayPlot("N1.GC.L")
-hierarchicalCorrelation("N1.GC.L")
-hierarchicalCorrelation("N2.GC.L")
 
-cor.test(log(SigDecayDF$N1.GC.L),as.numeric(SigDecayDF$TimePassed),use="complete.obs")[[3]]
 
-#hierarchicalCorrelation
+DecayPlot("N1.GC.L")
+
+
+
 #correlation need to be independent
 #think about it and make it more rigorous
 
 #look at non parametric test
 #look at range for low number of points
 #Order by time / values
-#1 d observations -> label dates test to see if the organized ranks are non random
-#non parametric test require iid
-#spearman look at pro and con of non parametric tests
-DecayPlot("N1.GC.L")
+
 #show direction
 #hetroskdaski - fails
 #truncate - stabilize variance
 #almost key figure - rigorous visualization of hiarc model. give model 2
 #2: variance also increaces. show conc
+
+SpearmanTest("N1.GC.L")
+
+SigDecayDF%>%
+  group_by(WWTP,Filter.Replicate)%>%
+  summarise(R2 = summary(lm(log(N1.GC.L) ~ TimePassed))$r.squared)
 ```
 
 ```{r}
-  GraphPlot <- SigDecayDF%>%
-    ggplot()+
-    aes(x=TimePassed,y=log(N1.GC.L)+log(N2.GC.L),color=Filter.Replicate)+
-    geom_jitter(width = .2)+
-    geom_smooth(method = "lm", se=FALSE)+
-    facet_wrap(~WWTP,nrow=3,scales = "free")+
-    scale_y_log10()
-
-Sig <- summary(lm(log(N1.GC.L)+log(N2.GC.L)~ Filter.Replicate * WWTP * TimePassed ,data=SigDecayDF))
-
-GraphPlot
-Sig
-
-
 SigDecayDF%>%
   group_by(WWTP,Filter.Replicate,TimePassed)%>%
-  summarise(N1Var=var(N1.GC.L))%>%
+  summarise(N1Var=var(log(N1.GC.L)))%>%
     ggplot()+
-    aes(x=TimePassed,y=N1Var,color=Filter.Replicate)+
+    aes(x=TimePassed,y=N1Var)+
     geom_jitter(width = .2)+
     geom_smooth(method = "lm", se=FALSE)+
     facet_wrap(~WWTP,nrow=3,scales = "free")+
-    scale_y_log10()
+    facet_grid(Filter.Replicate~WWTP)
 #color ramp for time
 
 #some weighted based on lag time
 
 #Formal Hiar fixed = time ,=filter site dependent=N1,N2,PMMoV,BCoV
+```
 
+
+```{r Formal MixedEffect}
+library(lmerTest)
 #Replicate
 #BCoV.percent.recovery Sig
 #log(PMMoV.GC.L) Sig
 #log(N1.GC.L) Not Sig
 #log(N2.GC.L) Not Sig
-SigDecayDF2 <- SigDecayDF%>%
-  mutate(SiteFilter = paste( WWTP ,Filter.Replicate))
 
-MixedEffectModel <- lmer(log(N1.GC.L) ~ TimePassed + (TimePassed| WWTP/Filter.Replicate), 
-                         data = SigDecayDF2)
+MixedEffectModel <- lmer(log(N1.GC.L) ~ TimePassed + (1+TimePassed| WWTP:Filter.Replicate), 
+                         data = SigDecayDF)
 summary(MixedEffectModel)
-confint(MixedEffectModel)
+anova(MixedEffectModel)
+
+full.lmer <- lmer(
+  log(N1.GC.L) ~ TimePassed + (1+TimePassed| WWTP:Filter.Replicate), 
+                         data = SigDecayDF, REML = FALSE)
+reduced.lmer <- lmer(log(N1.GC.L) ~ 1 + (1| WWTP:Filter.Replicate), 
+                         data = SigDecayDF, REML = FALSE)
+summary(anova(reduced.lmer, full.lmer))
+anova(MixedEffectModel, test="F")
+
+
+SigDecayDF3$Pred <- predict(MixedEffectModel)
+
+SigDecayDF3%>%
+  ggplot()+
+    aes(x=TimePassed,y=log(N1.GC.L))+
+    geom_jitter(width = .2)+
+    geom_smooth(method = "lm", se=FALSE)+
+    #geom_line(aes(y=Pred))+
+    facet_grid(Filter.Replicate~WWTP)
+
+
+
+# fit.fixed <- aov(log(N1.GC.L) ~ 
+#                    TimePassed * Filter.Replicate * WWTP,
+#                  data = SigDecayDF)
+# summary(fit.fixed)
+
+# pf(20.58, df1 = 2, df2 = 3, lower.tail = FALSE)
+# 
+# library(brms)
+#  brm(log(N1.GC.L) ~ 1 + (1| WWTP:Filter.Replicate), 
+#                               data   = SigDecayDF, 
+#                               warmup = 1000, 
+#                               iter   = 3000, 
+#                               chains = 2, 
+#                               inits  = "random")
+
 ```

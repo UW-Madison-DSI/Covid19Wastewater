@@ -60,18 +60,39 @@ LIMSMadDF <- LIMSFullDF%>%
   filter(Site == "Madison")
 ```
 ```{r CaseSmoothing}
+#return( RollPerPos(CaseDF,"Cases","Tests",Facet="Site"))
+
 DFSmoothingFN <- function(CaseDF){
-  return( RollPerPos(CaseDF,"Cases","Tests",Facet="Site"))
+  #5.028338
+scale =5.028338
+#2.332779
+shape =2.332779
+  CaseDF%>%
+    group_by(Site)%>%
+    mutate(Cases2 = c(rep(NA,29),
+                    rollapply(Cases,width=30,FUN=weighted.mean,
+                          w=dgamma(1:30,scale =scale,shape =shape),
+                          na.rm = TRUE)))
 }
 
 SmoothCasePlotDF <- DFSmoothingFN(LatCaseMadDF)
+
+
+
+#5.028338
+scale =5.028338
+#2.332779
+shape =2.332779
+
+plot(dgamma(1:30,scale =scale,shape =shape))
+
 ```
 
 
 ```{r Ploting}
 CasePlot <- ggplot()+
   geom_rect(aes(xmin=Date-.5,xmax=Date+.5,ymin=0,ymax=Cases),color="dark gray",fill="gray", data=LatCaseMadDF)+
-  geom_line(aes(x=Date,y=Cases),data=SmoothCasePlotDF,color="red")+
+  geom_line(aes(x=Date,y=Cases2),data=SmoothCasePlotDF,color="red")+
   coord_cartesian(xlim = c(min(LIMSMadDF$Date),max(LIMSMadDF$Date)))+
   xlab("")+
   theme(axis.title.y = element_text(size=12))
