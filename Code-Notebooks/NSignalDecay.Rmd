@@ -4,7 +4,7 @@ author: "Marlin"
 date: "7/25/2021"
 output: html_document
 ---
-```{r}
+```{r, echo=FALSE}
 knitr::opts_chunk$set(
 	echo = FALSE,
 	message = FALSE,
@@ -12,13 +12,14 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r Start enviroment, message=FALSE, warning=FALSE}
+```{r Start enviroment, message=FALSE, warning=FALSE, echo=FALSE}
 library(ggpubr)
 library(tidyverse)
 library(forecast)
 library(lmtest)
 library(lubridate)
 library(lme4)
+library(lmerTest)
 #Data Files and prep work
 source("../Scripts/GenPlotMaking.R")
 source("../Scripts/WasteWaterDataProccess.R")
@@ -26,10 +27,11 @@ source("../Scripts/CassesDataProccess.R")
 source("../Scripts/HelperFunctions.R")
 ```
 
-```{r DF Set Up}
-PathStarter="Z:/"
+```{r DF Set Up, echo=FALSE}
+PathStarter="R:/"
 
-SigWasteFN <- paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/TimeSeriesDataforStats072321.csv")
+SigWasteFN <- paste0(PathStarter,
+      "COVID-19_WastewaterAnalysis/data/raw/TimeSeriesDataforStats072321.csv")
 
 SigDecayDF <- read.csv(SigWasteFN)%>%
   rename(collectionDate = Collection.Date,
@@ -42,34 +44,134 @@ SigDecayDF <- read.csv(SigWasteFN)%>%
 ```
 ```{r data discription}
 
-SigDecayDF%>%
-  group_by(WWTP,collectionDate,Filter.Replicate)%>%
-  summarise(n())
+# SigDecayDF%>%
+#   group_by(WWTP,collectionDate,Filter.Replicate)%>%
+#   summarise(n())
 
-SigDecayDF%>%
+
+#WWTP
+#WWTP:Filter.Replicate
+PRWWTP <- summary(aov(log(N1.GC.L)~WWTP,data=SigDecayDF))[[1]][5][[1]][1]
+WWTPBoxPlot <- SigDecayDF%>%
   ggplot()+
-  aes(x=TimePassed,y=log(N1.GC.L))+
-  geom_point()+
-  geom_smooth(method="lm")+
-  facet_grid(Filter.Replicate~WWTP)
+  geom_boxplot(aes(y=log(N1.GC.L),x=WWTP))+
+  ggtitle("Significant difference of means between locations")
 
 
-summary(aov(log(N1.GC.L)~WWTP+WWTP:Filter.Replicate,data=SigDecayDF))
+annotate_figure(WWTPBoxPlot,bottom = text_grob(paste("PVal=",format(PRWWTP,digits=3))))
 
-SigDecayDF%>%
+
+
+PRWWTPFilter <- summary(aov(log(N1.GC.L)~WWTP+WWTP:Filter.Replicate,data=SigDecayDF))[[1]][5][[1]][2]
+WWTPBoxPlot <- SigDecayDF%>%
   ggplot()+
-  geom_boxplot(aes(y=log(N1.GC.L),x=WWTP))
-SigDecayDF%>%
-  ggplot()+
-  geom_boxplot(aes(y=log(N1.GC.L),x=paste(WWTP,Filter.Replicate)))
+  geom_boxplot(aes(y=log(N1.GC.L),x=paste(WWTP,Filter.Replicate)))+
+  labs(x="WWTP FilterRep",title="Significant difference of means between replicates")
+annotate_figure(WWTPBoxPlot,bottom = text_grob(paste("PVal=",format(PRWWTPFilter,digits=3))))
+
 ```
 
 
 
 
 ```{r ploting comp, warning=FALSE, message=FALSE}
-summary(lm(N1.GC.L~TimePassed+WWTP,data=SigDecayDF))
-summary(aov(log(N1.GC.L)~TimePassed*WWTP*Filter.Replicate,data=SigDecayDF))
+#
+
+MixedEffectModelSum <- function(DF){
+  MixedEffectModel <- lmer(log(N1.GC.L) ~ TimePassed + (1|WWTP:Filter.Replicate),
+                         data = DF)
+  summary(MixedEffectModel)
+}
+MixedEffectModelPlot <- function(DF,Title){
+  MixedEffectModel <- lmer(log(N1.GC.L) ~ TimePassed + (1|WWTP:Filter.Replicate),
+                         data = DF)
+
+  DF2 <- DF%>%
+    filter(!is.na(N1.GC.L))
+  
+                                    
+  DF2$Pred = exp(predict(MixedEffectModel))
+  MainPlot <- DF2%>%
+     ggplot()+
+     geom_point(aes(x=TimePassed,y=N1.GC.L,color=Filter.Replicate))+
+     geom_line(aes(x=TimePassed,y=Pred,color=Filter.Replicate))+
+     facet_wrap(~WWTP)+
+     scale_y_log10()+
+    ggtitle(Title)
+  annotate_figure(MainPlot,
+      bottom = text_grob(paste("PVal of Time:",
+                        round(summary(MixedEffectModel)$coefficients[10],4))))
+}
+
+
+regressions_data <- function(Var,DF){
+  DF%>%
+    group_by(WWTP,Filter.Replicate)%>%
+    summarise(PVal=round(summary(lm(!!sym(Var)~TimePassed))$coefficients[8], digits = 3))
+}
+
+
+DecayPlot <- function(Var,DF){
+  GraphPlot <- DF%>%
+    ggplot()+
+    aes(x=TimePassed,y=!!sym(Var),color = Filter.Replicate)+
+    geom_label(inherit.aes=FALSE, aes(x = 13.5, 
+           y = 60+40*as.numeric(as.factor(Filter.Replicate)),
+           color=Filter.Replicate, label=paste("PVal=",PVal)),
+           size=3,
+           show.legend = FALSE,
+           data=regressions_data(Var,DF))+
+    geom_jitter(width = .2)+
+    geom_smooth(method = "lm", se=FALSE)+
+    scale_y_log10()+
+    facet_wrap(~WWTP,nrow=1)
+  return(GraphPlot)
+}
+
+
+DecayPlot("N1.GC.L",SigDecayDF)+
+  ggtitle("WI Rapids Rep A Large source of disagreement")
+#MixedEffectModelSum(SigDecayDF)
+MixedEffectModelPlot(SigDecayDF,Title="Mixed model fails to find signifigent relationship")
+
+
+SigDecayDF2 <- SigDecayDF%>%
+  filter(!(WWTP=="WI Rapids"&Filter.Replicate=="Rep A"))#%>%
+  #filter(!(WWTP=="Kenosha"&Filter.Replicate=="Rep B"))
+
+
+MixedEffectModelPlot(SigDecayDF2,Title="Mixed model filtering WI Rapids rep A finds signifigent relationship")
+#MixedEffectModelSum(SigDecayDF2)
+
+
+#summary(MixedEffectModel)
+# anova(MixedEffectModel)
+# anova(MixedEffectModel, test="F")
+
+
+```
+
+
+
+
+```{r, include=FALSE}
+SpearmanTest <- function(Var){
+    SigDecayDF%>%
+      group_by(WWTP,Filter.Replicate)%>%
+      summarise(Cor=cor(log(!!sym(Var)),
+                    method="spearman",
+                    as.numeric(TimePassed),
+                    use="complete.obs"),
+                CorPvalue = cor.test(log(!!sym(Var)),
+                                     method="spearman",
+                               as.numeric(TimePassed),
+                               use="complete.obs")[[3]])
+}
+
+
+
+
+
 
 #add filter rep to model
 #find signif of coef
@@ -89,69 +191,6 @@ summary(aov(log(N1.GC.L)~TimePassed*WWTP*Filter.Replicate,data=SigDecayDF))
 
 # variance over time / 
 #
-regressions_data <- function(Var,DF){
-  DF%>%
-    group_by(WWTP,Filter.Replicate)%>%
-    summarise(R2=round(summary(lm(!!sym(Var)~TimePassed))$r.squared, digits = 3))
-}
-
-
-DecayPlot <- function(Var,DF){
-  GraphPlot <- DF%>%
-    ggplot()+
-    aes(x=TimePassed,y=!!sym(Var),color = Filter.Replicate)+
-    geom_label(inherit.aes=FALSE, aes(x = 13.5, 
-           y = 60+40*as.numeric(as.factor(Filter.Replicate)),
-           color=Filter.Replicate, label=paste("R^2=",R2)),
-           size=3,
-           data=regressions_data(Var,DF))+
-    geom_jitter(width = .2)+
-    geom_smooth(method = "lm", se=FALSE)+
-    scale_y_log10()+
-    facet_wrap(~WWTP,nrow=1)
-  return(GraphPlot)
-}
-
-
-DecayPlot("N1.GC.L",SigDecayDF)
-
-SigDecayDF2 <- SigDecayDF%>%
-  filter(!(WWTP=="WI Rapids"&Filter.Replicate=="Rep A"))
-
-DecayPlot("N1.GC.L",SigDecayDF2)
-
-
-library(lmerTest)
-MixedEffectModel <- lmer(log(N1.GC.L) ~ TimePassed + (1|WWTP:Filter.Replicate),
-                         data = SigDecayDF)
-
-summary(MixedEffectModel)
-anova(MixedEffectModel)
-anova(MixedEffectModel, test="F")
-```
-
-
-
-
-
-SpearmanTest <- function(Var){
-    SigDecayDF%>%
-      group_by(WWTP,Filter.Replicate)%>%
-      summarise(Cor=cor(log(!!sym(Var)),
-                    method="spearman",
-                    as.numeric(TimePassed),
-                    use="complete.obs"),
-                CorPvalue = cor.test(log(!!sym(Var)),
-                                     method="spearman",
-                               as.numeric(TimePassed),
-                               use="complete.obs")[[3]])
-}
-
-
-
-
-
-
 
 #correlation need to be independent
 #think about it and make it more rigorous
@@ -174,7 +213,7 @@ SigDecayDF%>%
 #liked color version instead of Facet version
 ```
 
-```{r}
+```{r, include=FALSE}
 SigDecayDF%>%
   group_by(WWTP,Filter.Replicate,TimePassed)%>%
   summarise(N1Var=var(log(N1.GC.L),na.rm = TRUE),N1Mean = mean(log(N1.GC.L),na.rm = TRUE))%>%
@@ -196,7 +235,7 @@ SigDecayDF%>%
 ```
 
 
-```{r Formal MixedEffect}
+```{r Formal MixedEffect, include=FALSE}
 library(lmerTest)
 #Replicate
 #BCoV.percent.recovery Sig
@@ -225,7 +264,7 @@ anova(MixedEffectModel, test="F")
 #1/2 hour on plots/SLD PDF/HTM take finding and make it easy to read for more efficent meetings
 ```
 
-```{r}
+```{r, include=FALSE}
 # fit.fixed <- aov(log(N1.GC.L) ~ 
 #                    TimePassed * Filter.Replicate * WWTP,
 #                  data = SigDecayDF)
