@@ -5,21 +5,13 @@ date: "7/22/2021"
 output: html_document
 ---
 
-```{r set up markdown settings}
+```{r set up markdown settings, echo=FALSE}
 knitr::opts_chunk$set(
 	echo = FALSE,
 	message = FALSE,
 	warning = FALSE
 )
 
-ConfigOption <- list(
-  myseed=1234567890,
-  XAxisLabSiz=10,
-  YAxisLabSiz=15,
-  GenFontSiz=20,
-  alphaPoint=.7,
-  PointSize=2,
-  alphaWeek=.2)
 ```
 
 ```{r Start enviroment, message=FALSE, warning=FALSE}
@@ -43,11 +35,22 @@ PathStarter="Z:/"
 
 LatMMSDFN  <-  paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/MMSD_Cases.csv")
 LIMSFN <- paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/WATERMICRO_WW_COVID-2021-06-30 17 40.xlsx")
-#Z:\COVID-19_WastewaterAnalysis\data\raw
+
+HFGCasesFN  <-  paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/HighFreq_CaseData_2021-05-07.csv")
+
 
 LatCaseDF <- CovidDataPARSER(MMSDFN = LatMMSDFN)%>%
   filter(!is.na(Site))%>%
   select(Date,Site,Cases,Tests,Per_pos)
+
+HFGCaseDF <- HFGCasesPARSER(FN = HFGCasesFN)%>%
+  filter(!is.na(Site))%>%
+  mutate(Tests=NA,Per_pos=NA)%>%
+  select(Date,Site,Cases=ReportedCases,Tests,Per_pos)%>%
+  mutate(Cases = ifelse(Cases==-999,2.5,Cases))%>%
+  filter(Site!="Madison")
+
+FullCase <- rbind(HFGCaseDF,LatCaseDF)
 
 LatCaseMadDF <- LatCaseDF%>%
   filter(Site == "Madison")
@@ -88,44 +91,20 @@ DFLoessFNC <- function(LimsDF){
              span=.125,
              min.weight=0,
              max.weight=1e5,
-             iterations=10)$fitted
+             iterations=20)$fitted
 }
-
-
-SmoothCasePlotDF <- DFSmoothingFNC(LatCaseMadDF)
 
   #5.028338
 scale =5.028338
   #2.332779
 shape =2.332779
   
-plot(dgamma(1:30,scale =scale,shape =shape))
+plot(dgamma(1:21,scale =scale,shape =shape))
 
-
-FullDayDF <- data.frame(Date=seq(min(LIMSMadDF$Date),max(LIMSMadDF$Date),1))
-
-ReadyDF <- full_join(FullDayDF,LIMSMadDF, by = c("Date"))%>%
-  fill(N1, .direction = "down")%>%
-  mutate(Site="Madison")
-
-MergedDF <- inner_join(SmoothCasePlotDF,ReadyDF, by=c("Date","Site"))
-
-CasesTSVec <- ts(MergedDF)[,6]
-CasesTSVec2 <- ts(MergedDF)[,3]
-loessPred <- ts(DFLoessFNC(LIMSMadDF)[-1])
-N1TSVec <- log(ts(MergedDF)[,8])
 ```
 
 
 ```{R TSPliting}
-ts.plot(80*rollmean(N1TSVec, 7,align="right",fill = NA)-800,
-        rollmean(CasesTSVec2, 7,align="right",fill = NA),
-        CasesTSVec,
-         80*loessPred-800,
-         col=c( "light blue","pink","red","blue"), 
-         gpars=list(xlab="Time (Days)", ylab="Cases"))
- legend("topright", legend=c("SLD Cases","7 MA Cases","Loess Smoothing","7 MA N1"), col=c("red","pink","blue", "light blue"), lty=1, cex=1)
-
 
 #library(smooth)
 #sma(MergedDF[,8], h=7)
@@ -138,11 +117,7 @@ ts.plot(80*rollmean(N1TSVec, 7,align="right",fill = NA)-800,
 # checkresiduals(fit)
 #
  
-ts.plot(diff(CasesTSVec),
-         diff(80*loessPred-800),
-         col=c("red","blue"), 
-         gpars=list(xlab="Time (Days)", ylab="Cases"))
- legend("topright", legend=c("SLD Cases","Loess Smoothing"), col=c("red","blue"), lty=1, cex=1)
+
 #alt y axis
 #x axis labled as date
 #control color so they are not so light
@@ -151,65 +126,28 @@ ts.plot(diff(CasesTSVec),
 #few people have done SLD
 ```
 
-```{r Formal Work}
-
-
-IndependentVec <- diff(loessPred)
-DependentVec <- diff(CasesTSVec)
-
-ccfvalues2  <-  ccf(IndependentVec,DependentVec,type = c("correlation"),na.action = na.pass)
-ccfvalues2  <-  ccf(loessPred,CasesTSVec,type = c("correlation"),na.action = na.pass)
-
-alldata1 <- ts.union(Pred = diff(CasesTSVec),N1Norm = diff(loessPred),
-                         N1TSVec,
-                         N1A=stats::lag(diff(loessPred),1),
-                         N1B=stats::lag(diff(loessPred),10),
-                         N1C=stats::lag(diff(loessPred)))
-
-
-tryit1a  <- lm(Pred~N1B, data = alldata1)
-
-summary(tryit1a)
-#plot(tryit1a)
-acf(residuals(tryit1a))
+```{r Formal Work, include=FALSE}
+# IndependentVec <- diff(loessPred)
+# DependentVec <- diff(CasesTSVec)
+# 
+# ccfvalues2  <-  ccf(IndependentVec,DependentVec,type = c("correlation"),na.action = na.pass)
+# ccfvalues2  <-  ccf(loessPred,CasesTSVec,type = c("correlation"),na.action = na.pass)
+# 
+# alldata1 <- ts.union(Pred = diff(CasesTSVec),N1Norm = diff(loessPred),
+#                          N1TSVec,
+#                          N1A=stats::lag(diff(loessPred),1),
+#                          N1B=stats::lag(diff(loessPred),10),
+#                          N1C=stats::lag(diff(loessPred)))
+# 
+# 
+# tryit1a  <- lm(Pred~N1B, data = alldata1)
+# 
+# summary(tryit1a)
+# #plot(tryit1a)
+# acf(residuals(tryit1a))
 ```
 
-
-```{r Extended}
-TempDF <- filter(LIMSFullDF,Site=="MMSD-P7")
-LIMSMadDF <- DFLoessFNC(TempDF)
-
-FullDayDF <- data.frame(Date=seq(min(TempDF$Date),max(TempDF$Date),1))
-
-ReadyDF <- full_join(FullDayDF,TempDF, by = c("Date"))%>%
-  fill(N1, .direction = "down")%>%
-  mutate(Site="MMSD-P7")
-
-SmoothCasePlotDF <- DFSmoothingFNC(filter(LatCaseDF,Site=="MMSD-P7"))
-
-MergedDF <- inner_join(SmoothCasePlotDF,ReadyDF, by=c("Date","Site"))
-
-CasesTSVec <- ts(MergedDF)[,6]
-CasesTSVec2 <- ts(MergedDF)[,3]
-loessPred <- ts(LIMSMadDF[-1])
-N1TSVec <- log(ts(MergedDF)[,8])
-
-
-ts.plot(10*rollmean(N1TSVec, 7,align="right",fill = NA)-90,
-        rollmean(CasesTSVec2, 7,align="right",fill = NA),
-        CasesTSVec,
-         10*loessPred-90,
-         col=c( "light blue","pink","red","blue"), 
-         gpars=list(xlab="Time (Days)", ylab="Cases"))
- legend("topright", legend=c("SLD Cases","7 MA Cases","Loess Smoothing","7 MA N1"), col=c("red","pink","blue", "light blue"), lty=1, cex=1)
-
- 
-ts.plot(diff(CasesTSVec),
-         diff(10*loessPred-90),
-         col=c("red","blue"), 
-         gpars=list(xlab="Time (Days)", ylab="Cases"))
- legend("topright", legend=c("SLD Cases","Loess Smoothing"), col=c("red","blue"), lty=1, cex=1)
- 
+```{r}
 #Do for non interceptor data
  
 #Transformation to stabilize scale
@@ -244,36 +182,90 @@ ts.plot(diff(CasesTSVec),
 #2)CCF that gives metric behind heuristic
  
 #3)
+ #FullCase
 ```
+ 
+ 
+```{r Ploting Fnc} 
+IsFull <- function(DF){
+  return(length(DF$Date)==max(DF$Date)-min(DF$Date)+1)
+}
+
+TSPloting <- function(PlotingTS,FullPlot=TRUE){
+  par(mar = c(5, 4, 4, 4) + 0.3)           
+
+  if(FullPlot){
+    plot.ts(rollmean(exp(PlotingTS[[4]]), 7,align="right",fill = NA),
+            col = "light blue", main="SLD compared to Loess smoothing of N1",
+            ylab = "N1 (GC/L)",log = 'y')
+    
+    par(new = TRUE)  
+    plot.ts(rollmean(PlotingTS[[3]], 7,align="right",fill = NA),
+            col = "pink",        
+       axes = FALSE, xlab = "", ylab = "")
+    
+    par(new = TRUE)  
+    plot.ts(exp(PlotingTS[[2]]),
+            col = "blue",        
+       axes = FALSE, 
+       xlab = "", 
+       ylab = "",
+       log = 'y')
+  }else{
+    plot.ts(PlotingTS[[2]], 
+          col = "blue", 
+          ylab = "N1 (GC/L)", 
+          main="First Diffrence of SLD and Loess smoothing of N1")
+  }
+
+  par(new = TRUE)                           
+  plot.ts(PlotingTS[[1]], col = "red",        
+     axes = FALSE, xlab = "", ylab = "")
+
+  axis(side = 4, at = pretty(range(PlotingTS[[1]])))   
+  mtext("Cases", side = 4, line = 3)
+  if(FullPlot){
+    legendNames <- c("SLD Cases","7 MA Cases","Loess Smoothing","7 MA N1")
+    legendColors <- c("red","pink","blue", "light blue")
+  }else{
+    legendNames<- c("SLD Cases","Loess Smoothing")
+    legendColors<- c("red","blue")
+  }
+  legend("topright", legend=legendNames, col=legendColors, lty=1, cex=.75)
+}
 
 
-
-```{r Ploting}
-CasePlot <- ggplot()+
-  geom_rect(aes(xmin=Date-.5,xmax=Date+.5,ymin=0,ymax=Cases),color="dark gray",fill="gray", data=LatCaseMadDF)+
-  geom_line(aes(x=Date,y=Cases2),data=SmoothCasePlotDF,color="red")+
-  coord_cartesian(xlim = c(min(LIMSMadDF$Date),max(LIMSMadDF$Date)))+
-  xlab("")+
-  theme(axis.title.y = element_text(size=12))
-
-# N1Plot <- LIMSMadDF%>%
-#     ggplot()+
-#     aes(x=Date,y=N1)+
-#     geom_point()+
-#     geom_smooth(se=FALSE,span=.1)+
-#   scale_y_log10()
-
-
-N1Plot <-LoessSmoothPlot(SiteS="Madison",Span=.1,min=0,max=120,weights=c("Constant","Constant"),
-                          Title = F,FullLim=F,SiteLab=F,Data = LIMSMadDF) +
-  coord_cartesian(xlim = c(min(LIMSMadDF$Date),max(LIMSMadDF$Date)))+
-  xlab("")+
-  theme(legend.position = "none",
-        axis.title.y = element_text(size=12))
+SLDGraphics <- function(SiteS){
+  FilteredLIMSDF <- filter(LIMSFullDF,Site==SiteS)
   
-ggarrange(CasePlot,N1Plot,nrow=2)
+  FullDayDF <- data.frame(Date=seq(min(FilteredLIMSDF$Date),
+                                   max(FilteredLIMSDF$Date),1))
+  
+  ReadyDF <- full_join(FullDayDF,FilteredLIMSDF, by = c("Date"))%>%
+    fill(N1, .direction = "down")%>%
+    mutate(Site=SiteS)
+  
+  SmoothCasePlotDF <- DFSmoothingFNC(filter(FullCase,Site==SiteS))%>%
+    mutate(Site=SiteS)#%>%
+    #filter(!is.na(Cases2))
 
-ARMA
-
+  MergedDF <- inner_join(SmoothCasePlotDF,ReadyDF, by=c("Date","Site"))
+  #return(MergedDF)
+  MergedDF$LoessN1 <- DFLoessFNC(MergedDF)
+  
+  #return(MergedDF)
+  
+  SLDCaseVec <- ts(MergedDF)[,6]
+  CaseVec <- ts(MergedDF)[,3]
+  loessN1Vec <- ts(MergedDF)[,15]
+  logN1Vec <- log(ts(MergedDF)[,8])
+  #return(loessN1Vec)
+  TSPloting(list(SLDCaseVec,loessN1Vec,CaseVec,logN1Vec))
+  TSPloting(list(diff(SLDCaseVec),diff(loessN1Vec)),
+            FullPlot=FALSE)
+  ccf(loessN1Vec,SLDCaseVec)
+}
+SLDGraphics("Madison")
 ```
+
 

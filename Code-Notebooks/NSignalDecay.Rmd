@@ -28,7 +28,7 @@ source("../Scripts/HelperFunctions.R")
 ```
 
 ```{r DF Set Up, echo=FALSE}
-PathStarter="R:/"
+PathStarter="Z:/"
 
 SigWasteFN <- paste0(PathStarter,
       "COVID-19_WastewaterAnalysis/data/raw/TimeSeriesDataforStats072321.csv")
@@ -42,6 +42,9 @@ SigDecayDF <- read.csv(SigWasteFN)%>%
          N1.CT = as.numeric(N1.CT))
 
 ```
+
+
+
 ```{r data discription}
 
 # SigDecayDF%>%
@@ -52,27 +55,43 @@ SigDecayDF <- read.csv(SigWasteFN)%>%
 #WWTP
 #WWTP:Filter.Replicate
 PRWWTP <- summary(aov(log(N1.GC.L)~WWTP,data=SigDecayDF))[[1]][5][[1]][1]
+data2.labels <- data.frame(
+  time = c(2), 
+  value = c(1), 
+  label = c(paste("PVal=",format(PRWWTP,digits=3)))
+  )
+
 WWTPBoxPlot <- SigDecayDF%>%
   ggplot()+
-  geom_boxplot(aes(y=log(N1.GC.L),x=WWTP))+
-  ggtitle("Significant difference of means between locations")
-
-
-annotate_figure(WWTPBoxPlot,bottom = text_grob(paste("PVal=",format(PRWWTP,digits=3))))
-
+  geom_boxplot(aes(y=N1.GC.L,x=WWTP))+
+  scale_y_log10()+
+  ggtitle("Significant difference of means between locations")+
+  geom_text(aes(x=time,y=value,label=label),data=data2.labels)+
+  ylab("N1 (GC/L)")
 
 
 PRWWTPFilter <- summary(aov(log(N1.GC.L)~WWTP+WWTP:Filter.Replicate,data=SigDecayDF))[[1]][5][[1]][2]
-WWTPBoxPlot <- SigDecayDF%>%
-  ggplot()+
-  geom_boxplot(aes(y=log(N1.GC.L),x=paste(WWTP,Filter.Replicate)))+
-  labs(x="WWTP FilterRep",title="Significant difference of means between replicates")
-annotate_figure(WWTPBoxPlot,bottom = text_grob(paste("PVal=",format(PRWWTPFilter,digits=3))))
 
+data2.labelsFilter <- data.frame(
+  time = c(3), 
+  value = c(1), 
+  label = c(paste("PVal=",format(PRWWTPFilter,digits=3)))
+  )
+
+FilterBoxPlot <- SigDecayDF%>%
+  ggplot()+
+  geom_boxplot(aes(y=N1.GC.L,x=paste(WWTP,Filter.Replicate)))+
+  scale_y_log10()+
+  ylab("N1 (GC/L)")+
+  geom_text(aes(x=time,y=value,label=label),data=data2.labelsFilter)+
+  labs(x="WWTP FilterRep",title="Significant difference of means between replicates")
+
+WWTPBoxPlot
+FilterBoxPlot
 ```
 
 
-
+The hierarchical structure of the data suggests a mixed effect model is the most appropriate way of measuring the significance of the decay rate
 
 ```{r ploting comp, warning=FALSE, message=FALSE}
 #
@@ -89,18 +108,26 @@ MixedEffectModelPlot <- function(DF,Title){
   DF2 <- DF%>%
     filter(!is.na(N1.GC.L))
   
+  data2.labels <- data.frame(
+    time = c(8), 
+    value = c(5),
+    WWTP = c("Madison"),
+    label = c(paste("PVal of Time:",
+                        round(summary(MixedEffectModel)$coefficients[10],4)))
+  )
                                     
   DF2$Pred = exp(predict(MixedEffectModel))
-  MainPlot <- DF2%>%
+  
+  DF2%>%
      ggplot()+
      geom_point(aes(x=TimePassed,y=N1.GC.L,color=Filter.Replicate))+
      geom_line(aes(x=TimePassed,y=Pred,color=Filter.Replicate))+
      facet_wrap(~WWTP)+
      scale_y_log10()+
+    ylab("N1 (GC/L)")+
+    geom_text(aes(x=time,y=value,label=label),data=data2.labels)+
     ggtitle(Title)
-  annotate_figure(MainPlot,
-      bottom = text_grob(paste("PVal of Time:",
-                        round(summary(MixedEffectModel)$coefficients[10],4))))
+
 }
 
 
@@ -124,16 +151,18 @@ DecayPlot <- function(Var,DF){
     geom_jitter(width = .2)+
     geom_smooth(method = "lm", se=FALSE)+
     scale_y_log10()+
+    ylab("N1 (GC/L)")+
     facet_wrap(~WWTP,nrow=1)
   return(GraphPlot)
 }
 
 
-DecayPlot("N1.GC.L",SigDecayDF)+
-  ggtitle("WI Rapids Rep A Large source of disagreement")
+
 #MixedEffectModelSum(SigDecayDF)
 MixedEffectModelPlot(SigDecayDF,Title="Mixed model fails to find signifigent relationship")
 
+DecayPlot("N1.GC.L",SigDecayDF)+
+  ggtitle("WI Rapids Rep A Large source of disagreement")
 
 SigDecayDF2 <- SigDecayDF%>%
   filter(!(WWTP=="WI Rapids"&Filter.Replicate=="Rep A"))#%>%

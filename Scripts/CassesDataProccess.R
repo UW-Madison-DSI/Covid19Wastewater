@@ -81,12 +81,18 @@ DormCaseDataPARSER <- function(FileName){
 
 
 
-HFGCasesPARSER = function(data){
-  DataF=read.csv(data)%>%
+HFGCasesPARSER = function(FN){
+  HFGCaseDFNoReported <- read.csv(FN)%>%
     rename(Site=wwtp_name)%>%
     filter(!is.na(Site))%>%
     mutate(Date=ymd(Date))%>%
     mutate(Site=ifelse(Site=="SunPrairie","Sun Prairie",Site))%>%
     mutate(Site=ifelse(Site=="RiverFalls","River Falls",Site))
-  return(DataF)
+  
+  HFGCaseDFReportedOnly <- HFGCaseDFNoReported%>%
+    mutate(Date=Date+1,ReportedCases=ConfirmedCases)%>%
+    select(Date,Site,ReportedCases)
+  
+  HFGCaseDF  <-  full_join(HFGCaseDFReportedOnly,HFGCaseDFNoReported,by=c("Date","Site"))
+  return(HFGCaseDF)
 }
