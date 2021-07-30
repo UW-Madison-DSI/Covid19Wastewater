@@ -48,56 +48,22 @@ SigDecayDF%>%
 
 SigDecayDF%>%
   ggplot()+
-  aes(x=TimePassed,y=log(N1.GC.L),color=paste(WWTP,Filter.Replicate))+
+  aes(x=TimePassed,y=log(N1.GC.L))+
   geom_point()+
-  geom_smooth(method="lm")
+  geom_smooth(method="lm")+
+  facet_grid(Filter.Replicate~WWTP)
 
+
+summary(aov(log(N1.GC.L)~WWTP+WWTP:Filter.Replicate,data=SigDecayDF))
 
 SigDecayDF%>%
-  group_by(WWTP,Filter.Replicate,TimePassed)%>%
-  summarise(N1=mean(log(N1.GC.L),na.rm=TRUE),Var=var(log(N1.GC.L),na.rm=TRUE))%>%
   ggplot()+
-  aes(x=TimePassed,color=Filter.Replicate)+
-  geom_rect(aes(xmin=TimePassed-.2,xmax=TimePassed+.2,
-                ymin=N1-Var,ymax=N1+Var),fill=NA)+
-  geom_point(aes(y=N1))+
-  facet_wrap(~WWTP,nrow=3)
+  geom_boxplot(aes(y=log(N1.GC.L),x=WWTP))
+SigDecayDF%>%
+  ggplot()+
+  geom_boxplot(aes(y=log(N1.GC.L),x=paste(WWTP,Filter.Replicate)))
 ```
-```{r, warning=FALSE}
-aba <- SigDecayDF%>%
-  filter(WWTP=="Kenosha",Filter.Replicate=="Rep A",
-         !is.na(N1.GC.L))
 
-aba$Pred <- predict(lm(log(N1.GC.L)~ TimePassed ,data=aba))
-
-
-full_join(SigDecayDF,aba,by=c("WWTP","Filter.Replicate","TimePassed","N1.GC.L"))%>%
-  ggplot()+
-    aes(x=TimePassed,y=log(N1.GC.L),color=Filter.Replicate)+
-    geom_jitter(width = .2)+
-    geom_smooth(method = "lm", se=FALSE)+
-    geom_line(aes(y=Pred))+
-    facet_wrap(~WWTP,nrow=3,scales = "free_y")+
-    scale_y_log10()
-
-SigDecayDF3 <- SigDecayDF%>%
-  filter(!is.na(N1.GC.L))
-
-
-
-SigDecayDF3$Pred <- predict(lm(log(N1.GC.L)~ TimePassed + 
-                                TimePassed:WWTP:Filter.Replicate+WWTP:Filter.Replicate+
-                                TimePassed:WWTP+WWTP,
-                                data=SigDecayDF3))
-
-SigDecayDF3%>%
-  ggplot()+
-    aes(x=TimePassed,y=log(N1.GC.L))+
-    geom_jitter(width = .2)+
-    #geom_smooth(method = "lm", se=FALSE)+
-    geom_line(aes(y=Pred))+
-    facet_grid(Filter.Replicate~WWTP)
-```
 
 
 
@@ -123,19 +89,50 @@ summary(aov(log(N1.GC.L)~TimePassed*WWTP*Filter.Replicate,data=SigDecayDF))
 
 # variance over time / 
 #
+regressions_data <- function(Var,DF){
+  DF%>%
+    group_by(WWTP,Filter.Replicate)%>%
+    summarise(R2=round(summary(lm(!!sym(Var)~TimePassed))$r.squared, digits = 3))
+}
 
-DecayPlot <- function(Var){
-  GraphPlot <- SigDecayDF%>%
+
+DecayPlot <- function(Var,DF){
+  GraphPlot <- DF%>%
     ggplot()+
-    aes(x=TimePassed,y=!!sym(Var))+
+    aes(x=TimePassed,y=!!sym(Var),color = Filter.Replicate)+
+    geom_label(inherit.aes=FALSE, aes(x = 13.5, 
+           y = 60+40*as.numeric(as.factor(Filter.Replicate)),
+           color=Filter.Replicate, label=paste("R^2=",R2)),
+           size=3,
+           data=regressions_data(Var,DF))+
     geom_jitter(width = .2)+
     geom_smooth(method = "lm", se=FALSE)+
-    facet_grid(Filter.Replicate~WWTP)+
-    scale_y_log10()
-  
-  Sig<- summary(lm(log(N1.GC.L)~ Filter.Replicate * WWTP * TimePassed ,data=SigDecayDF))[[4]][41]
-  return(annotate_figure(GraphPlot,top = text_grob(paste("Significance:",signif(0,3)))))
+    scale_y_log10()+
+    facet_wrap(~WWTP,nrow=1)
+  return(GraphPlot)
 }
+
+
+DecayPlot("N1.GC.L",SigDecayDF)
+
+SigDecayDF2 <- SigDecayDF%>%
+  filter(!(WWTP=="WI Rapids"&Filter.Replicate=="Rep A"))
+
+DecayPlot("N1.GC.L",SigDecayDF2)
+
+
+library(lmerTest)
+MixedEffectModel <- lmer(log(N1.GC.L) ~ TimePassed + (1|WWTP:Filter.Replicate),
+                         data = SigDecayDF)
+
+summary(MixedEffectModel)
+anova(MixedEffectModel)
+anova(MixedEffectModel, test="F")
+```
+
+
+
+
 
 SpearmanTest <- function(Var){
     SigDecayDF%>%
@@ -152,7 +149,7 @@ SpearmanTest <- function(Var){
 
 
 
-DecayPlot("N1.GC.L")
+
 
 
 
@@ -174,18 +171,23 @@ SpearmanTest("N1.GC.L")
 SigDecayDF%>%
   group_by(WWTP,Filter.Replicate)%>%
   summarise(R2 = summary(lm(log(N1.GC.L) ~ TimePassed))$r.squared)
+#liked color version instead of Facet version
 ```
 
 ```{r}
 SigDecayDF%>%
   group_by(WWTP,Filter.Replicate,TimePassed)%>%
-  summarise(N1Var=var(log(N1.GC.L)))%>%
+  summarise(N1Var=var(log(N1.GC.L),na.rm = TRUE),N1Mean = mean(log(N1.GC.L),na.rm = TRUE))%>%
     ggplot()+
-    aes(x=TimePassed,y=N1Var)+
+    aes(x=N1Var,y=N1Mean)+
     geom_jitter(width = .2)+
     geom_smooth(method = "lm", se=FALSE)+
     facet_wrap(~WWTP,nrow=3,scales = "free")+
     facet_grid(Filter.Replicate~WWTP)
+
+
+
+
 #color ramp for time
 
 #some weighted based on lag time
@@ -202,32 +204,28 @@ library(lmerTest)
 #log(N1.GC.L) Not Sig
 #log(N2.GC.L) Not Sig
 
-MixedEffectModel <- lmer(log(N1.GC.L) ~ TimePassed + (1+TimePassed| WWTP:Filter.Replicate), 
+MixedEffectModel <- lmer(log(N1.GC.L) ~ TimePassed + (1|WWTP:Filter.Replicate),
                          data = SigDecayDF)
+
 summary(MixedEffectModel)
 anova(MixedEffectModel)
-
-full.lmer <- lmer(
-  log(N1.GC.L) ~ TimePassed + (1+TimePassed| WWTP:Filter.Replicate), 
-                         data = SigDecayDF, REML = FALSE)
-reduced.lmer <- lmer(log(N1.GC.L) ~ 1 + (1| WWTP:Filter.Replicate), 
-                         data = SigDecayDF, REML = FALSE)
-summary(anova(reduced.lmer, full.lmer))
 anova(MixedEffectModel, test="F")
 
+#Sample size analysis
 
-SigDecayDF3$Pred <- predict(MixedEffectModel)
+#Show simple easy to understand - show sigs
+#More complex model - does not show
+#pruning - show sigs?
+#Should be a win
 
-SigDecayDF3%>%
-  ggplot()+
-    aes(x=TimePassed,y=log(N1.GC.L))+
-    geom_jitter(width = .2)+
-    geom_smooth(method = "lm", se=FALSE)+
-    #geom_line(aes(y=Pred))+
-    facet_grid(Filter.Replicate~WWTP)
+#1) Plot of 6 independent regressions: sig of each of 6 regressions
+#2) remove counterproductive parts and see if that helps
+#3) Show what needs to change to get sig
 
+#1/2 hour on plots/SLD PDF/HTM take finding and make it easy to read for more efficent meetings
+```
 
-
+```{r}
 # fit.fixed <- aov(log(N1.GC.L) ~ 
 #                    TimePassed * Filter.Replicate * WWTP,
 #                  data = SigDecayDF)
@@ -242,5 +240,4 @@ SigDecayDF3%>%
 #                               iter   = 3000, 
 #                               chains = 2, 
 #                               inits  = "random")
-
 ```

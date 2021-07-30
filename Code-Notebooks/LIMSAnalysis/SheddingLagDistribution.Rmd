@@ -61,32 +61,191 @@ LIMSMadDF <- LIMSFullDF%>%
 ```
 ```{r CaseSmoothing}
 #return( RollPerPos(CaseDF,"Cases","Tests",Facet="Site"))
+library(limma)
 
-DFSmoothingFN <- function(CaseDF){
+DFSmoothingFNC <- function(CaseDF){
   #5.028338
-scale =5.028338
-#2.332779
-shape =2.332779
-  CaseDF%>%
+  scale =5.028338
+  #2.332779
+  shape =2.332779
+  FullDayDF <- data.frame(Date=seq(min(CaseDF$Date),max(CaseDF$Date),1))
+  FullDateDF <- full_join(FullDayDF,CaseDF, by = c("Date"))%>%
+    fill(Cases, .direction = "down")%>%
     group_by(Site)%>%
-    mutate(Cases2 = c(rep(NA,29),
-                    rollapply(Cases,width=30,FUN=weighted.mean,
-                          w=dgamma(1:30,scale =scale,shape =shape),
+    mutate(Cases2 = c(rep(NA,20),
+                    rollapply(Cases,width=21,FUN=weighted.mean,
+                          w=dgamma(1:21,scale =scale,shape =shape),
                           na.rm = TRUE)))
 }
 
-SmoothCasePlotDF <- DFSmoothingFN(LatCaseMadDF)
+DFLoessFNC <- function(LimsDF){
+    FullDayDF <- data.frame(Date=seq(min(LimsDF$Date),max(LimsDF$Date),1))
+    ReadyDF <- full_join(FullDayDF,LimsDF, by = c("Date"))%>%
+      fill(N1, .direction = "down")
+    
+    loessFit(y=log(ReadyDF$N1),
+             x=ReadyDF$Date,
+             span=.125,
+             min.weight=0,
+             max.weight=1e5,
+             iterations=10)$fitted
+}
 
 
+SmoothCasePlotDF <- DFSmoothingFNC(LatCaseMadDF)
 
-#5.028338
+  #5.028338
 scale =5.028338
-#2.332779
+  #2.332779
 shape =2.332779
-
+  
 plot(dgamma(1:30,scale =scale,shape =shape))
 
+
+FullDayDF <- data.frame(Date=seq(min(LIMSMadDF$Date),max(LIMSMadDF$Date),1))
+
+ReadyDF <- full_join(FullDayDF,LIMSMadDF, by = c("Date"))%>%
+  fill(N1, .direction = "down")%>%
+  mutate(Site="Madison")
+
+MergedDF <- inner_join(SmoothCasePlotDF,ReadyDF, by=c("Date","Site"))
+
+CasesTSVec <- ts(MergedDF)[,6]
+CasesTSVec2 <- ts(MergedDF)[,3]
+loessPred <- ts(DFLoessFNC(LIMSMadDF)[-1])
+N1TSVec <- log(ts(MergedDF)[,8])
 ```
+
+
+```{R TSPliting}
+ts.plot(80*rollmean(N1TSVec, 7,align="right",fill = NA)-800,
+        rollmean(CasesTSVec2, 7,align="right",fill = NA),
+        CasesTSVec,
+         80*loessPred-800,
+         col=c( "light blue","pink","red","blue"), 
+         gpars=list(xlab="Time (Days)", ylab="Cases"))
+ legend("topright", legend=c("SLD Cases","7 MA Cases","Loess Smoothing","7 MA N1"), col=c("red","pink","blue", "light blue"), lty=1, cex=1)
+
+
+#library(smooth)
+#sma(MergedDF[,8], h=7)
+
+# fit = Arima(CasesTSVec, xreg=loessPred, order=c(2,1,0))
+# 
+# cbind("Regression Errors" = residuals(fit, type="regression"),
+#       "ARIMA errors" = residuals(fit, type="innovation")) %>%
+#   autoplot(facets=TRUE)
+# checkresiduals(fit)
+#
+ 
+ts.plot(diff(CasesTSVec),
+         diff(80*loessPred-800),
+         col=c("red","blue"), 
+         gpars=list(xlab="Time (Days)", ylab="Cases"))
+ legend("topright", legend=c("SLD Cases","Loess Smoothing"), col=c("red","blue"), lty=1, cex=1)
+#alt y axis
+#x axis labled as date
+#control color so they are not so light
+#2)Show original data as bar graph?
+#Make it clear its Madison/Title that explains
+#few people have done SLD
+```
+
+```{r Formal Work}
+
+
+IndependentVec <- diff(loessPred)
+DependentVec <- diff(CasesTSVec)
+
+ccfvalues2  <-  ccf(IndependentVec,DependentVec,type = c("correlation"),na.action = na.pass)
+ccfvalues2  <-  ccf(loessPred,CasesTSVec,type = c("correlation"),na.action = na.pass)
+
+alldata1 <- ts.union(Pred = diff(CasesTSVec),N1Norm = diff(loessPred),
+                         N1TSVec,
+                         N1A=stats::lag(diff(loessPred),1),
+                         N1B=stats::lag(diff(loessPred),10),
+                         N1C=stats::lag(diff(loessPred)))
+
+
+tryit1a  <- lm(Pred~N1B, data = alldata1)
+
+summary(tryit1a)
+#plot(tryit1a)
+acf(residuals(tryit1a))
+```
+
+
+```{r Extended}
+TempDF <- filter(LIMSFullDF,Site=="MMSD-P7")
+LIMSMadDF <- DFLoessFNC(TempDF)
+
+FullDayDF <- data.frame(Date=seq(min(TempDF$Date),max(TempDF$Date),1))
+
+ReadyDF <- full_join(FullDayDF,TempDF, by = c("Date"))%>%
+  fill(N1, .direction = "down")%>%
+  mutate(Site="MMSD-P7")
+
+SmoothCasePlotDF <- DFSmoothingFNC(filter(LatCaseDF,Site=="MMSD-P7"))
+
+MergedDF <- inner_join(SmoothCasePlotDF,ReadyDF, by=c("Date","Site"))
+
+CasesTSVec <- ts(MergedDF)[,6]
+CasesTSVec2 <- ts(MergedDF)[,3]
+loessPred <- ts(LIMSMadDF[-1])
+N1TSVec <- log(ts(MergedDF)[,8])
+
+
+ts.plot(10*rollmean(N1TSVec, 7,align="right",fill = NA)-90,
+        rollmean(CasesTSVec2, 7,align="right",fill = NA),
+        CasesTSVec,
+         10*loessPred-90,
+         col=c( "light blue","pink","red","blue"), 
+         gpars=list(xlab="Time (Days)", ylab="Cases"))
+ legend("topright", legend=c("SLD Cases","7 MA Cases","Loess Smoothing","7 MA N1"), col=c("red","pink","blue", "light blue"), lty=1, cex=1)
+
+ 
+ts.plot(diff(CasesTSVec),
+         diff(10*loessPred-90),
+         col=c("red","blue"), 
+         gpars=list(xlab="Time (Days)", ylab="Cases"))
+ legend("topright", legend=c("SLD Cases","Loess Smoothing"), col=c("red","blue"), lty=1, cex=1)
+ 
+#Do for non interceptor data
+ 
+#Transformation to stabilize scale
+ 
+ 
+#1)Make overlay plot function
+#a)normal comp
+#b)first difference
+#c)P8 version
+#compare smooth vs Smooth  ccf
+#show all smooth Unsmooth combos
+#look for best gamma
+ 
+ 
+#CCF
+#broke it into 2 parts
+#CCF of SLD vs raw N1
+ 
+#ccf(CasesTSVec,)
+ 
+#some pipeline to optimize
+#What did the original paper do? are we doing the same thing
+#case reported at day A
+#What we want: when person A became infected
+#What we expect: SLD leads Cases
+#infected a week and a half ago - some people are still shedding
+#if looking at cases you have 3 gammas 
+#Cases ~ 2 gamma ~ infected ~ 1 gamma ~ still shedding 
+ 
+#1) Focus on 2 or 3 plots give very clear heuristic picture. in form that does not need words
+ 
+#2)CCF that gives metric behind heuristic
+ 
+#3)
+```
+
 
 
 ```{r Ploting}
@@ -113,5 +272,8 @@ N1Plot <-LoessSmoothPlot(SiteS="Madison",Span=.1,min=0,max=120,weights=c("Consta
         axis.title.y = element_text(size=12))
   
 ggarrange(CasePlot,N1Plot,nrow=2)
+
+ARMA
+
 ```
 
