@@ -73,18 +73,18 @@ WWTPBoxPlot <- SigDecayDF%>%
 PRWWTPFilter <- summary(aov(log(N1.GC.L)~WWTP+WWTP:Filter.Replicate,data=SigDecayDF))[[1]][5][[1]][2]
 
 data2.labelsFilter <- data.frame(
-  time = c(3), 
+  time = c(2), 
   value = c(1), 
   label = c(paste("PVal=",format(PRWWTPFilter,digits=3)))
   )
 
 FilterBoxPlot <- SigDecayDF%>%
   ggplot()+
-  geom_boxplot(aes(y=N1.GC.L,x=paste(WWTP,Filter.Replicate)))+
+  geom_boxplot(aes(y=N1.GC.L,x=WWTP,fill=Filter.Replicate))+
   scale_y_log10()+
   ylab("N1 (GC/L)")+
   geom_text(aes(x=time,y=value,label=label),data=data2.labelsFilter)+
-  labs(x="WWTP FilterRep",title="Significant difference of means between replicates")
+  labs(title="Significant difference of means between replicates")
 
 WWTPBoxPlot
 FilterBoxPlot
@@ -93,7 +93,7 @@ FilterBoxPlot
 
 The hierarchical structure of the data suggests a mixed effect model is the most appropriate way of measuring the significance of the decay rate
 
-```{r ploting comp, warning=FALSE, message=FALSE}
+```{r ploting Funcs, warning=FALSE, message=FALSE}
 #
 
 MixedEffectModelSum <- function(DF){
@@ -138,12 +138,12 @@ regressions_data <- function(Var,DF){
 }
 
 
-DecayPlot <- function(Var,DF){
+DecayPlot <- function(Var,DF,Locate=c(13.5,60,40)){
   GraphPlot <- DF%>%
     ggplot()+
     aes(x=TimePassed,y=!!sym(Var),color = Filter.Replicate)+
-    geom_label(inherit.aes=FALSE, aes(x = 13.5, 
-           y = 60+40*as.numeric(as.factor(Filter.Replicate)),
+    geom_label(inherit.aes=FALSE, aes(x = Locate[1], 
+           y = Locate[2]+Locate[3]*as.numeric(as.factor(Filter.Replicate)),
            color=Filter.Replicate, label=paste("PVal=",PVal)),
            size=3,
            show.legend = FALSE,
@@ -155,6 +155,10 @@ DecayPlot <- function(Var,DF){
     facet_wrap(~WWTP,nrow=1)
   return(GraphPlot)
 }
+```
+
+
+```{r ploting, warning=FALSE, message=FALSE}
 
 
 
@@ -164,6 +168,15 @@ MixedEffectModelPlot(SigDecayDF,Title="Mixed model fails to find signifigent rel
 DecayPlot("N1.GC.L",SigDecayDF)+
   ggtitle("WI Rapids Rep A Large source of disagreement")
 
+DecaySummary <- SigDecayDF%>%
+  group_by(WWTP,Filter.Replicate,TimePassed)%>%
+  summarise(N1Var=var(log(N1.GC.L),na.rm = TRUE),N1Mean = mean(log(N1.GC.L),na.rm = TRUE))
+
+DecayPlot("N1Var",DecaySummary,Locate=c(8,.6,.7))+
+  ggtitle("WI Rapids Rep A has unique variance trends")
+MixedEffectModelPlot(rename(DecaySummary,N1.GC.L=N1Var),
+                     Title="Mixed model show posible relationship between delayed testing and increaced variance")
+
 SigDecayDF2 <- SigDecayDF%>%
   filter(!(WWTP=="WI Rapids"&Filter.Replicate=="Rep A"))#%>%
   #filter(!(WWTP=="Kenosha"&Filter.Replicate=="Rep B"))
@@ -172,6 +185,12 @@ SigDecayDF2 <- SigDecayDF%>%
 MixedEffectModelPlot(SigDecayDF2,Title="Mixed model filtering WI Rapids rep A finds signifigent relationship")
 #MixedEffectModelSum(SigDecayDF2)
 
+DecaySummary2 <- SigDecayDF2%>%
+  group_by(WWTP,Filter.Replicate,TimePassed)%>%
+  summarise(N1Var=var(log(N1.GC.L),na.rm = TRUE),N1Mean = mean(log(N1.GC.L),na.rm = TRUE))
+
+MixedEffectModelPlot(rename(DecaySummary2,N1.GC.L=N1Var),
+                     Title="Mixed model filtering WI Rapids rep A finds signifigent  relationship between delayed testing and increaced variance")
 
 #summary(MixedEffectModel)
 # anova(MixedEffectModel)
@@ -247,11 +266,10 @@ SigDecayDF%>%
   group_by(WWTP,Filter.Replicate,TimePassed)%>%
   summarise(N1Var=var(log(N1.GC.L),na.rm = TRUE),N1Mean = mean(log(N1.GC.L),na.rm = TRUE))%>%
     ggplot()+
-    aes(x=N1Var,y=N1Mean)+
+    aes(x=TimePassed,y=N1Var,color=Filter.Replicate)+
     geom_jitter(width = .2)+
     geom_smooth(method = "lm", se=FALSE)+
-    facet_wrap(~WWTP,nrow=3,scales = "free")+
-    facet_grid(Filter.Replicate~WWTP)
+    facet_wrap(~WWTP,nrow=1)
 
 
 

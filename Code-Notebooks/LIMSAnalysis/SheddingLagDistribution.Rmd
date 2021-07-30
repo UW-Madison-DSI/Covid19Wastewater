@@ -52,15 +52,23 @@ HFGCaseDF <- HFGCasesPARSER(FN = HFGCasesFN)%>%
 
 FullCase <- rbind(HFGCaseDF,LatCaseDF)
 
-LatCaseMadDF <- LatCaseDF%>%
-  filter(Site == "Madison")
-
-
 LIMSFullDF <- LIMSDataPARSER(LIMSFN)%>%
   select(Date,Site, BCoV, N1,N1Error,N2, N2Error,PMMoV,Pop,FlowRate)
 
-LIMSMadDF <- LIMSFullDF%>%
-  filter(Site == "Madison")
+CaseSum=FullCase%>%
+  filter(!is.na(Cases))%>%
+  group_by(Site)%>%
+  summarise(NCase=n())
+
+N1Sum=LIMSFullDF%>%
+  filter(!is.na(N1))%>%
+  group_by(Site)%>%
+  summarise(NN1=n())
+
+DataComp <- inner_join(CaseSum,N1Sum,by=c("Site"))%>%
+  mutate(Dif=NCase-NN1,min=ifelse(NCase<NN1,NCase,NN1))
+LowCaseDataPoints <- DataComp%>%
+  filter(Dif<0)
 ```
 ```{r CaseSmoothing}
 #return( RollPerPos(CaseDF,"Cases","Tests",Facet="Site"))
@@ -99,7 +107,10 @@ scale =5.028338
   #2.332779
 shape =2.332779
   
-plot(dgamma(1:21,scale =scale,shape =shape))
+plot(dgamma(1:21,scale =scale,shape =shape), 
+            main="Gamma Distribution with mean = 11.73 days and SD = 7.68",
+            ylab = "Weight",
+            xlab = "Lag")
 
 ```
 
