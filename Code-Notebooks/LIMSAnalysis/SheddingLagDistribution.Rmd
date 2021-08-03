@@ -74,15 +74,29 @@ LowCaseDataPoints <- DataComp%>%
 ```{r CaseSmoothing}
 #return( RollPerPos(CaseDF,"Cases","Tests",Facet="Site"))
 library(limma)
+DataPrep <- function(Vec1,Vec,SiteS=NA){
+  if(!is.na(SiteS)){
+    FilteredVec1 <- filter(Vec1,Site==SiteS)
+  }else{
+    FilteredVec1 <- Vec1
+  }
+  
+  FullDayDF <- data.frame(Date=seq(min(FilteredVec1$Date),
+                                   max(FilteredVec1$Date),1))
+  ReadyDF <- full_join(FullDayDF,FilteredVec1, by = c("Date"))%>%
+    fill(!!sym(Vec), .direction = "down")%>%
+    mutate(Site=SiteS)%>%
+    select(Date,!!sym(Vec),Site)
+  return(ReadyDF)
+}
 
-DFSmoothingFNC <- function(CaseDF){
+
+DFSmoothingFNC <- function(CaseDF,SiteS){
   #5.028338
   scale =5.028338
   #2.332779
   shape =2.332779
-  FullDayDF <- data.frame(Date=seq(min(CaseDF$Date),max(CaseDF$Date),1))
-  FullDateDF <- full_join(FullDayDF,CaseDF, by = c("Date"))%>%
-    fill(Cases, .direction = "down")%>%
+  FullDayDF <- DataPrep(CaseDF,"Cases",SiteS=SiteS)%>%
     group_by(Site)%>%
     mutate(Cases2 = c(rep(NA,20),
                     rollapply(Cases,width=21,FUN=weighted.mean,
@@ -90,10 +104,9 @@ DFSmoothingFNC <- function(CaseDF){
                           na.rm = TRUE)))
 }
 
-DFLoessFNC <- function(LimsDF){
-    FullDayDF <- data.frame(Date=seq(min(LimsDF$Date),max(LimsDF$Date),1))
-    ReadyDF <- full_join(FullDayDF,LimsDF, by = c("Date"))%>%
-      fill(N1, .direction = "down")
+DFLoessFNC <- function(N1DF,SiteS){
+
+    ReadyDF <- DataPrep(N1DF,"N1",SiteS=SiteS)
     
     loessFit(y=log(ReadyDF$N1),
              x=ReadyDF$Date,
@@ -256,67 +269,68 @@ TSPloting <- function(PlotingTS,SourceDF,FullPlot=TRUE,SubTitle=NA){
 }
 
 
-SLDGraphics <- function(SiteS,Diffs=1){
-  FilteredLIMSDF <- filter(LIMSFullDF,Site==SiteS)
-  
-  FullDayDF <- data.frame(Date=seq(min(FilteredLIMSDF$Date),
-                                   max(FilteredLIMSDF$Date),1))
-  
-  ReadyDF <- full_join(FullDayDF,FilteredLIMSDF, by = c("Date"))%>%
-    fill(N1, .direction = "down")%>%
-    mutate(Site=SiteS)
-  
-  SmoothCasePlotDF <- DFSmoothingFNC(filter(FullCase,Site==SiteS))%>%
-    mutate(Site=SiteS)#%>%
-    #filter(!is.na(Cases2))
-
-  MergedDF <- inner_join(SmoothCasePlotDF,ReadyDF, by=c("Date","Site"))
-  #return(MergedDF)
-  MergedDF$LoessN1 <- DFLoessFNC(MergedDF)
-  #return(MergedDF)
-  #ts(MergedDF)[,6]
-  TSDF <- ts(MergedDF,start = 18520)
-  SLDCaseVec <- TSDF[,6]
-  CaseVec <- TSDF[,3]
-  loessN1Vec <- TSDF[,15]
-  logN1Vec <- log(TSDF[,8])
-  #return(loessN1Vec)
-  TSPloting(list(SLDCaseVec,loessN1Vec,CaseVec,logN1Vec),MergedDF,SubTitle=SiteS)
-  CCF1 <- ccf(loessN1Vec,
-               SLDCaseVec,
-               main="Cross correlation between SLD and loess smoothing of N1",
-               sub=SiteS)
-  
-  TSPloting(list(diff(SLDCaseVec,Diffs),diff(loessN1Vec,Diffs)),MergedDF,
+SLDGraphics <- function(SiteS,DepTSVec,IndTSVec,DepName,IndName,efficient=FALSE){
+  TSPloting(list(DepTSVec,IndTSVec),MergedDF,
             FullPlot=FALSE,SubTitle=SiteS)
-  
-  CCF2 <- ccf(diff(loessN1Vec,Diffs),
-               diff(SLDCaseVec,Diffs),
-               main="CC between first diffrence of SLD and smoothed N1",
+  TSPloting(list(diff(DepTSVec),diff(IndTSVec)),MergedDF,
+            FullPlot=FALSE,SubTitle=SiteS)
+  # TSPloting(list(SLDCaseVec,loessN1Vec,CaseVec,logN1Vec),MergedDF,SubTitle=SiteS)
+  # 
+  # TSPloting(list(diff(DepTSVec,Diffs),diff(IndTSVec,Diffs)),MergedDF,
+  #           FullPlot=FALSE,SubTitle=SiteS)
+  ccf(IndTSVec,DepTSVec,
+               main=paste("CC between",IndName,"and", DepName),
+               sub=SiteS)
+  preWhiteFit <- auto.arima(IndTSVec, seasonal=FALSE,
+  stepwise=FALSE, approximation=FALSE)
+
+  x <- IndTSVec - fitted(Arima(IndTSVec, model = preWhiteFit))
+  y <- DepTSVec - fitted(Arima(DepTSVec, model = preWhiteFit))
+  CCFVec=ccf(x, y,lag.max=22,
+               main=paste("prewhiten CC between",IndName,"and", DepName),
                sub=SiteS)
   
-  CCF3 <- ccf(logN1Vec,
-               SLDCaseVec,
-               main="CC between  SLD and log of N1",
-               sub=SiteS)
+  if(max(CCFVec[[1]])<.15&&efficient){
+    print("no signifigent relationship")
+    return(NULL)
+  }
   
-  CCF4 <- ccf(loessN1Vec,
-               CaseVec,
-               main="CC between Cases and loess smoothing of N1",
-               sub=SiteS)
+  OffSet <- which(CCFVec[[1]]==max(CCFVec[[1]]))-21
+
   #return(Plot3)
-  TSUnionDF <- ts.union(SLDCaseVec,
-                        OGVec = loessN1Vec)
-  FullModel <- dynlm(SLDCaseVec~L(loessN1Vec,c(-12)),data=TSUnionDF)
-  return(TSDF)
+  TSUnionDF <- ts.intersect(DepTSVec,
+                        OGVec = stats::lag(IndTSVec,OffSet))
+  
+  OLM <- lm(TSUnionDF[,1]~TSUnionDF[,2])
+  ggtsdisplay(residuals(OLM))
+  FM <- auto.arima(TSUnionDF[,1],xreg=TSUnionDF[,2])
+  #FM <- cochrane.orcutt(OLM,max.iter=1000)
+  ggtsdisplay(residuals(FM))
+  print(summary(FM))
+  return(FM)
 }
 ```
 
 
 ```{r Madison}
+FullMadLimsDF <- DataPrep(LIMSFullDF,"N1","Madison")
+SmoothCasePlotDF <- DFSmoothingFNC(FullCase,SiteS="Madison")%>%
+  mutate(Site="Madison")#%>%
+    #filter(!is.na(Cases2))
 
-SLDModel <- SLDGraphics("Madison",Diffs=1)
-summary(SLDModel)
+MergedDF <- inner_join(SmoothCasePlotDF,FullMadLimsDF, by=c("Date","Site"))
+MergedDF$LoessN1 <- DFLoessFNC(MergedDF,SiteS="Madison")
+
+TSDF <- ts(MergedDF,start = 18520)
+SLDCaseVec <- TSDF[,4]
+CaseVec <- TSDF[,2]
+loessN1Vec <- TSDF[,6]
+logN1Vec <- log(TSDF[,5])
+
+SLDModelMad <- SLDGraphics("Madison",SLDCaseVec,logN1Vec,"SLD","Loess")
+```
+
+```{r}
 #asks Nathan for fuller case data
 #SLD to pure N1
 #logN1 SSD  comp give stats to optimize
@@ -339,13 +353,13 @@ summary(SLDModel)
 #loess smoothing on PMMoV might help with that
 #revisit norm
 #revisit N1 N2
-
+library(lmtest)
 ```
+
 ```{r}
 
 
-SLDModel <- SLDGraphics("MMSD-P18",Diffs=1)
-summary(aba)
+SLDModelPEight <- SLDGraphics("MMSD-P18",Diffs=1)
 
 intersect(unique(LIMSFullDF$Site),unique(FullCase$Site))
 
@@ -368,17 +382,138 @@ library(tidyquant)
 
 ```{r}
 library("portes")
+library(TSA)
 SLDTS <- SLDModel[,6]
 N1 <- log(SLDModel[,8])
-auto.arima(N1, seasonal=FALSE,
-  stepwise=FALSE, approximation=FALSE)
+LoessN1 <- log(SLDModel[,15])
+auto.arima(diff(LoessN1, seasonal=FALSE,
+  stepwise=FALSE, approximation=FALSE))
 fit2 <- Arima(N1, order=c(1,1,1))
-ggtsdisplay(N1)
-checkresiduals(fit2)
-FitResid <- residuals(fit2)
 
-newpwy<- stats::filter(SLDTS, filter = c(0.4981  ,1,-0.8995), sides =1)
-ccf (FitResid,newpwy,na.action=na.omit)
+x <- N1 - fitted(Arima(N1, model = fit2))
+y <- SLDTS - fitted(Arima(SLDTS, model = fit2))
+ccf(x, y)
+
+ggtsdisplay(x)
+ggtsdisplay(y)
+#prewhiten(N1, SLDTS, x.model = mod1)
+
+
+
+XReg <- do.call(ts.intersect,lapply(1:14,stats::lag,x=LoessN1))
+colnames(XReg) <- 1:14
+MainDriver <- ts.intersect(XReg,SLDTS)
+
+regmodel=lm(diff(SLDTS)~diff(XReg.14),data=MainDriver)
+summary(regmodel)
+ggtsdisplay(diff(MainDriver[,14]))
+ggtsdisplay(diff(MainDriver[,15]))
+ggtsdisplay(residuals(regmodel))
+
+ar1res = Arima(residuals(regmodel), order=c(1,0,0))
+xl = ts.intersect(MainDriver[,14], stats::lag(MainDriver[,14],-1))
+xnew=xl[,1] - 0.6488*xl[,2]
+yl = ts.intersect(MainDriver[,15],stats::lag(MainDriver[,15],-1))
+ynew=yl[,1]-0.6488*yl[,2]
+ 
+adjustreg = lm(ynew~xnew) # Adjustment regression
+summary(adjustreg)
+ggtsdisplay(residuals(adjustreg))
 ```
 
+
+```{r}
+library(forecast)
+library(slider)
+
+mod1 <- Arima(LoessN1, order=c(4,2,0))
+x <- LoessN1 - fitted(Arima(LoessN1, model = mod1))
+y <- SLDTS - fitted(Arima(SLDTS, model = mod1))
+ccf(x, y)
+ccf(LoessN1,SLDTS)
+ggtsdisplay(x)
+ggtsdisplay(y)
+mod1 <- Arima(LoessN1, order=c(4,2,0))
+
+
+ggtsdisplay(diff(LoessN1,differences=2))
+ggtsdisplay(diff(SLDTS,differences=2))
+ccf(diff(LoessN1,differences=2),diff(SLDTS,differences=2))
+
+
+
+XReg <- do.call(ts.intersect,lapply(-10:10,stats::lag,x=LoessN1))
+colnames(XReg) <- -10:10
+MainDriver <- ts.intersect(XReg,SLDTS)
+(fit1 <- auto.arima(MainDriver[,22], xreg=MainDriver[,1:21]))
+(fit1 <- auto.arima(MainDriver[,22], xreg=MainDriver[,1:11]))
+(fit1 <- auto.arima(MainDriver[,22], xreg=MainDriver[,11:21]))
+(fit1 <- auto.arima(MainDriver[,22], xreg=MainDriver[,15:18]))
+(fit1 <- auto.arima(MainDriver[,22], xreg=MainDriver[,16:18]))
+
+(fit <- auto.arima(MainDriver[,22], xreg=MainDriver[,15:18]))
+summary(fit)
+
+```
+
+
+```{r Regression with ARIMA errors}
+SLDTS <- SLDModel[,6]
+N1 <- log(SLDModel[,8])
+LoessN1 <- log(SLDModel[,15])
+XReg <- do.call(ts.intersect,lapply(-10:10,stats::lag,x=LoessN1))
+colnames(XReg) <- -10:10
+MainDriver <- ts.intersect(XReg,SLDTS)
+
+
+A <- ccf(LoessN1,SLDTS)
+
+
+OLM <- lm(SLDTS~stats::lag(LoessN1,11))
+FM <- cochrane.orcutt(OLM,max.iter=1000)
+summary(OLM)
+OLMR <- residuals(OLM)
+OLMP <- predict(OLM)
+ggtsdisplay(OLMR) #Clear AR relationship
+#ggtsdisplay
+#checkresiduals
+AARIMA <- auto.arima(OLMR, seasonal=FALSE,
+  stepwise=FALSE, approximation=FALSE)
+ggtsdisplay(residuals(AARIMA))
+
+install.packages("orcutt")
+library(orcutt)
+FM <- cochrane.orcutt(OLM,max.iter=1000)
+
+```
+
+
+```{R Signal Decoder}
+LoessN1Moved=stats::lag(LoessN1,k=14)
+ccf(LoessN1Moved,SLDTS)
+DoubleData=ts.intersect(LoessN1Moved,SLDTS)
+```
+
+```{r}
+    CCF1 <- ccf(loessN1Vec,
+               SLDCaseVec,
+               main="Cross correlation between SLD and loess smoothing of N1",
+               sub=SiteS)
+  
+  CCF2 <- ccf(diff(loessN1Vec,Diffs),
+               diff(SLDCaseVec,Diffs),
+               main="CC between first diffrence of SLD and smoothed N1",
+               sub=SiteS)
+  
+  CCF3 <- ccf(logN1Vec,
+               SLDCaseVec,
+               main="CC between  SLD and log of N1",
+               sub=SiteS)
+  
+  CCF4 <- ccf(loessN1Vec,
+               CaseVec,
+               main="CC between Cases and loess smoothing of N1",
+               sub=SiteS)
+
+```
 
