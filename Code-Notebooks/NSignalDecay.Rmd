@@ -56,18 +56,25 @@ MixedEffectModelSum <- function(DF,Var){
                          data = DF)
   summary(MixedEffectModel)
 }
-MixedEffectModelPlot <- function(DF,Var,Title,subtitle){
-  MixedEffectModel <- lmer(as.formula(paste0("log(",Var,") ~ TimePassed +   (1|WWTP:Filter.Replicate)")),
-                         data = DF)
-
+MixedEffectModelPlot <- function(DF,Var,Title,subtitle,Log=TRUE){
+  if(Log){
+    Var2=paste0("log(",Var,")")
+  }else{
+    Var2=Var
+  }
   DF2 <- DF%>%
+    filter(!!sym(Var)!=0)
+  MixedEffectModel <- lmer(as.formula(paste0(Var2," ~ TimePassed +   (1|WWTP:Filter.Replicate)")),
+                         data = DF2)
+
+  DF3 <- DF2%>%
     filter(!is.na(!!sym(Var)))
   
   Temp <- signif(summary(MixedEffectModel)$coefficients[10],4)
                                     
-  DF2$Pred = exp(predict(MixedEffectModel))
+  DF3$Pred = exp(predict(MixedEffectModel))
   
-  DF2%>%
+  DF3%>%
     mutate(Filter.Replicate=substr(Filter.Replicate,4,6))%>%
      ggplot()+
      geom_jitter(aes(x=FilteredDate,y=!!sym(Var),color=Filter.Replicate,alpha=as.character(Temp)),width = .2)+
@@ -146,7 +153,7 @@ MixedEffectModelPlot(SigDecayDF2,Var = "N2.GC.L",Title="mixed effect model estim
 ```
 
 ```{r ploting PMMoV, warning=FALSE, message=FALSE,fig.height=6}
-DecayPlot("PMMoV.GC.L",SigDecayDF)+
+DecayPlot("PMMoV.GC.L",SigDecayDF,Locate=c(18729,0,3000,14))+
   ggtitle("Independent analysis for each filter rep")
 
 MixedEffectModelPlot(SigDecayDF, Var = "PMMoV.GC.L",Title="mixed effect model estimating common slope",subtitle="")
@@ -161,7 +168,7 @@ MixedEffectModelPlot(SigDecayDF2,Var = "PMMoV.GC.L",Title="mixed effect model es
 ```
 
 ```{r ploting BCoV, warning=FALSE, message=FALSE,fig.height=6}
-DecayPlot("BCoV.percent.recovery",SigDecayDF)+
+DecayPlot("BCoV.percent.recovery",SigDecayDF,Locate=c(18729,-9,10,14))+
   ggtitle("Independent analysis for each filter rep")
 
 
