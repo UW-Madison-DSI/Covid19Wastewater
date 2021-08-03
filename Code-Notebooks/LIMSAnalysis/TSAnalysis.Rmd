@@ -305,14 +305,14 @@ summary(mod)
 ccfvalues2  <-  ccf(diff(loessPred),diff(CasesTSVec),type = c("correlation"),na.action = na.pass)
 ccfvalues2  <-  ccf(loessPred,CasesTSVec,type = c("correlation"),na.action = na.pass)
 
-alldata1 <- ts.union(Pred = diff(CasesTSVec),N1Norm = diff(loessPred),
+alldata1 <- ts.union(Pred = (CasesTSVec),N1Norm = (loessPred),
                          N1TSVec,
-                         N1A=stats::lag(diff(loessPred),1),
-                         N1B=stats::lag(diff(loessPred),10),
-                         N1C=stats::lag(diff(loessPred)))
+                         N1A=stats::lag((loessPred),15),
+                         N1B=stats::lag((loessPred),10),
+                         N1C=stats::lag((loessPred)))
 
 
-tryit1a  <- lm(Pred~N1Norm, data = alldata1)
+tryit1a  <- lm(Pred~N1Norm+N1A+N1B, data = alldata1)
 
 summary(tryit1a)
 
@@ -338,7 +338,7 @@ alldata1 <- ts.intersect(rollingCase,loessPred,
                          N1C=stats::lag(loessPred,-20))
 
 
-tryit1a  <- lm(rollingCase~N1A+N1B+N1C, data = alldata1)
+tryit1a  <- lm(rollingCase~N1A+N1B, data = alldata1)
 
 summary(tryit1a)
 

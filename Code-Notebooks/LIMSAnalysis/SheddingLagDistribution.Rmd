@@ -21,6 +21,7 @@ library(forecast)
 library(lmtest)
 library(lubridate)
 library(limma)
+library(zoo)
 
 #Data Files and prep work
 source("../../Scripts/GenPlotMaking.R")
@@ -198,22 +199,26 @@ plot(dgamma(1:21,scale =scale,shape =shape),
  
  
 ```{r Ploting Fnc} 
+library(dynlm)
+
 IsFull <- function(DF){
   return(length(DF$Date)==max(DF$Date)-min(DF$Date)+1)
 }
 
-TSPloting <- function(PlotingTS,FullPlot=TRUE){
+TSPloting <- function(PlotingTS,SourceDF,FullPlot=TRUE,SubTitle=NA){
   par(mar = c(5, 4, 4, 4) + 0.3)           
 
   if(FullPlot){
     plot.ts(rollmean(exp(PlotingTS[[4]]), 7,align="right",fill = NA),
-            col = "light blue", main="SLD compared to Loess smoothing of N1",
-            ylab = "N1 (GC/L)",log = 'y')
+            col = "steelblue3", 
+            main="SLD compared to Loess smoothing of N1",
+            sub=SubTitle,
+            ylab = "N1 (GC/L)",log = 'y',xaxt = "n")
     
     par(new = TRUE)  
     plot.ts(rollmean(PlotingTS[[3]], 7,align="right",fill = NA),
-            col = "pink",        
-       axes = FALSE, xlab = "", ylab = "")
+            col = "hotpink",        
+       axes = FALSE, xlab = "", ylab = "",xaxt = "n")
     
     par(new = TRUE)  
     plot.ts(exp(PlotingTS[[2]]),
@@ -221,32 +226,37 @@ TSPloting <- function(PlotingTS,FullPlot=TRUE){
        axes = FALSE, 
        xlab = "", 
        ylab = "",
-       log = 'y')
+       log = 'y',xaxt = "n")
   }else{
     plot.ts(PlotingTS[[2]], 
           col = "blue", 
           ylab = "N1 (GC/L)", 
-          main="First Diffrence of SLD and Loess smoothing of N1")
+          main="First Diffrence of SLD and Loess smoothing of N1",
+          sub=SubTitle,
+          xaxt = "n")
   }
 
   par(new = TRUE)                           
   plot.ts(PlotingTS[[1]], col = "red",        
-     axes = FALSE, xlab = "", ylab = "")
+     axes = FALSE, xlab = "", ylab = "",xaxt = "n")
 
   axis(side = 4, at = pretty(range(PlotingTS[[1]])))   
   mtext("Cases", side = 4, line = 3)
   if(FullPlot){
     legendNames <- c("SLD Cases","7 MA Cases","Loess Smoothing","7 MA N1")
-    legendColors <- c("red","pink","blue", "light blue")
+    legendColors <- c("red","hotpink","blue", "steelblue3")
   }else{
     legendNames<- c("SLD Cases","Loess Smoothing")
     legendColors<- c("red","blue")
   }
   legend("topright", legend=legendNames, col=legendColors, lty=1, cex=.75)
+  axis(1,
+     pretty(SourceDF$Date),labels =format(pretty(SourceDF$Date), "%Y-%m-%d"))
+     #pretty(format(SourceDF$Date, "%Y-%m-%d")))
 }
 
 
-SLDGraphics <- function(SiteS){
+SLDGraphics <- function(SiteS,Diffs=1){
   FilteredLIMSDF <- filter(LIMSFullDF,Site==SiteS)
   
   FullDayDF <- data.frame(Date=seq(min(FilteredLIMSDF$Date),
@@ -263,20 +273,112 @@ SLDGraphics <- function(SiteS){
   MergedDF <- inner_join(SmoothCasePlotDF,ReadyDF, by=c("Date","Site"))
   #return(MergedDF)
   MergedDF$LoessN1 <- DFLoessFNC(MergedDF)
-  
   #return(MergedDF)
-  
-  SLDCaseVec <- ts(MergedDF)[,6]
-  CaseVec <- ts(MergedDF)[,3]
-  loessN1Vec <- ts(MergedDF)[,15]
-  logN1Vec <- log(ts(MergedDF)[,8])
+  #ts(MergedDF)[,6]
+  TSDF <- ts(MergedDF,start = 18520)
+  SLDCaseVec <- TSDF[,6]
+  CaseVec <- TSDF[,3]
+  loessN1Vec <- TSDF[,15]
+  logN1Vec <- log(TSDF[,8])
   #return(loessN1Vec)
-  TSPloting(list(SLDCaseVec,loessN1Vec,CaseVec,logN1Vec))
-  TSPloting(list(diff(SLDCaseVec),diff(loessN1Vec)),
-            FullPlot=FALSE)
-  ccf(loessN1Vec,SLDCaseVec)
+  TSPloting(list(SLDCaseVec,loessN1Vec,CaseVec,logN1Vec),MergedDF,SubTitle=SiteS)
+  CCF1 <- ccf(loessN1Vec,
+               SLDCaseVec,
+               main="Cross correlation between SLD and loess smoothing of N1",
+               sub=SiteS)
+  
+  TSPloting(list(diff(SLDCaseVec,Diffs),diff(loessN1Vec,Diffs)),MergedDF,
+            FullPlot=FALSE,SubTitle=SiteS)
+  
+  CCF2 <- ccf(diff(loessN1Vec,Diffs),
+               diff(SLDCaseVec,Diffs),
+               main="CC between first diffrence of SLD and smoothed N1",
+               sub=SiteS)
+  
+  CCF3 <- ccf(logN1Vec,
+               SLDCaseVec,
+               main="CC between  SLD and log of N1",
+               sub=SiteS)
+  
+  CCF4 <- ccf(loessN1Vec,
+               CaseVec,
+               main="CC between Cases and loess smoothing of N1",
+               sub=SiteS)
+  #return(Plot3)
+  TSUnionDF <- ts.union(SLDCaseVec,
+                        OGVec = loessN1Vec)
+  FullModel <- dynlm(SLDCaseVec~L(loessN1Vec,c(-12)),data=TSUnionDF)
+  return(TSDF)
 }
-SLDGraphics("Madison")
+```
+
+
+```{r Madison}
+
+SLDModel <- SLDGraphics("Madison",Diffs=1)
+summary(SLDModel)
+#asks Nathan for fuller case data
+#SLD to pure N1
+#logN1 SSD  comp give stats to optimize
+#seasonal effect?
+#waldtest(SLDModel[,1],SLDModel[,2])
+
+#Pre whiting - auto correlation removing
+#
+#First diff acts as derivative for perfect smooth
+#First diff is hard to interpret with noisy data
+#goal is not perfect correlation: goal is to have principled analysis that helps 
+#explain what we see to test different changes
+#
+#is we get something that works great for madison. Nathan will finish
+
+
+#Rolling correlation -- CCF
+#Pre whiting - auto correlation removing
+#normalizing by PMMoV - worked at some points but noise in PMMoV hurt
+#loess smoothing on PMMoV might help with that
+#revisit norm
+#revisit N1 N2
+
+```
+```{r}
+
+
+SLDModel <- SLDGraphics("MMSD-P18",Diffs=1)
+summary(aba)
+
+intersect(unique(LIMSFullDF$Site),unique(FullCase$Site))
+
+#great: Madison, P11, P7
+#ok: P8
+#bad: p18
+```
+
+
+```{r}
+library(tseries)
+#library(dLagM)
+
+#ts.plot(diff(aba[,1],2),stats::lag(150*diff(aba[,2],2),12),col=c("red","blue"))
+#adf.test(diff(aba[,1],2))
+
+rolCorPlot(aba[,1],aba[,2],width=7)
+library(tidyquant)
+```
+
+```{r}
+library("portes")
+SLDTS <- SLDModel[,6]
+N1 <- log(SLDModel[,8])
+auto.arima(N1, seasonal=FALSE,
+  stepwise=FALSE, approximation=FALSE)
+fit2 <- Arima(N1, order=c(1,1,1))
+ggtsdisplay(N1)
+checkresiduals(fit2)
+FitResid <- residuals(fit2)
+
+newpwy<- stats::filter(SLDTS, filter = c(0.4981  ,1,-0.8995), sides =1)
+ccf (FitResid,newpwy,na.action=na.omit)
 ```
 
 
