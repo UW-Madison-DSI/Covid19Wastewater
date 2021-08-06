@@ -162,7 +162,7 @@ DecayPlot <- function(Var,DF,Locate=c(18729,14,25,20),Log=TRUE){
 ```
 
 
-```{r ploting N1, warning=FALSE, message=FALSE,fig.height=4}
+```{r ploting N1, warning=FALSE, message=FALSE,fig.height=6}
 MixedEffectModelPlot(SigDecayDF, Var = "N1.GC.L",
                      Title="",subtitle="",
                      xlab="Figure 1. Mixed-effects model.",
@@ -224,13 +224,11 @@ library(printr)
 ```
 
 
+This process was repeated with N2 with no significance.
 
 
 
-
-```{r ploting N2, include=FALSE, warning=FALSE, message=FALSE,fig.height=6}
-#This process was repeated with N2 with no significance.
-
+```{r ploting N2, include=TRUE, warning=FALSE, message=FALSE,fig.height=6}
 MixedEffectModelPlot(SigDecayDF, Var = "N2.GC.L",
                      Title="",subtitle="",
                      xlab="Figure 1. Mixed-effects model.",
@@ -250,12 +248,10 @@ MixedEffectModelPlot(SigDecayDF2,Var = "N2.GC.L",
 ```
 
 
+When the mixed model is fitted for PMMoV we find a much stronger picture indicating an exponential decay relationship.
 
 
-```{r ploting PMMoV, include=FALSE, warning=FALSE, message=FALSE,fig.height=6}
-
-# When the mixed model is fitted for PMMoV we find a much stronger picture indicating an exponential decay relationship.
-
+```{r ploting PMMoV, include=TRUE, warning=FALSE, message=FALSE,fig.height=6}
 MixedEffectModelPlot(SigDecayDF, Var = "PMMoV.GC.L",
                      Title="",subtitle="",
                      xlab="Figure 1. Mixed-effects model.",
@@ -275,7 +271,7 @@ MixedEffectModelPlot(SigDecayDF2,Var = "PMMoV.GC.L",
                      ylab="PMMoV (GC/L)")
 ```
 
-```{r ploting BCoV, include=FALSE, warning=FALSE, message=FALSE,fig.height=6}
+```{r ploting BCoV, include=TRUE, warning=FALSE, message=FALSE,fig.height=6}
 MixedEffectModelPlot(SigDecayDF, Var = "BCoV.percent.recovery",
                      Title="",subtitle="",
                      xlab="Figure 1. Mixed-effects model.",
@@ -297,11 +293,6 @@ MixedEffectModelPlot(SigDecayDF3,Var = "BCoV.percent.recovery",
                      ylab="Percent bovine coronavirus recovery",
                      Log=FALSE)
 ```
-
-
-\newpage
-
-This process was repeated with each covariate and summarized in the table one below
 
 ```{r}
 

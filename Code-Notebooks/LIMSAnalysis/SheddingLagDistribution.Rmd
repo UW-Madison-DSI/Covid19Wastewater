@@ -130,6 +130,27 @@ plot(dgamma(1:21,scale =scale,shape =shape),
             ylab = "Weight",
             xlab = "Lag")
 
+
+plot(c(rep(0,10),dgamma(1:21,scale =scale,shape =shape)[11:21]), 
+            main="Gamma Distribution with mean = 11.73 days and SD = 7.68",
+            ylab = "Weight",
+            xlab = "Lag")
+
+DFSmoothingDormsFNC <- function(CaseDF,SiteS){
+  #5.028338
+  scale =5.028338
+  #2.332779
+  shape =2.332779
+  FullDayDF <- DataPrep(CaseDF,"Cases",SiteS=SiteS)%>%
+    group_by(Site)%>%
+    mutate(Cases2 = c(rep(NA,20),
+                    rollapply(Cases,width=21,FUN=weighted.mean,
+                          w=c(rep(0,10),
+                              dgamma(1:21,
+                              scale=scale,
+                              shape=shape)[11:21]),
+                          na.rm = TRUE)))
+}
 ```
 
 
