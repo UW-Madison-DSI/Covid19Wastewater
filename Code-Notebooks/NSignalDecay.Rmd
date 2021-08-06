@@ -323,7 +323,16 @@ knitr::kable(signif(rbind(`N1 using six replicates`,
                           `PMMoV excluding WI Rapids rep A`,
                           `BCoV using six replicates`,
                           `BCoV excluding Madison rep A`
-                          ),3),
+                          ),2),
 caption ="Summary of models")
 
+#put log in math notation
+#Var in 
+#sub table
+#round 2 2 fig
+#include slope in graph
+#log linear model estimating degergation rate
+#Note madison weirdness with star or dag and describe in footnote
+#Mark BCoV as non log
+#exlude mad because only 2 non 0 data points
 ```

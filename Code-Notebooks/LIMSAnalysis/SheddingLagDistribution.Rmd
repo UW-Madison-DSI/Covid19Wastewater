@@ -2,9 +2,11 @@
 title: "SheddingLagDistribution"
 author: "Marlin"
 date: "7/22/2021"
-output: html_document
-editor_options: 
-  chunk_output_type: inline
+output:
+  html_document: default
+  pdf_document: default
+editor_options:
+  chunk_output_type: console
 ---
 
 ```{r set up markdown settings, echo=FALSE}
@@ -31,7 +33,6 @@ source("../../Scripts/WasteWaterDataProccess.R")
 source("../../Scripts/CassesDataProccess.R")
 source("../../Scripts/HelperFunctions.R")
 ```
-
 
 ```{r DF Set Up}
 PathStarter="Z:/"
@@ -75,7 +76,7 @@ LowCaseDataPoints <- DataComp%>%
 ```
 
 
-```{r CaseSmoothing}
+```{r CaseSmoothing, include=FALSE}
 #return( RollPerPos(CaseDF,"Cases","Tests",Facet="Site"))
 library(limma)
 DataPrep <- function(DF,SiteS=NA,keep=c()){
@@ -364,8 +365,7 @@ SLDGraphics <- function(SiteS,DepTSVec,IndTSVec,DepName,IndName,efficient=FALSE)
 }
 ```
 
-
-```{r Madison}
+```{r Madison Prep}
 FullMadLimsDF <- DataPrep(LIMSFullDF,keep=c("N1","N1Error"),"Madison")
 SmoothCasePlotDF <- DFSmoothingFNC(FullCase,SiteS="Madison")%>%
   mutate(Site="Madison")#%>%
@@ -381,7 +381,9 @@ SLDCaseVec <- TSDF[,4]
 CaseVec <- TSDF[,3]
 loessN1Vec <- TSDF[,6]
 logN1Vec <- log(TSDF[,5])
+```
 
+```{r Mad Full Graphic, include=FALSE}
 SLDModelMad <- SLDGraphics("Madison",SLDCaseVec,loessN1Vec,"SLD","log(N1)")
 
 
@@ -492,7 +494,6 @@ SLDModelMad <- SLDGraphics("Madison",SLDCaseVec,loessN1Vec,"SLD","log(N1)")
 # ggtsdisplay(residuals(adjustreg))
 ```
 
-
 ```{r}
 # library(forecast)
 # library(slider)
@@ -532,25 +533,32 @@ SLDModelMad <- SLDGraphics("Madison",SLDCaseVec,loessN1Vec,"SLD","log(N1)")
 
 ```{r 6 part plot}
 #(SourceDF$N1Error)
-TSPloting <- function(PlotingTS,SourceDF,SubTitle){
+TSPloting <- function(PlotingTS,SourceDF,SubTitle,SLD=TRUE){
+  if(SLD){
+    Shade <- 0.5
+    Thickness <- 1
+  }else{
+    Shade <-1
+    Thickness <- 2
+  }
   RangeCases <- range(PlotingTS[[3]],na.rm=TRUE)
   RangeN1 <- range(SourceDF$N1,na.rm=TRUE)
   plot.new()
-  par(mar = c(5, 4, 4, 4) + 0.3)
+  par(mar = c(8, 4, 4, 4) + 0.1)
   plot(1, type="n", xlab=SubTitle, ylab="", axes = FALSE,
        xlim=range(SourceDF$Date), ylim=RangeN1,log="y")
   rect(SourceDF$Date-.5,
        SourceDF$N1-SourceDF$N1Error,
        SourceDF$Date+.5,
        SourceDF$N1+SourceDF$N1Error,
-      col  = rgb(0, 0, 1, alpha=0.05),
+      col  = rgb(0, 0, 1, alpha=0.25),
       border  = NA,
       xlab = "",
       ylab = "",
       xaxt = "n")
   par(new = TRUE)
   barplot(as.numeric(PlotingTS[[3]]),
-          col  = rgb(1, 0, 0, alpha=0.05),
+          col  = rgb(1, 0, 0, alpha=0.1),
           xlab = "",
           ylab = "",
           xaxt = "n",
@@ -558,24 +566,26 @@ TSPloting <- function(PlotingTS,SourceDF,SubTitle){
           ylim = RangeCases,
           axes = FALSE)
   par(new = TRUE)
-  plot.ts(rollmean(exp(PlotingTS[[4]]), 7,align="right",fill = NA),
-          col = rgb(0, 0, 1, alpha=0.3),
-          xlab = "",
-          ylab = "",
-          xaxt = "n",
-          axes = FALSE,
-          ylim = RangeN1,
-          log="y")
-  axis(4,col.axis = "blue")
-  par(new = TRUE)
+  
   plot.ts(rollmean(PlotingTS[[3]], 7,align="right",fill = NA),
-         col = rgb(1, 0, 0, alpha=0.3),
+         col = rgb(1, 0, 0, alpha=Shade),
           ylim = RangeCases,
    axes = FALSE,
+   lwd=Thickness,
    xlab = "",
    ylab = "",
    xaxt = "n")
-
+  axis(4, pretty(RangeCases),col.axis = "red",cex.axis=.75)
+  
+  RangeDates <- range(SourceDF$Date)
+  ticks <- seq(RangeDates[1],RangeDates[2], by = "month")
+  axis(1,
+     ticks,
+     labels = FALSE,
+     cex.axis=.5)
+  text(cex=.75, x=ticks-15, y=-115, format(ticks,"%b %Y"),
+       xpd=TRUE, srt=30)
+  
   par(new = TRUE)
   plot.ts(exp(PlotingTS[[2]]),
             col = "blue",
@@ -584,30 +594,49 @@ TSPloting <- function(PlotingTS,SourceDF,SubTitle){
        xlab = "",
        ylab = "",
        log="y",
+       lwd=2,
        xaxt = "n")
-
-  par(new = TRUE)
-  plot.ts(PlotingTS[[1]],
+  axis(2,col.axis = "blue",cex.axis=.75)
+  
+  legendNames <- c("7 day MA Cases","loess smoothing with span=.125")
+  legendColors <- c(rgb(1, 0, 0, alpha=Shade),"blue")
+  if(SLD){
+    legendNames <- c("Shedding lag distribution",legendNames)
+  legendColors <- c("red",legendColors)
+    
+    par(new = TRUE)
+    plot.ts(PlotingTS[[1]],
           ylim = RangeCases,
           col = "red",
+          lwd=2,
       axes = FALSE,
      xlab = "", ylab = "",xaxt = "n")
-  axis(2, pretty(RangeCases),col.axis = "red")
-  mtext("Cases", side = 2, line = 3, col = "red")
-  mtext("N1 (GC/L)", side = 4, line = 3, col = "blue")
+  }
+  mtext("Cases", side = 4, line = 2, col = "red",cex=.75)
+  mtext("N1 (GC/L)", side = 2, line = 2, col = "blue",cex=.75)
 
-  legendNames <- c("SLD Cases","7 MA Cases","Loess Smoothing","7 MA N1")
-  legendColors <- c("red","hotpink","blue", "steelblue3")
 
   legend("topright", legend=legendNames, col=legendColors, lty=1, cex=.6)
-  axis(1,
-     pretty(SourceDF$Date),labels =format(pretty(SourceDF$Date), "%Y-%m-%d"))
+  
 }
 
-
-TSPloting(list(SLDCaseVec,loessN1Vec,CaseVec,logN1Vec),MergedDF,
+TSPloting(list(SLDCaseVec,loessN1Vec,CaseVec),MergedDF,
+            SubTitle="Madison",SLD=FALSE)
+TSPloting(list(SLDCaseVec,loessN1Vec,CaseVec),MergedDF,
             SubTitle="Madison")
 
 
+#2 N1
+#loess
+#Cases with MA
+#bring in SLD with everything
+#include span in legend? in small font
+
+
+#How to communicate clearly
+#read paper to see if transformation is pos
+#mess with N1 y to see if it looks better. low prio
+#MA Key
+#look at convolution of MA SLD
 ```
 
