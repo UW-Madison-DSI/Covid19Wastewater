@@ -212,7 +212,7 @@ plot(dgamma(1:21,scale =scale,shape =shape),
  
  
 ```{r Ploting Fnc} 
-library(dynlm)
+#library(dynlm)
 
 IsFull <- function(DF){
   return(length(DF$Date)==max(DF$Date)-min(DF$Date)+1)
@@ -222,9 +222,9 @@ TSPloting <- function(PlotingTS,SourceDF,DepName,IndName,FullPlot=TRUE,SubTitle=
   if(FirstDif){
     PlotingTS[[2]] <- diff(PlotingTS[[2]])
     PlotingTS[[1]] <- diff(PlotingTS[[1]])
-    Lab <- paste("Cross correlation of the First Diffrence of", DepName, "and", IndName)
+    Lab <- paste("First Diffrence of", DepName, "and", IndName)
   }else{
-    Lab <- paste("Cross correlation of", DepName, "and", IndName)
+    Lab <- paste("Visual relationship of", DepName, "and", IndName)
   }
   
   par(mar = c(5, 4, 4, 4) + 0.3)           
@@ -232,9 +232,9 @@ TSPloting <- function(PlotingTS,SourceDF,DepName,IndName,FullPlot=TRUE,SubTitle=
   if(FullPlot){
     plot.ts(rollmean(exp(PlotingTS[[4]]), 7,align="right",fill = NA),
             col = "steelblue3", 
-            main=Lab,
-            sub=SubTitle,
-            ylab = "N1 (GC/L)",log = 'y',xaxt = "n")
+            axes = FALSE, xlab = "", ylab = "",xaxt = "n")
+    
+    axis(side = 4, at = signif(exp(pretty(range(PlotingTS[[2]]))),1))
     
     par(new = TRUE)  
     plot.ts(rollmean(PlotingTS[[3]], 7,align="right",fill = NA),
@@ -251,7 +251,7 @@ TSPloting <- function(PlotingTS,SourceDF,DepName,IndName,FullPlot=TRUE,SubTitle=
   }else{
     plot.ts(PlotingTS[[2]], 
           col = "blue", 
-          ylab = "N1 (GC/L)", 
+          axes = FALSE,
           main=Lab,
           sub=SubTitle,
           xaxt = "n")
@@ -261,8 +261,9 @@ TSPloting <- function(PlotingTS,SourceDF,DepName,IndName,FullPlot=TRUE,SubTitle=
   plot.ts(PlotingTS[[1]], col = "red",        
      axes = FALSE, xlab = "", ylab = "",xaxt = "n")
 
-  axis(side = 4, at = pretty(range(PlotingTS[[1]])))   
-  mtext("Cases", side = 4, line = 3)
+  axis(side = 2, at = pretty(range(PlotingTS[[1]])))
+  mtext("Cases", side = 2, line = 3, col = "red")
+  mtext("N1 (GC/L)", side = 4, line = 3, col = "blue")
   if(FullPlot){
     legendNames <- c("SLD Cases","7 MA Cases","Loess Smoothing","7 MA N1")
     legendColors <- c("red","hotpink","blue", "steelblue3")
@@ -275,8 +276,13 @@ TSPloting <- function(PlotingTS,SourceDF,DepName,IndName,FullPlot=TRUE,SubTitle=
      pretty(SourceDF$Date),labels =format(pretty(SourceDF$Date), "%Y-%m-%d"))
      #pretty(format(SourceDF$Date, "%Y-%m-%d")))
 }
+TSPloting(list(SLDCaseVec,loessN1Vec,CaseVec,logN1Vec),MergedDF,"A","IndName",
+            FullPlot=TRUE,SubTitle="Madison")
 
+signif(exp(pretty(range(logN1Vec))),1)
+```
 
+```
 SLDGraphics <- function(SiteS,DepTSVec,IndTSVec,DepName,IndName,efficient=FALSE){
   print("Visual Relationship")
   TSPloting(list(DepTSVec,IndTSVec),MergedDF,DepName,IndName,
@@ -347,7 +353,25 @@ CaseVec <- TSDF[,2]
 loessN1Vec <- TSDF[,6]
 logN1Vec <- log(TSDF[,5])
 
-SLDModelMad <- SLDGraphics("Madison",SLDCaseVec,loessN1Vec,"SLD","Loess")
+SLDModelMad <- SLDGraphics("Madison",SLDCaseVec,loessN1Vec,"SLD","log(N1)")
+
+
+#library(TSA)
+#arimax(SLDCaseVec,order=c(2,1,0),xreg=loessN1Vec)
+
+#7 day weekly average
+
+#instead do regression model of cases by day of week
+#changing seasonality
+#is model useful
+#SARIMA residuals
+#cases method
+#color coat axis
+#fix all labeling inconsistency
+#loess
+#add cases and 7 day cases and log(N1) to plot
+TSPloting(list(SLDCaseVec,loessN1Vec,CaseVec,logN1Vec),MergedDF,"A","IndName",
+            FullPlot=TRUE,SubTitle="Madison")
 ```
 
 ```{r}
@@ -474,6 +498,9 @@ SLDModelMad <- SLDGraphics("Madison",SLDCaseVec,loessN1Vec,"SLD","Loess")
 # (fit <- auto.arima(MainDriver[,22], xreg=MainDriver[,15:18]))
 # summary(fit)
 
+
+#library(TSA)
+#arimax
 ```
 
 

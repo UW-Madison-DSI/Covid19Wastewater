@@ -1,8 +1,10 @@
 ---
-title: "NSignalDecay"
-author: "Marlin"
-date: "7/25/2021"
-output: html_document
+title: "<center> <h1>Sample degradation analysis</h1> </center>"
+author: "<center> <h1>Marlin Lee and Steve Goldstein</h1> </center>"
+date: "<center> <h1>August 3, 2021</h1> </center>"
+output:
+  pdf_document: default
+  html_document: default
 ---
 ```{r, echo=FALSE}
 knitr::opts_chunk$set(
@@ -46,17 +48,36 @@ SigDecayDF <- read.csv(SigWasteFN)%>%
 
 
 
-The hierarchical structure of the data suggests a mixed effect model is the most appropriate way of measuring the significance of the decay rate
+Analysis of TimeSeriesDataforStats072321.csv from 7/23/2021 email from Kayley Janssen  
+
+>One figure I am hoping to include is a time series of filtering to show decay rate or when/if a
+significant drop off in signal of SARS-CoV-2 and control viruses in wastewater held at 4 degrees
+occurs. We were provided with enough influent from 3 different wastewater treatment plants
+where we filtered duplicates of the sample almost every day over a 2 week period and then ran
+triplicates(technical replicates) of each filter on qPCR for N1, N2, BCoV, and PMMoV.
+
+Fitting a linear model to log(concentration N1) seems appropriate: the slope of the regression
+line estimates the exponential rate of decay of concentration N1. Figure 1 shows the results of
+applying a mixed-effects model, estimating a common slope for the three WWTPs and letting
+concentration N1 vary between the three. The p-value for the slope coefficient is not significant.  
+
+To investigate why the data don’t fit this model, we fit linear models to each filter replicate
+independently. Figure 2 suggests that Wisconsin Rapids Filter replicate A might be an outlier.
+Excluding this sample from the dataset and fitting the mixed-effects model yields an estimated
+decay rate of -0.041 ± 0.016 GC/(L*day), ( p < 0.05), as shown in Figure 3.  
 
 ```{r ploting Funcs, warning=FALSE, message=FALSE}
 #
 
 MixedEffectModelSum <- function(DF,Var){
-  MixedEffectModel <- lmer(as.formula(paste0("log(",Var,") ~ TimePassed +   (1|WWTP:Filter.Replicate)")),
+  MixedEffectModel <- lmer(as.formula(paste0("log(",Var,") ~ TimePassed +   (1|WWTP)")),
                          data = DF)
   summary(MixedEffectModel)
 }
-MixedEffectModelPlot <- function(DF,Var,Title,subtitle,Log=TRUE){
+MixedEffectModelPlot <- function(DF,Var,Title,subtitle,
+                                 xlab="Filtered Date",
+                                 ylab="N1 (GC/L)",
+                                 Log=TRUE){
   if(Log){
     Var2=paste0("log(",Var,")")
   }else{
@@ -64,29 +85,32 @@ MixedEffectModelPlot <- function(DF,Var,Title,subtitle,Log=TRUE){
   }
   DF2 <- DF%>%
     filter(!!sym(Var)!=0)
-  MixedEffectModel <- lmer(as.formula(paste0(Var2," ~ TimePassed +   (1|WWTP:Filter.Replicate)")),
+  MixedEffectModel <- lmer(as.formula(paste0(Var2," ~ TimePassed +   (1|WWTP)")),
                          data = DF2)
 
   DF3 <- DF2%>%
     filter(!is.na(!!sym(Var)))
   
-  Temp <- signif(summary(MixedEffectModel)$coefficients[10],4)
+  Pvel <- signif(summary(MixedEffectModel)$coefficients[10],4)
                                     
   DF3$Pred = exp(predict(MixedEffectModel))
   
   DF3%>%
     mutate(Filter.Replicate=substr(Filter.Replicate,4,6))%>%
      ggplot()+
-     geom_jitter(aes(x=FilteredDate,y=!!sym(Var),color=Filter.Replicate,alpha=as.character(Temp)),width = .2)+
-     geom_line(aes(x=FilteredDate,y=Pred,color=Filter.Replicate))+
+     geom_jitter(aes(x=FilteredDate,y=!!sym(Var),
+                     color=Filter.Replicate,
+                     alpha=as.character(Pvel)),
+                 width = .2)+
+     geom_line(aes(x=FilteredDate,y=Pred))+
      facet_wrap(~WWTP,nrow = 3)+
      scale_y_log10()+
-    labs(y=Var,
-         x="Filtered Date",
+    labs(y=ylab,
+         x=xlab,
          color = "Filter Replicate",
          title=Title,
          subtitle=subtitle)+
-    scale_alpha_manual(values=c(1),labels = c(Temp),name=expression(p[slope]),guide = 'legend')
+    scale_alpha_manual(values=c(1),labels = c(Pvel),name=expression(p[slope]),guide = 'legend')
 }
 
 regressions_data <- function(Var,DF){
@@ -114,29 +138,78 @@ DecayPlot <- function(Var,DF,Locate=c(18729,-40,45,14)){
     geom_jitter(width = .2)+
     geom_smooth(method = "lm", se=FALSE)+
     scale_y_log10()+
-    labs(x="Filtered Date",y="N1 (GC/L)",color="Filter Replicate")+
+    labs(x="Filtered Date",y=Var,color="Filter Replicate")+
     facet_wrap(~WWTP,nrow=3)
   return(GraphPlot)
 }
-
 ```
 
 
 ```{r ploting N1, warning=FALSE, message=FALSE,fig.height=6}
-DecayPlot("N1.GC.L",SigDecayDF)+
-  ggtitle("Independent analysis for each filter rep")
+MixedEffectModelPlot(SigDecayDF, Var = "N1.GC.L",
+                     Title="",subtitle="",
+                     xlab="Figure 1. Mixed-effects model.",
+                     ylab="N1 (GC/L)")
 
-MixedEffectModelPlot(SigDecayDF, Var = "N1.GC.L",Title="mixed effect model estimating common slope",subtitle="")
+
+DecayPlot("N1.GC.L",SigDecayDF)+
+  labs(x="Figure 2. Six independent linear regressions.",
+       y="N1 (GC/L)")
 
 
 SigDecayDF2 <- SigDecayDF%>%
   filter(!(WWTP=="WI Rapids"&Filter.Replicate=="Rep A"))
 
-MixedEffectModelPlot(SigDecayDF2,Var = "N1.GC.L",Title="mixed effect model estimating common slope",  subtitle="excluding apparent outlier")
+MixedEffectModelPlot(SigDecayDF2,Var = "N1.GC.L",
+                     Title="",
+                     subtitle="",
+                     xlab="Figure 3. Mixed-effects model excluding WI Rapids filter replicate A",
+                     ylab="N1 (GC/L)")
+
+
+#overlay PMMoV vs N1
+#compare slope of different models and SE
+#looking at delay in measuring as a way to control LIMS signal
+#what model used comes down to formulating what the goal is
+
+#Brian: early august - students coming back - want to be done asap - where we are report useful in that place
+#should we devote resources for collection
+#make simplest thing to show
+#back apply to remove error
+#might explain issues
+#see relationship between time and difference between testing and collection
+
+#Focus on removing heuristics
+#rigorous analysis
+
+#look at Steve doc and convert visuals
+#Include slope and SE in sections
+
+#1)Reproduce Steve doc in reproducible way
+#-include other graphics in same style. 
+#for 3 intercept model
+#-Need P, slope and se in legend with/without WRap rep A
+#for %BCov exclude mad rep A instead
+#1 big table: rows are variables col are p,slope,se with/without WRap rep A and notes
+#3 figures each
+#Spare writing
+#include N1+N2
+#N2 are messy with delay
+#constant picture between N1 and Pmmov-show that
+
+#2)code review isc conversation
+#by early monday lets have something that tells story
+#lets have something put together by monday
+library(knitr)
+library(printr)
+`N1 using six replicates` <- MixedEffectModelSum(SigDecayDF,"N1.GC.L")[[10]][2,c(1,2,5)]
+`N1 excluding WI Rapids rep A` <- MixedEffectModelSum(SigDecayDF2,"N1.GC.L")[[10]][2,c(1,2,5)]
+knitr::kable(signif(rbind(`N1 using six replicates`,`N1 excluding WI Rapids rep A`),3),
+caption ="Summary of models")
 ```
 
 
-```{r ploting N2, warning=FALSE, message=FALSE,fig.height=6}
+```{r ploting N2, include=FALSE, warning=FALSE, message=FALSE,fig.height=6}
 DecayPlot("N2.GC.L",SigDecayDF)+
   ggtitle("Independent analysis for each filter rep")
 
@@ -152,7 +225,7 @@ MixedEffectModelPlot(SigDecayDF2,Var = "N2.GC.L",Title="mixed effect model estim
                       subtitle="excluding apparent outlier")
 ```
 
-```{r ploting PMMoV, warning=FALSE, message=FALSE,fig.height=6}
+```{r ploting PMMoV, include=FALSE, warning=FALSE, message=FALSE,fig.height=6}
 DecayPlot("PMMoV.GC.L",SigDecayDF,Locate=c(18729,0,3000,14))+
   ggtitle("Independent analysis for each filter rep")
 
@@ -167,7 +240,7 @@ MixedEffectModelPlot(SigDecayDF2,Var = "PMMoV.GC.L",Title="mixed effect model es
                       subtitle="excluding apparent outlier")
 ```
 
-```{r ploting BCoV, warning=FALSE, message=FALSE,fig.height=6}
+```{r ploting BCoV, include=FALSE, warning=FALSE, message=FALSE,fig.height=6}
 DecayPlot("BCoV.percent.recovery",SigDecayDF,Locate=c(18729,-9,10,14))+
   ggtitle("Independent analysis for each filter rep")
 
@@ -176,9 +249,13 @@ MixedEffectModelPlot(SigDecayDF, Var = "BCoV.percent.recovery",Title="mixed effe
 
 
 SigDecayDF2 <- SigDecayDF%>%
-  filter(!(WWTP=="WI Rapids"&Filter.Replicate=="Rep A"))
+  #filter(!(WWTP=="WI Rapids"&Filter.Replicate=="Rep A"))%>%
+  filter(!(WWTP=="Madison"&Filter.Replicate=="Rep A"))
 
 
 MixedEffectModelPlot(SigDecayDF2,Var = "BCoV.percent.recovery",Title="mixed effect model estimating common slope",
                       subtitle="excluding apparent outlier")
+
+
+
 ```
