@@ -3,6 +3,8 @@ title: "SheddingLagDistribution"
 author: "Marlin"
 date: "7/22/2021"
 output: html_document
+editor_options: 
+  chunk_output_type: inline
 ---
 
 ```{r set up markdown settings, echo=FALSE}
@@ -71,22 +73,24 @@ DataComp <- inner_join(CaseSum,N1Sum,by=c("Site"))%>%
 LowCaseDataPoints <- DataComp%>%
   filter(Dif<0)
 ```
+
+
 ```{r CaseSmoothing}
 #return( RollPerPos(CaseDF,"Cases","Tests",Facet="Site"))
 library(limma)
-DataPrep <- function(Vec1,Vec,SiteS=NA){
+DataPrep <- function(DF,SiteS=NA,keep=c()){
   if(!is.na(SiteS)){
-    FilteredVec1 <- filter(Vec1,Site==SiteS)
+    FilteredVec1 <- filter(DF,Site==SiteS)
   }else{
-    FilteredVec1 <- Vec1
+    FilteredVec1 <- DF
   }
   
   FullDayDF <- data.frame(Date=seq(min(FilteredVec1$Date),
                                    max(FilteredVec1$Date),1))
   ReadyDF <- full_join(FullDayDF,FilteredVec1, by = c("Date"))%>%
-    fill(!!sym(Vec), .direction = "down")%>%
+    fill(one_of(keep), .direction = "down")%>%
     mutate(Site=SiteS)%>%
-    select(Date,!!sym(Vec),Site)
+    select(Date,one_of(keep),Site,)
   return(ReadyDF)
 }
 
@@ -106,7 +110,7 @@ DFSmoothingFNC <- function(CaseDF,SiteS){
 
 DFLoessFNC <- function(N1DF,SiteS){
 
-    ReadyDF <- DataPrep(N1DF,"N1",SiteS=SiteS)
+    ReadyDF <- DataPrep(N1DF,keep=c("N1"),SiteS=SiteS)
     
     loessFit(y=log(ReadyDF$N1),
              x=ReadyDF$Date,
@@ -226,15 +230,19 @@ TSPloting <- function(PlotingTS,SourceDF,DepName,IndName,FullPlot=TRUE,SubTitle=
   }else{
     Lab <- paste("Visual relationship of", DepName, "and", IndName)
   }
-  
+  plot.new()
   par(mar = c(5, 4, 4, 4) + 0.3)           
 
   if(FullPlot){
     plot.ts(rollmean(exp(PlotingTS[[4]]), 7,align="right",fill = NA),
             col = "steelblue3", 
-            axes = FALSE, xlab = "", ylab = "",xaxt = "n")
+            axes = FALSE, 
+            xlab = "", 
+            ylab = "",
+            xaxt = "n",
+            log="y")
     
-    axis(side = 4, at = signif(exp(pretty(range(PlotingTS[[2]]))),1))
+    axis(side = 4, col.axis="blue")
     
     par(new = TRUE)  
     plot.ts(rollmean(PlotingTS[[3]], 7,align="right",fill = NA),
@@ -247,21 +255,25 @@ TSPloting <- function(PlotingTS,SourceDF,DepName,IndName,FullPlot=TRUE,SubTitle=
        axes = FALSE, 
        xlab = "", 
        ylab = "",
-       log = 'y',xaxt = "n")
+       log = 'y',
+       xaxt = "n")
   }else{
-    plot.ts(PlotingTS[[2]], 
+    plot.ts(exp(PlotingTS[[2]]), 
           col = "blue", 
           axes = FALSE,
           main=Lab,
+          ylab="",
           sub=SubTitle,
+          log = 'y',
           xaxt = "n")
+    axis(side = 4, col.axis="blue")
   }
 
   par(new = TRUE)                           
   plot.ts(PlotingTS[[1]], col = "red",        
      axes = FALSE, xlab = "", ylab = "",xaxt = "n")
 
-  axis(side = 2, at = pretty(range(PlotingTS[[1]])))
+  axis(side = 2, at = pretty(range(PlotingTS[[1]])),col.axis="red")
   mtext("Cases", side = 2, line = 3, col = "red")
   mtext("N1 (GC/L)", side = 4, line = 3, col = "blue")
   if(FullPlot){
@@ -276,13 +288,7 @@ TSPloting <- function(PlotingTS,SourceDF,DepName,IndName,FullPlot=TRUE,SubTitle=
      pretty(SourceDF$Date),labels =format(pretty(SourceDF$Date), "%Y-%m-%d"))
      #pretty(format(SourceDF$Date, "%Y-%m-%d")))
 }
-TSPloting(list(SLDCaseVec,loessN1Vec,CaseVec,logN1Vec),MergedDF,"A","IndName",
-            FullPlot=TRUE,SubTitle="Madison")
 
-signif(exp(pretty(range(logN1Vec))),1)
-```
-
-```
 SLDGraphics <- function(SiteS,DepTSVec,IndTSVec,DepName,IndName,efficient=FALSE){
   print("Visual Relationship")
   TSPloting(list(DepTSVec,IndTSVec),MergedDF,DepName,IndName,
@@ -339,17 +345,19 @@ SLDGraphics <- function(SiteS,DepTSVec,IndTSVec,DepName,IndName,efficient=FALSE)
 
 
 ```{r Madison}
-FullMadLimsDF <- DataPrep(LIMSFullDF,"N1","Madison")
+FullMadLimsDF <- DataPrep(LIMSFullDF,keep=c("N1","N1Error"),"Madison")
 SmoothCasePlotDF <- DFSmoothingFNC(FullCase,SiteS="Madison")%>%
   mutate(Site="Madison")#%>%
     #filter(!is.na(Cases2))
 
 MergedDF <- inner_join(SmoothCasePlotDF,FullMadLimsDF, by=c("Date","Site"))
 MergedDF$LoessN1 <- DFLoessFNC(MergedDF,SiteS="Madison")
+MergedDF <- MergedDF%>%
+  select(Date,Site,Cases,Cases2,N1,LoessN1,N1Error)
 
 TSDF <- ts(MergedDF,start = 18520)
 SLDCaseVec <- TSDF[,4]
-CaseVec <- TSDF[,2]
+CaseVec <- TSDF[,3]
 loessN1Vec <- TSDF[,6]
 logN1Vec <- log(TSDF[,5])
 
@@ -370,8 +378,6 @@ SLDModelMad <- SLDGraphics("Madison",SLDCaseVec,loessN1Vec,"SLD","log(N1)")
 #fix all labeling inconsistency
 #loess
 #add cases and 7 day cases and log(N1) to plot
-TSPloting(list(SLDCaseVec,loessN1Vec,CaseVec,logN1Vec),MergedDF,"A","IndName",
-            FullPlot=TRUE,SubTitle="Madison")
 ```
 
 ```{r}
@@ -503,4 +509,84 @@ TSPloting(list(SLDCaseVec,loessN1Vec,CaseVec,logN1Vec),MergedDF,"A","IndName",
 #arimax
 ```
 
+```{r 6 part plot}
+#(SourceDF$N1Error)
+TSPloting <- function(PlotingTS,SourceDF,SubTitle){
+  RangeCases <- range(PlotingTS[[3]],na.rm=TRUE)
+  RangeN1 <- range(SourceDF$N1,na.rm=TRUE)
+  plot.new()
+  par(mar = c(5, 4, 4, 4) + 0.3)
+  plot(1, type="n", xlab=SubTitle, ylab="", axes = FALSE,
+       xlim=range(SourceDF$Date), ylim=RangeN1,log="y")
+  rect(SourceDF$Date-.5,
+       SourceDF$N1-SourceDF$N1Error,
+       SourceDF$Date+.5,
+       SourceDF$N1+SourceDF$N1Error,
+      col  = rgb(0, 0, 1, alpha=0.05),
+      border  = NA,
+      xlab = "",
+      ylab = "",
+      xaxt = "n")
+  par(new = TRUE)
+  barplot(as.numeric(PlotingTS[[3]]),
+          col  = rgb(1, 0, 0, alpha=0.05),
+          xlab = "",
+          ylab = "",
+          xaxt = "n",
+          border = NA,
+          ylim = RangeCases,
+          axes = FALSE)
+  par(new = TRUE)
+  plot.ts(rollmean(exp(PlotingTS[[4]]), 7,align="right",fill = NA),
+          col = rgb(0, 0, 1, alpha=0.3),
+          xlab = "",
+          ylab = "",
+          xaxt = "n",
+          axes = FALSE,
+          ylim = RangeN1,
+          log="y")
+  axis(4,col.axis = "blue")
+  par(new = TRUE)
+  plot.ts(rollmean(PlotingTS[[3]], 7,align="right",fill = NA),
+         col = rgb(1, 0, 0, alpha=0.3),
+          ylim = RangeCases,
+   axes = FALSE,
+   xlab = "",
+   ylab = "",
+   xaxt = "n")
+
+  par(new = TRUE)
+  plot.ts(exp(PlotingTS[[2]]),
+            col = "blue",
+       ylim = RangeN1,
+       axes = FALSE,
+       xlab = "",
+       ylab = "",
+       log="y",
+       xaxt = "n")
+
+  par(new = TRUE)
+  plot.ts(PlotingTS[[1]],
+          ylim = RangeCases,
+          col = "red",
+      axes = FALSE,
+     xlab = "", ylab = "",xaxt = "n")
+  axis(2, pretty(RangeCases),col.axis = "red")
+  mtext("Cases", side = 2, line = 3, col = "red")
+  mtext("N1 (GC/L)", side = 4, line = 3, col = "blue")
+
+  legendNames <- c("SLD Cases","7 MA Cases","Loess Smoothing","7 MA N1")
+  legendColors <- c("red","hotpink","blue", "steelblue3")
+
+  legend("topright", legend=legendNames, col=legendColors, lty=1, cex=.6)
+  axis(1,
+     pretty(SourceDF$Date),labels =format(pretty(SourceDF$Date), "%Y-%m-%d"))
+}
+
+
+TSPloting(list(SLDCaseVec,loessN1Vec,CaseVec,logN1Vec),MergedDF,
+            SubTitle="Madison")
+
+
+```
 
