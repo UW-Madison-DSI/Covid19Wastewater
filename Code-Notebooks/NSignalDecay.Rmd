@@ -201,17 +201,6 @@ MixedEffectModelPlot(SigDecayDF2,Var = "N1.GC.L",
 #Focus on removing heuristics
 #rigorous analysis
 
-#look at Steve doc and convert visuals
-#Include slope and SE in sections
-
-#1)Reproduce Steve doc in reproducible way
-#-include other graphics in same style. 
-#for 3 intercept model
-#-Need P, slope and se in legend with/without WRap rep A
-#for %BCov exclude mad rep A instead
-#1 big table: rows are variables col are p,slope,se with/without WRap rep A and notes
-#3 figures each
-#Spare writing
 #include N1+N2
 #N2 are messy with delay
 #constant picture between N1 and Pmmov-show that

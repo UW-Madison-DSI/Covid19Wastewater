@@ -3,10 +3,10 @@ title: "SheddingLagDistribution"
 author: "Marlin"
 date: "7/22/2021"
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
 editor_options:
-  chunk_output_type: console
+  chunk_output_type: inline
 ---
 
 ```{r set up markdown settings, echo=FALSE}
@@ -32,18 +32,22 @@ source("../../Scripts/GenPlotMaking.R")
 source("../../Scripts/WasteWaterDataProccess.R")
 source("../../Scripts/CassesDataProccess.R")
 source("../../Scripts/HelperFunctions.R")
+
 ```
 
 ```{r DF Set Up}
 PathStarter="Z:/"
 
 LatMMSDFN  <-  paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/MMSD_Cases.csv")
+LatSpringDormFN  <-  paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/SpringSemester_CasesByDorm.TSV")
+LatFallDormFN  <-  paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/FallSemester_CasesByDorm.TSV")
+
 LIMSFN <- paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/WATERMICRO_WW_COVID-2021-06-30 17 40.xlsx")
 
 HFGCasesFN  <-  paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/HighFreq_CaseData_2021-05-07.csv")
 
 
-LatCaseDF <- CovidDataPARSER(MMSDFN = LatMMSDFN)%>%
+LatCaseDF <- CovidDataPARSER(LatSpringDormFN,LatFallDormFN,MMSDFN = LatMMSDFN)%>%
   filter(!is.na(Site))%>%
   select(Date,Site,Cases,Tests,Per_pos)
 
@@ -59,6 +63,16 @@ FullCase <- rbind(HFGCaseDF,LatCaseDF)
 LIMSFullDF <- LIMSDataPARSER(LIMSFN)%>%
   select(Date,Site, BCoV, N1,N1Error,N2, N2Error,PMMoV,Pop,FlowRate)
 
+
+
+
+#2020-12-25
+#2021-01-11
+
+
+
+
+
 CaseSum=FullCase%>%
   filter(!is.na(Cases))%>%
   group_by(Site)%>%
@@ -73,6 +87,7 @@ DataComp <- inner_join(CaseSum,N1Sum,by=c("Site"))%>%
   mutate(Dif=NCase-NN1,min=ifelse(NCase<NN1,NCase,NN1))
 LowCaseDataPoints <- DataComp%>%
   filter(Dif<0)
+
 ```
 
 
@@ -96,17 +111,33 @@ DataPrep <- function(DF,SiteS=NA,keep=c()){
 }
 
 
-DFSmoothingFNC <- function(CaseDF,SiteS){
+DFSmoothingFNC <- function(CaseDF,
+                           SiteS,
+                           PreRoll=FALSE,
+                           Weights=dgamma(1:21,scale =5.028338,shape =2.332779)){
   #5.028338
-  scale =5.028338
   #2.332779
-  shape =2.332779
-  FullDayDF <- DataPrep(CaseDF,"Cases",SiteS=SiteS)%>%
+  
+  FullDayDF <- DataPrep(CaseDF,"Cases",SiteS=SiteS)
+  
+  if(PreRoll){
+    FullDayDF <- FullDayDF%>%
+      group_by(Site)%>%
+      mutate(Cases2 = c(rep(NA,6),
+                    rollapply(Cases,width=7,
+                              FUN=mean,
+                              na.rm = TRUE)))
+  }else{
+    FullDayDF <- FullDayDF%>%
+      mutate(Cases2=Cases)
+  }
+  FullDayDF <- FullDayDF%>%
     group_by(Site)%>%
     mutate(Cases2 = c(rep(NA,20),
-                    rollapply(Cases,width=21,FUN=weighted.mean,
-                          w=dgamma(1:21,scale =scale,shape =shape),
+                    rollapply(Cases2,width=21,FUN=weighted.mean,
+                          w=Weights,
                           na.rm = TRUE)))
+  return(FullDayDF)
 }
 
 DFLoessFNC <- function(N1DF,SiteS){
@@ -137,21 +168,7 @@ plot(c(rep(0,10),dgamma(1:21,scale =scale,shape =shape)[11:21]),
             ylab = "Weight",
             xlab = "Lag")
 
-DFSmoothingDormsFNC <- function(CaseDF,SiteS){
-  #5.028338
-  scale =5.028338
-  #2.332779
-  shape =2.332779
-  FullDayDF <- DataPrep(CaseDF,"Cases",SiteS=SiteS)%>%
-    group_by(Site)%>%
-    mutate(Cases2 = c(rep(NA,20),
-                    rollapply(Cases,width=21,FUN=weighted.mean,
-                          w=c(rep(0,10),
-                              dgamma(1:21,
-                              scale=scale,
-                              shape=shape)[11:21]),
-                          na.rm = TRUE)))
-}
+
 ```
 
 
@@ -365,26 +382,39 @@ SLDGraphics <- function(SiteS,DepTSVec,IndTSVec,DepName,IndName,efficient=FALSE)
 }
 ```
 
-```{r Madison Prep}
+```{r Madison Prep, fig.height=3}
 FullMadLimsDF <- DataPrep(LIMSFullDF,keep=c("N1","N1Error"),"Madison")
-SmoothCasePlotDF <- DFSmoothingFNC(FullCase,SiteS="Madison")%>%
-  mutate(Site="Madison")#%>%
-    #filter(!is.na(Cases2))
 
-MergedDF <- inner_join(SmoothCasePlotDF,FullMadLimsDF, by=c("Date","Site"))
+SCPDF <- DFSmoothingFNC(FullCase,SiteS="Madison")%>%
+  mutate(Site="Madison")
+
+SCPDF2 <- DFSmoothingFNC(FullCase,PreRoll=TRUE,SiteS="Madison")%>%
+  mutate(Site="Madison")
+
+SCPDF3 <- inner_join(SCPDF,SCPDF2,by=c("Date","Site","Cases"),suffix=c("",".PreRolled"))
+MergedDF <- inner_join(SCPDF3,FullMadLimsDF, by=c("Date","Site"))
+
 MergedDF$LoessN1 <- DFLoessFNC(MergedDF,SiteS="Madison")
+
 MergedDF <- MergedDF%>%
-  select(Date,Site,Cases,Cases2,N1,LoessN1,N1Error)
+  select(Date,Site,Cases,Cases2,Cases2.PreRolled,N1,LoessN1,N1Error)
 
 TSDF <- ts(MergedDF,start = 18520)
+SLDPreRolledVec <- TSDF[,5]
 SLDCaseVec <- TSDF[,4]
 CaseVec <- TSDF[,3]
-loessN1Vec <- TSDF[,6]
-logN1Vec <- log(TSDF[,5])
+loessN1Vec <- TSDF[,7]
+logN1Vec <- log(TSDF[,6])
+
+plot(SLDPreRolledVec)
+plot(SLDCaseVec)
 ```
 
+
+--------------------------
+
 ```{r Mad Full Graphic, include=FALSE}
-SLDModelMad <- SLDGraphics("Madison",SLDCaseVec,loessN1Vec,"SLD","log(N1)")
+SLDGraphics("Madison",SLDPreRolledVec,loessN1Vec,"SLD","log(N1)")
 
 
 #library(TSA)
@@ -533,7 +563,7 @@ SLDModelMad <- SLDGraphics("Madison",SLDCaseVec,loessN1Vec,"SLD","log(N1)")
 
 ```{r 6 part plot}
 #(SourceDF$N1Error)
-TSPloting <- function(PlotingTS,SourceDF,SubTitle,SLD=TRUE){
+TSPloting2 <- function(PlotingTS,SourceDF,SubTitle,SLD=TRUE){
   if(SLD){
     Shade <- 0.5
     Thickness <- 1
@@ -616,27 +646,184 @@ TSPloting <- function(PlotingTS,SourceDF,SubTitle,SLD=TRUE){
   mtext("N1 (GC/L)", side = 2, line = 2, col = "blue",cex=.75)
 
 
-  legend("topright", legend=legendNames, col=legendColors, lty=1, cex=.6)
+  legend("topright", legend=legendNames, col=legendColors, lty=1, cex=.5)
   
 }
 
-TSPloting(list(SLDCaseVec,loessN1Vec,CaseVec),MergedDF,
+TSPloting2(list(SLDPreRolledVec,loessN1Vec,CaseVec),MergedDF,
             SubTitle="Madison",SLD=FALSE)
-TSPloting(list(SLDCaseVec,loessN1Vec,CaseVec),MergedDF,
+TSPloting2(list(SLDPreRolledVec,loessN1Vec,CaseVec),MergedDF,
             SubTitle="Madison")
 
 
-#2 N1
-#loess
-#Cases with MA
-#bring in SLD with everything
-#include span in legend? in small font
 
-
-#How to communicate clearly
-#read paper to see if transformation is pos
-#mess with N1 y to see if it looks better. low prio
-#MA Key
-#look at convolution of MA SLD
 ```
+
+-----------------------------------------------
+
+
+```{r Dorms}
+Site="UW-LakeShore"
+#UW-Sellery
+#UW-LakeShore
+FullLimsDF <- DataPrep(LIMSFullDF,keep=c("N1","N1Error"),Site)
+SmoothCasePlotDF <- DFSmoothingFNC(FullCase,SiteS=Site,
+                                   Weights=c(rep(0,10),
+                              dgamma(1:21,
+                              scale=scale,
+                              shape=shape)[11:21]))
+
+FullLimsDF$LoessN1 <- DFLoessFNC(FullLimsDF,SiteS=Site)
+
+MergedDF <- inner_join(SmoothCasePlotDF,FullLimsDF,
+                       by=c("Date","Site"))
+
+MergedDF <- MergedDF%>%
+  select(Date,Site,Cases,Cases2,N1,LoessN1,N1Error)
+
+TSDF <- ts(MergedDF,start = 18520)
+SLDCaseVec <- TSDF[,4]
+CaseVec <- TSDF[,3]
+loessN1Vec <- TSDF[,6]
+logN1Vec <- log(TSDF[,5])
+
+SLDModelMad <- SLDGraphics(Site,SLDCaseVec,loessN1Vec,"SLD","log(N1)")
+
+TSPloting2(list(SLDCaseVec,loessN1Vec,CaseVec),MergedDF,
+            SubTitle=Site,SLD=TRUE)
+```
+-----------------------------------------
+
+```{r Sell}
+DormGraphics <- function(Site,InDepth=FALSE,Short=TRUE){
+  FullLimsDF <- DataPrep(LIMSFullDF,keep=c("N1","N1Error"),Site)
+  SCPDF <- DFSmoothingFNC(FullCase,SiteS=Site,
+                                Weights=c(rep(0,10),
+                                dgamma(1:21,
+                                scale=scale,
+                                shape=shape)[11:21]))
+  
+  SCPDF2 <- DFSmoothingFNC(FullCase,PreRoll=TRUE,SiteS=Site,
+                                Weights=c(rep(0,10),
+                                dgamma(1:21,
+                                scale=scale,
+                                shape=shape)[11:21]))%>%
+    mutate(Site=Site)
+  
+  SCPDF3 <- inner_join(SCPDF,SCPDF2,by=c("Date","Site","Cases"),suffix=c("",".PreRolled"))
+  MergedDF <- inner_join(SCPDF3,FullLimsDF, by=c("Date","Site"))
+  
+  
+  MergedDF$LoessN1 <- DFLoessFNC(MergedDF,SiteS=Site)
+  
+  MergedDF <- MergedDF%>%
+    select(Date,Site,Cases,Cases2,Cases2.PreRolled,N1,LoessN1,N1Error)
+  
+  TSDF <- ts(MergedDF,start = 18520)
+  SLDPreRolledVec <- TSDF[,5]
+  SLDCaseVec <- TSDF[,4]
+  CaseVec <- TSDF[,3]
+  loessN1Vec <- TSDF[,7]
+  logN1Vec <- log(TSDF[,6])
+  if(InDepth){
+    SLDModelMad <- SLDGraphics(Site,SLDPreRolledVec,loessN1Vec,"SLD","log(N1)")
+  }
+  if(Short){
+    TSPloting2(list(SLDPreRolledVec,loessN1Vec,CaseVec),MergedDF,
+                SubTitle=Site,SLD=TRUE)
+  }
+  return(TSDF)
+}
+# plot(SLDPreRolledVec)
+# plot(SLDCaseVec)
+DormGraphics("Spring UW-Sellery")
+ListDiscard <- lapply(c("Spring UW-Sellery","Fall UW-Sellery",
+         "Spring UW-LakeShore","Fall UW-LakeShore"),DormGraphics)
+#Fall UW-Sellery
+#UW-LakeShore
+```
+
+
+
+----------------------------------------------------------------
+
+
+```{r}
+missing_codes <- MissingCode()
+LIMSFullDF2 <- read_excel(LIMSFN,
+                                  na  =  missing_codes,
+                                  col_types = c(rep("guess",48),"text",rep("guess",12)))%>%
+  rename(Site=wwtp_name,
+         collected=sample_collect_date,
+         tested=test_result_date,
+         N1=n1_sars_cov2_conc)%>%
+  mutate(collected=mdy(collected),
+         tested=as.Date(as.POSIXct(tested,format='%m/%d/%Y ')),
+         N1=as.numeric(N1),
+         TimeDiff=tested-collected)
+
+
+#sample_collect_date
+#sample_collect_time
+#test_result_date
+#unformatted_collectdate
+
+LIMSFullDF2%>%
+  filter(Site=="Madison Metro")%>%
+  ggplot()+
+  aes(y=N1)+
+  geom_point(aes(x=collected,color="col"))+
+  geom_point(aes(x=tested,color="Tested"))+
+  scale_y_log10()
+  
+LIMSFullDF2%>%
+  filter(Site=="Madison Metro")%>%
+  ggplot()+
+  aes(y=N1)+
+  geom_point(aes(x=TimeDiff,color="col"))+
+  #geom_point(aes(x=tested,color="Tested"))+
+  scale_y_log10()
+
+LIMSFullDF2%>%
+  ggplot()+
+  aes(y=TimeDiff)+
+  geom_point(aes(x=collected))
+
+LIMSFullDF2%>%
+  #filter(TimeDiff<50)%>%
+  ggplot()+
+  aes(y=TimeDiff)+
+  geom_point(aes(x=collected))+
+  geom_vline(aes(xintercept =mdy("12-15-2020")))+
+  geom_hline(aes(yintercept =80))
+
+
+LIMSFullDF2%>%
+  #filter(TimeDiff<50)%>%
+  mutate(Time=ifelse(collected<mdy("12-15-2020"),"Pre2021","2021"))%>%
+  group_by(Time)%>%
+  summarise(mean=mean(log(N1),na.rm=TRUE),
+            var=var(log(N1),na.rm=TRUE),
+            meanDif=mean(TimeDiff,na.rm=TRUE),
+            varDif=var(TimeDiff,na.rm=TRUE))
+
+
+
+Aba=LIMSFullDF2%>%
+  mutate(Time=ifelse(collected<mdy("12-15-2020"),"Pre2021","2021"))
+summary(aov(N1~Time,data=Aba))
+
+DecayRate=-0.041
+
+LIMSFullDF2%>%
+  filter(Site=="Madison Metro")%>%
+  mutate(N1P=N1*exp(1)^(.041*as.numeric(TimeDiff)))%>%
+  mutate(Outliers=ifelse(TimeDiff>12,"Long delay","Normal delay"))%>%
+  ggplot()+
+  aes(x=collected,color=Outliers)+
+  geom_point(aes(y=N1P))+
+  scale_y_log10()
+  #geom_point(aes(y=N1P))
+```
+
 

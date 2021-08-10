@@ -57,9 +57,13 @@ LIMSDataPARSER <- function(LIMSFN){
   LIMSDF <- read_excel(LIMSFN,
                                   na  =  missing_codes,
                                   col_types = c(rep("guess",48),"text",rep("guess",12)))%>%
-    rename(Site=wwtp_name,FlowRate=average_flow_rate,
-           Cov1_below_lod=avg_sars_cov2_below_lod,cov2_conc=avg_sars_cov2_conc,
-           BCoV=bcov_rec_rate,BCoVConc=bcov_spike_conc,county=county_names,
+    rename(Site=wwtp_name,
+           FlowRate=average_flow_rate,
+           Cov1_below_lod=avg_sars_cov2_below_lod,
+           cov2_conc=avg_sars_cov2_conc,
+           BCoV=bcov_rec_rate,
+           BCoVConc=bcov_spike_conc,
+           county=county_names,
            Date=unformatted_collectdate,
            N1=n1_sars_cov2_conc,
            N1Error=n1_sars_cov2_error,
@@ -67,8 +71,13 @@ LIMSDataPARSER <- function(LIMSFN){
            N2Error=n2_sars_cov2_error,
            PMMoV=pmmov_conc,
            Pop=population_served)%>%
-    mutate(Date=as.Date(Date),N1=as.numeric(N1),N2=as.numeric(N2),Pop=as.numeric(Pop),
-           N1Error=as.numeric(N1Error),N2Error=as.numeric(N2Error),PMMoV=as.numeric(PMMoV),
+    mutate(Date=as.Date(Date),
+           N1=as.numeric(N1),
+           N2=as.numeric(N2),
+           Pop=as.numeric(Pop),
+           N1Error=as.numeric(N1Error),
+           N2Error=as.numeric(N2Error),
+           PMMoV=as.numeric(PMMoV),
            BCoV=as.numeric(BCoV),FlowRate=as.numeric(FlowRate))%>%
     mutate(Site=ifelse(Site=="Madison Metro","Madison",Site),
            Site=ifelse(Site=="Covid Sewage UW DORM","UW-LakeShore",Site),
@@ -80,8 +89,17 @@ LIMSDataPARSER <- function(LIMSFN){
            Site=ifelse(Site=="Madison-P18-NE","MMSD-P18",Site),
            AVG = AVGGenFN(N1, N2),
            wt = 2 - is.na(N1) - is.na(N2))%>%
+     mutate(isDorm = ifelse(Site %in% c("UW-LakeShore","UW-Sellery"),TRUE,FALSE),
+           Site = ifelse(isDorm&Date>=ymd("2021-01-11"),paste("Spring",Site),Site),
+           Site = ifelse(isDorm&Date<=ymd("2020-12-25"),paste("Fall",Site),Site),
+           Site = ifelse(isDorm&Date>ymd("2020-12-25")&
+                           Date<ymd("2021-01-11"),paste("Break",Site),Site))%>%
+    select(-isDorm)%>%
     #converting -1 meaning missing data to NA
-    mutate(N1=ifelse(N1==-1,NA,N1),N2=ifelse(N2==-1,NA,N2),PMMoV=ifelse(PMMoV==-1,NA,PMMoV),BCoV=ifelse(BCoV==-1,NA,BCoV))
+    mutate(N1=ifelse(N1==-1,NA,N1),
+           N2=ifelse(N2==-1,NA,N2),
+           PMMoV=ifelse(PMMoV==-1,NA,PMMoV),
+           BCoV=ifelse(BCoV==-1,NA,BCoV))
   
   return(LIMSDF)
 }
@@ -168,8 +186,12 @@ WasteWater <- function(Waterfilename){
            Site = ifelse(Site == "UW-D", "UW-LakeShore", Site),
            Site = ifelse(Site == "UW-S", "UW-Sellery", Site),
            TSS = ifelse(is.na(TSS), `TSS (mg/L)`, TSS),
+           isDorm = ifelse(Site %in% c( "UW-LakeShore","UW-Sellery"),TRUE,FALSE),
+           Site = ifelse(isDorm&&Date>=ymd("2021-01-11"),paste("Spring",Site),Site),
+           Site = ifelse(isDorm&&Date<=ymd("2020-12-25"),paste("Fall",Site),Site),
+           Site = ifelse(isDorm&&Date>ymd("2020-12-25")&&Date<ymd("2021-01-11"),paste("Break",Site),Site)
     )%>%
-    select(-`TSS (mg/L)`)%>%
+    select(-`TSS (mg/L)`,-isDorm)%>%
     mutate(Date = coalesce(ddays(suppressWarnings(as.numeric(Date))-1)+ymd("1900-01-01"),
                            suppressWarnings(mdy(Date))))
 }

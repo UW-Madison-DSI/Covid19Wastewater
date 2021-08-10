@@ -68,10 +68,14 @@ CovidDataPARSER= function(File1=NA,File2=NA,MMSDFN=NA){
 
 DormCaseDataPARSER <- function(FileName){
   CSVDF <- read.csv(FileName,sep = "",header = T)%>%
-    mutate(Tests=Negative	+Positive,Per_pos=100*Positive/Tests)%>%
-    mutate(Site = ifelse(Site == "UW_D", "UW-LakeShore", Site))%>%
-    mutate(Site = ifelse(Site == "UW_S", "UW-Sellery", Site))%>%
-    mutate(Date=mdy(Date))%>%
+    mutate(Tests=Negative	+Positive,Per_pos=100*Positive/Tests,
+           Site = ifelse(Site == "UW_D", "UW-LakeShore", Site),
+           Site = ifelse(Site == "UW_S", "UW-Sellery", Site),
+           Date=mdy(Date),
+           Site = ifelse(Date>=ymd("2021-01-11"),paste("Spring",Site),Site),
+           Site = ifelse(Date<=ymd("2020-12-25"),paste("Fall",Site),Site),
+           Site = ifelse(Date>ymd("2020-12-25")&
+                           Date<ymd("2021-01-11"),paste("Break",Site),Site))%>%
     rename(Cases=Positive)%>%
     select(-Negative)%>%
     mutate(Population=NA)
