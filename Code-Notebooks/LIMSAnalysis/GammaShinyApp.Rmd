@@ -72,18 +72,36 @@ ui <- fluidPage(
       sliderInput(inputId = "scale",
                   label = "scale",
                   min = 1,
-                  max = 20,
+                  max = 15,
                   step =.1,
                   value = 5.028338),
       sliderInput(inputId = "shape",
                   label = "shape",
                   min = 1,
-                  max = 20,
+                  max = 5,
                   step =.1,
-                  value = 2.332779)
+                  value = 2.332779),
+      checkboxInput(inputId = "Roll",
+                    label="Convolve with 7day Avg", 
+                    value=T),
+      sliderInput(inputId = "delay",
+                  label = "Quarantine length",
+                  min = 0,
+                  max = 20,
+                  step =1,
+                  value = 0),
+      sliderInput(inputId = "Span",
+                  label = "loess span",
+                  min = 0,
+                  max = .5,
+                  step =.01,
+                  value = .125)
     ),
     mainPanel(
-      plotOutput(outputId = "SLDPlot")
+      tabsetPanel(type = "tabs",
+       tabPanel("SLDPlot", plotOutput(outputId = "SLDPlot")),
+       tabPanel("GammaDist", plotOutput(outputId = "GammaDist")),
+       tabPanel("DifSLDPlot", plotOutput(outputId = "DifSLDPlot")))
     )
   )
 )
@@ -91,26 +109,26 @@ ui <- fluidPage(
 ```
 
 ```{r Server Shiny app}
-DataPrepS <- DormGraphics <- function(Site,shape,scale){
+DataPrepS <- DormGraphics <- function(Site,shape,scale,delay,Span){
   FullLimsDF <- DataPrep(LIMSFullDF,keep=c("N1","N1Error"),Site)
   SCPDF <- DFSmoothingFNC(FullCase,SiteS=Site,
-                                Weights=
+                                Weights=c(rep(0,delay),
                                 dgamma(1:21,
                                 scale=scale,
-                                shape=shape))
+                                shape=shape)[(delay+1):21]))
   
   SCPDF2 <- DFSmoothingFNC(FullCase,PreRoll=TRUE,SiteS=Site,
-                                Weights=
+                                Weights=c(rep(0,delay),
                                 dgamma(1:21,
                                 scale=scale,
-                                shape=shape))%>%
+                                shape=shape)[(delay+1):21]))%>%
     mutate(Site=Site)
   
   SCPDF3 <- inner_join(SCPDF,SCPDF2,by=c("Date","Site","Cases"),suffix=c("",".PreRolled"))
   MergedDF <- inner_join(SCPDF3,FullLimsDF, by=c("Date","Site"))
   
   
-  MergedDF$LoessN1 <- DFLoessFNC(MergedDF,SiteS=Site)
+  MergedDF$LoessN1 <- DFLoessFNC(MergedDF,SiteS=Site,span=Span)
   
   MergedDF <- MergedDF%>%
     select(Date,Site,Cases,Cases2,Cases2.PreRolled,N1,LoessN1,N1Error)
@@ -128,16 +146,42 @@ DataPrepS <- DormGraphics <- function(Site,shape,scale){
 server <- function(input, output) {
 
   UsedDF <- reactive({
-    DataPrepS(input$Site,input$shape,input$scale)
-
+    DataPrepS(input$Site,input$shape,input$scale,input$delay,input$Span)
   })
-
+  TSDF <- reactive({
+    ts(UsedDF(),start = 18520)
+  })
+  SLDVec <- reactive({
+    if(input$Roll){
+      return(TSDF()[,5])
+    }else{
+      return(TSDF()[,4])
+    }
+  })
   
   output$SLDPlot <- renderPlot({
-    TSDF <- ts(UsedDF(),start = 18520)
-    TSPloting2(list(TSDF[,5],TSDF[,7],TSDF[,3]),UsedDF(),
-                SubTitle=Site,SLD=TRUE)
+    TSPloting2(list(SLDVec(),TSDF()[,7],TSDF()[,3]),UsedDF(),
+                SubTitle=input$Site,SLD=TRUE,input$Span)
   })
+  
+  output$GammaDist <- renderPlot({
+
+    plot(c(rep(0,input$delay),
+                                dgamma(1:21,
+                                scale=input$scale,
+                                shape=input$shape)[(input$delay+1):21]), 
+            main=paste("Gamma Distribution with mean =", round(input$scale*input$shape,3),"days and SD =", round(input$scale*sqrt(input$shape),3)),
+            ylab = "Weight",
+            xlab = "Lag")
+  })
+  
+  output$DifSLDPlot <- renderPlot({
+    TSPloting(list(SLDVec(),TSDF()[,7]),UsedDF(),
+                "DepName","IndName",FullPlot=FALSE,SubTitle=NA,FirstDif=TRUE)
+  })
+
 }
 shinyApp(ui, server)
+
+
 ```

@@ -3,8 +3,8 @@ title: "SheddingLagDistribution"
 author: "Marlin"
 date: "7/22/2021"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 editor_options:
   chunk_output_type: inline
 ---
@@ -84,63 +84,10 @@ LowCaseDataPoints <- DataComp%>%
 ```{r CaseSmoothing, include=FALSE}
 #return( RollPerPos(CaseDF,"Cases","Tests",Facet="Site"))
 library(limma)
-DataPrep <- function(DF,SiteS=NA,keep=c()){
-  if(!is.na(SiteS)){
-    FilteredVec1 <- filter(DF,Site==SiteS)
-  }else{
-    FilteredVec1 <- DF
-  }
-  
-  FullDayDF <- data.frame(Date=seq(min(FilteredVec1$Date),
-                                   max(FilteredVec1$Date),1))
-  ReadyDF <- full_join(FullDayDF,FilteredVec1, by = c("Date"))%>%
-    fill(one_of(keep), .direction = "down")%>%
-    mutate(Site=SiteS)%>%
-    select(Date,one_of(keep),Site,)
-  return(ReadyDF)
-}
 
 
-DFSmoothingFNC <- function(CaseDF,
-                           SiteS,
-                           PreRoll=FALSE,
-                           Weights=dgamma(1:21,scale =5.028338,shape =2.332779)){
-  #5.028338
-  #2.332779
-  
-  FullDayDF <- DataPrep(CaseDF,"Cases",SiteS=SiteS)
-  
-  if(PreRoll){
-    FullDayDF <- FullDayDF%>%
-      group_by(Site)%>%
-      mutate(Cases2 = c(rep(NA,6),
-                    rollapply(Cases,width=7,
-                              FUN=mean,
-                              na.rm = TRUE)))
-  }else{
-    FullDayDF <- FullDayDF%>%
-      mutate(Cases2=Cases)
-  }
-  FullDayDF <- FullDayDF%>%
-    group_by(Site)%>%
-    mutate(Cases2 = c(rep(NA,20),
-                    rollapply(Cases2,width=21,FUN=weighted.mean,
-                          w=Weights,
-                          na.rm = TRUE)))
-  return(FullDayDF)
-}
 
-DFLoessFNC <- function(N1DF,SiteS){
 
-    ReadyDF <- DataPrep(N1DF,keep=c("N1"),SiteS=SiteS)
-    
-    loessFit(y=log(ReadyDF$N1),
-             x=ReadyDF$Date,
-             span=.125,
-             min.weight=0,
-             max.weight=1e5,
-             iterations=20)$fitted
-}
 
   #5.028338
 scale =5.028338
@@ -251,125 +198,7 @@ IsFull <- function(DF){
   return(length(DF$Date)==max(DF$Date)-min(DF$Date)+1)
 }
 
-TSPloting <- function(PlotingTS,SourceDF,DepName,IndName,FullPlot=TRUE,SubTitle=NA,FirstDif=FALSE){
-  if(FirstDif){
-    PlotingTS[[2]] <- diff(PlotingTS[[2]])
-    PlotingTS[[1]] <- diff(PlotingTS[[1]])
-    Lab <- paste("First Diffrence of", DepName, "and", IndName)
-  }else{
-    Lab <- paste("Visual relationship of", DepName, "and", IndName)
-  }
-  plot.new()
-  par(mar = c(5, 4, 4, 4) + 0.3)           
 
-  if(FullPlot){
-    plot.ts(rollmean(exp(PlotingTS[[4]]), 7,align="right",fill = NA),
-            col = "steelblue3", 
-            axes = FALSE, 
-            xlab = "", 
-            ylab = "",
-            xaxt = "n",
-            log="y")
-    
-    axis(side = 4, col.axis="blue")
-    
-    par(new = TRUE)  
-    plot.ts(rollmean(PlotingTS[[3]], 7,align="right",fill = NA),
-            col = "hotpink",        
-       axes = FALSE, xlab = "", ylab = "",xaxt = "n")
-    
-    par(new = TRUE)  
-    plot.ts(exp(PlotingTS[[2]]),
-            col = "blue",        
-       axes = FALSE, 
-       xlab = "", 
-       ylab = "",
-       log = 'y',
-       xaxt = "n")
-  }else{
-    plot.ts(exp(PlotingTS[[2]]), 
-          col = "blue", 
-          axes = FALSE,
-          main=Lab,
-          ylab="",
-          sub=SubTitle,
-          log = 'y',
-          xaxt = "n")
-    axis(side = 4, col.axis="blue")
-  }
-
-  par(new = TRUE)                           
-  plot.ts(PlotingTS[[1]], col = "red",        
-     axes = FALSE, xlab = "", ylab = "",xaxt = "n")
-
-  axis(side = 2, at = pretty(range(PlotingTS[[1]])),col.axis="red")
-  mtext("Cases", side = 2, line = 3, col = "red")
-  mtext("N1 (GC/L)", side = 4, line = 3, col = "blue")
-  if(FullPlot){
-    legendNames <- c("SLD Cases","7 MA Cases","Loess Smoothing","7 MA N1")
-    legendColors <- c("red","hotpink","blue", "steelblue3")
-  }else{
-    legendNames<- c("SLD Cases","Loess Smoothing")
-    legendColors<- c("red","blue")
-  }
-  legend("topright", legend=legendNames, col=legendColors, lty=1, cex=.75)
-  axis(1,
-     pretty(SourceDF$Date),labels =format(pretty(SourceDF$Date), "%Y-%m-%d"))
-     #pretty(format(SourceDF$Date, "%Y-%m-%d")))
-}
-
-SLDGraphics <- function(SiteS,DepTSVec,IndTSVec,DepName,IndName,efficient=FALSE){
-  print("Visual Relationship")
-  TSPloting(list(DepTSVec,IndTSVec),MergedDF,DepName,IndName,
-            FullPlot=FALSE,SubTitle=SiteS)
-  TSPloting(list(DepTSVec,IndTSVec),MergedDF,DepName,IndName,
-          FullPlot=FALSE,SubTitle=SiteS,FirstDif=TRUE)
-
-  CCFVec <- ccf(IndTSVec,DepTSVec,
-               main=paste("CC between",IndName,"and", DepName),
-               sub=SiteS)
-  OffSet <- which(CCFVec[[1]]==max(CCFVec[[1]]))-21 #Best offset of Straight ccf
-  
-  
-  preWhiteFit <- auto.arima(IndTSVec, seasonal=FALSE,
-  stepwise=FALSE, approximation=FALSE) #underlying arima trend of Ind
-
-  IndResid <- IndTSVec - fitted(Arima(IndTSVec, model = preWhiteFit))
-  DepResid <- DepTSVec - fitted(Arima(DepTSVec, model = preWhiteFit))
-  CCFVecPre <- ccf(IndResid, DepResid,lag.max=22,
-               main=paste("prewhiten CC between",IndName,"and", DepName),
-               sub=SiteS) #CC removing Arima relationship of Ind
-  
-  OffSetWhit <- which(CCFVecPre[[1]]==max(CCFVecPre[[1]]))-21#Best offset of PreWhite ccf
-  
-  if(max(CCFVecPre[[1]])<.15){ #If no prewhite corr is significant then use straight ccf
-    print("no signifigent prewhitened relationship")
-    OffSetWhit <- OffSet
-  }
-  
-  print(paste("using offset of", OffSetWhit))
-  
-  TSUnionDF <- ts.intersect(DepTSVec,
-                      OGVec = stats::lag(IndTSVec,OffSetWhit))
-  
-  print("Visual Relationship with offset")
-  TSPloting(list(TSUnionDF[,1],TSUnionDF[,2]),MergedDF,DepName,IndName,
-            FullPlot=FALSE,SubTitle=SiteS)
-  TSPloting(list(TSUnionDF[,1],TSUnionDF[,2]),MergedDF,DepName,IndName,
-            FullPlot=FALSE,SubTitle=SiteS,FirstDif=TRUE)
-  
-
-  OLM <- lm(TSUnionDF[,1]~TSUnionDF[,2])
-  print("Ordinary LM")
-  print(summary(OLM))
-  ggtsdisplay(residuals(OLM))
-  FM <- auto.arima(TSUnionDF[,1],xreg=TSUnionDF[,2])
-  #FM <- cochrane.orcutt(OLM,max.iter=1000)
-  print("LM with Arima residuals")
-  ggtsdisplay(residuals(FM))
-  print(summary(FM))
-  return(FM)
-}
 ```
 
 ```{r Madison Prep, fig.height=3}
@@ -553,92 +382,7 @@ SLDGraphics("Madison",SLDPreRolledVec,loessN1Vec,"SLD","log(N1)")
 
 ```{r 6 part plot}
 #(SourceDF$N1Error)
-TSPloting2 <- function(PlotingTS,SourceDF,SubTitle,SLD=TRUE){
-  if(SLD){
-    Shade <- 0.5
-    Thickness <- 1
-  }else{
-    Shade <-1
-    Thickness <- 2
-  }
-  RangeCases <- range(PlotingTS[[3]],na.rm=TRUE)
-  RangeN1 <- range(SourceDF$N1,na.rm=TRUE)
-  plot.new()
-  par(mar = c(8, 4, 4, 4) + 0.1)
-  plot(1, type="n", xlab=SubTitle, ylab="", axes = FALSE,
-       xlim=range(SourceDF$Date), ylim=RangeN1,log="y")
-  rect(SourceDF$Date-.5,
-       SourceDF$N1-SourceDF$N1Error,
-       SourceDF$Date+.5,
-       SourceDF$N1+SourceDF$N1Error,
-      col  = rgb(0, 0, 1, alpha=0.25),
-      border  = NA,
-      xlab = "",
-      ylab = "",
-      xaxt = "n")
-  par(new = TRUE)
-  barplot(as.numeric(PlotingTS[[3]]),
-          col  = rgb(1, 0, 0, alpha=0.1),
-          xlab = "",
-          ylab = "",
-          xaxt = "n",
-          border = NA,
-          ylim = RangeCases,
-          axes = FALSE)
-  par(new = TRUE)
-  
-  plot.ts(rollmean(PlotingTS[[3]], 7,align="right",fill = NA),
-         col = rgb(1, 0, 0, alpha=Shade),
-          ylim = RangeCases,
-   axes = FALSE,
-   lwd=Thickness,
-   xlab = "",
-   ylab = "",
-   xaxt = "n")
-  axis(4, pretty(RangeCases),col.axis = "red",cex.axis=.75)
-  
-  RangeDates <- range(SourceDF$Date)
-  ticks <- seq(RangeDates[1],RangeDates[2], by = "month")
-  axis(1,
-     ticks,
-     labels = FALSE,
-     cex.axis=.5)
-  text(cex=.75, x=ticks-15, y=-115, format(ticks,"%b %Y"),
-       xpd=TRUE, srt=30)
-  
-  par(new = TRUE)
-  plot.ts(exp(PlotingTS[[2]]),
-            col = "blue",
-       ylim = RangeN1,
-       axes = FALSE,
-       xlab = "",
-       ylab = "",
-       log="y",
-       lwd=2,
-       xaxt = "n")
-  axis(2,col.axis = "blue",cex.axis=.75)
-  
-  legendNames <- c("7 day MA Cases","loess smoothing with span=.125")
-  legendColors <- c(rgb(1, 0, 0, alpha=Shade),"blue")
-  if(SLD){
-    legendNames <- c("Shedding lag distribution",legendNames)
-  legendColors <- c("red",legendColors)
-    
-    par(new = TRUE)
-    plot.ts(PlotingTS[[1]],
-          ylim = RangeCases,
-          col = "red",
-          lwd=2,
-      axes = FALSE,
-     xlab = "", ylab = "",xaxt = "n")
-  }
-  mtext("Cases", side = 4, line = 2, col = "red",cex=.75)
-  mtext("N1 (GC/L)", side = 2, line = 2, col = "blue",cex=.75)
 
-
-  legend("topright", legend=legendNames, col=legendColors, lty=1, cex=.5)
-  
-}
 
 TSPloting2(list(SLDPreRolledVec,loessN1Vec,CaseVec),MergedDF,
             SubTitle="Madison",SLD=FALSE)
@@ -726,7 +470,7 @@ DormGraphics <- function(Site,InDepth=FALSE,Short=TRUE){
 }
 # plot(SLDPreRolledVec)
 # plot(SLDCaseVec)
-DormGraphics("Spring UW-Sellery")
+
 ListDiscard <- lapply(c("Spring UW-Sellery","Fall UW-Sellery",
          "Spring UW-LakeShore","Fall UW-LakeShore"),DormGraphics)
 #Fall UW-Sellery
@@ -810,10 +554,13 @@ LIMSFullDF2%>%
   mutate(N1P=N1*exp(1)^(.041*as.numeric(TimeDiff)))%>%
   mutate(Outliers=ifelse(TimeDiff>12,"Long delay","Normal delay"))%>%
   ggplot()+
-  aes(x=collected,color=Outliers)+
-  geom_point(aes(y=N1P))+
+  aes(x=collected)+#,color=Outliers)+
+  geom_point(aes(y=N1,color="N1"),alpha=.3)+
+  geom_point(aes(y=N1P,color="N1 undecayed"),alpha=.3)+
+  geom_smooth(aes(y=N1,color="N1"),se=FALSE,span=.2)+
+  geom_smooth(aes(y=N1P,color="N1 undecayed"),se=FALSE,span=.2)+
   scale_y_log10()
-  #geom_point(aes(y=N1P))
+
 ```
 
 
