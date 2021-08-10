@@ -18,120 +18,41 @@ source("../../Scripts/GenPlotMaking.R")
 source("../../Scripts/WasteWaterDataProccess.R")
 source("../../Scripts/CassesDataProccess.R")
 source("../../Scripts/HelperFunctions.R")
-
-
-LIMSFullDFRoll=RollAvg(LIMSFullDF,n=21,var=c("N1","N1Error"))%>%
-  filter(!is.nan(N1)&!is.nan(N1Error))%>%
-  select(Date,Site,N1,N1Error)
-
-ModelDF <- LIMSFullDF%>%
-  select(Date,Site,BCoV,PMMoV,N1,N1Error)%>%
-  mutate(Weight=N1/N1Error)
-
-```
-
-```{r Madison Model}
-HighSpan <- .1
-MinWeight <- 0
-PointSize=1
-
-MadModDF <- ModelDF%>%
-  filter(Site=="Madison")%>%
-  filter(N1!=0)%>%
-  select(Site,Date,N1,N1Error)%>%
-  mutate(Date=as.numeric(Date))
-
-LargestWeight=1/min(MadModDF$N1Error)
-DateRange <- max(MadModDF$Date)-min(MadModDF$Date)
-
-LM11 <- loessFit(y=MadModDF$N1,x=MadModDF$Date,weights=rep(1,dim(MadModDF)[1]),span=HighSpan,min.weight=MinWeight)
-MadModDF$pred1 <- LM11$fitted
-LM12 <- loessFit(y=MadModDF$N1,x=MadModDF$Date,weights=MadModDF$N1/(MadModDF$N1Error*LargestWeight),span=HighSpan,min.weight=MinWeight)
-MadModDF$pred2 <- LM12$fitted
-LM13 <- loessFit(y=MadModDF$N1,x=MadModDF$Date,weights=MadModDF$N1/((MadModDF$N1Error*LargestWeight)^2),span=HighSpan,min.weight=MinWeight)
-MadModDF$pred3 <- LM13$fitted
-
-MadModDF=MadModDF%>%
-  mutate(Date=as.Date(Date))
-
-BasedPlot <- MadModDF%>%
-  ggplot()+
-  aes(x=Date)+
-  geom_point(aes(y=N1,alpha=N1/N1Error),size=PointSize)+
-  scale_y_log10()
-#,alpha=1/N1Error
-MadPlot <- BasedPlot+
-  geom_line(aes(y=pred3,color="weight=1/N1Error^2"))+
-  geom_line(aes(y=pred1,color="weight=1"))+
-  geom_line(aes(y=pred2,color="weight=1/N1Error"))+
-  facet_wrap(~Site)
-
-
-max(MadModDF$N1Error)/min(MadModDF$N1Error)
-
-min(MadModDF$N1Error)
-#normalize N1
-#different weight normalizations
-#N1/N1Error
 ```
 
 
-```{r Hudsen}
+```{r}
+PathStarter="Z:/"
 
-HudModDF <- ModelDF%>%
-  filter(Site=="Hudson")%>%
-  #filter(N1=0)%>%
-  select(Site,Date,N1,N1Error)%>%
-  mutate(Date=as.numeric(Date))
+LatMMSDFN  <-  paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/MMSD_Cases.csv")
+LatSpringDormFN  <-  paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/SpringSemester_CasesByDorm.TSV")
+LatFallDormFN  <-  paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/FallSemester_CasesByDorm.TSV")
 
-LargestWeight=1/min(HudModDF$N1Error)
-#
+LIMSFN <- paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/WATERMICRO_WW_COVID-2021-06-30 17 40.xlsx")
 
-DateRange <- max(HudModDF$Date)-min(HudModDF$Date)
-
-LM11 <- loessFit(y=HudModDF$N1,x=HudModDF$Date,weights=rep(1,dim(HudModDF)[1]),span=HighSpan,min.weight=MinWeight)
-HudModDF$pred1 <- LM11$fitted
-LM12 <- loessFit(y=HudModDF$N1,x=HudModDF$Date,weights=1/(HudModDF$N1Error*LargestWeight),span=HighSpan,min.weight=MinWeight)
-HudModDF$pred2 <- LM12$fitted
-LM13 <- loessFit(y=HudModDF$N1,x=HudModDF$Date,weights=1/((HudModDF$N1Error*LargestWeight)^2),span=HighSpan,min.weight=MinWeight)
-HudModDF$pred3 <- LM13$fitted
-
-HudModDF=HudModDF%>%
-  mutate(Date=as.Date(Date))
-BasedPlot <- HudModDF%>%
-  ggplot()+
-  aes(x=Date)+
-  geom_point(aes(y=N1,alpha=1/N1Error),size=PointSize)+
-  scale_y_log10()
-
-HudPlot <- BasedPlot+
-  geom_line(aes(y=pred3,color="weight=1/N1Error^2"))+
-  geom_line(aes(y=pred1,color="weight=1"))+
-  geom_line(aes(y=pred2,color="weight=1/N1Error"))+
-  facet_wrap(~Site)
-  
-
-#unique(ModelDF$Site)
-MadPlot
-HudPlot
+HFGCasesFN  <-  paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/HighFreq_CaseData_2021-05-07.csv")
 
 
-HudModDF$resid=LM11$residuals
-lm(resid~N1,data=HudModDF)
+LatCaseDF <- CovidDataPARSER(LatSpringDormFN,LatFallDormFN,MMSDFN = LatMMSDFN)%>%
+  filter(!is.na(Site))%>%
+  select(Date,Site,Cases,Tests,Per_pos)
 
+HFGCaseDF <- HFGCasesPARSER(FN = HFGCasesFN)%>%
+  filter(!is.na(Site))%>%
+  mutate(Tests=NA,Per_pos=NA)%>%
+  select(Date,Site,Cases=ReportedCases,Tests,Per_pos)%>%
+  mutate(Cases = ifelse(Cases==-999,2.5,Cases))%>%
+  filter(Site!="Madison")
 
-HudModDF%>%
-  ggplot()+
-  geom_point(aes(x=N1,y=resid))
-HudModDF%>%
-  ggplot()+
-  geom_point(aes(x=N1,y=(resid/((.7567*N1)-63890))))
+FullCase <- rbind(HFGCaseDF,LatCaseDF)
 
-
-ModelDF
-
+LIMSFullDF <- LIMSDataPARSER(LIMSFN)%>%
+  select(Date,Site, BCoV, N1,N1Error,N2, N2Error,PMMoV,Pop,FlowRate)
 
 ```
+
+
+
 
 ```{r UI shiny app}
 SiteOptions2=c()
@@ -141,145 +62,82 @@ MinWeight <- 0
 PointSize=1
 #"Madison","M Intercepters","hFD Sites"
 ui <- fluidPage(
-  titlePanel("Loess smoothing"),
+  titlePanel("Gamma Distribution"),
   sidebarLayout(
     sidebarPanel(width=2,
       selectInput(inputId = "Site",
                   label = "Site",
                   choices=c("Madison","Hudson","UW-LakeShore"),
                   selected = "Madison"),
-      sliderInput(inputId = "Span",
-                  label = "Span",
-                  min = 0,
-                  max = 1,
-                  value = .1),
-      checkboxInput(inputId = "Log",
-                    label="Scale y axis", 
-                    value=T),
-      checkboxInput(inputId = "N1",
-                    label="Normalize N1Error by N1", 
-                    value=F),
-      numericInput(
-                  inputId="MinWeight",
-                  label="Minimum weight",
-                  value=1e-5,
-                  min = NA,
-                  max = NA,
-                  step = NA,
-                  width = NULL
-      ),
-      numericInput(
-                  inputId="MaxWeight",
-                  label="Maximum weight",
-                  value=1e5,
-                  min = NA,
-                  max = NA,
-                  step = NA,
-                  width = NULL
-      )#,
-      # numericInput(
-      #             inputId="Iter",
-      #             label="Number Of Iterations",
-      #             value=4L,
-      #             min = NA,
-      #             max = NA,
-      #             step = NA,
-      #             width = NULL
-      # )
+      sliderInput(inputId = "scale",
+                  label = "scale",
+                  min = 1,
+                  max = 20,
+                  step =.1,
+                  value = 5.028338),
+      sliderInput(inputId = "shape",
+                  label = "shape",
+                  min = 1,
+                  max = 20,
+                  step =.1,
+                  value = 2.332779)
     ),
     mainPanel(
-      tabsetPanel(type = "tabs",
-       tabPanel("loessPlot", plotlyOutput(outputId = "loessPlot"),textOutput(outputId="MinMaxWeight"))
-       )
+      plotOutput(outputId = "SLDPlot")
     )
   )
 )
-#MinWeight
+
 ```
 
 ```{r Server Shiny app}
+DataPrepS <- DormGraphics <- function(Site,shape,scale){
+  FullLimsDF <- DataPrep(LIMSFullDF,keep=c("N1","N1Error"),Site)
+  SCPDF <- DFSmoothingFNC(FullCase,SiteS=Site,
+                                Weights=
+                                dgamma(1:21,
+                                scale=scale,
+                                shape=shape))
+  
+  SCPDF2 <- DFSmoothingFNC(FullCase,PreRoll=TRUE,SiteS=Site,
+                                Weights=
+                                dgamma(1:21,
+                                scale=scale,
+                                shape=shape))%>%
+    mutate(Site=Site)
+  
+  SCPDF3 <- inner_join(SCPDF,SCPDF2,by=c("Date","Site","Cases"),suffix=c("",".PreRolled"))
+  MergedDF <- inner_join(SCPDF3,FullLimsDF, by=c("Date","Site"))
+  
+  
+  MergedDF$LoessN1 <- DFLoessFNC(MergedDF,SiteS=Site)
+  
+  MergedDF <- MergedDF%>%
+    select(Date,Site,Cases,Cases2,Cases2.PreRolled,N1,LoessN1,N1Error)
+  
+  TSDF <- ts(MergedDF,start = 18520)
+  SLDPreRolledVec <- TSDF[,5]
+  SLDCaseVec <- TSDF[,4]
+  CaseVec <- TSDF[,3]
+  loessN1Vec <- TSDF[,7]
+  logN1Vec <- log(TSDF[,6])
+  return(MergedDF)
+}
+#mean = 11.73 days and an sd = 7.68 days
+
 server <- function(input, output) {
 
   UsedDF <- reactive({
-    # if(input$Site=="Madison"){
-    #   FilterSites=c("Madison")
-    # }else if(input$Site=="M Intercepters"){
-    #   FilterSites=c("Madison-P18-NE", "Madison-P2-Central", "Madison-P7-SE", "Madison-P8-West", "Madison-P11-SW")
-    # }else if(input$Site=="hFD Sites"){
-    #   FilterSites=c("Sun Prairie", "Kenosha", "Hudson")
-    # }
-    
-    
-    RetDF=ModelDF%>%
-      filter(!is.na(N1))%>%
-      filter(Site %in% input$Site)%>%
-      mutate(weights=1/N1Error)
-    if (input$N1){
-      RetDF=RetDF%>%
-        mutate(weights=N1/N1Error)
-      #*min(N1Error)
-    }
-    RetDF
-  })
-  ModelCDF <- reactive({
-    LargestWeight <- 1/min(UsedDF()$N1Error)
-    ModelDF2=UsedDF()%>%
-      mutate(Date=as.numeric(Date))
-    HighSpan=input$Span
-    LM1 <- loessFit(y=UsedDF()$N1,
-                    x=UsedDF()$Date,
-                    weights=rep(1,dim(UsedDF())[1]),
-                    span=HighSpan,
-                    min.weight=input$MinWeight,
-                    max.weight=input$MaxWeight,
-                    iterations=4)#input$Iter)
-    
-    LMN1 <- loessFit(y=UsedDF()$N1,
-                     x=UsedDF()$Date,
-                     weights=UsedDF()$weights,
-                     span=HighSpan,
-                     min.weight=input$MinWeight,
-                     max.weight=input$MaxWeight,
-                     iterations=4)#input$Iter)
+    DataPrepS(input$Site,input$shape,input$scale)
 
-    LMN1_2 <- loessFit(y=UsedDF()$N1,
-                       x=UsedDF()$Date,
-                       weights=UsedDF()$weights/UsedDF()$N1Error,
-                       span=HighSpan,min.weight=input$MinWeight,
-                       max.weight=input$MaxWeight,
-                       iterations=4)#input$Iter)
-    ModelDF2 <- ModelDF2%>%
-      mutate(Pred1=LM1$fitted,
-             PredSE=LMN1$fitted,
-             PredVarError=LMN1_2$fitted)%>%
-      mutate(CapedValue=ifelse(ModelDF2$weights>input$MaxWeight,"Value Higher then Max Weight","UnControled weight"))%>%
-      mutate(CapedValue=ifelse(weights<input$MinWeight,"value Lower then Min Weight",CapedValue))%>%
-      mutate(Date=as.Date(Date))
-    
-    ModelDF2
   })
+
   
-  output$loessPlot <- renderPlotly({
-    LoessGraphic=ModelCDF()%>%
-      ggplot()+
-      aes(x=Date)+
-      geom_point(aes(y=N1,size=weights,color=CapedValue))+
-      #,size=PointSize
-      scale_size_continuous(range = c(.5, 3*PointSize))+
-      geom_line(aes(y=PredVarError,color="weight=1/N1Error^2"))+
-      geom_line(aes(y=Pred1,color="weight=1"))+
-      geom_line(aes(y=PredSE,color="weight=1/N1Error"))+
-      facet_wrap(~Site)
-    if(input$Log){
-      LoessGraphic=LoessGraphic+scale_y_log10()
-    }
-    #LoessGraphicFinal=ggplotly(LoessGraphic)
-    #print(LoessGraphicFinal)
-    ggplotly(LoessGraphic)
+  output$SLDPlot <- renderPlot({
+    TSDF <- ts(UsedDF(),start = 18520)
+    TSPloting2(list(TSDF[,5],TSDF[,7],TSDF[,3]),UsedDF(),
+                SubTitle=Site,SLD=TRUE)
   })
-  output$MinMaxWeight <- renderText(
-    paste("min Weight",signif(min(UsedDF()$weights),3),"max Weight:",signif(max(UsedDF()$weights),3))
-  )
 }
 shinyApp(ui, server)
 ```
