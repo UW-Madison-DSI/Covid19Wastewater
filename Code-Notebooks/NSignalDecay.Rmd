@@ -304,7 +304,7 @@ This process was repeated with each covariate and summarized in the table one be
 `BCoV using six replicates` <- MixedEffectModelSum(SigDecayDF,"BCoV.percent.recovery",Log=FALSE)[[10]][2,c(1,2,5)]
 `BCoV excluding Madison rep A` <- MixedEffectModelSum(SigDecayDF2,"BCoV.percent.recovery",Log=FALSE)[[10]][2,c(1,2,5)]
 
-knitr::kable(signif(rbind(`N1 using six replicates`,
+FinalTable <- signif(rbind(`N1 using six replicates`,
                           `N1 excluding WI Rapids rep A`,
                           `N2 using six replicates`,
                           `N2 excluding WI Rapids rep A`,
@@ -312,16 +312,19 @@ knitr::kable(signif(rbind(`N1 using six replicates`,
                           `PMMoV excluding WI Rapids rep A`,
                           `BCoV using six replicates`,
                           `BCoV excluding Madison rep A`
-                          ),2),
-caption ="Summary of models")
+                          ),2)
 
 #put log in math notation
 #Var in 
 #sub table
-#round 2 2 fig
 #include slope in graph
 #log linear model estimating degergation rate
 #Note madison weirdness with star or dag and describe in footnote
 #Mark BCoV as non log
 #exlude mad because only 2 non 0 data points
+
+colnames(FinalTable) <- c("Decay Rate","SE","P")
+
+knitr::kable(FinalTable,
+caption ="Summary of models")
 ```

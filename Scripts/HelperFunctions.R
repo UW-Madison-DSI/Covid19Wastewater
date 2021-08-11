@@ -382,8 +382,8 @@ TSPloting2 <- function(PlotingTS,SourceDF,SubTitle,SLD=TRUE,span=.125){
     Shade <-1
     Thickness <- 2
   }
-  RangeCases <- range(PlotingTS[[3]],na.rm=TRUE)
-  RangeN1 <- range(SourceDF$N1,na.rm=TRUE)
+  RangeCases <- range(PlotingTS[[1]],na.rm=TRUE)
+  RangeN1 <- range(exp(PlotingTS[[2]]),na.rm=TRUE)
   plot.new()
   par(mar = c(8, 4, 4, 4) + 0.1)
   plot(1, type="n", xlab=SubTitle, ylab="", axes = FALSE,

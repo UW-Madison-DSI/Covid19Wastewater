@@ -60,6 +60,8 @@ HFGCaseDF <- HFGCasesPARSER(FN = HFGCasesFN)%>%
 
 FullCase <- rbind(HFGCaseDF,LatCaseDF)
 
+FullCaseRoll <- RollPerPos(FullCase,"Cases","Tests",Facet="Site",n = 14)
+
 LIMSFullDF <- LIMSDataPARSER(LIMSFN)%>%
   select(Date,Site, BCoV, N1,N1Error,N2, N2Error,PMMoV,Pop,FlowRate)
 
@@ -386,11 +388,21 @@ SLDGraphics("Madison",SLDPreRolledVec,loessN1Vec,"SLD","log(N1)")
 
 TSPloting2(list(SLDPreRolledVec,loessN1Vec,CaseVec),MergedDF,
             SubTitle="Madison",SLD=FALSE)
+
+
+source("../../Scripts/HelperFunctions.R")
 TSPloting2(list(SLDPreRolledVec,loessN1Vec,CaseVec),MergedDF,
             SubTitle="Madison")
 
 
-
+#replace with min max matching
+#
+#Other decay work - account for filter decay
+#Ask about decay and 
+#
+#
+#
+#
 ```
 
 -----------------------------------------------
@@ -468,6 +480,7 @@ DormGraphics <- function(Site,InDepth=FALSE,Short=TRUE){
   }
   return(TSDF)
 }
+
 # plot(SLDPreRolledVec)
 # plot(SLDCaseVec)
 
@@ -547,19 +560,104 @@ Aba=LIMSFullDF2%>%
   mutate(Time=ifelse(collected<mdy("12-15-2020"),"Pre2021","2021"))
 summary(aov(N1~Time,data=Aba))
 
-DecayRate=-0.041
+DecayRate=0.041
 
-LIMSFullDF2%>%
+#log(N1)~Intercept-0.041*TimePassed
+#e^(log(N1)+0.041*TimePassed)=True_N1
+#N1*e^.041*TimePassed=True_N1
+DecLIMSFullDF2 <- LIMSFullDF2%>%
   filter(Site=="Madison Metro")%>%
-  mutate(N1P=N1*exp(1)^(.041*as.numeric(TimeDiff)))%>%
-  mutate(Outliers=ifelse(TimeDiff>12,"Long delay","Normal delay"))%>%
+  mutate(N1P=N1*exp(1)^(DecayRate*as.numeric(TimeDiff)))%>%
+  mutate(Outliers=ifelse(TimeDiff>12,"Long delay","Normal delay"))
+
+
+DecLIMSFullDF2%>%
   ggplot()+
   aes(x=collected)+#,color=Outliers)+
   geom_point(aes(y=N1,color="N1"),alpha=.3)+
   geom_point(aes(y=N1P,color="N1 undecayed"),alpha=.3)+
-  geom_smooth(aes(y=N1,color="N1"),se=FALSE,span=.2)+
+  geom_smooth(aes(y=N1,color="N1"),se=T,span=.2)+
   geom_smooth(aes(y=N1P,color="N1 undecayed"),se=FALSE,span=.2)+
   scale_y_log10()
+
+
+DecLIMSFullDF2%>%
+  mutate(N1=c(NA,diff(N1)),N1P=c(NA,diff(N1P)))%>%
+  mutate(Outliers=ifelse(TimeDiff>12,"Long delay","Normal delay"))%>%
+  ggplot()+
+  aes(x=collected,color=Outliers)+
+  geom_point(aes(y=log(N1)-log(N1P)))
+
+
+library(pracma)
+Vecter <- log(DecLIMSFullDF2$N1)
+plot(Vecter)
+SmoothVecter <- rollmean(Vecter, 21,align="right",fill = NA)
+plot(SmoothVecter)
+NoTrend <- Vecter-SmoothVecter
+plot(NoTrend)
+
+Vecter2 <- log(DecLIMSFullDF2$N1P)
+plot(Vecter2)
+SmoothVecter2 <- rollmean(Vecter2, 21,align="right",fill = NA)
+plot(SmoothVecter2)
+NoTrend2 <- Vecter2-SmoothVecter2
+plot(NoTrend2)
+
+
+TrendDif <- abs(NoTrend)-abs(NoTrend2)
+
+plot(TrendDif)
+
+mean(TrendDif, na.rm=TRUE)
+sd(TrendDif, na.rm=TRUE)
+
+
+var(NoTrend, na.rm=TRUE)
+var(NoTrend2, na.rm=TRUE)
+var.test(NoTrend,NoTrend2)
+
+```
+
+
+```{r , warning=FALSE, message=FALSE}
+FullCaseRoll%>%
+  filter(Site=="Madison",
+         Date>mdy("9/15/2020"))%>%
+  ggplot()+
+  aes(x=Date)+
+  geom_smooth(aes(y=Per_pos),se=F,span=.2)
+
+
+
+DecLIMSFullDF2%>%
+  ggplot()+
+  aes(x=collected)+#,color=Outliers)+
+  geom_smooth(aes(y=N1),se=F,span=.2)+
+  scale_y_log10()
+
+
+
+FullCase%>%
+  filter(Site=="Madison",
+         Date>mdy("9/15/2020"))%>%
+  ggplot()+
+  aes(x=Date)+
+  geom_smooth(aes(y=Tests,color="Tests"),se=F,span=.2)+
+  geom_smooth(aes(y=Cases,color="Cases"),se=F,span=.2)+
+  geom_smooth(aes(y=Per_pos,color="Per_pos"),se=F,span=.2)+
+  scale_y_log10()
+
+FullCaseRoll%>%
+  filter(Site=="Madison",
+         Date>mdy("9/15/2020"))%>%
+  ggplot()+
+  aes(x=Date)+
+  geom_line(aes(y=Tests,color="Tests"),se=F,span=.2)+
+  geom_line(aes(y=Cases,color="Cases"),se=F,span=.2)+
+  geom_line(aes(y=Per_pos,color="Per_pos"),se=F,span=.2)+
+  scale_y_log10()+
+  ggtitle("14 day MA")
 
 ```
 

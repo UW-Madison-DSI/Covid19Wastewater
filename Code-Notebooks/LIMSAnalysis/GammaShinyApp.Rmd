@@ -55,7 +55,9 @@ LIMSFullDF <- LIMSDataPARSER(LIMSFN)%>%
 
 
 ```{r UI shiny app}
-SiteOptions2=c()
+SiteOptions2=c("Madison","Spring UW-Sellery",
+                            "Fall UW-Sellery", "Spring UW-LakeShore",
+                            "Fall UW-LakeShore")
 
 HighSpan <- .1
 MinWeight <- 0
@@ -67,7 +69,7 @@ ui <- fluidPage(
     sidebarPanel(width=2,
       selectInput(inputId = "Site",
                   label = "Site",
-                  choices=c("Madison","Hudson","UW-LakeShore"),
+                  choices=SiteOptions2,
                   selected = "Madison"),
       sliderInput(inputId = "scale",
                   label = "scale",
@@ -111,13 +113,15 @@ ui <- fluidPage(
 ```{r Server Shiny app}
 DataPrepS <- DormGraphics <- function(Site,shape,scale,delay,Span){
   FullLimsDF <- DataPrep(LIMSFullDF,keep=c("N1","N1Error"),Site)
-  SCPDF <- DFSmoothingFNC(FullCase,SiteS=Site,
+  FullCase2 <- FullCase%>%
+    mutate(Cases=ifelse(Cases<0,2.5,Cases))
+  SCPDF <- DFSmoothingFNC(FullCase2,SiteS=Site,
                                 Weights=c(rep(0,delay),
                                 dgamma(1:21,
                                 scale=scale,
                                 shape=shape)[(delay+1):21]))
   
-  SCPDF2 <- DFSmoothingFNC(FullCase,PreRoll=TRUE,SiteS=Site,
+  SCPDF2 <- DFSmoothingFNC(FullCase2,PreRoll=TRUE,SiteS=Site,
                                 Weights=c(rep(0,delay),
                                 dgamma(1:21,
                                 scale=scale,
@@ -131,7 +135,8 @@ DataPrepS <- DormGraphics <- function(Site,shape,scale,delay,Span){
   MergedDF$LoessN1 <- DFLoessFNC(MergedDF,SiteS=Site,span=Span)
   
   MergedDF <- MergedDF%>%
-    select(Date,Site,Cases,Cases2,Cases2.PreRolled,N1,LoessN1,N1Error)
+    select(Date,Site,Cases,Cases2,Cases2.PreRolled,N1,LoessN1,N1Error)%>%
+    filter(!is.na(Cases)&!is.na(Cases2.PreRolled),!is.na(N1),!is.na(LoessN1))
   
   TSDF <- ts(MergedDF,start = 18520)
   SLDPreRolledVec <- TSDF[,5]
@@ -148,9 +153,11 @@ server <- function(input, output) {
   UsedDF <- reactive({
     DataPrepS(input$Site,input$shape,input$scale,input$delay,input$Span)
   })
+  
   TSDF <- reactive({
     ts(UsedDF(),start = 18520)
   })
+  
   SLDVec <- reactive({
     if(input$Roll){
       return(TSDF()[,5])
