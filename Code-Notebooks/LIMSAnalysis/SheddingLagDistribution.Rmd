@@ -383,7 +383,7 @@ SLDGraphics("Madison",SLDPreRolledVec,loessN1Vec,"SLD","log(N1)")
 #arimax
 ```
 
-```{r 6 part plot, fig.height=8}
+```{r 6 part plot, fig.height=16}
 #(SourceDF$N1Error)
 
 
@@ -418,22 +418,22 @@ SLDCaseVec <- TSDF[,4]
 CaseVec <- TSDF[,3]
 loessN1Vec <- TSDF[,7]
 logN1Vec <- log(TSDF[,6])
-CaseVec[CaseVec==0]<-NA
+#CaseVec[CaseVec==0]<-NA
 
 source("../../Scripts/HelperFunctions.R")
 
 TSPloting2(list(SLDPreRolledVec,loessN1Vec,CaseVec),MergedDF,
             SubTitle="Madison",span=.2)
-
+#[190:221]
 ```
 
 -----------------------------------------------
 
 
 ```{r Dorms}
-Site="UW-LakeShore"
-#UW-Sellery
-#UW-LakeShore
+# Site="UW-LakeShore"
+# UW-Sellery
+# UW-LakeShore
 # FullLimsDF <- DataPrep(LIMSFullDF,keep=c("N1","N1Error"),Site)
 # SmoothCasePlotDF <- DFSmoothingFNC(FullCase,SiteS=Site,
 #                                    Weights=c(rep(0,10),
@@ -456,7 +456,7 @@ Site="UW-LakeShore"
 # logN1Vec <- log(TSDF[,5])
 # 
 # SLDModelMad <- SLDGraphics(Site,SLDCaseVec,loessN1Vec,"SLD","log(N1)")
-
+# 
 # TSPloting2(list(SLDCaseVec,loessN1Vec,CaseVec),MergedDF,
 #             SubTitle=Site,SLD=TRUE)
 ```

@@ -373,6 +373,14 @@ SLDGraphics <- function(SiteS,DepTSVec,IndTSVec,DepName,IndName,efficient=FALSE)
 }
 
 
+RangeShifter <- function(Old=NA,New=NA,Range=NA,Ratio=NA){
+  if(is.na(Ratio)){
+    return((New-Old)/Range)
+  }
+  if(is.na(New)){
+    return(Range*Ratio+Old)
+  }
+}
 
 TSPloting2 <- function(PlotingTS,SourceDF,SubTitle,
                        SLD=TRUE,span=.125){
@@ -384,20 +392,38 @@ TSPloting2 <- function(PlotingTS,SourceDF,SubTitle,
     Thickness <- 2
   }
   N1Axis="y"
-  CasesAxis="y"
+  CasesAxis=""
   RangeCases <- range(PlotingTS[[1]],na.rm=TRUE)
   RangeN1 <- range(exp(PlotingTS[[2]]),na.rm=TRUE)
-  MaxN1 <- max(SourceDF$N1,na.rm=TRUE)
-  MinN1 <- min(SourceDF$N1,na.rm=TRUE)
-  MaxCases <- max(PlotingTS[[3]],na.rm=TRUE)
-  N1Ratio <- log(MaxN1)/log(RangeN1[2])
-  CasesRatio <- log(MaxCases)/(log(RangeCases[2]))
-  Displace <- max(N1Ratio,CasesRatio)
-  print(paste(RangeCases[[1]]))
   
-  RangeCases[2] <- RangeCases[2]*exp(Displace+1.5)
-  RangeN1[2] <- RangeN1[2]*exp(Displace)
-  RangeCases[1] <- RangeCases[1]-4
+  MinN1 <-min(PlotingTS[[1]],na.rm=TRUE)
+  MinCases <- 0
+  
+  RangeCases[1] <- min(PlotingTS[[1]][190:221],na.rm=TRUE)
+  RangeN1[1] <- min(exp(PlotingTS[[2]][190:221]),na.rm=TRUE)
+  
+  N1Ratio <- RangeShifter(Old=log(RangeN1[1]),New=log(MinN1),Range=diff(log(RangeN1)))
+  CasesRatio <- RangeShifter(Old=RangeCases[1],New=MinCases,Range=diff(RangeCases))
+  Displace <- min(N1Ratio,CasesRatio)+7
+  
+  
+  print(paste(N1Ratio,CasesRatio,Displace))
+  
+  RangeCases[1] <- RangeShifter(Old=RangeCases[1],Range=diff(RangeCases),Ratio=Displace)
+  RangeN1[1] <-exp(RangeShifter(Old=log(RangeN1[1]),
+                                Range=diff(log(RangeN1)),Ratio=Displace))
+  MaxN1 <- max(SourceDF$N1,na.rm=TRUE)
+  MaxCases <- max(PlotingTS[[3]],na.rm=TRUE)
+  N1Ratio <- RangeShifter(Old=log(RangeN1[2]),New=log(MaxN1),Range=diff(log(RangeN1)))
+  CasesRatio <- RangeShifter(Old=RangeCases[2],New=MaxCases,Range=diff(RangeCases))
+  Displace <- max(N1Ratio,CasesRatio)
+  
+  RangeN1[2] <- exp(RangeShifter(Old=log(RangeN1[2]),
+                                 Range=diff(log(RangeN1)),Ratio = Displace))
+  RangeCases[2] <- RangeShifter(Old=RangeCases[2],
+                                Range=diff(RangeCases),Ratio = Displace)
+  
+  
   
   plot.new()
   par(mar = c(8, 4, 4, 4) + 0.1)
@@ -442,7 +468,7 @@ TSPloting2 <- function(PlotingTS,SourceDF,SubTitle,
        ticks,
        labels = FALSE,
        cex.axis=.5)
-  text(cex=.75, x=ticks-15, y=-115, format(ticks,"%b %Y"),
+  text(cex=.75, x=ticks-5, y=RangeCases[1]-200, format(ticks,"%b %Y"),
        xpd=TRUE, srt=30)
   
   par(new = TRUE)
