@@ -97,7 +97,10 @@ ui <- fluidPage(
                   min = 0,
                   max = .5,
                   step =.01,
-                  value = .125)
+                  value = .125)#,
+      # checkboxInput(inputId = "Log",
+      #               label="log(N1)", 
+      #               value=T)
     ),
     mainPanel(
       tabsetPanel(type = "tabs",
@@ -167,8 +170,15 @@ server <- function(input, output) {
   })
   
   output$SLDPlot <- renderPlot({
+    #if(input$Log){
+      N1logz <- "y"
+    # }else{
+    #   N1logz <- ""
+    # }
+    # 
+    
     TSPloting2(list(SLDVec(),TSDF()[,7],TSDF()[,3]),UsedDF(),
-                SubTitle=input$Site,SLD=TRUE,input$Span)
+                SubTitle=input$Site,SLD=TRUE,input$Span,N1log=N1logz)
   })
   
   output$GammaDist <- renderPlot({
@@ -189,6 +199,4 @@ server <- function(input, output) {
 
 }
 shinyApp(ui, server)
-
-
 ```

@@ -374,7 +374,8 @@ SLDGraphics <- function(SiteS,DepTSVec,IndTSVec,DepName,IndName,efficient=FALSE)
 
 
 
-TSPloting2 <- function(PlotingTS,SourceDF,SubTitle,SLD=TRUE,span=.125){
+TSPloting2 <- function(PlotingTS,SourceDF,SubTitle,
+                       SLD=TRUE,span=.125){
   if(SLD){
     Shade <- 0.5
     Thickness <- 1
@@ -382,18 +383,29 @@ TSPloting2 <- function(PlotingTS,SourceDF,SubTitle,SLD=TRUE,span=.125){
     Shade <-1
     Thickness <- 2
   }
+  N1Axis="y"
+  CasesAxis="y"
   RangeCases <- range(PlotingTS[[1]],na.rm=TRUE)
   RangeN1 <- range(exp(PlotingTS[[2]]),na.rm=TRUE)
+  MaxN1 <- max(SourceDF$N1,na.rm=TRUE)
+  MaxCases <- max(PlotingTS[[3]],na.rm=TRUE)
+  N1Ratio <- log(MaxN1)/log(RangeN1[2])
+  CasesRatio <- log(MaxCases)/log(RangeCases[2])
+  Displace <- max(N1Ratio,CasesRatio)
+  RangeCases[2] <- RangeCases[2]*exp(Displace)
+  RangeN1[2] <- RangeN1[2]*exp(Displace)
+  
   plot.new()
   par(mar = c(8, 4, 4, 4) + 0.1)
   plot(1, type="n", xlab=SubTitle, ylab="", axes = FALSE,
-       xlim=range(SourceDF$Date), ylim=RangeN1,log="y")
+       xlim=range(SourceDF$Date), ylim=RangeN1,log=N1Axis)
   rect(SourceDF$Date-.5,
        SourceDF$N1-SourceDF$N1Error,
        SourceDF$Date+.5,
        SourceDF$N1+SourceDF$N1Error,
        col  = rgb(0, 0, 1, alpha=0.25),
        border  = NA,
+       ylim = RangeN1,
        xlab = "",
        ylab = "",
        xaxt = "n")
@@ -404,6 +416,7 @@ TSPloting2 <- function(PlotingTS,SourceDF,SubTitle,SLD=TRUE,span=.125){
           ylab = "",
           xaxt = "n",
           border = NA,
+          log=CasesAxis,
           ylim = RangeCases,
           axes = FALSE)
   par(new = TRUE)
@@ -413,6 +426,7 @@ TSPloting2 <- function(PlotingTS,SourceDF,SubTitle,SLD=TRUE,span=.125){
           ylim = RangeCases,
           axes = FALSE,
           lwd=Thickness,
+          log=CasesAxis,
           xlab = "",
           ylab = "",
           xaxt = "n")
@@ -434,7 +448,7 @@ TSPloting2 <- function(PlotingTS,SourceDF,SubTitle,SLD=TRUE,span=.125){
           axes = FALSE,
           xlab = "",
           ylab = "",
-          log="y",
+          log=N1Axis,
           lwd=2,
           xaxt = "n")
   axis(2,col.axis = "blue",cex.axis=.75)
@@ -451,6 +465,7 @@ TSPloting2 <- function(PlotingTS,SourceDF,SubTitle,SLD=TRUE,span=.125){
             col = "red",
             lwd=2,
             axes = FALSE,
+            log=CasesAxis,
             xlab = "", ylab = "",xaxt = "n")
   }
   mtext("Cases", side = 4, line = 2, col = "red",cex=.75)

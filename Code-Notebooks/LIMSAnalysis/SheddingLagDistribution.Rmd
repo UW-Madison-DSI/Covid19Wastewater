@@ -215,7 +215,7 @@ SCPDF2 <- DFSmoothingFNC(FullCase,PreRoll=TRUE,SiteS="Madison")%>%
 SCPDF3 <- inner_join(SCPDF,SCPDF2,by=c("Date","Site","Cases"),suffix=c("",".PreRolled"))
 MergedDF <- inner_join(SCPDF3,FullMadLimsDF, by=c("Date","Site"))
 
-MergedDF$LoessN1 <- DFLoessFNC(MergedDF,SiteS="Madison")
+MergedDF$LoessN1 <- DFLoessFNC(MergedDF,SiteS="Madison",span=.2)
 
 MergedDF <- MergedDF%>%
   select(Date,Site,Cases,Cases2,Cases2.PreRolled,N1,LoessN1,N1Error)
@@ -252,6 +252,7 @@ SLDGraphics("Madison",SLDPreRolledVec,loessN1Vec,"SLD","log(N1)")
 #fix all labeling inconsistency
 #loess
 #add cases and 7 day cases and log(N1) to plot
+#Arima needs a lot of data
 ```
 
 ```{r}
@@ -382,7 +383,7 @@ SLDGraphics("Madison",SLDPreRolledVec,loessN1Vec,"SLD","log(N1)")
 #arimax
 ```
 
-```{r 6 part plot}
+```{r 6 part plot, fig.height=8}
 #(SourceDF$N1Error)
 
 
@@ -390,19 +391,21 @@ TSPloting2(list(SLDPreRolledVec,loessN1Vec,CaseVec),MergedDF,
             SubTitle="Madison",SLD=FALSE)
 
 
+#replace with min max matching
+#Other decay work - account for filter decay
+#Ask about decay and
+
+
+plot(loessN1Vec[1:350])
+plot(loessN1Vec[70:180])
+
+
 source("../../Scripts/HelperFunctions.R")
 TSPloting2(list(SLDPreRolledVec,loessN1Vec,CaseVec),MergedDF,
             SubTitle="Madison")
 
 
-#replace with min max matching
-#
-#Other decay work - account for filter decay
-#Ask about decay and 
-#
-#
-#
-#
+CaseVec[CaseVec==0]<-NA
 ```
 
 -----------------------------------------------
@@ -626,7 +629,7 @@ FullCaseRoll%>%
          Date>mdy("9/15/2020"))%>%
   ggplot()+
   aes(x=Date)+
-  geom_smooth(aes(y=Per_pos),se=F,span=.2)
+  geom_smooth(aes(y=Cases),se=F,span=.2)
 
 
 
