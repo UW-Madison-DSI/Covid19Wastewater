@@ -388,12 +388,16 @@ TSPloting2 <- function(PlotingTS,SourceDF,SubTitle,
   RangeCases <- range(PlotingTS[[1]],na.rm=TRUE)
   RangeN1 <- range(exp(PlotingTS[[2]]),na.rm=TRUE)
   MaxN1 <- max(SourceDF$N1,na.rm=TRUE)
+  MinN1 <- min(SourceDF$N1,na.rm=TRUE)
   MaxCases <- max(PlotingTS[[3]],na.rm=TRUE)
   N1Ratio <- log(MaxN1)/log(RangeN1[2])
-  CasesRatio <- log(MaxCases)/log(RangeCases[2])
+  CasesRatio <- log(MaxCases)/(log(RangeCases[2]))
   Displace <- max(N1Ratio,CasesRatio)
-  RangeCases[2] <- RangeCases[2]*exp(Displace)
+  print(paste(RangeCases[[1]]))
+  
+  RangeCases[2] <- RangeCases[2]*exp(Displace+1.5)
   RangeN1[2] <- RangeN1[2]*exp(Displace)
+  RangeCases[1] <- RangeCases[1]-4
   
   plot.new()
   par(mar = c(8, 4, 4, 4) + 0.1)
@@ -430,7 +434,7 @@ TSPloting2 <- function(PlotingTS,SourceDF,SubTitle,
           xlab = "",
           ylab = "",
           xaxt = "n")
-  axis(4, pretty(RangeCases),col.axis = "red",cex.axis=.75)
+  axis(4,col.axis = "red",cex.axis=.75)
   
   RangeDates <- range(SourceDF$Date)
   ticks <- seq(RangeDates[1],RangeDates[2], by = "month")

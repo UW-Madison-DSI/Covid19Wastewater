@@ -387,8 +387,8 @@ SLDGraphics("Madison",SLDPreRolledVec,loessN1Vec,"SLD","log(N1)")
 #(SourceDF$N1Error)
 
 
-TSPloting2(list(SLDPreRolledVec,loessN1Vec,CaseVec),MergedDF,
-            SubTitle="Madison",SLD=FALSE)
+# TSPloting2(list(SLDPreRolledVec,loessN1Vec,CaseVec),MergedDF,
+#             SubTitle="Madison",SLD=FALSE)
 
 
 #replace with min max matching
@@ -396,16 +396,35 @@ TSPloting2(list(SLDPreRolledVec,loessN1Vec,CaseVec),MergedDF,
 #Ask about decay and
 
 
-plot(loessN1Vec[1:350])
-plot(loessN1Vec[70:180])
+FullMadLimsDF <- DataPrep(LIMSFullDF,keep=c("N1","N1Error"),"Madison")
 
+SCPDF <- DFSmoothingFNC(FullCase,SiteS="Madison")%>%
+  mutate(Site="Madison")
+
+SCPDF2 <- DFSmoothingFNC(FullCase,PreRoll=TRUE,SiteS="Madison")%>%
+  mutate(Site="Madison")
+
+SCPDF3 <- inner_join(SCPDF,SCPDF2,by=c("Date","Site","Cases"),suffix=c("",".PreRolled"))
+MergedDF <- inner_join(SCPDF3,FullMadLimsDF, by=c("Date","Site"))
+
+MergedDF$LoessN1 <- DFLoessFNC(MergedDF,SiteS="Madison",span=.2)
+
+MergedDF <- MergedDF%>%
+  select(Date,Site,Cases,Cases2,Cases2.PreRolled,N1,LoessN1,N1Error)
+
+TSDF <- ts(MergedDF,start = 18520)
+SLDPreRolledVec <- TSDF[,5]
+SLDCaseVec <- TSDF[,4]
+CaseVec <- TSDF[,3]
+loessN1Vec <- TSDF[,7]
+logN1Vec <- log(TSDF[,6])
+CaseVec[CaseVec==0]<-NA
 
 source("../../Scripts/HelperFunctions.R")
+
 TSPloting2(list(SLDPreRolledVec,loessN1Vec,CaseVec),MergedDF,
-            SubTitle="Madison")
+            SubTitle="Madison",span=.2)
 
-
-CaseVec[CaseVec==0]<-NA
 ```
 
 -----------------------------------------------
@@ -415,31 +434,31 @@ CaseVec[CaseVec==0]<-NA
 Site="UW-LakeShore"
 #UW-Sellery
 #UW-LakeShore
-FullLimsDF <- DataPrep(LIMSFullDF,keep=c("N1","N1Error"),Site)
-SmoothCasePlotDF <- DFSmoothingFNC(FullCase,SiteS=Site,
-                                   Weights=c(rep(0,10),
-                              dgamma(1:21,
-                              scale=scale,
-                              shape=shape)[11:21]))
+# FullLimsDF <- DataPrep(LIMSFullDF,keep=c("N1","N1Error"),Site)
+# SmoothCasePlotDF <- DFSmoothingFNC(FullCase,SiteS=Site,
+#                                    Weights=c(rep(0,10),
+#                               dgamma(1:21,
+#                               scale=scale,
+#                               shape=shape)[11:21]))
+# 
+# FullLimsDF$LoessN1 <- DFLoessFNC(FullLimsDF,SiteS=Site)
+# 
+# MergedDF <- inner_join(SmoothCasePlotDF,FullLimsDF,
+#                        by=c("Date","Site"))
+# 
+# MergedDF <- MergedDF%>%
+#   select(Date,Site,Cases,Cases2,N1,LoessN1,N1Error)
+# 
+# TSDF <- ts(MergedDF,start = 18520)
+# SLDCaseVec <- TSDF[,4]
+# CaseVec <- TSDF[,3]
+# loessN1Vec <- TSDF[,6]
+# logN1Vec <- log(TSDF[,5])
+# 
+# SLDModelMad <- SLDGraphics(Site,SLDCaseVec,loessN1Vec,"SLD","log(N1)")
 
-FullLimsDF$LoessN1 <- DFLoessFNC(FullLimsDF,SiteS=Site)
-
-MergedDF <- inner_join(SmoothCasePlotDF,FullLimsDF,
-                       by=c("Date","Site"))
-
-MergedDF <- MergedDF%>%
-  select(Date,Site,Cases,Cases2,N1,LoessN1,N1Error)
-
-TSDF <- ts(MergedDF,start = 18520)
-SLDCaseVec <- TSDF[,4]
-CaseVec <- TSDF[,3]
-loessN1Vec <- TSDF[,6]
-logN1Vec <- log(TSDF[,5])
-
-SLDModelMad <- SLDGraphics(Site,SLDCaseVec,loessN1Vec,"SLD","log(N1)")
-
-TSPloting2(list(SLDCaseVec,loessN1Vec,CaseVec),MergedDF,
-            SubTitle=Site,SLD=TRUE)
+# TSPloting2(list(SLDCaseVec,loessN1Vec,CaseVec),MergedDF,
+#             SubTitle=Site,SLD=TRUE)
 ```
 -----------------------------------------
 
@@ -487,8 +506,8 @@ DormGraphics <- function(Site,InDepth=FALSE,Short=TRUE){
 # plot(SLDPreRolledVec)
 # plot(SLDCaseVec)
 
-ListDiscard <- lapply(c("Spring UW-Sellery","Fall UW-Sellery",
-         "Spring UW-LakeShore","Fall UW-LakeShore"),DormGraphics)
+# ListDiscard <- lapply(c("Spring UW-Sellery","Fall UW-Sellery",
+#          "Spring UW-LakeShore","Fall UW-LakeShore"),DormGraphics)
 #Fall UW-Sellery
 #UW-LakeShore
 ```
