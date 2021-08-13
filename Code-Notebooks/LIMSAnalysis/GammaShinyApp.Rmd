@@ -177,8 +177,8 @@ server <- function(input, output) {
     # }
     # 
     
-    TSPloting2(list(SLDVec(),TSDF()[,7],TSDF()[,3]),UsedDF(),
-                SubTitle=input$Site,SLD=TRUE,input$Span,N1log=N1logz)
+    TSPloting2(list(SLDVec(),exp(TSDF()[,7]),TSDF()[,3]),UsedDF(),
+                SubTitle=input$Site,SLD=TRUE,input$Span)
   })
   
   output$GammaDist <- renderPlot({
@@ -193,10 +193,9 @@ server <- function(input, output) {
   })
   
   output$DifSLDPlot <- renderPlot({
-    TSPloting(list(SLDVec(),TSDF()[,7]),UsedDF(),
+    TSPloting(list(SLDVec(),exp(TSDF()[,7])),UsedDF(),
                 "DepName","IndName",FullPlot=FALSE,SubTitle=NA,FirstDif=TRUE)
   })
-
 }
 shinyApp(ui, server)
 ```

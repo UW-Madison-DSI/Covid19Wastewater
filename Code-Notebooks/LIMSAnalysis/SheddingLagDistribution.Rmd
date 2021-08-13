@@ -204,7 +204,7 @@ IsFull <- function(DF){
 ```
 
 ```{r Madison Prep, fig.height=3}
-FullMadLimsDF <- DataPrep(LIMSFullDF,keep=c("N1","N1Error"),"Madison")
+FullMadLimsDF <- DataPrep(LIMSFullDF,keep=c("N1","N1Error","N2","N2Error"),"Madison")
 
 SCPDF <- DFSmoothingFNC(FullCase,SiteS="Madison")%>%
   mutate(Site="Madison")
@@ -215,10 +215,11 @@ SCPDF2 <- DFSmoothingFNC(FullCase,PreRoll=TRUE,SiteS="Madison")%>%
 SCPDF3 <- inner_join(SCPDF,SCPDF2,by=c("Date","Site","Cases"),suffix=c("",".PreRolled"))
 MergedDF <- inner_join(SCPDF3,FullMadLimsDF, by=c("Date","Site"))
 
-MergedDF$LoessN1 <- DFLoessFNC(MergedDF,SiteS="Madison",span=.2)
+MergedDF$LoessN1 <- DFLoessFNC(MergedDF,Var="N1",SiteS="Madison",span=.2)
+MergedDF$LoessN2 <- DFLoessFNC(MergedDF,Var="N2",SiteS="Madison",span=.2)
 
 MergedDF <- MergedDF%>%
-  select(Date,Site,Cases,Cases2,Cases2.PreRolled,N1,LoessN1,N1Error)
+  select(Date,Site,Cases,Cases2,Cases2.PreRolled,N1,LoessN1,N1Error,N2,LoessN2,N2Error)
 
 TSDF <- ts(MergedDF,start = 18520)
 SLDPreRolledVec <- TSDF[,5]
@@ -226,17 +227,27 @@ SLDCaseVec <- TSDF[,4]
 CaseVec <- TSDF[,3]
 loessN1Vec <- TSDF[,7]
 logN1Vec <- log(TSDF[,6])
+loessN2Vec <- TSDF[,10]
+logN2Vec <- log(TSDF[,9])
 
-plot(SLDPreRolledVec)
-plot(SLDCaseVec)
+
+ccf(diff((loessN1Vec)),diff(log(SLDPreRolledVec)))
+
+A <- ts.union(diff(log(SLDPreRolledVec)),
+                diff(stats::lag((loessN1Vec),4)))
+summary(lm(A[,1]~A[,2]))
+
+
 ```
 
 
 --------------------------
 
 ```{r Mad Full Graphic, include=FALSE}
-SLDGraphics("Madison",SLDPreRolledVec,loessN1Vec,"SLD","log(N1)")
 
+source("../../Scripts/HelperFunctions.R")
+N1Rel <- SLDGraphics("Madison",log(SLDPreRolledVec),(loessN1Vec),"SLD","log(N1)")
+N2Rel <- SLDGraphics("Madison",log(SLDPreRolledVec),(loessN2Vec),"SLD","log(N1)")
 
 #library(TSA)
 #arimax(SLDCaseVec,order=c(2,1,0),xreg=loessN1Vec)
@@ -248,11 +259,20 @@ SLDGraphics("Madison",SLDPreRolledVec,loessN1Vec,"SLD","log(N1)")
 #is model useful
 #SARIMA residuals
 #cases method
-#color coat axis
 #fix all labeling inconsistency
 #loess
 #add cases and 7 day cases and log(N1) to plot
 #Arima needs a lot of data
+library(vars)
+
+model <- VARselect(log(SLDPreRolledVec),lag.max = 50, exogen = cbind(loessN1Vec,loessN2Vec))
+model
+
+Model1 <- VAR(v1, p = 2, type = "const", season = NULL, exog = NULL) 
+summary(Model1)
+
+Serial1 <- serial.test(Model1, lags.pt = 5, type = "PT.asymptotic")
+Serial1
 ```
 
 ```{r}
@@ -425,6 +445,7 @@ source("../../Scripts/HelperFunctions.R")
 TSPloting2(list(SLDPreRolledVec,loessN1Vec,CaseVec),MergedDF,
             SubTitle="Madison",span=.2)
 #[190:221]
+
 ```
 
 -----------------------------------------------

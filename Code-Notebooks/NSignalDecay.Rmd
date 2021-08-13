@@ -128,8 +128,8 @@ MixedEffectModelPlot <- function(DF,Var,Title,subtitle,
 
 regressions_data <- function(Var,DF){
   DF%>%
-    mutate(Filter.Replicate=substr(Filter.Replicate,4,6))%>%
-    group_by(WWTP,Filter.Replicate)%>%
+    #mutate(Filter.Replicate=substr(Filter.Replicate,4,6))%>%
+    group_by(WWTP)%>%
     summarise(PVal=signif(summary(lm(!!sym(Var)~TimePassed))$coefficients[8], digits = 3))
 }
 
@@ -138,11 +138,10 @@ DecayPlot <- function(Var,DF,Locate=c(18729,14,25,20),Log=TRUE){
   GraphPlot <- DF%>%
     mutate(Filter.Replicate=substr(Filter.Replicate,4,6))%>%
     ggplot()+
-    aes(x=FilteredDate,y=!!sym(Var),color = Filter.Replicate)+
+    aes(x=FilteredDate,y=!!sym(Var))+#,color=Filter.Replicate)+
     geom_label(inherit.aes=FALSE, 
           aes(x = as.Date(Locate[1]-Locate[2]*abs(as.numeric(as.factor(WWTP))-2)),
-           y = Locate[3]+Locate[4]*2*(as.numeric(as.factor(Filter.Replicate))-1.5),
-           color=Filter.Replicate, 
+           y = Locate[3],
            label=paste("p[slope]","==",  PVal)),
            size=4,
            show.legend = FALSE,
@@ -163,19 +162,23 @@ DecayPlot <- function(Var,DF,Locate=c(18729,14,25,20),Log=TRUE){
 
 
 ```{r ploting N1, warning=FALSE, message=FALSE,fig.height=4}
+SigDecayDF2 <- SigDecayDF%>%
+  mutate(N12=N1.GC.L+N2.GC.L)
+
+
 MixedEffectModelPlot(SigDecayDF, Var = "N1.GC.L",
                      Title="",subtitle="",
                      xlab="Figure 1. Mixed-effects model.",
                      ylab="N1 (GC/L)")
 
 
-DecayPlot("N1.GC.L",SigDecayDF)+
+DecayPlot("N1.GC.L",SigDecayDF2)+
   labs(x="Figure 2. Six independent linear regressions.",
        y="N1 (GC/L)")
 
 
 SigDecayDF2 <- SigDecayDF%>%
-  filter(!(WWTP=="WI Rapids"&Filter.Replicate=="Rep A"))
+  filter(!(WWTP=="WI Rapids"))#&Filter.Replicate=="Rep A"))
 SigDecayDF3 <- SigDecayDF%>%
   filter(!(WWTP=="Madison"&Filter.Replicate=="Rep A"))
 

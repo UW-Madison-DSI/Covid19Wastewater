@@ -238,11 +238,11 @@ DFSmoothingFNC <- function(CaseDF,
   return(FullDayDF)
 }
 
-DFLoessFNC <- function(N1DF,SiteS,span=.125){
+DFLoessFNC <- function(N1DF,Var="N1",SiteS,span=.125){
   
-  ReadyDF <- DataPrep(N1DF,keep=c("N1"),SiteS=SiteS)
+  ReadyDF <- DataPrep(N1DF,keep=c(Var),SiteS=SiteS)
   
-  loessFit(y=log(ReadyDF$N1),
+  loessFit(y=log(ReadyDF[,Var]),
            x=ReadyDF$Date,
            span=span,
            min.weight=0,
@@ -288,13 +288,13 @@ TSPloting <- function(PlotingTS,SourceDF,DepName,IndName,FullPlot=TRUE,SubTitle=
             log = 'y',
             xaxt = "n")
   }else{
-    plot.ts(exp(PlotingTS[[2]]), 
+    plot.ts(PlotingTS[[2]], 
             col = "blue", 
             axes = FALSE,
             main=Lab,
             ylab="",
             sub=SubTitle,
-            log = 'y',
+            log = '',
             xaxt = "n")
     axis(side = 2, col.axis="blue")
   }
@@ -337,14 +337,14 @@ SLDGraphics <- function(SiteS,DepTSVec,IndTSVec,DepName,IndName,efficient=FALSE)
   
   IndResid <- IndTSVec - fitted(Arima(IndTSVec, model = preWhiteFit))
   DepResid <- DepTSVec - fitted(Arima(DepTSVec, model = preWhiteFit))
-  CCFVecPre <- ccf(IndResid, DepResid,lag.max=22,
+  CCFVecPre <- ccf(IndResid, DepResid,lag.max=10,
                    main=paste("prewhiten CC between",IndName,"and", DepName),
                    sub=SiteS) #CC removing Arima relationship of Ind
   
   OffSetWhit <- which(CCFVecPre[[1]]==max(CCFVecPre[[1]]))-21#Best offset of PreWhite ccf
   
-  if(max(CCFVecPre[[1]])<.15){ #If no prewhite corr is significant then use straight ccf
-    print("no signifigent prewhitened relationship")
+  if(TRUE){#max(CCFVecPre[[1]])<.15){ #If no prewhite corr is significant then use straight ccf
+    print("Ignoring preWhite process")
     OffSetWhit <- OffSet
   }
   
@@ -373,14 +373,6 @@ SLDGraphics <- function(SiteS,DepTSVec,IndTSVec,DepName,IndName,efficient=FALSE)
 }
 
 
-RangeShifter <- function(Old=NA,New=NA,Range=NA,Ratio=NA){
-  if(is.na(Ratio)){
-    return((New-Old)/Range)
-  }
-  if(is.na(New)){
-    return(Range*Ratio+Old)
-  }
-}
 
 TSPloting2 <- function(PlotingTS,SourceDF,SubTitle,
                        SLD=TRUE,span=.125){
@@ -391,39 +383,22 @@ TSPloting2 <- function(PlotingTS,SourceDF,SubTitle,
     Shade <-1
     Thickness <- 2
   }
-  N1Axis="y"
+  N1Axis=""
   CasesAxis=""
   RangeCases <- range(PlotingTS[[1]],na.rm=TRUE)
-  RangeN1 <- range(exp(PlotingTS[[2]]),na.rm=TRUE)
-  
-  MinN1 <-min(PlotingTS[[1]],na.rm=TRUE)
-  MinCases <- 0
-  
-  RangeCases[1] <- min(PlotingTS[[1]][190:221],na.rm=TRUE)
-  RangeN1[1] <- min(exp(PlotingTS[[2]][190:221]),na.rm=TRUE)
-  
-  N1Ratio <- RangeShifter(Old=log(RangeN1[1]),New=log(MinN1),Range=diff(log(RangeN1)))
-  CasesRatio <- RangeShifter(Old=RangeCases[1],New=MinCases,Range=diff(RangeCases))
-  Displace <- min(N1Ratio,CasesRatio)+7
-  
-  
-  print(paste(N1Ratio,CasesRatio,Displace))
-  
-  RangeCases[1] <- RangeShifter(Old=RangeCases[1],Range=diff(RangeCases),Ratio=Displace)
-  RangeN1[1] <-exp(RangeShifter(Old=log(RangeN1[1]),
-                                Range=diff(log(RangeN1)),Ratio=Displace))
+  RangeN1 <- range(PlotingTS[[2]],na.rm=TRUE)
   MaxN1 <- max(SourceDF$N1,na.rm=TRUE)
+  MinN1 <- min(SourceDF$N1,na.rm=TRUE)
   MaxCases <- max(PlotingTS[[3]],na.rm=TRUE)
-  N1Ratio <- RangeShifter(Old=log(RangeN1[2]),New=log(MaxN1),Range=diff(log(RangeN1)))
-  CasesRatio <- RangeShifter(Old=RangeCases[2],New=MaxCases,Range=diff(RangeCases))
+  N1Ratio <- log(MaxN1)/log(RangeN1[2])
+  CasesRatio <- log(MaxCases)/(log(RangeCases[2]))
   Displace <- max(N1Ratio,CasesRatio)
+  print(paste(RangeCases[[1]]))
   
-  RangeN1[2] <- exp(RangeShifter(Old=log(RangeN1[2]),
-                                 Range=diff(log(RangeN1)),Ratio = Displace))
-  RangeCases[2] <- RangeShifter(Old=RangeCases[2],
-                                Range=diff(RangeCases),Ratio = Displace)
+  #RangeCases[2] <- RangeCases[2]*exp(Displace+1.5)
+  #RangeN1[2] <- RangeN1[2]*exp(Displace)
   
-  
+  RangeCases[1] <- 0 #RangeCases[1]-4
   
   plot.new()
   par(mar = c(8, 4, 4, 4) + 0.1)
@@ -468,11 +443,11 @@ TSPloting2 <- function(PlotingTS,SourceDF,SubTitle,
        ticks,
        labels = FALSE,
        cex.axis=.5)
-  text(cex=.75, x=ticks-5, y=RangeCases[1]-200, format(ticks,"%b %Y"),
+  text(cex=.75, x=ticks-2, y=-30, format(ticks,"%b %Y"),
        xpd=TRUE, srt=30)
   
   par(new = TRUE)
-  plot.ts(exp(PlotingTS[[2]]),
+  plot.ts(PlotingTS[[2]],
           col = "blue",
           ylim = RangeN1,
           axes = FALSE,
