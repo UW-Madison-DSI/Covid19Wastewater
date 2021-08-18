@@ -147,7 +147,7 @@ DecayPlot <- function(Var,DF,Locate=c(18729,14,25,20),Log=TRUE){
            show.legend = FALSE,
            parse = TRUE,
            data=regressions_data(Var,DF))+
-    geom_jitter(width = .2)+
+    geom_jitter(aes(color=Filter.Replicate),width = .2)+
     geom_smooth(method = "lm", se=FALSE)+
 
     labs(x="Filtered Date",y=Var,color="Filter Replicate")+
