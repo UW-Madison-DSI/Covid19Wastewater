@@ -3,48 +3,30 @@ title: "HFG Variance"
 author: "Marlin"
 date: "7/9/2021"
 output: html_document
+editor_options: 
+  chunk_output_type: inline
 ---
 
 ```{r warning = FALSE, message = FALSE,echo = FALSE}
-source("../../../../Scripts/DataProccess.R")
+library(ggpubr)
+library(dplyr)
 
-HFGFrame=HFGInfo(HFGData)%>%
-  mutate(Filter=as.character(Filter),Well=as.character(Well))%>%
-  filter(!is.na(N1GC),!is.na(Filter),!is.na(Plant),!is.na(Date))%>%
-  mutate(DayPlace=paste(Plant,Date),DayPlaceFilter=paste(Plant,Date,Filter))%>%
-  select(DayPlace,DayPlaceFilter,N1GC)%>%
-  group_by(DayPlace)%>%
-  mutate(n=n())%>%
-  filter(n==9)
+library(lubridate)
 
-HFGSumarized=HFGFrame%>%
-  group_by(DayPlace)%>%
-  mutate(N=n(),K=length(unique(DayPlaceFilter)))%>%
-  mutate(Y_mean_DP=mean(log(N1GC)))%>%
-  group_by(DayPlaceFilter)%>%
-  mutate(Y_mean_Filter=mean(log(N1GC)))%>%
-  group_by(DayPlace)%>%
-  summarize(between=sum((Y_mean_Filter-Y_mean_DP)^2)/(K-1),within=sum((log(N1GC)-Y_mean_Filter)^2)/(N-K))%>%
-  distinct()%>%
-  mutate(Plant=strsplit(DayPlace, " ")[[1]][1])
+#Data Files and prep work
+source("../../Scripts/GenPlotMaking.R")
+source("../../Scripts/WasteWaterDataProccess.R")
+source("../../Scripts/CassesDataProccess.R")
+source("../../Scripts/HelperFunctions.R")
 
-#Example point={1,1,1,2,3,4,5,5,5}
-#sample means are ={1,3,5}
-#total mean = {3}
-#numerator = 3 * (1-3)^2 + 
+PathStarter="Z:/"
+HFGCasesFN  <-  paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/HighFreq_CaseData_2021-05-07.csv")
+HFGWasteFN <-  paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/HFG data for stats corrected 071421.xlsx")
+HFGPop <- paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/HFGPop.csv")
 
-#OverallData=HFGFrame%>%
-#  mutate(Y_mean=mean(log(N1GC)),N=n(),K=length(unique(DayPlaceFilter)))%>%
-#  group_by(DayPlaceFilter)%>%
-#  mutate(Y_mean_Filter=mean(log(N1GC)))%>%
-#  ungroup()%>%
-#  summarize(between=sum((Y_mean_Filter-Y_mean)^2)/(K-1),within=sum((log(N1GC)-Y_mean_Filter)^2)/(N-K))%>%
-#  distinct()%>%
-#  mutate(FScore=between/within)
-#OverallData
-
-#DayPlace.aov <- aov(log(N1GC) ~ DayPlaceFilter, data = HFGFrame)
-#summary(DayPlace.aov)[1][[1]][4][1]
+HFGWasteDF <- HFGWastePARSER(HFGWasteFN)
+HFGCaseDF <- HFGCasesPARSER(HFGCasesFN)
+  #mutate(across(c("ReportedCases", "EpisodeCases","",""), scale2))
 
 
 ```
@@ -52,15 +34,39 @@ HFGSumarized=HFGFrame%>%
 
 ```{r fig.width=8, fig.height=8,echo = FALSE}
 
-HFGSumarized%>%
-  ggplot()+geom_point(aes(x=between,y=within,color=Plant))+
-  geom_abline(intercept = 0, slope = 1)+
-  scale_y_log10()+
-  scale_x_log10()
+HFGWasteDF%>%
+  ggplot()+
+  aes(x=Date,y=N1GC)+
+  geom_point(aes(color=as.factor(Well),shape=as.factor(Filter )))+
+  facet_wrap(~Plant,scales = "free_y")
 
-HFGSumarized%>%
-  ggplot()+geom_histogram(aes(x=between/within),bins = 30)+
-  geom_vline(xintercept = 1,color="red")+
-  scale_x_log10()+
-  xlab("F Score")
+library(forecast)
+library(zoo)
+HFGWasteUSEDF <- HFGWasteDF%>%
+  filter(Plant!="River Falls")%>%
+  select(Date,Plant,N1GC,Filter)
+
+LoessHFG <- HFGWasteUSEDF%>%
+  group_by(Date,Plant)%>%
+  summarise(N1Date=exp(mean(log(N1GC),na.rm=TRUE)))%>%
+  ungroup()%>%
+  arrange(Plant, Date) %>%
+  mutate(RealN1=predict(loess(N1Date~as.numeric(Date),span=.7)))
+
+HFGSumFilter <- HFGWasteUSEDF%>%
+  group_by(Date,Plant,Filter)%>%
+  summarise(N1Filt=exp(mean(log(N1GC),na.rm=TRUE)))
+
+HFGDataMod <- full_join(full_join(LoessHFG,HFGWasteDF,by=c("Date","Plant")),
+          HFGSumFilter,by=c("Date","Plant","Filter"))%>%
+  select(Date,Plant,RealN1,N1Date,N1Filt,N1GC)
+
+SSM <- function(Messured,Real){
+  return(sum((log(Messured)-log(Real))^2,na.rm=TRUE)/(length(Real)-1))
+}
+
+SSM(HFGDataMod$N1GC,HFGDataMod$RealN1)
+
+
+
 ```

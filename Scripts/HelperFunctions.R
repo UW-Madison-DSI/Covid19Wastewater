@@ -42,7 +42,7 @@ RollPerPosHelperFunc = function(vectorCases,vectorTests,n=7){
   return(SlideMeanVec)
 }
 
-RollAvg = function(RollingDF,FacetName="Site",n=21,method="Geo",var=c("ReportedCases","EpisodeCases","CollectedCases","ConfirmedCases")){
+RollAvg = function(RollingDF,FacetName="Site",n=21,method="Arth",var=c("ReportedCases","EpisodeCases","CollectedCases","ConfirmedCases")){
   TDF=RollingDF%>%
     mutate(Facet=!!sym(FacetName))
   FaucetOptions=unique(TDF$Facet)
@@ -117,79 +117,7 @@ LoessGenerater <- function(Data,weights,Span,min,max){
 
 
 
-LoessSmoothPlot <- function(SiteS="Madison",
-                            Data=LIMSFullDF,
-                            Independent="N1",Dependent="N1Error",
-                            weights=c("Constant","N/NSE"),
-                            Span=.3,min=1e-5,max=1e5,
-                            BoxWidth=.5,
-                            HasNo=F, Title=T,FullLim=F,SiteLab=T,NoLabel=F){
-  
-  LimitLIMSDF=Data%>%
-    filter(Site==SiteS)%>%
-    mutate(Indy=!!sym(Independent),
-           Dep=!!sym(Dependent))%>%
-    filter(!is.na(Dep),
-           !is.na(Indy),
-           Dep>0,
-           Indy>0)
-  
-  
-  LimitLIMSDF$Pred1 <- LoessGenerater(LimitLIMSDF,weights=weights[[1]],Span=Span,min = min,max = max)
-  LimitLIMSDF$PredSE <- LoessGenerater(LimitLIMSDF,weights=weights[[2]],Span=Span,min = min,max = max)
-  LoessPlot=LimitLIMSDF%>%
-    mutate(ErrorMin=Indy-Dep,ErrorMax=Indy+Dep)%>%
-    mutate(ErrorMin=ifelse(ErrorMin>0,ErrorMin,0))%>%
-    ggplot()+
-    aes(x=Date)+
-    geom_rect(aes(ymin=ErrorMin,ymax=ErrorMax,xmin=Date-BoxWidth,xmax=Date+BoxWidth),color="black",alpha=.25)+
-    geom_rect(aes(ymin=Indy,ymax=Indy,xmin=Date-BoxWidth,xmax=Date+BoxWidth),color="black",alpha=.25)+
-    geom_line(aes(y=Pred1,color="1"),size=1.25)+
-    geom_line(aes(y=PredSE,color=paste0(Independent,"/",Dependent)),size=1.25)
-  if(SiteLab){
-    LoessPlot=LoessPlot+facet_wrap(~Site)
-  }
-  LoessPlot=LoessPlot+
-    labs(title="", y=paste0(Independent," (GC/L)"),
-         color="Weights Used")+
-    #Header_theme(ConfigOption)+
-    theme(axis.text = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
-          axis.title = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
-          plot.margin = unit(c(0,0,0,0), "cm"))+ 
-    theme(legend.position = "bottom")
-  
-  #Formatting code
-  
-  PlaceHolder=""
-  if(HasNo){
-    PlaceHolder="no"
-  }
-  
-  if(Title){
-    LoessPlot=LoessPlot+
-      ggtitle(paste0("Weighted loess smoothing with ",PlaceHolder," truncation 
-                     loessFit(",Independent, " ~ Date, span=",Span,")"))
-  }
-  if(FullLim){
-    XVar=LIMSFullDF$Date
-    YVar=pull(LIMSFullDF,Independent)
-    XLim <- c(min(XVar),max(XVar))
-    YLim <- c(min(YVar[YVar!=0]),max(YVar))
-    LoessPlot <- LoessPlot+
-      scale_x_date(limits = XLim)+
-      scale_y_log10(limits = YLim)
-  }else{
-    LoessPlot <- LoessPlot+
-      scale_y_log10()
-  }
-  if(NoLabel){
-    LoessPlot <- LoessPlot + 
-      labs(title="",x="",y="")
-    # theme(axis.title.x=element_blank(),
-    #     axis.title.y=element_blank())
-  }
-  return(LoessPlot)
-}
+
 
 DataPrep <- function(DF,SiteS=NA,keep=c()){
   if(!is.na(SiteS)){
@@ -481,5 +409,152 @@ TSPloting2 <- function(PlotingTS,SourceDF,SubTitle,
   
 }
 
+CheckFunction <- function(StartDate=0:7,DaySmoothing=c(1,7,14),Lag=-2:2,
+                          Show2=FALSE,Mat=FALSE,Ret="R2",CasesUsed="Cases4",
+                          DateStart=mdy("11/1/2020")){
+  SDL <- length(StartDate)
+  DSL <- length(DaySmoothing)
+  LL <- length(Lag)
+  #array(numeric(),c(SDL*DSL*LL))
+  Matrix=vector(mode="numeric", length=SDL*DSL*LL)
+  for (j in 1:DSL){
+    for (k in 1:LL){
+      for (i in 1:SDL){
+        Matrix[j*SDL*LL+k*SDL+i-SDL*LL-SDL]=PlotingOptions(StartDate[i],
+                                        DaySmoothing[j],Lag[k],
+                                        Ret=Ret,CasesUsed=CasesUsed,
+                                        DateStart=DateStart)
+      }
+    }
+  }
+  if(Ret=="PVal"){
+    Loc <- which.min(Matrix)
+    Target=min(Matrix)
+  }else{
+    Loc <- which.max(Matrix)
+    Target=max(Matrix)
+  }
+  iL <- StartDate[((Loc-1)%%SDL)+1]
+  jL <- DaySmoothing[(Loc-1)%/%(SDL*LL)+1]
+  kL <- Lag[((Loc-1)%%(SDL*LL)%/%SDL)+1]
 
+  stopifnot(Target==PlotingOptions(iL,jL,kL,
+                                    Ret=Ret,CasesUsed=CasesUsed,
+                                    DateStart=DateStart))
+
+  BestLM <- PlotingOptions(iL,jL,kL,Show=Show2,
+                           Ret="LM",CasesUsed=CasesUsed,
+                           DateStart=DateStart)
+  
+  SlopeL <- signif(BestLM[[1]][1],3)
+  if(Show2){
+    print(paste("Best relationship at",iL,jL,kL,"with score of",
+                max(Matrix),"with F factor of",SlopeL))
+  }
+  if(Mat){
+    return(Matrix)
+  }
+  return(BestLM)
+}
+
+ReplacementFilter <- function(n,Main,Rep){
+  Noise <- abs((Main-Rep)/Rep)
+  Noise[is.na(Noise)] <- FALSE
+  NoiseFilter <- sort(Noise,TRUE)[n+1]
+  #length(logN1VecFiltA[Noise>=NoiseFilter])
+  Ret <- Main
+  Ret[Noise>NoiseFilter] <- Rep[Noise>NoiseFilter]
+  return(Ret)
+}
+
+
+PlotingOptions <- function(StartDate,DaySmoothing,Lag,
+                           Show=FALSE,Ret="LM",CasesUsed="Cases4",
+                           DateStart=mdy("11/1/2020")){
+  MadData <- MergedDF%>%
+    filter(Date>DateStart)%>%
+    mutate(MovedCases = data.table::shift(Cases2,Lag),
+           Cases3 = data.table::shift(Cases,Lag),
+           Week=as.numeric(Date+StartDate)%/%DaySmoothing)%>%
+    group_by(Week)%>%
+    summarise(NM=median(N1,na.rm=TRUE),
+              Cases4=mean(Cases3,na.rm = TRUE),
+              CasesM=mean(MovedCases,na.rm = TRUE))%>%
+    mutate(Cases4=c(NA,NA,rollapply(Cases4,width=3,FUN=weighted.mean,
+                                    w=WeightVec,
+                                    na.rm = TRUE)))%>%
+    mutate(CasesMain=!!sym(CasesUsed))
+  
+  LMod <- lm(CasesMain~NM-1,data=MadData)
+  COR <- signif(cor(MadData$CasesMain,MadData$NM,use="pairwise.complete.obs"),3)
+  R2 <- signif(summary(LMod)[[8]],3)
+  PVal <- signif(summary(LMod)$coefficients[,2],3)
+
+  if(Show){
+    Slope=LMod[[1]][1]
+    
+    DatePlot <- MadData%>%
+      ggplot()+
+      aes(x=Week)+
+      geom_line(aes(y=NM*Slope,color="N1Binned"))+
+      geom_line(aes(y=CasesMain,color="SLDBinned"))
+    
+    CompPlot <- MadData%>%
+      ggplot()+
+      aes(x=CasesMain,y=NM)+
+      geom_point()+
+      geom_abline(aes(color="Line of best first",slope=1/Slope,intercept=0))+
+      labs(x="7 Day binning of SLD Cases",
+           y="7 day binning of N1")+
+      annotate("text", x=250, y=4e4, label= paste("R^2:", R2))+
+      annotate("text", x=250, y=1e5, label= paste("Cor:", COR))
+    
+    print(CompPlot)
+    print(DatePlot)
+  }
+  if(Ret=="LM"){
+    return(LMod)
+  }else if(Ret=="COR"){
+    return(COR)
+  }else if(Ret=="R2"){
+    return(R2)
+  }else if(Ret=="PVal"){
+    return(PVal)
+  }
+  
+}#StartDate,DaySmoothing,Lag,COR,R2
+
+
+HeatMapCor <- function(DaySmoothing,Show3=TRUE,CasesUsed="Cases4",
+                       DateStart=mdy("11/1/2020")){
+  ColorLegend <- brewer.pal(n = 3, name = "YlOrRd")
+  Color <- brewer.pal(n = 8, name = "YlOrRd")
+  R2Mat <- matrix(CheckFunction(DaySmoothing=DaySmoothing,Show2=Show3,
+                                Mat=TRUE,Ret="R2",CasesUsed=CasesUsed,DateStart=DateStart),
+                  nrow=8)
+  
+  PValMat <- matrix(CheckFunction(DaySmoothing=DaySmoothing,Show2=Show3,
+                                  Mat=TRUE,Ret="PVal",CasesUsed=CasesUsed,
+                                  DateStart=DateStart),nrow=8)
+  
+  CorMat <- matrix(CheckFunction(DaySmoothing=DaySmoothing,Show2=Show3,
+                                 Mat=TRUE,Ret="COR",CasesUsed=CasesUsed,
+                                 DateStart=DateStart),nrow=8)
+  
+  
+  heatmap(R2Mat,Rowv=NA,Colv=NA,col = Color ,main="R2 relationship")
+  legend(x="right", legend=c(round(min(R2Mat),1),
+                             round(median(R2Mat),2),
+                             round(max(R2Mat),2)),fill=ColorLegend)
+  
+  heatmap(PValMat,Rowv=NA,Colv=NA,col = Color,main="PVal relationship")
+  legend(x="right", legend=c(round(min(PValMat),1),
+                             round(median(PValMat),1),
+                             round(max(PValMat),1)),fill=ColorLegend)
+  
+  heatmap(CorMat,Rowv=NA,Colv=NA,col = Color,main="Cor relationship")
+  legend(x="right", legend=c(round(min(CorMat),1),
+                             round(median(CorMat),1),
+                             round(max(CorMat),1)),fill=ColorLegend)
+}
 

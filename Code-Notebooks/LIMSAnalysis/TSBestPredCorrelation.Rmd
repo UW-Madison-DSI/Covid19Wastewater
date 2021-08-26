@@ -1,0 +1,135 @@
+---
+title: "TSBestPredCorrelation"
+author: "Marlin"
+date: "7/22/2021"
+output:
+  html_document: default
+  pdf_document: default
+editor_options:
+  chunk_output_type: inline
+---
+
+```{r set up markdown settings, echo=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
+
+```
+
+```{r Start enviroment, message=FALSE, warning=FALSE}
+library(ggpubr)
+library(forecast)
+library(lmtest)
+library(lubridate)
+library(limma)
+library(zoo)
+library(dplyr)
+
+#Data Files and prep work
+source("../../Scripts/GenPlotMaking.R")
+source("../../Scripts/WasteWaterDataProccess.R")
+source("../../Scripts/CassesDataProccess.R")
+source("../../Scripts/HelperFunctions.R")
+
+```
+
+```{r DF Set Up, include=TRUE}
+PathStarter="Z:/"
+
+LatMMSDFN  <-  paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/MMSD_Cases.csv")
+LatSpringDormFN  <-  paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/SpringSemester_CasesByDorm.TSV")
+LatFallDormFN  <-  paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/FallSemester_CasesByDorm.TSV")
+
+LIMSFN <- paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/WATERMICRO_WW_COVID-2021-06-30 17 40.xlsx")
+
+HFGCasesFN  <-  paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/HighFreq_CaseData_2021-05-07.csv")
+
+
+LatCaseDF <- CovidDataPARSER(LatSpringDormFN,LatFallDormFN,MMSDFN = LatMMSDFN)%>%
+  filter(!is.na(Site))%>%
+  select(Date,Site,Cases,Tests,Per_pos)
+
+HFGCaseDF <- HFGCasesPARSER(FN = HFGCasesFN)%>%
+  filter(!is.na(Site))%>%
+  mutate(Tests=NA,Per_pos=NA)%>%
+  select(Date,Site,Cases=ReportedCases,Tests,Per_pos)%>%
+  mutate(Cases = ifelse(Cases==-999,2.5,Cases))%>%
+  filter(Site!="Madison")
+
+FullCase <- rbind(HFGCaseDF,LatCaseDF)
+
+FullCaseRoll <- RollPerPos(FullCase,"Cases","Tests",Facet="Site",n = 14)
+
+LIMSFullDF <- LIMSDataPARSER(LIMSFN)%>%
+  select(Date,Site, BCoV, N1,N1Error,N2, N2Error,PMMoV,Pop,FlowRate)
+
+CaseSum=FullCase%>%
+  filter(!is.na(Cases))%>%
+  group_by(Site)%>%
+  summarise(NCase=n())
+
+N1Sum=LIMSFullDF%>%
+  filter(!is.na(N1))%>%
+  group_by(Site)%>%
+  summarise(NN1=n())
+
+DataComp <- inner_join(CaseSum,N1Sum,by=c("Site"))%>%
+  mutate(Dif=NCase-NN1,min=ifelse(NCase<NN1,NCase,NN1))
+LowCaseDataPoints <- DataComp%>%
+  filter(Dif<0)
+
+```
+
+
+
+
+ 
+```{r Ploting Fnc, include=FALSE} 
+#library(dynlm)
+
+IsFull <- function(DF){
+  return(length(DF$Date)==max(DF$Date)-min(DF$Date)+1)
+}
+
+
+```
+
+```{r Madison Prep, fig.height=3,include=FALSE}
+FullMadLimsDF <- DataPrep(LIMSFullDF,keep=c("N1","N1Error","N2","N2Error"),"Madison")
+
+SCPDF <- DFSmoothingFNC(FullCase,SiteS="Madison")%>%
+  mutate(Site="Madison")
+
+SCPDF2 <- DFSmoothingFNC(FullCase,PreRoll=TRUE,SiteS="Madison")%>%
+  mutate(Site="Madison")
+
+SCPDF3 <- inner_join(SCPDF,SCPDF2,by=c("Date","Site","Cases"),suffix=c("",".PreRolled"))
+
+MergedDF <- full_join(SCPDF3,FullMadLimsDF, by=c("Date","Site"))
+
+MergedDF$LoessN1 <- exp(DFLoessFNC(MergedDF,Var="N1",SiteS="Madison",span=.2))
+MergedDF$LoessN2 <- exp(DFLoessFNC(MergedDF,Var="N2",SiteS="Madison",span=.2))
+MergedDF$N1Filtered <- ReplacementFilter(6,MergedDF$N1,MergedDF$LoessN1)
+MergedDF <- MergedDF%>%
+  filter(Date>mdy("9/15/2020"))%>%
+  select(Date,Site,Cases,Cases2,Cases2.PreRolled,N1,
+         LoessN1,N1Error,N2,LoessN2,N2Error,N1Filtered)
+```
+
+```{r}
+#library("robets")
+#.0131
+plot((fitted.values(robets((MergedDF$N1Filtered),alpha=.0131,model="AAN"))))
+par(new = TRUE)
+plot((MergedDF$Cases2),col="Red",type="l")
+par(new = TRUE)
+plot((zoo::rollapply(data=MergedDF$N1Filtered,
+                    width=35,FUN=mean,align="right",fill=NA)),
+     col="Green",type="l")
+par(new = TRUE)
+plot((zoo::rollapply(data=MergedDF$N1Filtered,
+                    width=3,FUN=median,align="center",fill=NA)),
+     col="Blue",type="l")
+```

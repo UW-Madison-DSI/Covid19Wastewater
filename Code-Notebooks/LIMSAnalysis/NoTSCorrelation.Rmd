@@ -1,0 +1,124 @@
+---
+title: "No TS Correlation"
+author: "Marlin"
+date: "8/25/2021"
+output: html_document
+---
+
+```{r set up markdown settings, echo=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
+
+```
+
+```{r Start enviroment, message=FALSE, warning=FALSE}
+library(ggpubr)
+library(forecast)
+library(lmtest)
+library(lubridate)
+library(limma)
+library(zoo)
+library(dplyr)
+
+#Data Files and prep work
+source("../../Scripts/GenPlotMaking.R")
+source("../../Scripts/WasteWaterDataProccess.R")
+source("../../Scripts/CassesDataProccess.R")
+source("../../Scripts/HelperFunctions.R")
+
+```
+
+```{r DF Set Up, include=TRUE}
+PathStarter="Z:/"
+
+LatMMSDFN  <-  paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/MMSD_Cases.csv")
+LatSpringDormFN  <-  paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/SpringSemester_CasesByDorm.TSV")
+LatFallDormFN  <-  paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/FallSemester_CasesByDorm.TSV")
+
+LIMSFN <- paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/WATERMICRO_WW_COVID-2021-06-30 17 40.xlsx")
+
+HFGCasesFN  <-  paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/HighFreq_CaseData_2021-05-07.csv")
+
+
+LatCaseDF <- CovidDataPARSER(LatSpringDormFN,LatFallDormFN,MMSDFN = LatMMSDFN)%>%
+  filter(!is.na(Site))%>%
+  select(Date,Site,Cases,Tests,Per_pos)
+
+HFGCaseDF <- HFGCasesPARSER(FN = HFGCasesFN)%>%
+  filter(!is.na(Site))%>%
+  mutate(Tests=NA,Per_pos=NA)%>%
+  select(Date,Site,Cases=ReportedCases,Tests,Per_pos)%>%
+  mutate(Cases = ifelse(Cases==-999,2.5,Cases))%>%
+  filter(Site!="Madison")
+
+FullCase <- rbind(HFGCaseDF,LatCaseDF)
+
+FullCaseRoll <- RollPerPos(FullCase,"Cases","Tests",Facet="Site",n = 14)
+
+LIMSFullDF <- LIMSDataPARSER(LIMSFN)%>%
+  select(Date,Site, BCoV, N1,N1Error,N2, N2Error,PMMoV,Pop,FlowRate)
+
+
+```
+
+```{r}
+FullMadLimsDF <- DataPrep(LIMSFullDF,keep=c("N1","N1Error","N2","N2Error"),"Madison")
+
+SCPDF <- DFSmoothingFNC(FullCase,SiteS="Madison")%>%
+  mutate(Site="Madison")
+
+SCPDF2 <- DFSmoothingFNC(FullCase,PreRoll=TRUE,SiteS="Madison")%>%
+  mutate(Site="Madison")
+
+SCPDF3 <- inner_join(SCPDF,SCPDF2,by=c("Date","Site","Cases"),suffix=c("",".PreRolled"))
+
+MergedDF <- full_join(SCPDF3,FullMadLimsDF, by=c("Date","Site"))
+
+MergedDF$LoessN1 <- exp(DFLoessFNC(MergedDF,Var="N1",SiteS="Madison",span=.2))
+MergedDF$LoessN2 <- exp(DFLoessFNC(MergedDF,Var="N2",SiteS="Madison",span=.2))
+
+MergedDF <- MergedDF%>%
+  select(Date,Site,Cases,Cases2,Cases2.PreRolled,N1,LoessN1,N1Error,N2,LoessN2,N2Error)
+```
+
+```{r LM binning}
+WeightVec <- unlist(lapply((split(dgamma(1:21,scale =5.028338,shape =2.332779),c(rep(1,7),rep(2,7),rep(3,7))
+              )),mean))
+
+
+
+
+# 
+# MadData <- MergedDF%>%
+#     mutate(MovedCases = data.table::shift(Cases2,2))%>%
+#     mutate(Week=as.numeric(Date+6)%/%7)%>%
+#     group_by(Week)%>%
+#     summarise(N1M=median(N1,na.rm=TRUE),CasesM=mean(MovedCases,na.rm = TRUE))
+# A <- (lm(CasesM~N1M-1,data=MadData))
+# B <- (lm(CasesM~N1M,data=MadData))
+
+library(RColorBrewer)
+source("../../Scripts/HelperFunctions.R")
+
+
+CheckFunction(DaySmoothing=c(7,14),Show2=FALSE,Mat=TRUE,Ret="PVal",CasesUsed="Cases4")
+```
+
+
+```{r LM binning heatmap}
+
+# max(R2Mat)
+# max(CorMat)
+summary(PlotingOptions(7,7,2))
+#CasesM
+#Cases4
+
+HeatMapCor(c(7),CasesUsed="Cases4")
+HeatMapCor(c(7),CasesUsed="CasesM")
+HeatMapCor(c(7,14),DateStart=mdy("4/10/2020"))
+
+plot(es(MergedDF$N1,phi =.5)$fitted)
+```

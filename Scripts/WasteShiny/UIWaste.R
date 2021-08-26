@@ -1,4 +1,4 @@
-source('../Scripts/WasteShiny/TabsWaste.R', local = TRUE)
+source('../../Scripts/WasteShiny/TabsWaste.R', local = TRUE)
 #Creates UI for dashboard
 WasteUI  <- dashboardPage(
   #top left descriptor

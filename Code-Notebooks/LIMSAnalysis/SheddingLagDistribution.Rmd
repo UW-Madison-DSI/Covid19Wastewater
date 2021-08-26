@@ -88,10 +88,6 @@ LowCaseDataPoints <- DataComp%>%
 #return( RollPerPos(CaseDF,"Cases","Tests",Facet="Site"))
 library(limma)
 
-
-
-
-
   #5.028338
 scale =5.028338
   #2.332779
@@ -194,7 +190,8 @@ SCPDF2 <- DFSmoothingFNC(FullCase,PreRoll=TRUE,SiteS="Madison")%>%
   mutate(Site="Madison")
 
 SCPDF3 <- inner_join(SCPDF,SCPDF2,by=c("Date","Site","Cases"),suffix=c("",".PreRolled"))
-MergedDF <- inner_join(SCPDF3,FullMadLimsDF, by=c("Date","Site"))
+
+MergedDF <- full_join(SCPDF3,FullMadLimsDF, by=c("Date","Site"))
 
 MergedDF$LoessN1 <- exp(DFLoessFNC(MergedDF,Var="N1",SiteS="Madison",span=.2))
 MergedDF$LoessN2 <- exp(DFLoessFNC(MergedDF,Var="N2",SiteS="Madison",span=.2))
@@ -217,35 +214,13 @@ ccf(diff((loessN1Vec)),diff(SLDPreRolledVec))
 A <- ts.union(diff(log(SLDPreRolledVec)),
                 diff(stats::lag((loessN1Vec),6)))
 summary(lm(A[,1]~A[,2]))
+
+
+
+dgamma(1:21,scale =5.028338,shape =2.332779)
 ```
 
 ```{r}
-ReplacementFilter <- function(n,Main,Rep){
-  Noise <- abs((Main-Rep)/Rep)
-  NoiseFilter <- sort(Noise,TRUE)[n+1]
-  #length(logN1VecFiltA[Noise>=NoiseFilter])
-  Ret <- Main
-  Ret[Noise>NoiseFilter] <- Rep[Noise>NoiseFilter]
-  return(Ret)
-}
-
-
-FullMadLimsDF <- DataPrep(LIMSFullDF,keep=c("N1","N1Error","N2","N2Error"),"Madison")
-
-SCPDF <- DFSmoothingFNC(FullCase,SiteS="Madison")%>%
-  mutate(Site="Madison")
-
-SCPDF2 <- DFSmoothingFNC(FullCase,PreRoll=TRUE,SiteS="Madison")%>%
-  mutate(Site="Madison")
-
-SCPDF3 <- inner_join(SCPDF,SCPDF2,by=c("Date","Site","Cases"),suffix=c("",".PreRolled"))
-MergedDF <- inner_join(SCPDF3,FullMadLimsDF, by=c("Date","Site"))
-
-MergedDF <- MergedDF%>%
-  select(Date,Cases,Cases2,Cases2.PreRolled,N1)
-
-MergedDF$LoessN1 <- exp(DFLoessFNC(MergedDF,Var="N1",SiteS="Madison",span=.2))
-
 MergedDF$N1Filtered <- ReplacementFilter(7,MergedDF$N1,MergedDF$LoessN1)
 
 
@@ -286,54 +261,34 @@ plot(resid(LM))
 
 ```
 
+
+
+
+
+
 ```{r}
-LeadN <- 2
-
-
-MadData <- MergedDF%>%
-  mutate(MovedCases = lag(Cases2,2))%>%
-  mutate(Week=as.numeric(Date)%/%7)%>%
-  group_by(Week)%>%
-  summarise(N1M=median(N1,na.rm=TRUE),CasesM=mean(MovedCases,na.rm = TRUE))
-
-
-MadData%>%
-  ggplot()+
-  aes(x=CasesM,y=N1M)+
-  geom_point()+
-  labs(x="7 Day binning of SLD Cases",
-       y="7 day binning of N1")+
-  annotate("text", x=300, y=4e4, label= paste("R^2:", signif(summary(lm(CasesM~N1M,data=MadData))[[8]],3)))+
-  annotate("text", x=300, y=1e5, label= paste("Cor:", signif(cor(A,B,use="pairwise.complete.obs"),3)))
-
-
-
-
-# MadData$Resid <- c(NA,resid(lm(CasesM~N1M,data=MadData)))
-# MadData%>%
+# MergedDF%>%
 #   ggplot()+
-#   geom_line(aes(x=CasesM,y=Resid))
-
-MergedDF%>%
-  ggplot()+
-  aes(x=Cases2.PreRolled,y=lead(LoessN1,14))+
-  geom_point()+
-  labs(x="SLD Cases",
-       y="loess smoothing of N1")+
-  annotate("text", x=300, y=4e4, label= paste("R^2:", signif(summary(lm(Cases2.PreRolled~lead(LoessN1,14),data=MergedDF))[[8]],3)))+
-  annotate("text", x=300, y=1e5, label= paste("Cor:", signif(cor(MergedDF$Cases2.PreRolled,lead(MergedDF$LoessN1,14),use="pairwise.complete.obs"),3)))
-
-
-MergedDF%>%
-  ggplot()+
-  aes(x=Cases2.PreRolled,y=lead(N1Filtered,LeadN))+
-  geom_point()+
-  labs(x="SLD Cases")+
-  annotate("text", x=300, y=4e4, label= paste("R^2:", signif(summary(lm(log(Cases2.PreRolled)~log(lead(N1Filtered,LeadN)),data=MergedDF))[[8]],3)))+
-  annotate("text", x=300, y=1e5, label= paste("Cor:", signif(cor(MergedDF$Cases2.PreRolled,lead(MergedDF$N1Filtered,LeadN),use="pairwise.complete.obs"),3)))
-
-
-
+#   aes(x=Cases2.PreRolled,y=lead(LoessN1,14))+
+#   geom_point()+
+#   labs(x="SLD Cases",
+#        y="loess smoothing of N1")+
+#   annotate("text", x=300, y=4e4, label= paste("R^2:", signif(summary(lm(Cases2.PreRolled~lead(LoessN1,14),data=MergedDF))[[8]],3)))+
+#   annotate("text", x=300, y=1e5, label= paste("Cor:", signif(cor(MergedDF$Cases2.PreRolled,lead(MergedDF$LoessN1,14),use="pairwise.complete.obs"),3)))
+# 
+# 
+# MergedDF%>%
+#   ggplot()+
+#   aes(x=Cases2.PreRolled,y=lead(N1Filtered,LeadN))+
+#   geom_point()+
+#   labs(x="SLD Cases")+
+#   annotate("text", x=300, y=4e4, label= paste("R^2:", signif(summary(lm((Cases2.PreRolled)~(lead(N1Filtered,LeadN)),data=MergedDF))[[8]],3)))+
+#   annotate("text", x=300, y=1e5, label= paste("Cor:", signif(cor(MergedDF$Cases2.PreRolled,lead(MergedDF$N1Filtered,LeadN),use="pairwise.complete.obs"),3)))
+# 
+# summary(lm((Cases2.PreRolled)~(lead(N1,LeadN)),data=MergedDF))
+# summary(lm((Cases2.PreRolled)~(lead(N1Filtered,LeadN)),data=MergedDF))
+# summary(lm(CasesM~N1M,data=MadData))
+# summary(lm(Cases2.PreRolled~lead(LoessN1,14),data=MergedDF))
 ```
 
 

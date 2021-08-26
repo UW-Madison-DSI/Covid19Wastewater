@@ -147,7 +147,8 @@ ggplot()+
   geom_point(aes(y=N1,color='Filter replicates',x=Date,shape="High Frequency"),data=HFGData)+
   geom_point(aes(y=N1,x=Date-1,shape="Longitudinal"),data=LatData,size=2.5)+
   scale_y_log10()+
-  scale_x_date(limits=c(N1Start,N1End))+ggtitle("Waste data and predicted 2 standard deviations")
+  scale_x_date(limits=c(N1Start,N1End))+
+  ggtitle("Waste data and predicted 2 standard deviations")
 
 #'Filter replicates' on variance
 #

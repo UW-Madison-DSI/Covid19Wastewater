@@ -1,0 +1,161 @@
+---
+title: "TSBestCorrelation"
+author: "Marlin"
+date: "7/22/2021"
+output:
+  html_document: default
+  pdf_document: default
+editor_options:
+  chunk_output_type: inline
+---
+
+```{r set up markdown settings, echo=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
+
+```
+
+```{r Start enviroment, message=FALSE, warning=FALSE}
+library(ggpubr)
+library(forecast)
+library(lmtest)
+library(lubridate)
+library(limma)
+library(zoo)
+library(dplyr)
+
+#Data Files and prep work
+source("../../Scripts/GenPlotMaking.R")
+source("../../Scripts/WasteWaterDataProccess.R")
+source("../../Scripts/CassesDataProccess.R")
+source("../../Scripts/HelperFunctions.R")
+
+```
+
+```{r DF Set Up, include=TRUE}
+PathStarter="Z:/"
+
+LatMMSDFN  <-  paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/MMSD_Cases.csv")
+LatSpringDormFN  <-  paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/SpringSemester_CasesByDorm.TSV")
+LatFallDormFN  <-  paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/FallSemester_CasesByDorm.TSV")
+
+LIMSFN <- paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/WATERMICRO_WW_COVID-2021-06-30 17 40.xlsx")
+
+HFGCasesFN  <-  paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/HighFreq_CaseData_2021-05-07.csv")
+
+
+LatCaseDF <- CovidDataPARSER(LatSpringDormFN,LatFallDormFN,MMSDFN = LatMMSDFN)%>%
+  filter(!is.na(Site))%>%
+  select(Date,Site,Cases,Tests,Per_pos)
+
+HFGCaseDF <- HFGCasesPARSER(FN = HFGCasesFN)%>%
+  filter(!is.na(Site))%>%
+  mutate(Tests=NA,Per_pos=NA)%>%
+  select(Date,Site,Cases=ReportedCases,Tests,Per_pos)%>%
+  mutate(Cases = ifelse(Cases==-999,2.5,Cases))%>%
+  filter(Site!="Madison")
+
+FullCase <- rbind(HFGCaseDF,LatCaseDF)
+
+FullCaseRoll <- RollPerPos(FullCase,"Cases","Tests",Facet="Site",n = 14)
+
+LIMSFullDF <- LIMSDataPARSER(LIMSFN)%>%
+  select(Date,Site, BCoV, N1,N1Error,N2, N2Error,PMMoV,Pop,FlowRate)
+
+CaseSum=FullCase%>%
+  filter(!is.na(Cases))%>%
+  group_by(Site)%>%
+  summarise(NCase=n())
+
+N1Sum=LIMSFullDF%>%
+  filter(!is.na(N1))%>%
+  group_by(Site)%>%
+  summarise(NN1=n())
+
+DataComp <- inner_join(CaseSum,N1Sum,by=c("Site"))%>%
+  mutate(Dif=NCase-NN1,min=ifelse(NCase<NN1,NCase,NN1))
+LowCaseDataPoints <- DataComp%>%
+  filter(Dif<0)
+
+```
+
+```{r Madison Prep, fig.height=3,include=FALSE}
+FullMadLimsDF <- DataPrep(LIMSFullDF,keep=c("N1","N1Error","N2","N2Error"),"Madison")
+
+SCPDF <- DFSmoothingFNC(FullCase,SiteS="Madison")%>%
+  mutate(Site="Madison")
+
+SCPDF2 <- DFSmoothingFNC(FullCase,PreRoll=TRUE,SiteS="Madison")%>%
+  mutate(Site="Madison")
+
+SCPDF3 <- inner_join(SCPDF,SCPDF2,by=c("Date","Site","Cases"),suffix=c("",".PreRolled"))
+
+MergedDF <- full_join(SCPDF3,FullMadLimsDF, by=c("Date","Site"))
+
+MergedDF$LoessN1 <- exp(DFLoessFNC(MergedDF,Var="N1",SiteS="Madison",span=.2))
+MergedDF$LoessN2 <- exp(DFLoessFNC(MergedDF,Var="N2",SiteS="Madison",span=.2))
+
+MergedDF <- MergedDF%>%
+  select(Date,Site,Cases,Cases2,Cases2.PreRolled,N1,LoessN1,N1Error,N2,LoessN2,N2Error)
+```
+
+
+```{r N1BestSmoothing}
+#Bad wrm.smooth
+
+
+plot(predict(PlotingOptions(7,7,2)))
+plot(resid(PlotingOptions(7,7,2)))
+auto.arima(resid(PlotingOptions(7,7,2)))
+
+
+p=20
+b=10
+data=MergedDF$N1[!is.na(MergedDF$N1)]
+
+plot(exp(predict(aroma.light::robustSmoothSpline(log(MergedDF$N1[!is.na(MergedDF$N1)])))$y))
+
+plot(aroma.light::robustSmoothSpline(MergedDF$N1[!is.na(MergedDF$N1)]))
+
+plot(predict(loess(N1[!is.na(MergedDF$N1)]~as.numeric(Date[!is.na(MergedDF$N1)]),data=MergedDF,span=.2)))
+
+
+
+MergedDF2 <- MergedDF%>%
+  filter(Date>mdy("10/1/2020"))
+
+DateBase <- as.numeric(MergedDF2$Date)
+ybase <- MergedDF2$N1[!is.na(MergedDF2$N1)]
+y1=exp(predict(aroma.light::robustSmoothSpline(x=1:266,y=log(ybase)))$y)
+y2=predict(aroma.light::robustSmoothSpline(x=1:266,y=ybase))$y
+x=MergedDF2$Cases2.PreRolled[!is.na(MergedDF2$N1)]
+plot(x)
+par(new = TRUE)
+plot(y1)
+plot(diff(x,1))
+par(new = TRUE)
+plot(diff(y,1))
+
+cor(x,y)
+length(ybase)
+length(y)
+length(x)
+library(aroma.light)
+names(robustSmoothSpline(ybase))
+
+
+y1=exp(predict(aroma.light::robustSmoothSpline(log(ybase)),1:266)$y)
+y2=exp(predict(aroma.light::robustSmoothSpline(log(ybase)))$y)
+x=MergedDF2$Cases2.PreRolled[!is.na(MergedDF2$N1)]
+plot(x)
+par(new = TRUE)
+plot(y1,col="blue")
+par(new = TRUE)
+plot(y2,col="red")
+
+aroma.light::robustSmoothSpline(smooth.spline(x=1:266,y=log(ybase)))
+
+```

@@ -13,15 +13,15 @@ WasteServer <- function(input, output, session) {
     )
   })
   
-  source("../Scripts/WasteShiny/T1WasteGraphs.R",local = TRUE)
+  source("../../Scripts/WasteShiny/T1WasteGraphs.R",local = TRUE)
 
   output$plot1<-T1Plot
 
-  source("../Scripts/WasteShiny/T2WasteGraphs.R",local = TRUE)
+  source("../../Scripts/WasteShiny/T2WasteGraphs.R",local = TRUE)
   
   output$plot2<-T2Plot
 
-  source("../Scripts/WasteShiny/T3WasteGraphs.R",local = TRUE)
+  source("../../Scripts/WasteShiny/T3WasteGraphs.R",local = TRUE)
   
   output$plot3<-T3Plot
 }
