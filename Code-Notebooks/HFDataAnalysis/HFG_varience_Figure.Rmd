@@ -29,6 +29,31 @@ HFGCaseDF <- HFGCasesPARSER(HFGCasesFN)
   #mutate(across(c("ReportedCases", "EpisodeCases","",""), scale2))
 
 
+
+Mod <- HFGWasteDF%>%
+  group_by(Plant,Date,Filter)%>%
+  summarise(ML=mean(log(N1GC)),VL=var(log(N1GC)),
+            MN=mean(N1GC),VN=var(N1GC))
+
+summary(lm(VL~I(VN/MN^2),data=Mod))
+summary(lm(VL~I(VN),data=Mod))
+
+Mod%>%
+  ggplot()+
+  geom_point(aes(x=log(MN),y=ML))
+
+Mod%>%
+  ggplot()+
+  geom_point(aes(x=VN/MN^2,y=VL))
+  
+Mod%>%
+  filter(!is.na(ML),!is.na(VL))%>%
+  mutate(VNTL=VN/MN^2)%>%
+  mutate(A=abs(VL-VNTL)/VL)%>%
+  ungroup()%>%
+  summarise(ME=mean(A),FilterVar=fishmethods::combinevar(ML,VL,rep(3,length(ML)))[[2]])
+
+plot(lm(VL~I(VN/MN^2)-1,data=Mod))
 ```
 
 

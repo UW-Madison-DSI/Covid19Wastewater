@@ -299,12 +299,22 @@ MergedDF3%>%
 
 
 var(MergedDF3$TruLogResid)
+var(MergedDF3$ResidLog)
 
+
+#0.9856061
 #Validate this on HF data
-MergedDF3$N1Errorloged <- (3*MergedDF3$N1Error^2)/MergedDF3$N1^2
-
+LogMeans <- log(MergedDF3$N1)
+LogVariances <- (3*MergedDF3$N1Error^2)/MergedDF3$N1^2
+fishmethods::combinevar(LogMeans,LogVariances,rep(3,length(LogVariances)))
+#survcomp::combine.est(LogMeans,sqrt(LogVariances/3))
+#0.9210504
 
 MergedDF3%>%
   ggplot()+
-  aes()
+  geom_point(aes(x=log(N1),y=N1Errorloged))
+
+library(survcomp)
+#survcomp::combine.est()
+
 ```
