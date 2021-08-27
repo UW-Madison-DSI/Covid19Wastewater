@@ -409,6 +409,16 @@ TSPloting2 <- function(PlotingTS,SourceDF,SubTitle,
   
 }
 
+LocInput <- function(Mat,Loc,StartDate,DaySmoothing,Lag){
+  SDL <- length(StartDate)
+  LL <- length(Lag)
+  iL <- StartDate[((Loc-1)%%SDL)+1]
+  jL <- DaySmoothing[(Loc-1)%/%(SDL*LL)+1]
+  kL <- Lag[((Loc-1)%%(SDL*LL)%/%SDL)+1]
+  return(c(iL,jL,kL))
+}
+
+
 CheckFunction <- function(StartDate=0:7,DaySmoothing=c(1,7,14),Lag=-2:2,
                           Show2=FALSE,Mat=FALSE,Ret="R2",CasesUsed="Cases4",
                           DateStart=mdy("11/1/2020")){
@@ -434,25 +444,24 @@ CheckFunction <- function(StartDate=0:7,DaySmoothing=c(1,7,14),Lag=-2:2,
     Loc <- which.max(Matrix)
     Target=max(Matrix)
   }
-  iL <- StartDate[((Loc-1)%%SDL)+1]
-  jL <- DaySmoothing[(Loc-1)%/%(SDL*LL)+1]
-  kL <- Lag[((Loc-1)%%(SDL*LL)%/%SDL)+1]
+  ListInputs <- LocInput(Matrix,Loc,StartDate,DaySmoothing,Lag)
 
-  stopifnot(Target==PlotingOptions(iL,jL,kL,
+  stopifnot(Target==PlotingOptions(ListInputs[1],ListInputs[2],ListInputs[3],
                                     Ret=Ret,CasesUsed=CasesUsed,
                                     DateStart=DateStart))
-
-  BestLM <- PlotingOptions(iL,jL,kL,Show=Show2,
+  BestLM <- PlotingOptions(ListInputs[1],ListInputs[2],ListInputs[3],Show=Show2,
                            Ret="LM",CasesUsed=CasesUsed,
                            DateStart=DateStart)
   
   SlopeL <- signif(BestLM[[1]][1],3)
-  if(Show2){
-    print(paste("Best relationship at",iL,jL,kL,"with score of",
-                max(Matrix),"with F factor of",SlopeL))
-  }
+  DayOfWeekData <- weekdays(seq(as.Date("11/10/2020"), by=1, len=8))
+  
+
+  Ret <- paste("Best relationship at",DayOfWeekData[ListInputs[1]+1],ListInputs[2],ListInputs[3],"with", Ret ,"of",
+                max(Matrix),"with F factor of",SlopeL)
+
   if(Mat){
-    return(Matrix)
+    return(list(Matrix,Ret))
   }
   return(BestLM)
 }
@@ -525,36 +534,47 @@ PlotingOptions <- function(StartDate,DaySmoothing,Lag,
 }#StartDate,DaySmoothing,Lag,COR,R2
 
 
-HeatMapCor <- function(DaySmoothing,Show3=TRUE,CasesUsed="Cases4",
-                       DateStart=mdy("11/1/2020")){
-  ColorLegend <- brewer.pal(n = 3, name = "YlOrRd")
-  Color <- brewer.pal(n = 8, name = "YlOrRd")
-  R2Mat <- matrix(CheckFunction(DaySmoothing=DaySmoothing,Show2=Show3,
-                                Mat=TRUE,Ret="R2",CasesUsed=CasesUsed,DateStart=DateStart),
+HeatMapCor <- function(StartDate=0:7,DaySmoothing=c(7),Lag=-2:2,ShowPlots=FALSE,CasesUsed="Cases4",
+                       DateStart=mdy("10/1/2020")){
+  R2CF <- CheckFunction(DaySmoothing=DaySmoothing,StartDate=StartDate,
+                        Lag=Lag,Show2=ShowPlots,Mat=TRUE,Ret="R2",
+                        CasesUsed=CasesUsed,DateStart=DateStart)
+  PValCF <- CheckFunction(DaySmoothing=DaySmoothing,StartDate=StartDate,
+                          Lag=Lag,Show2=ShowPlots,Mat=TRUE,Ret="PVal",
+                          CasesUsed=CasesUsed, DateStart=DateStart)
+  CorCF <- CheckFunction(DaySmoothing=DaySmoothing,StartDate=StartDate,
+                         Lag=Lag,Show2=ShowPlots,Mat=TRUE,Ret="COR",
+                         CasesUsed=CasesUsed,DateStart=DateStart)
+  R2Mat <- matrix(R2CF[[1]],
                   nrow=8)
   
-  PValMat <- matrix(CheckFunction(DaySmoothing=DaySmoothing,Show2=Show3,
-                                  Mat=TRUE,Ret="PVal",CasesUsed=CasesUsed,
-                                  DateStart=DateStart),nrow=8)
+  PValMat <- matrix(PValCF[[1]],
+                    nrow=8)
   
-  CorMat <- matrix(CheckFunction(DaySmoothing=DaySmoothing,Show2=Show3,
-                                 Mat=TRUE,Ret="COR",CasesUsed=CasesUsed,
-                                 DateStart=DateStart),nrow=8)
+  CorMat <- matrix(CorCF[[1]],
+                   nrow=8)
+  print(paste("R2:",R2CF[[2]]))
+  print(paste("PVal:",PValCF[[2]]))
+  print(paste("Cor:",CorCF[[2]]))
   
+  DayOfWeekData <- weekdays(seq(as.Date("11/10/2020"), by=1, len=8))
   
-  heatmap(R2Mat,Rowv=NA,Colv=NA,col = Color ,main="R2 relationship")
-  legend(x="right", legend=c(round(min(R2Mat),1),
-                             round(median(R2Mat),2),
-                             round(max(R2Mat),2)),fill=ColorLegend)
+  xAxisPlot <- expand.grid(DaySmoothing, Lag)
+  xAxisPlot <- xAxisPlot[order(xAxisPlot$Var1),]
   
-  heatmap(PValMat,Rowv=NA,Colv=NA,col = Color,main="PVal relationship")
-  legend(x="right", legend=c(round(min(PValMat),1),
-                             round(median(PValMat),1),
-                             round(max(PValMat),1)),fill=ColorLegend)
-  
-  heatmap(CorMat,Rowv=NA,Colv=NA,col = Color,main="Cor relationship")
-  legend(x="right", legend=c(round(min(CorMat),1),
-                             round(median(CorMat),1),
-                             round(max(CorMat),1)),fill=ColorLegend)
+  AxisPattern<- apply(xAxisPlot, 1, paste, collapse=" ")
+  HeatMapMaker(R2Mat,AxisPattern,DayOfWeekData,"R2 relationship",ColorName="YlOrRd")
+  HeatMapMaker(PValMat,AxisPattern,DayOfWeekData,"PVal relationship",ColorName="YlOrRd")
+  HeatMapMaker(CorMat,AxisPattern,DayOfWeekData,"Cor relationship",ColorName="YlOrRd")
 }
-
+HeatMapMaker <- function(Mat,ColNames,RowNames,Main,ColorName){
+  ColorLegend <- brewer.pal(n = 3, name = ColorName)
+  Color <- brewer.pal(n = 8, name = ColorName)
+  rownames(Mat) <- RowNames
+  colnames(Mat) <- ColNames
+  heatmap(Mat,Rowv=NA,Colv=NA,col = Color ,main=Main)
+  legend(x="right", legend=c(round(min(Mat),1),
+                             round(median(Mat),2),
+                             round(max(Mat),2)),fill=ColorLegend)
+  title(xlab="time laged",ylab="Binning Start")
+}

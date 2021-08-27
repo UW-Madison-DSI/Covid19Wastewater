@@ -116,20 +116,35 @@ MergedDF <- MergedDF%>%
   filter(Date>mdy("9/15/2020"))%>%
   select(Date,Site,Cases,Cases2,Cases2.PreRolled,N1,
          LoessN1,N1Error,N2,LoessN2,N2Error,N1Filtered)
+#Nail down delays
+#10:30 park st
+#interceptors
+#look at interceptors to confirm results
+#might need to control pop
+#take robust es as mean curve- look at variance - look at resid- use longer term avg to predict error- iterative to make better es model. or start with loess smoothing.
 ```
 
 ```{r}
+#TODO:collection date
 #library("robets")
 #.0131
-plot((fitted.values(robets((MergedDF$N1Filtered),alpha=.0131,model="AAN"))))
+RobMod=fitted.values(robets((MergedDF$N1Filtered),
+                           alpha=.0131,model="AAN"))
+
+plot(RobMod,type="l",yaxt='n', ann=FALSE)
 par(new = TRUE)
-plot((MergedDF$Cases2),col="Red",type="l")
+plot((MergedDF$Cases2),col="Red",type="l",yaxt='n', ann=FALSE)
 par(new = TRUE)
 plot((zoo::rollapply(data=MergedDF$N1Filtered,
                     width=35,FUN=mean,align="right",fill=NA)),
-     col="Green",type="l")
+     col="Green",type="l",yaxt='n', ann=FALSE)
 par(new = TRUE)
 plot((zoo::rollapply(data=MergedDF$N1Filtered,
                     width=3,FUN=median,align="center",fill=NA)),
-     col="Blue",type="l")
+     col="Blue",type="l",yaxt='n', ann=FALSE)
+par(new = TRUE)
+plot((MergedDF$LoessN1),col="pink",type="l",yaxt='n', ann=FALSE)
+legend(x="topright", legend=c("Robust ES","SLD Cases","35 day MA","3 day meadian N1","loess"),fill=c("Black","Red","Green","Blue","pink"))
+
+
 ```

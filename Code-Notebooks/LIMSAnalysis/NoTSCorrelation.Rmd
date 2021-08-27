@@ -22,6 +22,7 @@ library(lubridate)
 library(limma)
 library(zoo)
 library(dplyr)
+library(RColorBrewer)
 
 #Data Files and prep work
 source("../../Scripts/GenPlotMaking.R")
@@ -100,25 +101,25 @@ WeightVec <- unlist(lapply((split(dgamma(1:21,scale =5.028338,shape =2.332779),c
 # A <- (lm(CasesM~N1M-1,data=MadData))
 # B <- (lm(CasesM~N1M,data=MadData))
 
-library(RColorBrewer)
-source("../../Scripts/HelperFunctions.R")
 
 
-CheckFunction(DaySmoothing=c(7,14),Show2=FALSE,Mat=TRUE,Ret="PVal",CasesUsed="Cases4")
+# CheckFunction(DaySmoothing=c(7,14),Show2=FALSE,Mat=TRUE,Ret="LM",CasesUsed="Cases4")
 ```
 
 
 ```{r LM binning heatmap}
-
+source("../../Scripts/HelperFunctions.R")
 # max(R2Mat)
 # max(CorMat)
-summary(PlotingOptions(7,7,2))
+#summary(PlotingOptions(7,7,2))
 #CasesM
 #Cases4
 
-HeatMapCor(c(7),CasesUsed="Cases4")
-HeatMapCor(c(7),CasesUsed="CasesM")
-HeatMapCor(c(7,14),DateStart=mdy("4/10/2020"))
+print("Binning -> SLD")
+HeatMapCor(StartDate=0:7,DaySmoothing=c(7),Lag=-2:2,CasesUsed="Cases4")
+print("SLD->Binning")
+HeatMapCor(StartDate=0:7,DaySmoothing=c(7),Lag=-2:2,CasesUsed="CasesM")
+print("Binning -> SLD late Start")
+HeatMapCor(StartDate=0:7,DaySmoothing=c(7),Lag=-2:2,CasesUsed="CasesM",DateStart=mdy("11/13/2020"),ShowPlots=FALSE)
 
-plot(es(MergedDF$N1,phi =.5)$fitted)
 ```

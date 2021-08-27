@@ -98,8 +98,11 @@ MergedDF <- full_join(SCPDF3,FullMadLimsDF, by=c("Date","Site"))
 MergedDF$LoessN1 <- exp(DFLoessFNC(MergedDF,Var="N1",SiteS="Madison",span=.2))
 MergedDF$LoessN2 <- exp(DFLoessFNC(MergedDF,Var="N2",SiteS="Madison",span=.2))
 
+MergedDF$N1Filtered <- ReplacementFilter(6,MergedDF$N1,MergedDF$LoessN1)
 MergedDF <- MergedDF%>%
-  select(Date,Site,Cases,Cases2,Cases2.PreRolled,N1,LoessN1,N1Error,N2,LoessN2,N2Error)
+  filter(Date>mdy("9/15/2020"))%>%
+  select(Date,Site,Cases,Cases2,Cases2.PreRolled,N1,
+         LoessN1,N1Error,N2,LoessN2,N2Error,N1Filtered)
 ```
 
 
@@ -158,4 +161,150 @@ plot(y2,col="red")
 
 aroma.light::robustSmoothSpline(smooth.spline(x=1:266,y=log(ybase)))
 
+```
+
+```{r Best Fit of N1 and SLD}
+#TODO:collection date
+#library("robets")
+#.0131
+RobMod <- c(fitted.values(robets(MergedDF$N1,
+                           alpha=.0131,model="AAN"))[31:282],rep(NA,30))
+MAMod <- c(zoo::rollapply(data=MergedDF$N1,
+                    width=35,FUN=mean,align="right",fill=NA)[31:282],
+           rep(NA,30))
+
+LoessMod <- c(MergedDF$LoessN1[16:282],
+           rep(NA,15))
+CaseMod <- MergedDF$Cases2
+
+
+plot(RobMod,type="l",yaxt='n', ann=FALSE)
+par(new = TRUE)
+plot((CaseMod),col="Red",type="l",yaxt='n', ann=FALSE)
+par(new = TRUE)
+plot((MAMod),
+     col="Green",type="l",yaxt='n', ann=FALSE)
+par(new = TRUE)
+plot((zoo::rollapply(data=MergedDF$N1Filtered,
+                    width=3,FUN=median,align="center",fill=NA)),
+     col="Blue",type="l",yaxt='n', ann=FALSE)
+par(new = TRUE)
+plot((LoessMod),col="pink",type="l",yaxt='n', ann=FALSE)
+legend(x="topright", legend=c("Robust ES","SLD Cases","35 day MA","3 day meadian N1","loess"),fill=c("Black","Red","Green","Blue","pink"))
+#robust ES with offset 30 fits cases best
+
+plot(diff(MergedDF$Cases2),col="Red",type="l")
+par(new = TRUE)
+plot(diff(RobMod),type="l")
+
+
+
+
+cor(RobMod,MergedDF$Cases2,use = "na.or.complete")
+LMRob=lm(MergedDF$Cases2~RobMod-1)
+ArimaMod=auto.arima(MergedDF$Cases2, xreg=RobMod)
+summary(LMRob)
+summary(ArimaMod)
+plot(resid(ArimaMod))
+plot(resid(LMRob),type="l")
+LMRob2=lm(diff(MergedDF$Cases2)~diff(RobMod)-1)
+summary(LMRob)
+summary(LMRob2)
+plot(LMRob)
+
+
+
+ccf(s.ts(RobMod3),as.ts(MergedDF$N1[1:161]),lag.max=20)
+#robust es with offset 20 fits N1 best
+
+RobMod3<- fitted.values(robets(MergedDF$N1,
+                           alpha=.0131,model="AAN"))[22:282]
+N1Resid <- log(MergedDF$N1[1:261]/RobMod3)
+
+plot(y=N1Resid,x=RobMod3)
+
+
+plot((fitted.values(robets((MergedDF$N1),
+                           alpha=.0131,model="MAN"))))
+par(new = TRUE)
+plot((CaseMod),col="Red",type="l",yaxt='n', ann=FALSE)
+```
+
+```{r}
+
+
+MergedDF3 <- MergedDF%>%
+  #filter(Date>mdy("11/1/2020"))%>%
+  select(Date,Cases2,N1,N1Error)
+
+MergedDF3$Trend <- exp(log(c(RobMod3,rep(NA,21))))
+MergedDF3$Resid <- MergedDF3$N1-MergedDF3$Trend
+MergedDF3$ResidLog <- log(MergedDF3$N1/MergedDF3$Trend)
+MergedDF3 <- MergedDF3%>%
+  filter(!is.na(Trend),!is.nan(Trend))
+
+
+MergedDF3%>%
+  ggplot()+
+  aes(x=Date)+
+  geom_line(aes(y=N1,color="N1"))+
+  geom_line(aes(y=Trend,color="Trend"))+
+  ggtitle("N1 vs Trend")
+
+MergedDF3%>%
+  ggplot()+
+  #aes(x=Date)+
+  geom_histogram(aes(x=ResidLog))
+
+MergedDF3%>%
+  ggplot()+
+  aes(x=Date)+
+  geom_point(aes(y=Resid))
+
+MergedDF3%>%
+  ggplot()+
+  aes(x=log(Trend))+
+  geom_point(aes(y=ResidLog))
+
+
+par(mfrow=c(1,2))
+acf(MergedDF3$ResidLog)
+pacf(MergedDF3$ResidLog)
+
+ARMod <- arima(MergedDF3$ResidLog,order=c(1,0,0))
+par(mfrow=c(1,2))
+acf(resid(ARMod))
+pacf(resid(ARMod))
+# summary(lm(log(N1)~log(Trend)-1,data=MergedDF3))
+MergedDF3$TruLogResid <- resid(ARMod)
+
+
+MergedDF3%>%
+  ggplot()+
+  aes(x=Date)+
+  geom_point(aes(y=ResidLog,color="LogResid"))+
+  geom_point(aes(y=TruLogResid,color="ArimaResid"))
+
+
+MergedDF3%>%
+  ggplot()+
+  #aes(x=Date)+
+  geom_histogram(aes(x=TruLogResid))
+
+
+MergedDF3%>%
+  ggplot()+
+  aes(x=log(Trend))+
+  geom_point(aes(y=TruLogResid))
+
+
+var(MergedDF3$TruLogResid)
+
+#Validate this on HF data
+MergedDF3$N1Errorloged <- (3*MergedDF3$N1Error^2)/MergedDF3$N1^2
+
+
+MergedDF3%>%
+  ggplot()+
+  aes()
 ```
