@@ -419,9 +419,9 @@ LocInput <- function(Mat,Loc,StartDate,DaySmoothing,Lag){
 }
 
 
-CheckFunction <- function(StartDate=0:7,DaySmoothing=c(1,7,14),Lag=-2:2,
+CheckFunction <- function(DF,StartDate=0:7,DaySmoothing=c(1,7,14),Lag=-2:2,
                           Show2=FALSE,Mat=FALSE,Ret="R2",CasesUsed="Cases4",
-                          DateStart=mdy("11/1/2020")){
+                          DateStart=mdy("11/1/2020"),Pop=FALSE){
   SDL <- length(StartDate)
   DSL <- length(DaySmoothing)
   LL <- length(Lag)
@@ -430,10 +430,10 @@ CheckFunction <- function(StartDate=0:7,DaySmoothing=c(1,7,14),Lag=-2:2,
   for (j in 1:DSL){
     for (k in 1:LL){
       for (i in 1:SDL){
-        Matrix[j*SDL*LL+k*SDL+i-SDL*LL-SDL]=PlotingOptions(StartDate[i],
+        Matrix[j*SDL*LL+k*SDL+i-SDL*LL-SDL]=PlotingOptions(DF=DF,StartDate[i],
                                         DaySmoothing[j],Lag[k],
                                         Ret=Ret,CasesUsed=CasesUsed,
-                                        DateStart=DateStart)
+                                        DateStart=DateStart,Pop=Pop)
       }
     }
   }
@@ -446,12 +446,12 @@ CheckFunction <- function(StartDate=0:7,DaySmoothing=c(1,7,14),Lag=-2:2,
   }
   ListInputs <- LocInput(Matrix,Loc,StartDate,DaySmoothing,Lag)
 
-  stopifnot(Target==PlotingOptions(ListInputs[1],ListInputs[2],ListInputs[3],
+  stopifnot(Target==PlotingOptions(DF=DF,ListInputs[1],ListInputs[2],ListInputs[3],
                                     Ret=Ret,CasesUsed=CasesUsed,
-                                    DateStart=DateStart))
-  BestLM <- PlotingOptions(ListInputs[1],ListInputs[2],ListInputs[3],Show=Show2,
+                                    DateStart=DateStart,Pop=Pop))
+  BestLM <- PlotingOptions(DF=DF,ListInputs[1],ListInputs[2],ListInputs[3],Show=Show2,
                            Ret="LM",CasesUsed=CasesUsed,
-                           DateStart=DateStart)
+                           DateStart=DateStart,Pop=Pop)
   
   SlopeL <- signif(BestLM[[1]][1],3)
   DayOfWeekData <- weekdays(seq(as.Date("11/10/2020"), by=1, len=8))
@@ -477,10 +477,10 @@ ReplacementFilter <- function(n,Main,Rep){
 }
 
 
-PlotingOptions <- function(DF=MergedDF,StartDate,DaySmoothing,Lag,
+PlotingOptions <- function(DF,StartDate,DaySmoothing,Lag,
                            Show=FALSE,Ret="LM",CasesUsed="Cases4",
-                           DateStart=mdy("11/1/2020")){
-  MadData <- MergedDF%>%
+                           DateStart=mdy("11/1/2020"),Pop=FALSE){
+  MadData <- DF%>%
     filter(Date>DateStart)%>%
     mutate(MovedCases = data.table::shift(Cases2,Lag),
            Cases3 = data.table::shift(Cases,Lag),
@@ -493,6 +493,9 @@ PlotingOptions <- function(DF=MergedDF,StartDate,DaySmoothing,Lag,
                                     w=WeightVec,
                                     na.rm = TRUE)))%>%
     mutate(CasesMain=!!sym(CasesUsed))
+  if(Pop){
+    MadData$CasesMain <- MadData$CasesMain/mean(MadData$Pop)
+  }
   
   LMod <- lm(CasesMain~NM-1,data=MadData)
   COR <- signif(cor(MadData$CasesMain,MadData$NM,use="pairwise.complete.obs"),3)
@@ -507,7 +510,7 @@ PlotingOptions <- function(DF=MergedDF,StartDate,DaySmoothing,Lag,
       aes(x=Week)+
       geom_line(aes(y=NM*Slope,color="N1Binned"))+
       geom_line(aes(y=CasesMain,color="SLDBinned"))
-    
+    MaxX <- .9*max(MadData$CasesMain,na.rm=TRUE)
     CompPlot <- MadData%>%
       ggplot()+
       aes(x=CasesMain,y=NM)+
@@ -515,8 +518,8 @@ PlotingOptions <- function(DF=MergedDF,StartDate,DaySmoothing,Lag,
       geom_abline(aes(color="Line of best first",slope=1/Slope,intercept=0))+
       labs(x="7 Day binning of SLD Cases",
            y="7 day binning of N1")+
-      annotate("text", x=250, y=4e4, label= paste("R^2:", R2))+
-      annotate("text", x=250, y=1e5, label= paste("Cor:", COR))
+      annotate("text", x=MaxX, y=4e4, label= paste("R^2:", R2))+
+      annotate("text", x=MaxX, y=1e5, label= paste("Cor:", COR))
     
     print(CompPlot)
     print(DatePlot)
@@ -534,16 +537,17 @@ PlotingOptions <- function(DF=MergedDF,StartDate,DaySmoothing,Lag,
 }#StartDate,DaySmoothing,Lag,COR,R2
 
 
-HeatMapCor <- function(StartDate=0:7,DaySmoothing=c(7),Lag=-2:2,ShowPlots=FALSE,CasesUsed="Cases4",
-                       DateStart=mdy("10/1/2020")){
-  R2CF <- CheckFunction(DaySmoothing=DaySmoothing,StartDate=StartDate,
-                        Lag=Lag,Show2=ShowPlots,Mat=TRUE,Ret="R2",
+HeatMapCor <- function(DF,StartDate=0:7,DaySmoothing=c(7),Lag=-2:2,ShowPlots=FALSE,CasesUsed="Cases4",
+                       DateStart=mdy("10/1/2020"),Pop=FALSE){
+  Site=unique(DF$Site)
+  R2CF <- CheckFunction(DF=DF,DaySmoothing=DaySmoothing,StartDate=StartDate,
+                        Lag=Lag,Show2=ShowPlots,Mat=TRUE,Ret="R2",Pop=Pop,
                         CasesUsed=CasesUsed,DateStart=DateStart)
-  PValCF <- CheckFunction(DaySmoothing=DaySmoothing,StartDate=StartDate,
-                          Lag=Lag,Show2=ShowPlots,Mat=TRUE,Ret="PVal",
+  PValCF <- CheckFunction(DF=DF,DaySmoothing=DaySmoothing,StartDate=StartDate,
+                          Lag=Lag,Show2=ShowPlots,Mat=TRUE,Ret="PVal",Pop=Pop,
                           CasesUsed=CasesUsed, DateStart=DateStart)
-  CorCF <- CheckFunction(DaySmoothing=DaySmoothing,StartDate=StartDate,
-                         Lag=Lag,Show2=ShowPlots,Mat=TRUE,Ret="COR",
+  CorCF <- CheckFunction(DF=DF,DaySmoothing=DaySmoothing,StartDate=StartDate,
+                         Lag=Lag,Show2=ShowPlots,Mat=TRUE,Ret="COR",Pop=Pop,
                          CasesUsed=CasesUsed,DateStart=DateStart)
   R2Mat <- matrix(R2CF[[1]],
                   nrow=8)
@@ -563,28 +567,34 @@ HeatMapCor <- function(StartDate=0:7,DaySmoothing=c(7),Lag=-2:2,ShowPlots=FALSE,
   xAxisPlot <- xAxisPlot[order(xAxisPlot$Var1),]
   
   AxisPattern<- apply(xAxisPlot, 1, paste, collapse=" ")
-  HeatMapMaker(R2Mat,AxisPattern,DayOfWeekData,"R2 relationship",ColorName="YlOrRd")
-  HeatMapMaker(PValMat,AxisPattern,DayOfWeekData,"PVal relationship",ColorName="YlOrRd")
-  HeatMapMaker(CorMat,AxisPattern,DayOfWeekData,"Cor relationship",ColorName="YlOrRd")
+  HeatMapMaker(R2Mat,AxisPattern,DayOfWeekData,Site=Site,
+               "R2 relationship",ColorName="YlOrRd")
+  HeatMapMaker(PValMat,AxisPattern,DayOfWeekData, Site=Site,
+               "PVal relationship",ColorName="YlOrRd")
+  HeatMapMaker(CorMat,AxisPattern,DayOfWeekData, Site=Site,
+               "Cor relationship",ColorName="YlOrRd")
 }
-HeatMapMaker <- function(Mat,ColNames,RowNames,Main,ColorName){
+
+HeatMapMaker <- function(Mat,ColNames,RowNames,Main,ColorName,Site){
   ColorLegend <- brewer.pal(n = 3, name = ColorName)
   Color <- brewer.pal(n = 8, name = ColorName)
   rownames(Mat) <- RowNames
   colnames(Mat) <- ColNames
   heatmap(Mat,Rowv=NA,Colv=NA,col = Color ,main=Main)
-  legend(x="right", legend=c(round(min(Mat),1),
-                             round(median(Mat),2),
-                             round(max(Mat),2)),fill=ColorLegend)
-  title(xlab="time laged",ylab="Binning Start")
+  legend(x="right", legend=c(signif(min(Mat),2),
+                             signif(median(Mat),2),
+                             signif(max(Mat),2)),
+         fill=ColorLegend)
+  title(xlab="time laged",ylab="Binning Start",sub=Site)
 }
 
 
 
-BestCorDFGen <- function(Site,DateFilt=mdy("9/15/2020")){
-  IntercepterLimsDF <- DataPrep(LIMSFullDF,
-                                keep=c("N1","N1Error","N2","N2Error"),
-                                Site)
+BestCorDFGen <- function(Site,DateFilt=mdy("9/15/2020"),
+                         keep=c("N1","N1Error","N2","N2Error","Pop")){
+  SiteLimsDF <- DataPrep(LIMSFullDF,
+                         keep=keep,
+                         Site)
   
   SCPDF <- DFSmoothingFNC(FullCase,SiteS=Site)%>%
     mutate(Site=Site)
@@ -594,7 +604,7 @@ BestCorDFGen <- function(Site,DateFilt=mdy("9/15/2020")){
   
   SCPDF3 <- inner_join(SCPDF,SCPDF2,by=c("Date","Site","Cases"),suffix=c("",".PreRolled"))
   
-  MergedDF <- full_join(SCPDF3,IntercepterLimsDF, by=c("Date","Site"))
+  MergedDF <- full_join(SCPDF3,SiteLimsDF, by=c("Date","Site"))
   
   MergedDF$LoessN1 <- exp(DFLoessFNC(MergedDF,Var="N1",SiteS=Site,span=.2))
   MergedDF$LoessN2 <- exp(DFLoessFNC(MergedDF,Var="N2",SiteS=Site,span=.2))
@@ -602,6 +612,6 @@ BestCorDFGen <- function(Site,DateFilt=mdy("9/15/2020")){
   MergedDF$N1Filtered <- ReplacementFilter(6,MergedDF$N1,MergedDF$LoessN1)
   MergedDF <- MergedDF%>%
     filter(Date>DateFilt)%>%
-    select(Date,Site,Cases,Cases2,Cases2.PreRolled,N1,
-           LoessN1,N1Error,N2,LoessN2,N2Error,N1Filtered)
+    select(Date,Site,Cases,Cases2,Cases2.PreRolled,
+           LoessN1,LoessN2,N1Filtered,keep)
 }

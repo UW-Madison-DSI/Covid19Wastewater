@@ -26,6 +26,7 @@ library(lubridate)
 library(limma)
 library(zoo)
 library(dplyr)
+library("robets")
 
 #Data Files and prep work
 source("../../Scripts/GenPlotMaking.R")
@@ -102,29 +103,33 @@ MergedDF <- BestCorDFGen("Madison")
 
 ```{r}
 #TODO:collection date
-#library("robets")
 #.0131
 
 
 MethodPlot <- function(DF){
-  RobMod=fitted.values(robets((DF$"N1Filtered"),
+  
+  DF2 <- DF
+  DF2$RobMod <- fitted.values(robets((DF$"N1Filtered"),
                            alpha=.0131,model="AAN"))
   
-  plot(RobMod,type="l",yaxt='n', ann=FALSE)
+  DF2 <- DF2%>%
+    filter(!is.na(Cases2))
+  
+  plot(DF2$RobMod,type="l",yaxt='n', ann=FALSE)
   par(new = TRUE)
-  plot((DF$"Cases2"),col="Red",type="l",yaxt='n', ann=FALSE)
+  plot((DF2$"Cases2"),col="Red",type="l",yaxt='n', ann=FALSE)
   par(new = TRUE)
-  plot((zoo::rollapply(data=DF$"N1Filtered",
+  plot((zoo::rollapply(data=DF2$"N1Filtered",
                       width=35,FUN=mean,align="right",fill=NA)),
        col="Green",type="l",yaxt='n', ann=FALSE)
   par(new = TRUE)
-  plot((zoo::rollapply(data=DF$"N1Filtered",
+  plot((zoo::rollapply(data=DF2$"N1Filtered",
                       width=3,FUN=median,align="center",fill=NA)),
        col="Blue",type="l",yaxt='n', ann=FALSE)
   par(new = TRUE)
-  plot((DF$"LoessN1"),col="pink",type="l",yaxt='n', ann=FALSE)
+  plot((DF2$"LoessN1"),col="pink",type="l",yaxt='n', ann=FALSE)
   legend(x="topright", legend=c("SLD Cases","Robust ES","35 day MA","3 day meadian N1","loess"),fill=c("Red","Black","Green","Blue","pink"),cex=.75)
-  title(unique(DF$Site))
+  title(unique(DF2$Site))
 }
 MethodPlot(MergedDF)
 ```

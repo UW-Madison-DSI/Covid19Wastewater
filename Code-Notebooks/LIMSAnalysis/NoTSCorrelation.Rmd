@@ -92,18 +92,54 @@ WeightVec <- unlist(lapply((split(dgamma(1:21,scale =5.028338,shape =2.332779),c
 
 
 ```{r LM binning heatmap}
-source("../../Scripts/HelperFunctions.R")
 # max(R2Mat)
 # max(CorMat)
 #summary(PlotingOptions(7,7,2))
 #CasesM
 #Cases4
-
 print("Binning -> SLD")
-HeatMapCor(StartDate=0:7,DaySmoothing=c(7),Lag=-2:2,CasesUsed="Cases4")
+HeatMapCor(DF=MergedDF,StartDate=0:7,DaySmoothing=c(7),Lag=-2:2,CasesUsed="Cases4")
 print("SLD->Binning")
-HeatMapCor(StartDate=0:7,DaySmoothing=c(7),Lag=-2:2,CasesUsed="CasesM")
+HeatMapCor(DF=MergedDF,StartDate=0:7,DaySmoothing=c(7),Lag=-2:2,CasesUsed="CasesM")
 print("Binning -> SLD late Start")
-HeatMapCor(StartDate=0:7,DaySmoothing=c(7),Lag=-2:2,CasesUsed="CasesM",DateStart=mdy("11/13/2020"),ShowPlots=FALSE)
+
+HeatMapCor(DF=MergedDF,StartDate=0:7,DaySmoothing=c(7),Lag=-2:2,CasesUsed="CasesM",DateStart=mdy("11/13/2020"),ShowPlots=FALSE)
 
 ```
+
+```{r Intercepters}
+Intercepters <- c("MMSD-P7" ,"MMSD-P2" ,               
+"MMSD-P8","MMSD-P11",                
+"MMSD-P18")
+
+IntercepterDFList <- lapply(Intercepters,BestCorDFGen,DateFilt=mdy("2/1/2021"),keep=c("N1","N1Error","N2","N2Error","Pop"))
+
+print("Binning -> SLD")
+lapply(IntercepterDFList,HeatMapCor,
+       StartDate=0:7,DaySmoothing=c(7,14),Lag=-2:2,CasesUsed="Cases4",ShowPlots=FALSE)
+print("SLD->Binning")
+lapply(IntercepterDFList,HeatMapCor,StartDate=0:7,DaySmoothing=c(7,14),Lag=-2:2,CasesUsed="CasesM")
+print("Binning -> SLD late Start")
+lapply(IntercepterDFList,HeatMapCor,StartDate=0:7,DaySmoothing=c(7,14),Lag=-2:2,CasesUsed="CasesM",DateStart=mdy("11/13/2020"),ShowPlots=FALSE)
+
+summary(PlotingOptions(IntercepterDFList[[2]],6,7,-2,Ret="LM",Show=TRUE))
+```
+
+
+```{r Intercepters}
+Sites <- c("Hudson","Kenosha","Oshkosh","River Falls","Sun Prairie","Wausau")
+
+SitesDFList <- lapply(Sites,BestCorDFGen,DateFilt=mdy("2/1/2021"),keep=c("N1","N1Error","N2","N2Error","Pop"))
+
+print("Binning -> SLD")
+lapply(SitesDFList,HeatMapCor,
+       StartDate=0:7,DaySmoothing=c(7,14),Lag=-2:2,CasesUsed="Cases4",ShowPlots=FALSE)
+print("SLD->Binning")
+lapply(SitesDFList,HeatMapCor,StartDate=0:7,DaySmoothing=c(7,14),Lag=-2:2,CasesUsed="CasesM")
+print("Binning -> SLD late Start")
+lapply(SitesDFList,HeatMapCor,StartDate=0:7,DaySmoothing=c(7,14),Lag=-2:2,CasesUsed="CasesM",DateStart=mdy("11/13/2020"),ShowPlots=FALSE)
+
+
+summary(PlotingOptions(SitesDFList[[1]],0,7,-1,Ret="LM",Show=TRUE))
+```
+
