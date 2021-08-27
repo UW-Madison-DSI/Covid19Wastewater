@@ -18,6 +18,7 @@ knitr::opts_chunk$set(
 ```
 
 ```{r Start enviroment, message=FALSE, warning=FALSE}
+
 library(ggpubr)
 library(forecast)
 library(lmtest)
@@ -46,8 +47,11 @@ LIMSFN <- paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/WATERMICRO_WW_COV
 HFGCasesFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/HighFreq_CaseData_2021-05-07.csv")
 
 
-LatCaseDF <- CovidDataPARSER(LatSpringDormFN,LatFallDormFN,MMSDFN = LatMMSDFN)%>%
-  filter(!is.na(Site))%>%
+LatCaseDF <- CovidDataPARSER(
+  LatSpringDormFN, LatFallDormFN,MMSDFN = LatMMSDFN
+  ) %>% 
+  
+  filter(!is.na(Site)) %>%
   select(Date,Site,Cases,Tests,Per_pos)
 
 HFGCaseDF <- HFGCasesPARSER(FN = HFGCasesFN)%>%
