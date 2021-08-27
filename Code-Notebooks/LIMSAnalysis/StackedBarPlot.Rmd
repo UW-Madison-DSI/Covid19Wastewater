@@ -103,7 +103,7 @@ Analysis with LIMS data
 ```{r}
 
 source("../../Scripts/WasteWaterDataProccess.R")
-source("../../Scripts/CassesDataProccess.R")
+source("../../Scripts/CasesDataProccess.R")
 source("../../Scripts/HelperFunctions.R")
 
 

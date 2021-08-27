@@ -26,7 +26,7 @@ library(shinycssloaders)
 #Data Files and prepwork
 source("../Scripts/GenPlotMaking.R")
 source("../Scripts/WasteWaterDataProccess.R")
-source("../Scripts/CassesDataProccess.R")
+source("../Scripts/CasesDataProccess.R")
 source("../Scripts/HelperFunctions.R")
 LatWasteFN <- "../../UntrackedData/WW SARS-COV-2 Data V5.xlsx"
 LatSpringCaseFN="../../UntrackedData/SpringSemester_CasesByDorm.tsv"

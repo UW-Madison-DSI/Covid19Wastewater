@@ -23,7 +23,7 @@ source("../Scripts/DataProccess.R")
 
 source("../Scripts/GenPlotMaking.R")
 source("../Scripts/WasteWaterDataProccess.R")
-source("../Scripts/CassesDataProccess.R")
+source("../Scripts/CasesDataProccess.R")
 source("../Scripts/HelperFunctions.R")
 
 
