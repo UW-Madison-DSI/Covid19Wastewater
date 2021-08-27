@@ -1,4 +1,7 @@
 ---
+params:
+  ## BaseDir: "Z:/"
+  BaseDir: "/Volumes/byandell/"
 title: "No TS Correlation"
 author: "Marlin"
 date: "8/25/2021"
@@ -33,15 +36,14 @@ source("../../Scripts/HelperFunctions.R")
 ```
 
 ```{r DF Set Up, include=TRUE}
-PathStarter="Z:/"
+BaseDir <- params$BaseDir
+LatMMSDFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/MMSD_Cases.csv")
+LatSpringDormFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/SpringSemester_CasesByDorm.TSV")
+LatFallDormFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/FallSemester_CasesByDorm.TSV")
 
-LatMMSDFN  <-  paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/MMSD_Cases.csv")
-LatSpringDormFN  <-  paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/SpringSemester_CasesByDorm.TSV")
-LatFallDormFN  <-  paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/FallSemester_CasesByDorm.TSV")
+LIMSFN <- paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/WATERMICRO_WW_COVID-2021-06-30 17 40.xlsx")
 
-LIMSFN <- paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/WATERMICRO_WW_COVID-2021-06-30 17 40.xlsx")
-
-HFGCasesFN  <-  paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/HighFreq_CaseData_2021-05-07.csv")
+HFGCasesFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/HighFreq_CaseData_2021-05-07.csv")
 
 
 LatCaseDF <- CovidDataPARSER(LatSpringDormFN,LatFallDormFN,MMSDFN = LatMMSDFN)%>%
@@ -126,7 +128,7 @@ summary(PlotingOptions(IntercepterDFList[[2]],6,7,-2,Ret="LM",Show=TRUE))
 ```
 
 
-```{r Intercepters}
+```{r WWTP_exMadison}
 Sites <- c("Hudson","Kenosha","Oshkosh","River Falls","Sun Prairie","Wausau")
 
 SitesDFList <- lapply(Sites,BestCorDFGen,DateFilt=mdy("2/1/2021"),keep=c("N1","N1Error","N2","N2Error","Pop"))
