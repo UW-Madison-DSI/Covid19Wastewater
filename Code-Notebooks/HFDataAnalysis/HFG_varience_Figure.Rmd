@@ -54,6 +54,8 @@ Mod%>%
   summarise(ME=mean(A),FilterVar=fishmethods::combinevar(ML,VL,rep(3,length(ML)))[[2]])
 
 plot(lm(VL~I(VN/MN^2)-1,data=Mod))
+
+mean(Mod$VL,na.rm=TRUE)
 ```
 
 

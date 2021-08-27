@@ -66,23 +66,7 @@ LIMSFullDF <- LIMSDataPARSER(LIMSFN)%>%
 ```
 
 ```{r}
-FullMadLimsDF <- DataPrep(LIMSFullDF,keep=c("N1","N1Error","N2","N2Error"),"Madison")
-
-SCPDF <- DFSmoothingFNC(FullCase,SiteS="Madison")%>%
-  mutate(Site="Madison")
-
-SCPDF2 <- DFSmoothingFNC(FullCase,PreRoll=TRUE,SiteS="Madison")%>%
-  mutate(Site="Madison")
-
-SCPDF3 <- inner_join(SCPDF,SCPDF2,by=c("Date","Site","Cases"),suffix=c("",".PreRolled"))
-
-MergedDF <- full_join(SCPDF3,FullMadLimsDF, by=c("Date","Site"))
-
-MergedDF$LoessN1 <- exp(DFLoessFNC(MergedDF,Var="N1",SiteS="Madison",span=.2))
-MergedDF$LoessN2 <- exp(DFLoessFNC(MergedDF,Var="N2",SiteS="Madison",span=.2))
-
-MergedDF <- MergedDF%>%
-  select(Date,Site,Cases,Cases2,Cases2.PreRolled,N1,LoessN1,N1Error,N2,LoessN2,N2Error)
+MergedDF <- BestCorDFGen("Madison")
 ```
 
 ```{r LM binning}

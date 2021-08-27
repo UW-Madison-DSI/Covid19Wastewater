@@ -97,54 +97,54 @@ IsFull <- function(DF){
 ```
 
 ```{r Madison Prep, fig.height=3,include=FALSE}
-FullMadLimsDF <- DataPrep(LIMSFullDF,keep=c("N1","N1Error","N2","N2Error"),"Madison")
-
-SCPDF <- DFSmoothingFNC(FullCase,SiteS="Madison")%>%
-  mutate(Site="Madison")
-
-SCPDF2 <- DFSmoothingFNC(FullCase,PreRoll=TRUE,SiteS="Madison")%>%
-  mutate(Site="Madison")
-
-SCPDF3 <- inner_join(SCPDF,SCPDF2,by=c("Date","Site","Cases"),suffix=c("",".PreRolled"))
-
-MergedDF <- full_join(SCPDF3,FullMadLimsDF, by=c("Date","Site"))
-
-MergedDF$LoessN1 <- exp(DFLoessFNC(MergedDF,Var="N1",SiteS="Madison",span=.2))
-MergedDF$LoessN2 <- exp(DFLoessFNC(MergedDF,Var="N2",SiteS="Madison",span=.2))
-MergedDF$N1Filtered <- ReplacementFilter(6,MergedDF$N1,MergedDF$LoessN1)
-MergedDF <- MergedDF%>%
-  filter(Date>mdy("9/15/2020"))%>%
-  select(Date,Site,Cases,Cases2,Cases2.PreRolled,N1,
-         LoessN1,N1Error,N2,LoessN2,N2Error,N1Filtered)
-#Nail down delays
-#10:30 park st
-#interceptors
-#look at interceptors to confirm results
-#might need to control pop
-#take robust es as mean curve- look at variance - look at resid- use longer term avg to predict error- iterative to make better es model. or start with loess smoothing.
+MergedDF <- BestCorDFGen("Madison")
 ```
 
 ```{r}
 #TODO:collection date
 #library("robets")
 #.0131
-RobMod=fitted.values(robets((MergedDF$N1Filtered),
+
+
+MethodPlot <- function(DF){
+  RobMod=fitted.values(robets((DF$"N1Filtered"),
                            alpha=.0131,model="AAN"))
-
-plot(RobMod,type="l",yaxt='n', ann=FALSE)
-par(new = TRUE)
-plot((MergedDF$Cases2),col="Red",type="l",yaxt='n', ann=FALSE)
-par(new = TRUE)
-plot((zoo::rollapply(data=MergedDF$N1Filtered,
-                    width=35,FUN=mean,align="right",fill=NA)),
-     col="Green",type="l",yaxt='n', ann=FALSE)
-par(new = TRUE)
-plot((zoo::rollapply(data=MergedDF$N1Filtered,
-                    width=3,FUN=median,align="center",fill=NA)),
-     col="Blue",type="l",yaxt='n', ann=FALSE)
-par(new = TRUE)
-plot((MergedDF$LoessN1),col="pink",type="l",yaxt='n', ann=FALSE)
-legend(x="topright", legend=c("Robust ES","SLD Cases","35 day MA","3 day meadian N1","loess"),fill=c("Black","Red","Green","Blue","pink"))
-
-
+  
+  plot(RobMod,type="l",yaxt='n', ann=FALSE)
+  par(new = TRUE)
+  plot((DF$"Cases2"),col="Red",type="l",yaxt='n', ann=FALSE)
+  par(new = TRUE)
+  plot((zoo::rollapply(data=DF$"N1Filtered",
+                      width=35,FUN=mean,align="right",fill=NA)),
+       col="Green",type="l",yaxt='n', ann=FALSE)
+  par(new = TRUE)
+  plot((zoo::rollapply(data=DF$"N1Filtered",
+                      width=3,FUN=median,align="center",fill=NA)),
+       col="Blue",type="l",yaxt='n', ann=FALSE)
+  par(new = TRUE)
+  plot((DF$"LoessN1"),col="pink",type="l",yaxt='n', ann=FALSE)
+  legend(x="topright", legend=c("SLD Cases","Robust ES","35 day MA","3 day meadian N1","loess"),fill=c("Red","Black","Green","Blue","pink"),cex=.75)
+  title(unique(DF$Site))
+}
+MethodPlot(MergedDF)
 ```
+
+
+```{r Dorm}
+Intercepters <- c("MMSD-P7" ,"MMSD-P2" ,               
+"MMSD-P8","MMSD-P11",                
+"MMSD-P18")
+
+IntercepterDFList <- lapply(Intercepters,BestCorDFGen,DateFilt=mdy("2/1/2021"))
+
+lapply(IntercepterDFList,MethodPlot)
+```
+
+```{r All Sites}
+Sites <- c("Hudson","Kenosha","Oshkosh","River Falls","Sun Prairie","Wausau")
+
+SitesDFList <- lapply(Sites,BestCorDFGen,DateFilt=mdy("10/1/2020"))
+
+lapply(SitesDFList,MethodPlot)
+```
+}

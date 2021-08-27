@@ -119,7 +119,7 @@ LoessGenerater <- function(Data,weights,Span,min,max){
 
 
 
-DataPrep <- function(DF,SiteS=NA,keep=c()){
+DataPrep <- function(DF=NA,SiteS=NA,keep=c()){
   if(!is.na(SiteS)){
     FilteredVec1 <- filter(DF,Site==SiteS)
   }else{
@@ -477,7 +477,7 @@ ReplacementFilter <- function(n,Main,Rep){
 }
 
 
-PlotingOptions <- function(StartDate,DaySmoothing,Lag,
+PlotingOptions <- function(DF=MergedDF,StartDate,DaySmoothing,Lag,
                            Show=FALSE,Ret="LM",CasesUsed="Cases4",
                            DateStart=mdy("11/1/2020")){
   MadData <- MergedDF%>%
@@ -577,4 +577,31 @@ HeatMapMaker <- function(Mat,ColNames,RowNames,Main,ColorName){
                              round(median(Mat),2),
                              round(max(Mat),2)),fill=ColorLegend)
   title(xlab="time laged",ylab="Binning Start")
+}
+
+
+
+BestCorDFGen <- function(Site,DateFilt=mdy("9/15/2020")){
+  IntercepterLimsDF <- DataPrep(LIMSFullDF,
+                                keep=c("N1","N1Error","N2","N2Error"),
+                                Site)
+  
+  SCPDF <- DFSmoothingFNC(FullCase,SiteS=Site)%>%
+    mutate(Site=Site)
+  
+  SCPDF2 <- DFSmoothingFNC(FullCase,PreRoll=TRUE,SiteS=Site)%>%
+    mutate(Site=Site)
+  
+  SCPDF3 <- inner_join(SCPDF,SCPDF2,by=c("Date","Site","Cases"),suffix=c("",".PreRolled"))
+  
+  MergedDF <- full_join(SCPDF3,IntercepterLimsDF, by=c("Date","Site"))
+  
+  MergedDF$LoessN1 <- exp(DFLoessFNC(MergedDF,Var="N1",SiteS=Site,span=.2))
+  MergedDF$LoessN2 <- exp(DFLoessFNC(MergedDF,Var="N2",SiteS=Site,span=.2))
+  
+  MergedDF$N1Filtered <- ReplacementFilter(6,MergedDF$N1,MergedDF$LoessN1)
+  MergedDF <- MergedDF%>%
+    filter(Date>DateFilt)%>%
+    select(Date,Site,Cases,Cases2,Cases2.PreRolled,N1,
+           LoessN1,N1Error,N2,LoessN2,N2Error,N1Filtered)
 }
