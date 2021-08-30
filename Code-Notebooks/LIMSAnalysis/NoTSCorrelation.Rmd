@@ -1,7 +1,7 @@
 ---
 params:
-  ## BaseDir: "Z:/"
-  BaseDir: "/Volumes/byandell/"
+  BaseDir: "Z:/"
+  ##BaseDir: "/Volumes/byandell/"
 title: "No TS Correlation"
 author: "Marlin"
 date: "8/25/2021"

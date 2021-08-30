@@ -550,13 +550,13 @@ HeatMapCor <- function(DF,StartDate=0:7,DaySmoothing=c(7),Lag=-2:2,ShowPlots=FAL
                          Lag=Lag,Show2=ShowPlots,Mat=TRUE,Ret="COR",Pop=Pop,
                          CasesUsed=CasesUsed,DateStart=DateStart)
   R2Mat <- matrix(R2CF[[1]],
-                  nrow=8)
+                  nrow=length(StartDate))
   
   PValMat <- matrix(PValCF[[1]],
-                    nrow=8)
+                    nrow=length(StartDate))
   
   CorMat <- matrix(CorCF[[1]],
-                   nrow=8)
+                   nrow=length(StartDate))
   print(paste("R2:",R2CF[[2]]))
   print(paste("PVal:",PValCF[[2]]))
   print(paste("Cor:",CorCF[[2]]))
