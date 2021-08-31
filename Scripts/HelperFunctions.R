@@ -419,7 +419,7 @@ LocInput <- function(Mat,Loc,StartDate,DaySmoothing,Lag){
 }
 
 
-CheckFunction <- function(DF,StartDate=0:7,DaySmoothing=c(1,7,14),Lag=-2:2,
+CheckFunction <- function(DF,StartDate=0:7,DaySmoothing=c(7,14),Lag=-2:2,
                           Show2=FALSE,Mat=FALSE,Ret="R2",CasesUsed="Cases4",
                           DateStart=mdy("11/1/2020"),Pop=FALSE){
   SDL <- length(StartDate)
@@ -440,6 +440,8 @@ CheckFunction <- function(DF,StartDate=0:7,DaySmoothing=c(1,7,14),Lag=-2:2,
   if(Ret=="PVal"){
     Loc <- which.min(Matrix)
     Target=min(Matrix)
+  }else if(Ret=="All"){
+    return(Matrix)
   }else{
     Loc <- which.max(Matrix)
     Target=max(Matrix)
@@ -479,7 +481,7 @@ ReplacementFilter <- function(n,Main,Rep){
 
 PlotingOptions <- function(DF,StartDate,DaySmoothing,Lag,
                            Show=FALSE,Ret="LM",CasesUsed="Cases4",
-                           DateStart=mdy("11/1/2020"),Pop=FALSE){
+                           DateStart=mdy("9/1/2020"),Pop=FALSE){
   MadData <- DF%>%
     filter(Date>DateStart)%>%
     mutate(MovedCases = data.table::shift(Cases2,Lag),
@@ -487,12 +489,15 @@ PlotingOptions <- function(DF,StartDate,DaySmoothing,Lag,
            Week=as.numeric(Date+StartDate)%/%DaySmoothing)%>%
     group_by(Week)%>%
     summarise(NM=median(N1,na.rm=TRUE),
-              Cases4=mean(Cases3,na.rm = TRUE),
+              Cases3=mean(Cases3,na.rm = TRUE),
               CasesM=mean(MovedCases,na.rm = TRUE))%>%
-    mutate(Cases4=c(NA,NA,rollapply(Cases4,width=3,FUN=weighted.mean,
+    mutate(Cases4=c(NA,NA,rollapply(Cases3,width=3,FUN=weighted.mean,
                                     w=WeightVec,
                                     na.rm = TRUE)))%>%
-    mutate(CasesMain=!!sym(CasesUsed))
+    mutate(CasesMain=!!sym(CasesUsed))%>%
+    filter(is.finite(CasesMain))
+  
+  #has issues. need to be fixed
   if(Pop){
     MadData$CasesMain <- MadData$CasesMain/mean(MadData$Pop)
   }
@@ -510,17 +515,21 @@ PlotingOptions <- function(DF,StartDate,DaySmoothing,Lag,
       aes(x=Week)+
       geom_line(aes(y=NM*Slope,color="N1Binned"))+
       geom_line(aes(y=CasesMain,color="SLDBinned"))
-    MaxX <- .9*max(MadData$CasesMain,na.rm=TRUE)
+    
+    MaxX <- .9*(max(MadData$CasesMain,na.rm=TRUE))
+    MinY <- min(MadData$NM,na.rm=TRUE)
+    YRange <- max(MadData$NM,na.rm=TRUE)-MinY
     CompPlot <- MadData%>%
       ggplot()+
       aes(x=CasesMain,y=NM)+
       geom_point()+
       geom_abline(aes(color="Line of best first",slope=1/Slope,intercept=0))+
-      labs(x="7 Day binning of SLD Cases",
-           y="7 day binning of N1")+
-      annotate("text", x=MaxX, y=4e4, label= paste("R^2:", R2))+
-      annotate("text", x=MaxX, y=1e5, label= paste("Cor:", COR))
-    
+      labs(x=paste(DaySmoothing,"Day binning of SLD Cases"),
+           y=paste(DaySmoothing,"Day binning of N1"))+
+      annotate("text", x=MaxX, y=.2*YRange+MinY, label= paste("PVal:", PVal))+
+      annotate("text", x=MaxX, y=.23*YRange+MinY, label= paste("S Factor:", signif(LMod[[1]][1],3)))+
+      annotate("text", x=MaxX, y=.26*YRange+MinY, label= paste("R^2:", R2))+
+      annotate("text", x=MaxX, y=.3*YRange+MinY, label= paste("Cor:", COR))
     print(CompPlot)
     print(DatePlot)
   }
@@ -532,6 +541,10 @@ PlotingOptions <- function(DF,StartDate,DaySmoothing,Lag,
     return(R2)
   }else if(Ret=="PVal"){
     return(PVal)
+  }else if(Ret=="Plot"){
+    return(CompPlot)
+  }else if(Ret=="All"){
+    return(list(COR,R2,PVal))
   }
   
 }#StartDate,DaySmoothing,Lag,COR,R2
@@ -549,35 +562,29 @@ HeatMapCor <- function(DF,StartDate=0:7,DaySmoothing=c(7),Lag=-2:2,ShowPlots=FAL
   CorCF <- CheckFunction(DF=DF,DaySmoothing=DaySmoothing,StartDate=StartDate,
                          Lag=Lag,Show2=ShowPlots,Mat=TRUE,Ret="COR",Pop=Pop,
                          CasesUsed=CasesUsed,DateStart=DateStart)
-  R2Mat <- matrix(R2CF[[1]],
-                  nrow=length(StartDate))
-  
-  PValMat <- matrix(PValCF[[1]],
-                    nrow=length(StartDate))
-  
-  CorMat <- matrix(CorCF[[1]],
-                   nrow=length(StartDate))
   print(paste("R2:",R2CF[[2]]))
   print(paste("PVal:",PValCF[[2]]))
   print(paste("Cor:",CorCF[[2]]))
   
-  DayOfWeekData <- weekdays(seq(as.Date("11/10/2020"), by=1, len=8))
+  DayOfWeekData <- weekdays(seq(DateStart, by=1, len=length(StartDate)))
   
   xAxisPlot <- expand.grid(DaySmoothing, Lag)
   xAxisPlot <- xAxisPlot[order(xAxisPlot$Var1),]
   
   AxisPattern<- apply(xAxisPlot, 1, paste, collapse=" ")
-  HeatMapMaker(R2Mat,AxisPattern,DayOfWeekData,Site=Site,
-               "R2 relationship",ColorName="YlOrRd")
-  HeatMapMaker(PValMat,AxisPattern,DayOfWeekData, Site=Site,
-               "PVal relationship",ColorName="YlOrRd")
-  HeatMapMaker(CorMat,AxisPattern,DayOfWeekData, Site=Site,
-               "Cor relationship",ColorName="YlOrRd")
+  HeatMapMaker(R2CF[[1]],length(StartDate),AxisPattern,
+               DayOfWeekData,Site=Site, "R2 relationship",ColorName="YlOrRd")
+  HeatMapMaker(PValCF[[1]],length(StartDate),AxisPattern,
+               DayOfWeekData, Site=Site, "PVal relationship",ColorName="YlOrRd")
+  HeatMapMaker(CorCF[[1]],length(StartDate),AxisPattern,
+               DayOfWeekData, Site=Site, "Cor relationship",ColorName="YlOrRd")
 }
 
-HeatMapMaker <- function(Mat,ColNames,RowNames,Main,ColorName,Site){
+
+HeatMapMaker <- function(NVector,N,ColNames,RowNames,Main,ColorName,Site){
   ColorLegend <- brewer.pal(n = 3, name = ColorName)
   Color <- brewer.pal(n = 8, name = ColorName)
+  Mat <- matrix(NVector, nrow=N)
   rownames(Mat) <- RowNames
   colnames(Mat) <- ColNames
   heatmap(Mat,Rowv=NA,Colv=NA,col = Color ,main=Main)
@@ -615,3 +622,23 @@ BestCorDFGen <- function(Site,DateFilt=mdy("9/15/2020"),
     select(Date,Site,Cases,Cases2,Cases2.PreRolled,
            LoessN1,LoessN2,N1Filtered,keep)
 }
+
+VecToDF <- function(DF,ValName,Start=mdy("10/1/2020"),StartDate=0:7,
+                    BinSize=c(7,14),Shift=-2:2){
+  DayOfWeekData <- weekdays(seq(Start, by=1,
+                                len=length(StartDate)))
+  xAxisPlot <- expand.grid(BinSize, Shift)
+  xAxisPlot <- xAxisPlot[order(xAxisPlot$Var1),]
+  
+  AxisPattern<- apply(xAxisPlot, 1, paste, collapse=" ")
+  Mat <- matrix(DF, nrow=length(StartDate))
+  colnames(Mat) <- AxisPattern
+  TransDF <- as.data.frame(Mat)
+  TransDF$WeekStart <- DayOfWeekData
+  TransDF <- pivot_longer(TransDF,`7 -2`:`14 2`,
+                          names_to=c("Bin Size","Offset"),
+                          names_sep=" ",values_to=ValName)
+  TransDF <- TransDF[!duplicated(TransDF), ]
+    
+  return(TransDF)
+  }

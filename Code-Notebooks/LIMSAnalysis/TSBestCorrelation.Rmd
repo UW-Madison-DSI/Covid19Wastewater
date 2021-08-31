@@ -26,6 +26,7 @@ library(lubridate)
 library(limma)
 library(zoo)
 library(dplyr)
+library(robets)
 
 #Data Files and prep work
 source("../../Scripts/GenPlotMaking.R")
@@ -195,7 +196,7 @@ plot(LMRob)
 
 
 
-ccf(s.ts(RobMod3),as.ts(MergedDF$N1[1:161]),lag.max=20)
+ccf(as.ts(RobMod),as.ts(MergedDF$N1[1:161]),lag.max=20)
 #robust es with offset 20 fits N1 best
 
 RobMod3<- fitted.values(robets(MergedDF$N1,
@@ -295,6 +296,33 @@ fishmethods::combinevar(LogMeans,LogVariances,rep(3,length(LogVariances)))
 
 library(survcomp)
 #survcomp::combine.est()
+
+N1 <- SLD+AR(1)+N(Well)+N(Fillter)
+
+#TS Framework. Want var
+
+#Look at other trend finders that predict
+#TS smoothing that mimics loess
+
+#1) SLD loess - interceptors agree - complex
+#2) Binning regression - simple clear relationship - simple
+#AC is throwing off binning a bit-look at every other week?-try to remove AC
+#Two good heuristics
+#3)Use TS to fit model=-ma(1)-ar(inf) 7 day MA or longer
+#this is underlying reason
+#shows there is a signal
+
+#could be a paper:could be many other questions
+#train on subsection->predict other
+#try on other locations
+#look at pop
+#how to get cases from N1->know how to get cases
+#SLD->Cases
+
+#Pred/Learning
+#Convol
+#fine tuning SLD
+#Full bay model
 ```
 
 

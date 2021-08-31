@@ -143,6 +143,9 @@ Intercepters <- c("MMSD-P7" ,"MMSD-P2" ,
 IntercepterDFList <- lapply(Intercepters,BestCorDFGen,DateFilt=mdy("2/1/2021"))
 
 lapply(IntercepterDFList,MethodPlot)
+#Slide Madison->interceptors
+#investigate p18
+#good sanity check
 ```
 
 ```{r All Sites}
