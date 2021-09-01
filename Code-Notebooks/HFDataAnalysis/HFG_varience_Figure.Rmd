@@ -4,7 +4,7 @@ author: "Marlin"
 date: "7/9/2021"
 output: html_document
 editor_options: 
-  chunk_output_type: inline
+  chunk_output_type: console
 ---
 
 ```{r warning = FALSE, message = FALSE,echo = FALSE}
@@ -30,10 +30,19 @@ HFGCaseDF <- HFGCasesPARSER(HFGCasesFN)
 
 
 
-Mod <- HFGWasteDF%>%
+Mod1 <- HFGWasteDF%>%
   group_by(Plant,Date,Filter)%>%
   summarise(ML=mean(log(N1GC)),VL=var(log(N1GC)),
             MN=mean(N1GC),VN=var(N1GC))
+
+Mod2 <- Mod1%>%
+  group_by(Plant,Date)%>%
+  summarise(AL=mean(VL),BL=var(ML),
+            A=mean(VN),B=var(MN))
+
+Mod2%>%
+  ggplot()+
+  geom_point(aes(x=log(A),y=log(B)))
 
 summary(lm(VL~I(VN/MN^2),data=Mod))
 summary(lm(VL~I(VN),data=Mod))

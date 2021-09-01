@@ -420,7 +420,7 @@ LocInput <- function(Mat,Loc,StartDate,DaySmoothing,Lag){
 
 
 CheckFunction <- function(DF,StartDate=0:7,DaySmoothing=c(7,14),Lag=-2:2,
-                          Show2=FALSE,Mat=FALSE,Ret="R2",CasesUsed="Cases4",
+                          Show2=FALSE,Mat=FALSE,Ret="R2",CasesUsed="BinningThenSLDCases",
                           DateStart=mdy("11/1/2020"),Pop=FALSE){
   SDL <- length(StartDate)
   DSL <- length(DaySmoothing)
@@ -480,18 +480,18 @@ ReplacementFilter <- function(n,Main,Rep){
 
 
 PlotingOptions <- function(DF,StartDate,DaySmoothing,Lag,
-                           Show=FALSE,Ret="LM",CasesUsed="Cases4",
+                           Show=FALSE,Ret="LM",CasesUsed="BinningThenSLDCases",
                            DateStart=mdy("9/1/2020"),Pop=FALSE){
   MadData <- DF%>%
     filter(Date>DateStart)%>%
     mutate(MovedCases = data.table::shift(Cases2,Lag),
-           Cases3 = data.table::shift(Cases,Lag),
+           BinningCases = data.table::shift(Cases,Lag),
            Week=as.numeric(Date+StartDate)%/%DaySmoothing)%>%
     group_by(Week)%>%
     summarise(NM=median(N1,na.rm=TRUE),
-              Cases3=mean(Cases3,na.rm = TRUE),
-              CasesM=mean(MovedCases,na.rm = TRUE))%>%
-    mutate(Cases4=c(NA,NA,rollapply(Cases3,width=3,FUN=weighted.mean,
+              BinningCases=mean(BinningCases,na.rm = TRUE),
+              SLDThenBinningCases=mean(MovedCases,na.rm = TRUE))%>%
+    mutate(BinningThenSLDCases=c(NA,NA,rollapply(BinningCases,width=3,FUN=weighted.mean,
                                     w=WeightVec,
                                     na.rm = TRUE)))%>%
     mutate(CasesMain=!!sym(CasesUsed))%>%
@@ -544,13 +544,13 @@ PlotingOptions <- function(DF,StartDate,DaySmoothing,Lag,
   }else if(Ret=="Plot"){
     return(CompPlot)
   }else if(Ret=="All"){
-    return(list(COR,R2,PVal))
+    return(paste(COR,R2,PVal))
   }
   
 }#StartDate,DaySmoothing,Lag,COR,R2
 
 
-HeatMapCor <- function(DF,StartDate=0:7,DaySmoothing=c(7),Lag=-2:2,ShowPlots=FALSE,CasesUsed="Cases4",
+HeatMapCor <- function(DF,StartDate=0:7,DaySmoothing=c(7),Lag=-2:2,ShowPlots=FALSE,CasesUsed="BinningThenSLDCases",
                        DateStart=mdy("10/1/2020"),Pop=FALSE){
   Site=unique(DF$Site)
   R2CF <- CheckFunction(DF=DF,DaySmoothing=DaySmoothing,StartDate=StartDate,

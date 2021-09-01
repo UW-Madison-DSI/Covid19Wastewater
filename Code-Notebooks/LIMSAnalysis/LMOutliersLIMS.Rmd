@@ -13,13 +13,13 @@ library(dplyr)
 library(lmtest)
 
 #Data Files and prep work
-source("../Scripts/GenPlotMaking.R")
-source("../Scripts/WasteWaterDataProccess.R")
-source("../Scripts/CasesDataProccess.R")
-source("../Scripts/HelperFunctions.R")
+source("../../Scripts/GenPlotMaking.R")
+source("../../Scripts/WasteWaterDataProccess.R")
+source("../../Scripts/CasesDataProccess.R")
+source("../../Scripts/HelperFunctions.R")
 
 
-source("../Scripts/WasteShiny/PrepData.R", local = TRUE)
+source("../../Scripts/WasteShiny/PrepData.R", local = TRUE)
 
 
 LIMSFullDFRoll=RollAvg(LIMSFullDF,n=21,var=c("N1","N1Error"))%>%
