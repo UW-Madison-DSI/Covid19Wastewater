@@ -390,9 +390,19 @@ LocInput <- function(Mat,Loc,StartDate,DaySmoothing,Lag){
 }
 
 
-CheckFunction <- function(DF,Weights,StartDate=0:7,DaySmoothing=c(7,14),Lag=-2:2,
-                          Show2=FALSE,Mat=FALSE,Ret="R2",CasesUsed="BinningThenSLDCases",
-                          DateStart=mdy("11/1/2020"),Pop=FALSE){
+CheckFunction <- function(DF,
+                          Weights,
+                          StartDate=0:7,
+                          DaySmoothing=c(7,14),
+                          Lag=-2:2,
+                          Show2=FALSE,
+                          Mat=FALSE,
+                          Ret="R2",
+                          CasesUsed="BinningThenSLDCases",
+                          NSUsed="MeanN1", 
+                          DateStart=mdy("9/1/2020"),
+                          LogModel=NA,
+                          Intercept=FALSE,Pop=FALSE){
   SDL <- length(StartDate)
   DSL <- length(DaySmoothing)
   LL <- length(Lag)
@@ -402,12 +412,16 @@ CheckFunction <- function(DF,Weights,StartDate=0:7,DaySmoothing=c(7,14),Lag=-2:2
     for (k in 1:LL){
       for (i in 1:SDL){
         Matrix[j*SDL*LL+k*SDL+i-SDL*LL-SDL]=PlotingOptions(DF=DF,
+                                        NSUsed=NSUsed,  
                                         Weights=Weights,
                                         StartDate=StartDate[i],
                                         DaySmoothing=DaySmoothing[j],
                                         Lag=Lag[k],
-                                        Ret=Ret,CasesUsed=CasesUsed,
-                                        DateStart=DateStart,Pop=Pop)
+                                        Ret=Ret,
+                                        CasesUsed=CasesUsed,
+                                        DateStart=DateStart,
+                                        LogModel=LogModel,
+                                        Intercept=Intercept,Pop=Pop)
       }
     }
   }
@@ -422,16 +436,28 @@ CheckFunction <- function(DF,Weights,StartDate=0:7,DaySmoothing=c(7,14),Lag=-2:2
   }
   ListInputs <- LocInput(Matrix,Loc,StartDate,DaySmoothing,Lag)
 
-  stopifnot(Target==PlotingOptions(DF=DF,Weights=Weights, StartDate=ListInputs[1],
-                                   DaySmoothing=ListInputs[2],Lag=ListInputs[3],
-                                    Ret=Ret,CasesUsed=CasesUsed,
-                                    DateStart=DateStart,Pop=Pop))
-  BestLM <- PlotingOptions(DF=DF,Weights=Weights, StartDate=ListInputs[1],
-                           DaySmoothing=ListInputs[2],Lag=ListInputs[3],
-                           Show=Show2, Ret="LM",CasesUsed=CasesUsed,
-                           DateStart=DateStart,Pop=Pop)
+  stopifnot(Target==PlotingOptions(DF=DF,NSUsed=NSUsed,Weights=Weights,
+                                   StartDate=ListInputs[1],
+                                   DaySmoothing=ListInputs[2],
+                                   Lag=ListInputs[3],
+                                   Ret=Ret,
+                                   CasesUsed=CasesUsed,
+                                   DateStart=DateStart,
+                                   LogModel=LogModel,
+                                   Intercept=Intercept,Pop=Pop))
   
-  SlopeL <- signif(BestLM[[1]][1],3)
+  BestLM <- PlotingOptions(DF=DF,NSUsed=NSUsed,Weights=Weights,
+                           StartDate=ListInputs[1],
+                           DaySmoothing=ListInputs[2],
+                           Lag=ListInputs[3],
+                           Show=Show2,
+                           Ret="LM",
+                           CasesUsed=CasesUsed,
+                           DateStart=DateStart,
+                           LogModel=LogModel,
+                           Intercept=Intercept,Pop=Pop)
+  
+  SlopeL <- signif(BestLM[[1]][2],3)
   DayOfWeekData <- weekdays(seq(as.Date("11/10/2020"), by=1, len=8))
   
 
@@ -455,59 +481,102 @@ ReplacementFilter <- function(n,Main,Rep){
 }
 
 
-PlotingOptions <- function(DF,Weights,StartDate,DaySmoothing,Lag,
-                           Show=FALSE,Ret="LM",CasesUsed="BinningThenSLDCases",
-                           DateStart=mdy("9/1/2020"),Pop=FALSE){
+DFPrepAnalysis <- function(DF,
+                           Weights,
+                           StartDate,
+                           DaySmoothing,
+                           Lag,
+                           CasesUsed="BinningThenSLDCases",
+                           NSUsed="N1Mean",
+                           DateStart=mdy("9/1/2020")
+                           ){
   MadData <- DF%>%
     filter(Date>DateStart)%>%
     mutate(MovedCases = data.table::shift(Cases2,Lag),
            BinningCases = data.table::shift(Cases,Lag),
-           Week=as.numeric(Date+StartDate)%/%DaySmoothing)%>%
+           Week=(as.numeric(Date)+StartDate)%/%DaySmoothing)%>%
     group_by(Week)%>%
-    summarise(NM=median(N1,na.rm=TRUE),
+    summarise(N1Median=median(N1,na.rm=TRUE),N1Mean=exp(mean(log(N1),na.rm=TRUE)),
+              AVGMedian=median(sqrt(N1*N2),na.rm=TRUE),AVGMean=exp(mean(log(sqrt(N1*N2)),na.rm=TRUE)),
               BinningCases=mean(BinningCases,na.rm = TRUE),
               SLDThenBinningCases=mean(MovedCases,na.rm = TRUE))%>%
     mutate(BinningThenSLDCases=c(NA,NA,rollapply(BinningCases,width=3,FUN=weighted.mean,
-                                    w=Weights,
-                                    na.rm = TRUE)))%>%
-    mutate(CasesMain=!!sym(CasesUsed))%>%
-    filter(is.finite(CasesMain))
+                                                 w=Weights,
+                                                 na.rm = TRUE)))%>%
+    mutate(CasesMain=!!sym(CasesUsed),NSMain=!!sym(NSUsed))%>%
+    filter(is.finite(CasesMain),is.finite(NSMain))
+}
+
+PlotingOptions <- function(DF,
+                           Weights,
+                           StartDate,
+                           DaySmoothing,
+                           Lag,
+                           Show=FALSE,
+                           Ret="LM",
+                           CasesUsed="BinningThenSLDCases",
+                           NSUsed="N1Mean",
+                           DateStart=mdy("9/1/2020"),
+                           LogModel=NA,
+                           Intercept=TRUE,Pop=FALSE){
   
+  MadData <- DFPrepAnalysis(DF=DF,
+                            Weights=Weights,
+                            StartDate=StartDate,
+                            DaySmoothing=DaySmoothing,
+                            Lag=Lag,
+                            CasesUsed=CasesUsed,
+                            NSUsed=NSUsed,
+                            DateStart=DateStart)
   #has issues. need to be fixed
-  if(Pop){
+  if(FALSE){
     MadData$CasesMain <- MadData$CasesMain/mean(MadData$Pop)
   }
   
-  LMod <- lm(CasesMain~NM-1,data=MadData)
-  COR <- signif(cor(MadData$CasesMain,MadData$NM,use="pairwise.complete.obs"),3)
-  R2 <- signif(summary(LMod)[[8]],3)
-  PVal <- signif(summary(LMod)$coefficients[,2],3)
+  if(LogModel){
+    MadData <- MadData%>%
+      mutate(CasesMain=log(CasesMain),
+             NSMain=log(NSMain))
+  }
+  if(Intercept){
+    LMod <- lm(CasesMain~NSMain,data=MadData)
+    PVal <- signif(summary(LMod)$coefficients[2,4],3)
+    Slope=LMod[[1]][2]
+    Inter=LMod[[1]][1]
+  }else{
+    LMod <- lm(CasesMain~NSMain-1,data=MadData)
+    PVal <- signif(summary(LMod)$coefficients[1,4],3)
+    Slope=LMod[[1]][1]
+    Inter=0
+  }
+  
+  COR <- signif(cor(MadData$CasesMain,MadData$NSMain,use="pairwise.complete.obs"),3)
+  R2 <- signif(summary(LMod)$r.squared,3)
 
   if(Show){
-    Slope=LMod[[1]][1]
     
-    DatePlot <- MadData%>%
-      ggplot()+
-      aes(x=Week)+
-      geom_line(aes(y=NM*Slope,color="N1Binned"))+
-      geom_line(aes(y=CasesMain,color="SLDBinned"))
+    TSPlot <- MadData%>%
+      ggplot(aes(x=Week))+
+      geom_line(aes(y=CasesMain,color="CaseSignal"))+
+      geom_line(aes(y=NSMain*Slope+Inter,color="Covid Signal"))
     
-    MaxX <- .9*(max(MadData$CasesMain,na.rm=TRUE))
-    MinY <- min(MadData$NM,na.rm=TRUE)
-    YRange <- max(MadData$NM,na.rm=TRUE)-MinY
+    
+    MinX <- min(MadData$CasesMain,na.rm=TRUE)
+    XRange <- max(MadData$CasesMain,na.rm=TRUE)-MinX
+    MinY <- min(MadData$NSMain,na.rm=TRUE)
+    YRange <- max(MadData$NSMain,na.rm=TRUE)-MinY
+    
     CompPlot <- MadData%>%
       ggplot()+
-      aes(x=CasesMain,y=NM)+
-      geom_abline(aes(color="Line of best first",slope=1/Slope,intercept=0),size=2)+
+      aes(x=CasesMain,y=NSMain)+
+      geom_abline(aes(color="Line of best first",slope=1/Slope,intercept=-Inter/Slope),size=2)+
       geom_point(size=1.5)+
       labs(x=paste(DaySmoothing,"Day binning of SLD Cases"),
            y=paste(DaySmoothing,"Day binning of N1"))+
-      annotate("text", x=MaxX, y=.2*YRange+MinY, label= paste("PVal:", PVal))+
-      annotate("text", x=MaxX, y=.23*YRange+MinY, label= paste("S Factor:", signif(LMod[[1]][1],3)))+
-      annotate("text", x=MaxX, y=.26*YRange+MinY, label= paste("R^2:", R2))+
-      annotate("text", x=MaxX, y=.3*YRange+MinY, label= paste("Cor:", COR))
-    print(CompPlot)
-    print(DatePlot)
+      annotate("text", x=.9*XRange+MinX, y=.2*YRange+MinY, label= paste("PVal:", PVal))+
+      annotate("text", x=.9*XRange+MinX, y=.23*YRange+MinY,label= paste("S Factor:", signif(1/Slope,3)))+
+      annotate("text", x=.9*XRange+MinX, y=.26*YRange+MinY,label= paste("R^2:", R2))+
+      annotate("text", x=.9*XRange+MinX, y=.3*YRange+MinY, label= paste("Cor:", COR))
   }
   if(Ret=="LM"){
     return(LMod)
@@ -518,9 +587,9 @@ PlotingOptions <- function(DF,Weights,StartDate,DaySmoothing,Lag,
   }else if(Ret=="PVal"){
     return(PVal)
   }else if(Ret=="Plot"){
-    return(CompPlot)
-  }else if(Ret=="All"){
-    return(paste(COR,R2,PVal))
+    return(list(CompPlot,TSPlot))
+  }else if(Ret=="All"){#StartDate,DaySmoothing,Lag
+    return(paste(COR,R2,PVal,Slope))
   }
   
 }#StartDate,DaySmoothing,Lag,COR,R2
@@ -541,7 +610,7 @@ HeatMapMaker <- function(NVector,N,ColNames,RowNames,Main,ColorName,Site){
 }
 
 BestCorDFGen <- function(DFCases,DFN1,Site,DateFilt=mdy("9/15/2020"),
-                         keep=c("N1")){
+                         keep=c("N1","N2")){
   SiteLimsDF <- DataPrep(DFN1,
                          keep=keep,
                          Site)
@@ -559,15 +628,15 @@ BestCorDFGen <- function(DFCases,DFN1,Site,DateFilt=mdy("9/15/2020"),
 
   MergedDF <- MergedDF%>%
     filter(Date>DateFilt)%>%
-    select(Date,Site,Cases,Cases2,Cases2.PreRolled,N1)
+    select(Date,Site,Cases,Cases2,Cases2.PreRolled,N1,N2)
   
   MergedDF
 }
 
-VecToDF <- function(DF,ValName,Start=mdy("10/1/2020"),StartDate=0:7,
+VecToDF <- function(DF,StartDate=0:7,
                     BinSize=c(7,14),Shift=-2:2){
-  DayOfWeekData <- weekdays(seq(Start, by=1,
-                                len=length(StartDate)))
+  stopifnot(length(DF)==length(BinSize)*length(StartDate)*length(Shift))
+  DayOfWeekData <- weekdays(as.Date(StartDate))
   xAxisPlot <- expand.grid(BinSize, Shift)
   xAxisPlot <- xAxisPlot[order(xAxisPlot$Var1),]
   
@@ -578,8 +647,65 @@ VecToDF <- function(DF,ValName,Start=mdy("10/1/2020"),StartDate=0:7,
   TransDF$WeekStart <- DayOfWeekData
   TransDF <- pivot_longer(TransDF,`7 -2`:`14 2`,
                           names_to=c("Bin Size","Offset"),
-                          names_sep=" ",values_to=ValName)
-  TransDF <- TransDF[!duplicated(TransDF), ]
-    
+                          names_sep=" ",values_to="All")%>%
+    separate(All,c("COR","R2","PVal","Slope"),sep=" ")
+  #TransDF <- TransDF[!duplicated(TransDF), ]
+
   return(TransDF)
-  }
+}
+
+
+TableDFGen <- function(DF,Cases,NSignal){
+  
+  DataTableVecLog <- CheckFunction(DF=DF,
+                                   Weights=WeightVec,
+                                   DaySmoothing=c(7,14),
+                                   Ret="All",
+                                   LogModel=TRUE,
+                                   CasesUsed=Cases,
+                                   NSUsed=NSignal,
+                                   Intercept=FALSE)
+  DFLog <- VecToDF(DataTableVecLog)%>%
+    mutate(LogModel="TRUE",hasIntercept="FALSE")
+  DataTableVecLogInt <- CheckFunction(DF=DF,
+                                      Weights=WeightVec,
+                                      DaySmoothing=c(7,14),
+                                      Ret="All",
+                                      LogModel=TRUE,
+                                      CasesUsed=Cases,
+                                      NSUsed=NSignal,
+                                      Intercept=TRUE)
+  DFLogInt <- VecToDF(DataTableVecLogInt)%>%
+    mutate(LogModel="TRUE",hasIntercept="TRUE")
+  
+  DataTableVec <- CheckFunction(DF=DF,
+                                Weights=WeightVec,
+                                DaySmoothing=c(7,14),
+                                Ret="All",
+                                LogModel=FALSE,
+                                CasesUsed=Cases,
+                                NSUsed=NSignal,
+                                Intercept=FALSE)
+  DFBase <- VecToDF(DataTableVec)%>%
+    mutate(LogModel="FALSE",hasIntercept="FALSE")
+  DataTableVecInt <- CheckFunction(DF=DF,
+                                   Weights=WeightVec,
+                                   DaySmoothing=c(7,14),
+                                   Ret="All",
+                                   LogModel=FALSE,
+                                   CasesUsed=Cases,
+                                   NSUsed=NSignal,
+                                   Intercept=TRUE)
+  DFInt <- VecToDF(DataTableVecLogInt)%>%
+    mutate(LogModel="FALSE",hasIntercept="TRUE")
+  
+  FullDF <- rbind(DFLog,DFInt,DFBase,DFLogInt)%>%
+    mutate(CaseSignal=Cases,NSignal=NSignal)%>%
+    select(CaseSignal,NSignal,LogModel,hasIntercept,WeekStart,
+           `Bin Size`,Offset,COR,R2	,PVal)
+}
+
+TableDFGen2 <- function(DF,NSignal){
+  CaseOptions <- c("BinningThenSLDCases","SLDThenBinningCases","BinningCases")
+  do.call("rbind",lapply(CaseOptions,TableDFGen,DF=DF,NSignal=NSignal))
+}
