@@ -69,6 +69,9 @@ LIMSFullDF <- LIMSDataPARSER(LIMSFN)%>%
 
 ```{r Madison Prep, fig.height=3,include=FALSE}
 MergedDF <- BestCorDFGen("Madison")
+
+
+
 ```
 
 
@@ -185,6 +188,7 @@ ccf(as.ts(RobMod),as.ts(MergedDF$N1[1:161]),lag.max=20)
 
 RobMod3<- fitted.values(robets(MergedDF$N1,
                            alpha=.0131,model="AAN"))[22:282]
+
 N1Resid <- log(MergedDF$N1[1:261]/RobMod3)
 
 plot(y=N1Resid,x=RobMod3)
@@ -196,11 +200,8 @@ par(new = TRUE)
 plot((CaseMod),col="Red",type="l",yaxt='n', ann=FALSE)
 ```
 
-```{r}
-
-
+```{r SLD VS Trend}
 MergedDF3 <- MergedDF%>%
-  #filter(Date>mdy("11/1/2020"))%>%
   select(Date,Cases2,Cases2.PreRolled
 ,N1,N1Error)
 
@@ -209,8 +210,60 @@ MergedDF3$Resid <- MergedDF3$Cases2.PreRolled-.00057*MergedDF3$Trend
 MergedDF3$ResidLog <- log(MergedDF3$Cases2.PreRolled/.00057*MergedDF3$Trend)
 MergedDF3 <- MergedDF3%>%
   filter(!is.na(Trend),!is.nan(Trend))
+MergedDF3$DIFFResid <- c(diff(MergedDF3$Cases2.PreRolled),NA) - c(diff(.00057*MergedDF3$Trend),NA)
+
+MergedDF3%>%
+  ggplot()+
+  aes(x=Date)+
+  geom_line(aes(y=Cases2.PreRolled,color="SLD"))+
+  geom_line(aes(y=.00057*Trend,color="Trend"))+
+  ggtitle("SLD vs Trend")
 
 
+MergedDF3%>%
+  ggplot()+
+  aes(x=Date)+
+  geom_line(aes(y=c(diff(Cases2.PreRolled),NA),color="SLD"))+
+  geom_line(aes(y=c(diff(.00057*Trend),NA),color="Trend"))+
+  ggtitle("SLD vs Trend")
+
+
+MergedDF3%>%
+  ggplot()+
+  #aes(x=Date)+
+  geom_histogram(aes(x=Resid))
+
+
+MergedDF3%>%
+  ggplot()+
+  aes(x=Date)+
+  geom_point(aes(y=Resid))
+
+acf(MergedDF3$Resid)
+pacf(MergedDF3$Resid)
+
+MergedDF3$TRUEResid <- auto.arima(MergedDF3$Resid)$residuals
+
+
+MergedDF3%>%
+  ggplot()+
+  #aes(x=Date)+
+  geom_histogram(aes(x=TRUEResid))
+
+
+MergedDF3%>%
+  ggplot()+
+  aes(x=Date)+
+  geom_point(aes(y=TRUEResid))
+
+acf(MergedDF3$TRUEResid)
+pacf(MergedDF3$TRUEResid)
+```
+
+
+```{r Trend vs N1}
+MergedDF3$Resid <- MergedDF3$N1-MergedDF3$Trend
+MergedDF3$ResidLog <- log(MergedDF3$N1/MergedDF3$Trend)
 MergedDF3%>%
   ggplot()+
   aes(x=Date)+
@@ -245,11 +298,33 @@ acf(resid(ARMod))
 pacf(resid(ARMod))
 # summary(lm(log(N1)~log(Trend)-1,data=MergedDF3))
 MergedDF3$TruLogResid <- resid(ARMod)
+
+
+TrendRemovedVar <- MergedDF3%>%
+  # ggplot()+
+  # geom_histogram(aes(x=TruLogResid))
+  summarise(VarDetrended=var(TruLogResid))
+
+WellFilterVar <- HFGWasteDF%>%
+  mutate(LogN1=log(N1GC))%>%
+  filter(!is.na(LogN1))%>%
+  group_by(Plant,Date)%>%
+  mutate(MeanDay=mean(LogN1))%>%
+  group_by(Plant,Date,Filter)%>%
+  mutate(MeanFilter=mean(LogN1))%>%
+  ungroup()%>%
+  # ggplot()+
+  # geom_histogram(aes(x=LogN1-MeanFilter))
+  summarise(VarFilter=var(LogN1-MeanDay),
+            VarWell=var(LogN1-MeanFilter))
+
+cbind(TrendRemovedVar,WellFilterVar)
 ```
 
 
 
 ```{r}
+
 MergedDF3%>%
   ggplot()+
   aes(x=Date)+
@@ -304,6 +379,232 @@ MergedDF3%>%
   geom_histogram(aes(x=log(N1Error)))
 
 ```
+
+```{r SLD VS N1}
+MergedDF3 <- MergedDF%>%
+  select(Date,Cases2,Cases2.PreRolled,N1,N1Error)%>%
+  filter(!is.na(N1))
+MergedDF3$Resid <-MergedDF3$Cases2.PreRolled-MergedDF3$N1
+MergedDF3$LogResid <-log(MergedDF3$Cases2.PreRolled/MergedDF3$N1)
+MergedDF3 <- MergedDF3%>%
+  filter(!is.na(LogResid))
+
+MergedDF3%>%
+  ggplot()+
+  aes(x=Date)+
+  geom_line(aes(y=Cases2.PreRolled,color="SLD"))+
+  geom_line(aes(y=.00057*N1,color="N1"))+
+  ggtitle("SLD vs N1")
+
+
+MergedDF3%>%
+  ggplot()+
+  #aes(x=Date)+
+  geom_histogram(aes(x=LogResid))
+
+
+MergedDF3%>%
+  ggplot()+
+  aes(x=Date)+
+  geom_point(aes(y=Resid))
+
+acf(MergedDF3$Resid)
+pacf(MergedDF3$Resid)
+
+MergedDF3$TRUEResid <- auto.arima(MergedDF3$LogResid)$residuals
+MergedDF3$TRUEResidTest <- auto.arima(log(MergedDF3$Cases2),
+                                      xreg=log(MergedDF3$N1))$residuals
+
+MergedDF3%>%
+  ggplot()+
+  #aes(x=Date)+
+  #geom_histogram(aes(x=TRUEResid))+
+  geom_histogram(aes(x=TRUEResidTest),fill="dark Red")
+
+
+MergedDF3%>%
+  ggplot()+
+  aes(x=Date)+
+  geom_point(aes(y=TRUEResidTest))
+
+
+MergedDF3$ArimaArimaErrors <- auto.arima(MergedDF3$TRUEResidTest)$residuals
+
+
+MergedDF3%>%
+  ggplot()+
+  aes(x=Date)+
+  geom_point(aes(y=ArimaArimaErrors))
+
+
+acf(MergedDF3$TRUEResidTest)
+pacf(MergedDF3$TRUEResidTest)
+
+BestMod <- auto.arima(log(MergedDF3$Cases2),
+                                      xreg=log(MergedDF3$N1))
+checkresiduals(BestMod)
+
+
+
+
+SLDVec <- (MergedDF3$Cases2)
+N1Vec <- (MergedDF3$N1)
+TrendVec <- exp(log(c(RobMod3,rep(NA,20))))
+Model <- arima(log(SLDVec),order=c(1,1,0),
+                                      xreg=log(N1Vec))
+
+auto.arima(log(SLDVec))
+```
+
+```{r Cross validation}
+library(forecast)
+SLD_Data <- ts(log(SLDVec), start = 2020, frequency = 365)
+N1_Data_xreg <- ts(log(N1Vec), start = 2020, frequency = 365)
+Trend_Data_xreg <- ts(log(N1Vec), start = 2020, frequency = 365)
+
+far2_xreg <- function(x, h, xreg, newxreg) {
+  forecast(Arima(x, order=c(1,1,0), xreg=xreg), xreg=newxreg)
+}
+far <- function(x, h){forecast(Arima(x, order=c(0,2,0)), h=h)}
+far2 <- function(x, h){forecast(auto.arima(x), h=h)}
+HAcVecGen <- function(TargetVec,
+                      MaxForcast=70,ForcastMethod,...){
+  
+  ForcastResid <- tsCV(SLD_Data, ForcastMethod,
+                       h=MaxForcast,...)
+  PerAVec <- vector()
+  for(i in 1:MaxForcast){
+    Hvec=ForcastResid[-((282-i):281),i]
+    SLDData <- TargetVec[-(1:i)]
+    PerAVec[i] <- accuracy(ts(SLDData - Hvec),
+                   ts(SLDData))[,2]
+  }
+  return(list(PerAVec,ForcastResid))
+}
+
+CustomLag <- function(x){
+  x2 <- strsplit(x, "[ ]")
+  LagN <- as.numeric(x2[[1]][1])
+  Vec1 <- unlist(x2)[!(as.numeric(unlist(x2))%%1==0)]
+  Vec2 <- c(rep(NA,LagN),Vec1[1:(length(Vec1)-LagN)])
+  return(Vec2)
+}
+
+ForcastLength <- 14
+
+XregMode <- HAcVecGen(SLD_Data,
+                 ForcastMethod=far2_xreg,
+                 MaxForcast=ForcastLength,
+                 xreg=N1_Data_xreg)
+
+XregTrendMode <- HAcVecGen(SLD_Data,
+                 ForcastMethod=far2_xreg,
+                 MaxForcast=ForcastLength,
+                 xreg=TrendVec)
+
+ArimaMode <- HAcVecGen(SLD_Data,
+                 ForcastMethod=far,
+                 MaxForcast=ForcastLength)
+
+AutoArimaMode <- HAcVecGen(SLD_Data,
+                 ForcastMethod=far2,
+                 MaxForcast=ForcastLength)
+
+RandWalkMode <- HAcVecGen(SLD_Data,
+                   ForcastMethod=rwf,
+                   MaxForcast=ForcastLength,
+                   drift=TRUE)
+
+naiveMode <- HAcVecGen(SLD_Data,
+                   ForcastMethod=naive,
+                   MaxForcast=ForcastLength)
+
+
+cbind("XregMode"=XregMode[[1]],
+      "XregTrendMode"=XregTrendMode[[1]],
+      "ArimaMode"=ArimaMode[[1]],
+      "RandWalkMode"=RandWalkMode[[1]],
+      "AutoArimaMode"=AutoArimaMode[[1]],
+      "naiveMode"=naiveMode[[1]])%>%
+  data.frame(h=1:ForcastLength)%>%
+  pivot_longer(XregMode:naiveMode)%>%
+  ggplot()+
+  aes(x=h)+
+  geom_point(aes(y=(value),color=name))+
+  scale_y_log10()
+
+DFNames <- paste0("h.",1:ForcastLength)
+```
+
+
+```{R Prediction Errors}
+
+ErrorPredictPlot <- function(X2){
+  data.frame(X2[[2]],h=1:length(SLD_Data),SLD_Data)%>%
+  pivot_longer(DFNames)%>%
+  mutate(lagA= as.numeric(sub("h.", "" , name)))%>%
+  group_by(lagA)%>%
+  mutate(Error=paste(lagA,value))%>%
+  mutate(Error=CustomLag(Error))%>%
+  filter(!is.na(Error))
+}
+ErrorForcastPlot <- function(X2){
+  data.frame(X2[[2]],h=1:length(SLD_Data),SLD_Data)%>%
+  pivot_longer(DFNames)%>%
+  mutate(lagA= as.numeric(sub("h.", "" , name)))%>%
+  group_by(lagA)%>%
+  mutate(Error=paste(lagA,value))%>%
+  mutate(Error=CustomLag(Error))%>%
+  filter(!is.na(Error))
+}
+WalkPredictResid <- suppressWarnings(ErrorForcastPlot(RandWalkMode))%>%
+  ggplot()+
+  aes(x=h)+
+  geom_line(aes(y=SLD_Data-as.numeric(Error),color=lagA))+
+    scale_color_gradient(low="blue", high="red")+
+  geom_line(aes(y=SLD_Data),color="black",size=1)+
+  ggtitle("Walk")
+
+ArimaPredictResid <- suppressWarnings(ErrorForcastPlot(ArimaMode))%>%
+  ggplot()+
+  aes(x=h)+
+  geom_line(aes(y=SLD_Data-as.numeric(Error),color=lagA))+
+    scale_color_gradient(low="blue", high="red")+
+  geom_line(aes(y=SLD_Data),color="black",size=1)+
+  ggtitle("Arima")
+
+XregPredictResid <- suppressWarnings(ErrorForcastPlot(XregMode))%>%
+  ggplot()+
+  aes(x=h)+
+  geom_line(aes(y=SLD_Data-as.numeric(Error),color=lagA))+
+    scale_color_gradient(low="blue", high="red")+
+  geom_line(aes(y=SLD_Data),color="black",size=1)+
+  ggtitle("Xreg")
+
+XregTrendPredictResid <- suppressWarnings(ErrorForcastPlot(XregTrendMode))%>%
+  ggplot()+
+  aes(x=h)+
+  geom_line(aes(y=SLD_Data-as.numeric(Error),color=lagA))+
+    scale_color_gradient(low="blue", high="red")+
+  geom_line(aes(y=SLD_Data),color="black",size=1)+
+  ggtitle("XregTrend")
+
+AutoArimaPredictResid <- suppressWarnings(ErrorForcastPlot(AutoArimaMode))%>%
+  ggplot()+
+  aes(x=h)+
+  geom_line(aes(y=SLD_Data-as.numeric(Error),color=lagA))+
+    scale_color_gradient(low="blue", high="red")+
+  geom_line(aes(y=SLD_Data),color="black",size=1)+
+  ggtitle("AutoArima")
+
+WalkPredictResid
+ArimaPredictResid
+AutoArimaPredictResid
+XregPredictResid
+XregTrendPredictResid
+```
+
+
 
 
 

@@ -4,7 +4,7 @@ author: "Marlin"
 date: "7/9/2021"
 output: html_document
 editor_options: 
-  chunk_output_type: console
+  chunk_output_type: inline
 ---
 
 ```{r warning = FALSE, message = FALSE,echo = FALSE}
@@ -40,22 +40,22 @@ Mod2 <- Mod1%>%
   summarise(AL=mean(VL),BL=var(ML),
             A=mean(VN),B=var(MN))
 
-Mod2%>%
+Mod1%>%
   ggplot()+
   geom_point(aes(x=log(A),y=log(B)))
 
-summary(lm(VL~I(VN/MN^2),data=Mod))
-summary(lm(VL~I(VN),data=Mod))
+summary(lm(VL~I(VN/MN^2),data=Mod1))
+summary(lm(VL~I(VN),data=Mod1))
 
-Mod%>%
+Mod1%>%
   ggplot()+
   geom_point(aes(x=log(MN),y=ML))
 
-Mod%>%
+Mod1%>%
   ggplot()+
   geom_point(aes(x=VN/MN^2,y=VL))
   
-Mod%>%
+Mod1%>%
   filter(!is.na(ML),!is.na(VL))%>%
   mutate(VNTL=VN/MN^2)%>%
   mutate(A=abs(VL-VNTL)/VL)%>%
@@ -64,7 +64,21 @@ Mod%>%
 
 plot(lm(VL~I(VN/MN^2)-1,data=Mod))
 
-mean(Mod$VL,na.rm=TRUE)
+mean(Mod1$VL,na.rm=TRUE)
+
+
+HFGWasteDF%>%
+  mutate(LogN1=log(N1GC))%>%
+  filter(!is.na(LogN1))%>%
+  group_by(Plant,Date)%>%
+  mutate(MeanDay=mean(LogN1))%>%
+  group_by(Plant,Date,Filter)%>%
+  mutate(MeanFilter=mean(LogN1))%>%
+  ungroup()%>%
+  # ggplot()+
+  # geom_histogram(aes(x=LogN1-MeanFilter))
+  summarise(VarFilter=var(LogN1-MeanDay),
+            VarWell=var(LogN1-MeanFilter))
 ```
 
 
