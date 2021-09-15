@@ -45,7 +45,8 @@ CovidDataPARSER= function(File1=NA,File2=NA,MMSDFN=NA){
       mutate(Site = ifelse(Site=="MMSD","Madison",paste("MMSD-P",Site,sep="")),
              Date = as.Date(Date))%>%
       group_by(Site)%>%
-      mutate(Cases=Cases - lag(Cases, n=lag,default = NA),Tests=Tests- lag(Tests, n=lag,default = NA))%>%
+      mutate(Cases=Cases - lag(Cases, n=lag,default = NA),
+             Tests=Tests- lag(Tests, n=lag,default = NA))%>%
       mutate(Per_pos=100*Cases/Tests)
   } else {
     FullData <- DormDF
