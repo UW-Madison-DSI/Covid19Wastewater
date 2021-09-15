@@ -52,7 +52,7 @@ HFGCasesFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/HighFreq_Ca
 
 LatCaseDF <- CovidDataPARSER(
   LatSpringDormFN, LatFallDormFN,MMSDFN = LatMMSDFN
-  ) %>% 
+  )%>% 
   
   filter(!is.na(Site)) %>%
   select(Date,Site,Cases,Tests,Per_pos)

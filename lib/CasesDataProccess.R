@@ -30,13 +30,17 @@ CovidDataPARSER= function(File1=NA,File2=NA,MMSDFN=NA){
     DormDF2 <- DormCaseDataPARSER(File2)
   }
   if(!is.na(File2)&&!is.na(File1)){
-    DormDF=rbind(DormDF,DormDF2)
+    stopifnot(is.data.frame(DormDF))
+    stopifnot(is.data.frame(DormDF2))
+    DormDF <- rbind(DormDF,DormDF2)
   }else if(!is.na(File2)){
-    DormDF=DormDF2
+    DormDF <- DormDF2
   }
   if(!is.na(MMSDFN)){
     lag=1
-    MMSDdata = read.csv(MMSDFN)%>%
+    MMSDdata  <-  read.csv(MMSDFN)
+    stopifnot(is.data.frame(MMSDdata))
+    MMSDdata <- MMSDdata%>%
       rename(Site=ServiceID)%>%
       mutate(Site = ifelse(Site=="MMSD","Madison",paste("MMSD-P",Site,sep="")),
              Date = as.Date(Date))%>%
@@ -52,7 +56,7 @@ CovidDataPARSER= function(File1=NA,File2=NA,MMSDFN=NA){
   } else if(is.na(DormDF)){
     FullData <- MMSDdata 
   }
-      
+  stopifnot(is.data.frame(FullData))
   FullData <- FullData%>%
     mutate(Site = ifelse(Site == "MMSD P18", "MMSD-P18", Site),
            Site = ifelse(Site == "MMSD P11", "MMSD-P11", Site),
