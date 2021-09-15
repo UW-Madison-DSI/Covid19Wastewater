@@ -1,4 +1,5 @@
 
+
 RollPerPos = function(RollingDF,CaseName,TestName,Facet=NA,n=7){
   TDF <- RollingDF%>%
     mutate(Facet=!!sym(Facet),
@@ -620,7 +621,7 @@ BestCorDFGen <- function(Site,DateFilt=mdy("9/15/2020"),
   MergedDF <- MergedDF%>%
     filter(Date>DateFilt)%>%
     select(Date,Site,Cases,Cases2,Cases2.PreRolled,
-           LoessN1,LoessN2,N1Filtered,keep)
+           LoessN1,LoessN2,N1Filtered,all_of(keep))
 }
 
 VecToDF <- function(DF,ValName,Start=mdy("10/1/2020"),StartDate=0:7,

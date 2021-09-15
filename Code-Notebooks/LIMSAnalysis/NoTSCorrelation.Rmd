@@ -1,6 +1,6 @@
 ---
 params:
-  BaseDir: "Z:/"
+  BaseDir: "R:/"
   ##BaseDir: "/Volumes/byandell/"
 title: "No TS Correlation"
 author: "Marlin"
@@ -20,6 +20,7 @@ knitr::opts_chunk$set(
 ```{r Start enviroment, message=FALSE, warning=FALSE}
 
 library(ggpubr)
+library(lubridate)
 library(forecast)
 library(lmtest)
 library(lubridate)
@@ -27,12 +28,15 @@ library(limma)
 library(zoo)
 library(dplyr)
 library(RColorBrewer)
+library(tidyverse)
+library(readxl)
+#BiocManager::install("limma")
 
 #Data Files and prep work
-source("../../Scripts/GenPlotMaking.R")
-source("../../Scripts/WasteWaterDataProccess.R")
-source("../../Scripts/CasesDataProccess.R")
-source("../../Scripts/HelperFunctions.R")
+source("../../lib/GenPlotMaking.R")
+source("../../lib/WasteWaterDataProccess.R")
+source("../../lib/CasesDataProccess.R")
+source("../../lib/HelperFunctions.R")
 
 ```
 

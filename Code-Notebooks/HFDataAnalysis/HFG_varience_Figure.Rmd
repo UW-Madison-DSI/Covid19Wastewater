@@ -19,7 +19,7 @@ source("../../Scripts/WasteWaterDataProccess.R")
 source("../../Scripts/CasesDataProccess.R")
 source("../../Scripts/HelperFunctions.R")
 
-PathStarter="Z:/"
+PathStarter="R:/"
 HFGCasesFN  <-  paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/HighFreq_CaseData_2021-05-07.csv")
 HFGWasteFN <-  paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/HFG data for stats corrected 071421.xlsx")
 HFGPop <- paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/HFGPop.csv")

@@ -37,7 +37,7 @@ source("../../Scripts/HelperFunctions.R")
 ```
 
 ```{r DF Set Up, include=TRUE}
-PathStarter="Z:/"
+PathStarter="R:/"
 
 LatMMSDFN  <-  paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/MMSD_Cases.csv")
 LatSpringDormFN  <-  paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/SpringSemester_CasesByDorm.TSV")
@@ -313,12 +313,16 @@ WellFilterVar <- HFGWasteDF%>%
   group_by(Plant,Date,Filter)%>%
   mutate(MeanFilter=mean(LogN1))%>%
   ungroup()%>%
-  # ggplot()+
-  # geom_histogram(aes(x=LogN1-MeanFilter))
+  #ggplot()+
+  #geom_histogram(aes(x=LogN1-MeanFilter))
   summarise(VarFilter=var(LogN1-MeanDay),
             VarWell=var(LogN1-MeanFilter))
 
 cbind(TrendRemovedVar,WellFilterVar)
+
+
+MergedDF3%>%
+  mutate()
 ```
 
 
