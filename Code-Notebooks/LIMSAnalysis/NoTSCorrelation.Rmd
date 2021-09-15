@@ -49,7 +49,7 @@ LIMSFN <- paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/WATERMICRO_WW_COV
 
 HFGCasesFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/HighFreq_CaseData_2021-05-07.csv")
 
-
+stopifnot(find("read.csv")=="package:utils")
 LatCaseDF <- CovidDataPARSER(
   LatSpringDormFN, LatFallDormFN,MMSDFN = LatMMSDFN
   )%>% 
