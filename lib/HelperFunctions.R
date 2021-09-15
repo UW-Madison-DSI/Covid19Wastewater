@@ -396,16 +396,17 @@ TSPloting2 <- function(PlotingTS,SourceDF,SubTitle,
 #Takes Case data and and N1 data and outputs results of binning and modeling the relationship
 BinRelationGen <- function(DF,
                            Weights,
-                           StartDate,
-                           DaySmoothing,
-                           Lag,
+                           StartDate=0,
+                           DaySmoothing=7,
+                           Lag=0,
                            Show=FALSE,
                            Ret="LM",
                            CasesUsed="BinningThenSLDCases",
                            NSUsed="N1Mean",
                            DateStart=mdy("9/1/2020"),
-                           LogModel=NA,
-                           Intercept=TRUE,Pop=FALSE){
+                           LogModel=FALSE,
+                           Intercept=TRUE,
+                           Pop=FALSE){
   
   MadData <- DFPrepAnalysis(DF=DF,
                             Weights=Weights,
@@ -493,7 +494,7 @@ LocInput <- function(Mat,Loc,StartDate,DaySmoothing,Lag){
 }
 
 
-CheckFunction <- function(DF,
+BinRelMatrix <- function(DF,
                           Weights,
                           StartDate=0:7,
                           DaySmoothing=c(7,14),
@@ -502,9 +503,9 @@ CheckFunction <- function(DF,
                           Mat=FALSE,
                           Ret="R2",
                           CasesUsed="BinningThenSLDCases",
-                          NSUsed="MeanN1", 
+                          NSUsed="N1Mean", 
                           DateStart=mdy("9/1/2020"),
-                          LogModel=NA,
+                          LogModel=FALSE,
                           Intercept=FALSE,Pop=FALSE){
   SDL <- length(StartDate)
   DSL <- length(DaySmoothing)
@@ -560,7 +561,8 @@ CheckFunction <- function(DF,
                            LogModel=LogModel,
                            Intercept=Intercept,Pop=Pop)
   
-  SlopeL <- signif(BestLM[[1]][2],3)
+  SlopePos=Intercept+1
+  SlopeL <- signif(BestLM[[1]][SlopePos],3)
   DayOfWeekData <- weekdays(seq(as.Date("11/10/2020"), by=1, len=8))
   
 
@@ -599,7 +601,8 @@ DFPrepAnalysis <- function(DF,
            BinningCases = data.table::shift(Cases,Lag),
            Week=(as.numeric(Date)+StartDate)%/%DaySmoothing)%>%
     group_by(Week)%>%
-    summarise(N1Median=median(N1,na.rm=TRUE),N1Mean=exp(mean(log(N1),na.rm=TRUE)),
+    summarise(N1Median=median(N1,na.rm=TRUE),
+              N1Mean=exp(mean(log(N1),na.rm=TRUE)),
               AVGMedian=median(sqrt(N1*N2),na.rm=TRUE),AVGMean=exp(mean(log(sqrt(N1*N2)),na.rm=TRUE)),
               BinningCases=mean(BinningCases,na.rm = TRUE),
               SLDThenBinningCases=mean(MovedCases,na.rm = TRUE))%>%
@@ -609,6 +612,8 @@ DFPrepAnalysis <- function(DF,
     mutate(CasesMain=!!sym(CasesUsed),NSMain=!!sym(NSUsed))%>%
     filter(is.finite(CasesMain),is.finite(NSMain))
 }
+
+
 
 
 
@@ -627,8 +632,15 @@ HeatMapMaker <- function(NVector,N,ColNames,RowNames,Main,ColorName,Site){
   title(xlab="time laged",ylab="Binning Start",sub=Site)
 }
 
-BestCorDFGen <- function(DFCases,DFN1,Site,DateFilt=mdy("9/15/2020"),
+BestCorDFGen <- function(Site,DFCases,DFN1,DateFilt=mdy("9/15/2020"),
                          keep=c("N1","N2")){
+  
+  # if(is.na(Site)){
+  #   stopifnot(length(unique(DFCases$Site))==1&length(unique(DFN1$Site))==1)
+  #   stopifnot(unique(DFCases$Site)[1]==unique(DFN1$Site)[1])
+  #   Site=unique(DFCases$Site)[1]
+  # }
+  
   SiteLimsDF <- DataPrep(DFN1,
                          keep=keep,
                          Site)
@@ -675,7 +687,7 @@ VecToDF <- function(DF,StartDate=0:7,
 
 TableDFGen <- function(DF,Cases,NSignal){
   
-  DataTableVecLog <- CheckFunction(DF=DF,
+  DataTableVecLog <- BinRelMatrix(DF=DF,
                                    Weights=WeightVec,
                                    DaySmoothing=c(7,14),
                                    Ret="All",
@@ -685,7 +697,7 @@ TableDFGen <- function(DF,Cases,NSignal){
                                    Intercept=FALSE)
   DFLog <- VecToDF(DataTableVecLog)%>%
     mutate(LogModel="TRUE",hasIntercept="FALSE")
-  DataTableVecLogInt <- CheckFunction(DF=DF,
+  DataTableVecLogInt <- BinRelMatrix(DF=DF,
                                       Weights=WeightVec,
                                       DaySmoothing=c(7,14),
                                       Ret="All",
@@ -696,7 +708,7 @@ TableDFGen <- function(DF,Cases,NSignal){
   DFLogInt <- VecToDF(DataTableVecLogInt)%>%
     mutate(LogModel="TRUE",hasIntercept="TRUE")
   
-  DataTableVec <- CheckFunction(DF=DF,
+  DataTableVec <- BinRelMatrix(DF=DF,
                                 Weights=WeightVec,
                                 DaySmoothing=c(7,14),
                                 Ret="All",
@@ -706,7 +718,7 @@ TableDFGen <- function(DF,Cases,NSignal){
                                 Intercept=FALSE)
   DFBase <- VecToDF(DataTableVec)%>%
     mutate(LogModel="FALSE",hasIntercept="FALSE")
-  DataTableVecInt <- CheckFunction(DF=DF,
+  DataTableVecInt <- BinRelMatrix(DF=DF,
                                    Weights=WeightVec,
                                    DaySmoothing=c(7,14),
                                    Ret="All",
@@ -726,4 +738,44 @@ TableDFGen <- function(DF,Cases,NSignal){
 TableDFGen2 <- function(DF,NSignal){
   CaseOptions <- c("BinningThenSLDCases","SLDThenBinningCases","BinningCases")
   do.call("rbind",lapply(CaseOptions,TableDFGen,DF=DF,NSignal=NSignal))
+}
+
+HeatMapCor <- function(DF,Weights,
+                       StartDate=0:7,
+                       DaySmoothing=c(7),
+                       Lag=-2:2,
+                       ShowPlots=FALSE,
+                       CasesUsed="BinningThenSLDCases",
+                       DateStart=mdy("10/1/2020"),
+                       Pop=FALSE,
+                       LogModel=FALSE){
+  Site=unique(DF$Site)
+  R2CF <- BinRelMatrix(DF=DF,Weights=Weights,DaySmoothing=DaySmoothing,
+                       StartDate=StartDate,Lag=Lag,Show2=ShowPlots,
+                       Mat=TRUE,Ret="R2",Pop=Pop,LogModel=LogModel,
+                        CasesUsed=CasesUsed,DateStart=DateStart)
+  PValCF <- BinRelMatrix(DF=DF,Weights=Weights,DaySmoothing=DaySmoothing,
+                         StartDate=StartDate,LogModel=LogModel,
+                          Lag=Lag,Show2=ShowPlots,Mat=TRUE,Ret="PVal",Pop=Pop,
+                          CasesUsed=CasesUsed, DateStart=DateStart)
+  CorCF <- BinRelMatrix(DF=DF,Weights=Weights,DaySmoothing=DaySmoothing,
+                        StartDate=StartDate,LogModel=LogModel,
+                         Lag=Lag,Show2=ShowPlots,Mat=TRUE,Ret="COR",Pop=Pop,
+                         CasesUsed=CasesUsed,DateStart=DateStart)
+  print(paste("R2:",R2CF[[2]]))
+  print(paste("PVal:",PValCF[[2]]))
+  print(paste("Cor:",CorCF[[2]]))
+  
+  DayOfWeekData <- weekdays(seq(DateStart, by=1, len=length(StartDate)))
+  
+  xAxisPlot <- expand.grid(DaySmoothing, Lag)
+  xAxisPlot <- xAxisPlot[order(xAxisPlot$Var1),]
+  
+  AxisPattern<- apply(xAxisPlot, 1, paste, collapse=" ")
+  HeatMapMaker(R2CF[[1]],length(StartDate),AxisPattern,
+               DayOfWeekData,Site=Site, "R2 relationship",ColorName="YlOrRd")
+  HeatMapMaker(PValCF[[1]],length(StartDate),AxisPattern,
+               DayOfWeekData, Site=Site, "PVal relationship",ColorName="YlOrRd")
+  HeatMapMaker(CorCF[[1]],length(StartDate),AxisPattern,
+               DayOfWeekData, Site=Site, "Cor relationship",ColorName="YlOrRd")
 }
