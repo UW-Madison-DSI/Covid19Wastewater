@@ -215,8 +215,7 @@ SiteLagHeatMap = function(CaseDF,WasteDF,seqminmax,Loc,Dat,Forma){
   return(plotedGraph)
 }
 
-#Depends on
-#lubridate
+library(lubridate)
 BoxPlotProduction = function(wastewaterDF,Time,concentration,Loc,BinSiz=7,DateLimits=NA){
   BoxGraphic=wastewaterDF%>%
     mutate(Date=!!sym(Time),N1=!!sym(concentration),Site=!!sym(Loc))%>%
