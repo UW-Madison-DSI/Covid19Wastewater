@@ -32,7 +32,7 @@ CovidDataPARSER= function(File1=NA,File2=NA,MMSDFN=NA){
   if(!is.na(File2)&&!is.na(File1)){
     stopifnot(is.data.frame(DormDF))
     stopifnot(is.data.frame(DormDF2))
-    DormDF <- rbind(DormDF,DormDF2)
+    DormDF <- bind_rows(DormDF,DormDF2)
   }else if(!is.na(File2)){
     DormDF <- DormDF2
   }
@@ -53,7 +53,7 @@ CovidDataPARSER= function(File1=NA,File2=NA,MMSDFN=NA){
     MMSDdata <- NA
   }
   if(!is.na(DormDF)&&!is.na(MMSDdata)){
-      FullData <- rbind(DormDF,MMSDdata)
+      FullData <- bind_rows(DormDF,MMSDdata)
   } else if(is.na(DormDF)){
     FullData <- MMSDdata 
   }

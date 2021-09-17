@@ -64,7 +64,7 @@ HFGCaseDF <- HFGCasesPARSER(FN = HFGCasesFN)%>%
   mutate(Cases = ifelse(Cases==-999,2.5,Cases))%>%
   filter(Site!="Madison")
 
-FullCase <- rbind(HFGCaseDF,LatCaseDF)
+FullCase <- bind_rows(HFGCaseDF,LatCaseDF)
 
 FullCaseRoll <- RollPerPos(FullCase,"Cases","Tests",Facet="Site",n = 14)%>%
   filter(Per_pos!=-500)
@@ -214,7 +214,7 @@ Pops <- c(P2Int,
 
 Show=FALSE
 Smooth=7
-IntercepterSlopes <- signif(rbind(
+IntercepterSlopes <- signif(bind_rows(
 summary(BinRelationGen(IntercepterDFList[[1]],Weights=WeightVec,1,Smooth,-2,
                        Ret="LM",Show=Show))$coefficients[1:2],
 summary(BinRelationGen(IntercepterDFList[[2]],Weights=WeightVec,5,Smooth,-2,
