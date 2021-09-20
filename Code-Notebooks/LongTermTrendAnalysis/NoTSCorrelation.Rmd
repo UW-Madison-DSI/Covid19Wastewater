@@ -37,6 +37,23 @@ source("../../lib/GenPlotMaking.R")
 source("../../lib/WasteWaterDataProccess.R")
 source("../../lib/CasesDataProccess.R")
 
+
+
+#ideas: scatter plot
+#predicting future
+#interplerating
+#break things down to ideas
+#SLD
+#Rem
+#make code more functional in design
+#param code
+#r script knit by param
+#Direc structure for testing
+#?Test first book
+#remove unneeded branch
+#add read me explaining presentation
+#Store what rmd gen fig and perhaps encription
+#**look into best practace
 ```
 
 ```{r DF Set Up, include=TRUE}
