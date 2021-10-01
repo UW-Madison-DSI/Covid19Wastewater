@@ -53,7 +53,7 @@ CovidDataPARSER= function(File1=NA,File2=NA,MMSDFN=NA){
     MMSDdata <- NA
   }
   if(!is.na(DormDF)&&!is.na(MMSDdata)){
-      FullData <- bind_rows(DormDF,MMSDdata)
+      FullData <- rbind(DormDF,MMSDdata)
   } else if(is.na(DormDF)){
     FullData <- MMSDdata 
   }

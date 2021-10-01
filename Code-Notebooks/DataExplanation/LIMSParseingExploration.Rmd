@@ -1,4 +1,7 @@
 ---
+params:
+  BaseDir: "Z:/"
+  ##BaseDir: "/Volumes/byandell/"
 title: "FullDataParsingAndAnalysis"
 author: "Marlin"
 date: "6/8/2021"
@@ -10,31 +13,38 @@ output: html_document
 library(shiny)
 library(ggpubr)
 library(dplyr)
+library(readxl)
 library(shinydashboard)
 library(shinyjqui)
 library(shinycssloaders)
 
 #Data Files and prep work
-source("../Scripts/GenPlotMaking.R")
-source("../Scripts/WasteWaterDataProccess.R")
-source("../Scripts/CasesDataProccess.R")
-source("../Scripts/HelperFunctions.R")
+#source("../../Scripts/HelperFunctions.R")
 
-
-source("../Scripts/WasteShiny/PrepData.R", local = TRUE)
-
-
-LIMSFullDFRoll=RollAvg(LIMSFullDF,n=21,var=c("N1","N1Error"))%>%
-  filter(!is.nan(N1)&!is.nan(N1Error))%>%
-  select(Date,Site,N1,N1Error)
-
+source("../../lib/GenPlotMaking.R")
+source("../../lib/WasteWaterDataProccess.R")
+source("../../lib/CasesDataProccess.R")
 ```
+
+```{r Read in raw Case LIMS}
+BaseDir <- params$BaseDir
+LIMSFN <- paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/WATERMICRO_WW_COVID-2021-06-30 17 40.xlsx")
+LIMSCaseMMSDFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/MMSD_Cases.csv")
+LIMSSpringDormFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/SpringSemester_CasesByDorm.TSV")
+LIMSFallDormFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/FallSemester_CasesByDorm.TSV")
+
+LIMSDF <- LIMSDataPARSER(LIMSFN)
+LatCaseDF <- CovidDataPARSER(
+  LIMSFallDormFN, LIMSSpringDormFN,MMSDFN = LIMSCaseMMSDFN
+  )
+```
+
 
 ```{r LIMS vs long dataset, include = FALSE}
 
 
 
-MadLIMSDF=LIMSFullDF%>%
+MadLIMSDF=LIMSDF%>%
   filter(Site=="Madison")%>%
   select(Date,N1)%>%
   mutate(Date=Date+1)

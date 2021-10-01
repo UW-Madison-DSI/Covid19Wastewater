@@ -1,4 +1,7 @@
 ---
+params:
+  BaseDir: "Z:/"
+  ##BaseDir: "/Volumes/byandell/"
 output:
   pdf_document: default
   html_document: default
@@ -16,18 +19,21 @@ knitr::opts_chunk$set(
 ```{r}
 library(ggformula)
 library(ggpubr)
+library(lubridate)
+library(tidyverse)
+library(readxl)
 ```
 
 ```{r}
-source("../Scripts/DataProccess.R")
+source("../../lib/GenPlotMaking.R")
+source("../../lib/WasteWaterDataProccess.R")
+source("../../lib/CasesDataProccess.R")
+source("../../lib/HelperFunctions.R")
 
-source("../Scripts/GenPlotMaking.R")
-source("../Scripts/WasteWaterDataProccess.R")
-source("../Scripts/CasesDataProccess.R")
-source("../Scripts/HelperFunctions.R")
-
-
-source("../Scripts/WasteShiny/PrepData.R", local = TRUE)
+BaseDir <- params$BaseDir
+LIMSFN <- paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/WATERMICRO_WW_COVID-2021-06-30 17 40.xlsx")
+LIMSFullDF <- LIMSDataPARSER(LIMSFN)%>%
+  select(Date,Site, BCoV, N1,N1Error,N2, N2Error, AVG,PMMoV,Pop,FlowRate)
 
 TargetSites=c("Madison","Hudson","UW-Sellery","UW-LakeShore")
 

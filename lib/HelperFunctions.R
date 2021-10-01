@@ -59,6 +59,7 @@ RollPerPosHelperFunc = function(vectorCases,vectorTests,n=7){
   return(SlideMeanVec)
 }
 
+
 RollAvg = function(RollingDF,FacetName="Site",n=21,method="Arth",var=c("ReportedCases","EpisodeCases","CollectedCases","ConfirmedCases")){
   TDF=RollingDF%>%
     mutate(Facet=!!sym(FacetName))
@@ -131,6 +132,20 @@ DataPrep <- function(DF=NA,SiteS=NA,keep=c()){
 }
 
 
+
+DFLoessFNC <- function(Data,Var="N1",span=.3){#makes loess smoothing of data
+  
+  MainDF <- Data%>%
+    tidyr::fill(all_of(Var), .direction = "down")#fills the df so the loess smoothing is full
+  loessModel=loessFit(y=log(MainDF[[Var]]),
+                      x=MainDF$Date,
+                      #weights=WeightList,
+                      span=span,
+                      #min.weight=minVal,
+                      #max.weight=maxVal,
+                      iterations=15)
+  return(exp(loessModel$fitted))
+}
 
 DFSmoothingFNC <- function(CaseDF,
                            SiteS,
@@ -407,7 +422,7 @@ BinRelationGen <- function(DF,
                            LogModel=FALSE,
                            Intercept=TRUE,
                            Pop=FALSE){
-  
+  #Create the binning with all the function options
   MadData <- DFPrepAnalysis(DF=DF,
                             Weights=Weights,
                             StartDate=StartDate,
@@ -416,16 +431,20 @@ BinRelationGen <- function(DF,
                             CasesUsed=CasesUsed,
                             NSUsed=NSUsed,
                             DateStart=DateStart)
-  #has issues. need to be fixed
+  
+  #has issues. need to be fixed. Some pop normalization
   if(FALSE){
     MadData$CasesMain <- MadData$CasesMain/mean(MadData$Pop)
   }
   
+  #Changes the data to log log
   if(LogModel){
     MadData <- MadData%>%
       mutate(CasesMain=log(CasesMain),
              NSMain=log(NSMain))
   }
+  
+  #Controls weighter we assume there is an intercept or not
   if(Intercept){
     LMod <- lm(CasesMain~NSMain,data=MadData)
     PVal <- signif(summary(LMod)$coefficients[2,4],3)
@@ -441,24 +460,23 @@ BinRelationGen <- function(DF,
   COR <- signif(cor(MadData$CasesMain,MadData$NSMain,use="pairwise.complete.obs"),3)
   R2 <- signif(summary(LMod)$r.squared,3)
   
-  if(Show){
-    
-    TSPlot <- MadData%>%
+  if(Show){#Controls if we generate these plots. Only return them if Ret=="Plot"
+    TSPlot <- MadData%>%#Ploting binned time function to see shape of TS
       ggplot(aes(x=Week))+
       geom_line(aes(y=CasesMain,color="CaseSignal"))+
       geom_line(aes(y=NSMain*Slope+Inter,color="Covid Signal"))
     
-    
+    #grabing edges of plot to place text
     MinX <- min(MadData$CasesMain,na.rm=TRUE)
     XRange <- max(MadData$CasesMain,na.rm=TRUE)-MinX
     MinY <- min(MadData$NSMain,na.rm=TRUE)
     YRange <- max(MadData$NSMain,na.rm=TRUE)-MinY
     
-    CompPlot <- MadData%>%
+    CompPlot <- MadData%>%#Plot Case vs N1 to show correlation
       ggplot()+
       aes(x=CasesMain,y=NSMain)+
       geom_abline(aes(color="Line of best first",slope=1/Slope,intercept=-Inter/Slope),size=2)+
-      geom_point(size=1.5)+
+      geom_point(size=1.5)+#helpful stats and the chosen line are added
       labs(x=paste(DaySmoothing,"Day binning of SLD Cases"),
            y=paste(DaySmoothing,"Day binning of N1"))+
       annotate("text", x=.9*XRange+MinX, y=.2*YRange+MinY, label= paste("PVal:", PVal))+
@@ -466,6 +484,8 @@ BinRelationGen <- function(DF,
       annotate("text", x=.9*XRange+MinX, y=.26*YRange+MinY,label= paste("R^2:", R2))+
       annotate("text", x=.9*XRange+MinX, y=.3*YRange+MinY, label= paste("Cor:", COR))
   }
+  
+  #Different return options
   if(Ret=="LM"){
     return(LMod)
   }else if(Ret=="COR"){
@@ -480,11 +500,13 @@ BinRelationGen <- function(DF,
     return(paste(COR,R2,PVal,Slope))
   }
   
-}#StartDate,DaySmoothing,Lag,COR,R2
+}
 
 
 
 LocInput <- function(Mat,Loc,StartDate,DaySmoothing,Lag){
+  #Works backward from list to figure out what part of the list
+  #connects to what inputs
   SDL <- length(StartDate)
   LL <- length(Lag)
   iL <- StartDate[((Loc-1)%%SDL)+1]
@@ -507,14 +529,17 @@ BinRelMatrix <- function(DF,
                           DateStart=mdy("9/1/2020"),
                           LogModel=FALSE,
                           Intercept=FALSE,Pop=FALSE){
+  
+  #Get input options to get total length of list
   SDL <- length(StartDate)
   DSL <- length(DaySmoothing)
   LL <- length(Lag)
-  #array(numeric(),c(SDL*DSL*LL))
+  #create list to operate on
   Matrix=vector(mode="numeric", length=SDL*DSL*LL)
   for (j in 1:DSL){
     for (k in 1:LL){
       for (i in 1:SDL){
+        #create Binning and LM and store requested relationship
         Matrix[j*SDL*LL+k*SDL+i-SDL*LL-SDL]=BinRelationGen(DF=DF,
                                         NSUsed=NSUsed,  
                                         Weights=Weights,
@@ -529,17 +554,18 @@ BinRelMatrix <- function(DF,
       }
     }
   }
-  if(Ret=="PVal"){
+  if(Ret=="PVal"){#Want to min pval instead
     Loc <- which.min(Matrix)
     Target=min(Matrix)
-  }else if(Ret=="All"){
+  }else if(Ret=="All"){#no clear optimization for ret=="ALL" so just return mat
     return(Matrix)
-  }else{
+  }else{#All other var want the max
     Loc <- which.max(Matrix)
     Target=max(Matrix)
   }
+  
   ListInputs <- LocInput(Matrix,Loc,StartDate,DaySmoothing,Lag)
-
+  #Make sure the max of list matches what it should be
   stopifnot(Target==BinRelationGen(DF=DF,NSUsed=NSUsed,Weights=Weights,
                                    StartDate=ListInputs[1],
                                    DaySmoothing=ListInputs[2],
@@ -549,7 +575,7 @@ BinRelMatrix <- function(DF,
                                    DateStart=DateStart,
                                    LogModel=LogModel,
                                    Intercept=Intercept,Pop=Pop))
-  
+  #Collect data for result report
   BestLM <- BinRelationGen(DF=DF,NSUsed=NSUsed,Weights=Weights,
                            StartDate=ListInputs[1],
                            DaySmoothing=ListInputs[2],
@@ -565,10 +591,11 @@ BinRelMatrix <- function(DF,
   SlopeL <- signif(BestLM[[1]][SlopePos],3)
   DayOfWeekData <- weekdays(seq(as.Date("11/10/2020"), by=1, len=8))
   
-
+  
   Ret <- paste("Best relationship at",DayOfWeekData[ListInputs[1]+1],ListInputs[2],ListInputs[3],"with", Ret ,"of",
                 max(Matrix),"with F factor of",SlopeL)
-
+  
+  #Return options
   if(Mat){
     return(list(Matrix,Ret))
   }

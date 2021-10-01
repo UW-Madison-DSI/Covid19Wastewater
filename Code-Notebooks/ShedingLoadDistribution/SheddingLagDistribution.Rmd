@@ -1,10 +1,13 @@
 ---
+params:
+  BaseDir: "Z:/"
+  ##BaseDir: "/Volumes/byandell/"
 title: "SheddingLagDistribution"
 author: "Marlin"
 date: "7/22/2021"
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
 editor_options:
   chunk_output_type: inline
 ---
@@ -26,25 +29,26 @@ library(lubridate)
 library(limma)
 library(zoo)
 library(dplyr)
+library(readxl)
 
 #Data Files and prep work
-source("../../Scripts/GenPlotMaking.R")
-source("../../Scripts/WasteWaterDataProccess.R")
-source("../../Scripts/CasesDataProccess.R")
-source("../../Scripts/HelperFunctions.R")
+source("../../lib/GenPlotMaking.R")
+source("../../lib/WasteWaterDataProccess.R")
+source("../../lib/CasesDataProccess.R")
+source("../../lib/HelperFunctions.R")
 
 ```
 
 ```{r DF Set Up, include=TRUE}
-PathStarter="Z:/"
+BaseDir <- params$BaseDir
 
-LatMMSDFN  <-  paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/MMSD_Cases.csv")
-LatSpringDormFN  <-  paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/SpringSemester_CasesByDorm.TSV")
-LatFallDormFN  <-  paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/FallSemester_CasesByDorm.TSV")
+LatMMSDFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/MMSD_Cases.csv")
+LatSpringDormFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/SpringSemester_CasesByDorm.TSV")
+LatFallDormFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/FallSemester_CasesByDorm.TSV")
 
-LIMSFN <- paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/WATERMICRO_WW_COVID-2021-06-30 17 40.xlsx")
+LIMSFN <- paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/WATERMICRO_WW_COVID-2021-06-30 17 40.xlsx")
 
-HFGCasesFN  <-  paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/HighFreq_CaseData_2021-05-07.csv")
+HFGCasesFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/HighFreq_CaseData_2021-05-07.csv")
 
 
 LatCaseDF <- CovidDataPARSER(LatSpringDormFN,LatFallDormFN,MMSDFN = LatMMSDFN)%>%
@@ -80,15 +84,15 @@ DataComp <- inner_join(CaseSum,N1Sum,by=c("Site"))%>%
 LowCaseDataPoints <- DataComp%>%
   filter(Dif<0)
 
+
+
+CovidDataPARSER(LatSpringDormFN,LatFallDormFN,MMSDFN = LatMMSDFN)
 ```
 
 
 
-```{r CaseSmoothing, include=FALSE}
-#return( RollPerPos(CaseDF,"Cases","Tests",Facet="Site"))
-library(limma)
-
-  #5.028338
+```{r CaseSmoothing, include=TRUE}
+#5.028338
 scale =5.028338
   #2.332779
 shape =2.332779
@@ -103,7 +107,6 @@ plot(c(rep(0,10),dgamma(1:21,scale =scale,shape =shape)[11:21]),
             main="Gamma Distribution with mean = 11.73 days and SD = 7.68",
             ylab = "Weight",
             xlab = "Lag")
-
 
 ```
 
@@ -193,11 +196,12 @@ SCPDF3 <- inner_join(SCPDF,SCPDF2,by=c("Date","Site","Cases"),suffix=c("",".PreR
 
 MergedDF <- full_join(SCPDF3,FullMadLimsDF, by=c("Date","Site"))
 
-MergedDF$LoessN1 <- exp(DFLoessFNC(MergedDF,Var="N1",SiteS="Madison",span=.2))
-MergedDF$LoessN2 <- exp(DFLoessFNC(MergedDF,Var="N2",SiteS="Madison",span=.2))
+MergedDF$LoessN1 <- (DFLoessFNC(MergedDF,span=.2))
+MergedDF$LoessN2 <- (DFLoessFNC(MergedDF,Var="N2",span=.2))
 
 MergedDF <- MergedDF%>%
-  select(Date,Site,Cases,Cases2,Cases2.PreRolled,N1,LoessN1,N1Error,N2,LoessN2,N2Error)
+  select(Date,Site,Cases,SLDCases,SLDCases.PreRolled,N1,LoessN1,N1Error,N2,LoessN2,N2Error)%>%
+  filter(!is.na(LoessN1),!is.na(SLDCases.PreRolled))
 
 TSDF <- ts(MergedDF,start = 18520)
 SLDPreRolledVec <- TSDF[,5]
@@ -214,10 +218,6 @@ ccf(diff((loessN1Vec)),diff(SLDPreRolledVec))
 A <- ts.union(diff(log(SLDPreRolledVec)),
                 diff(stats::lag((loessN1Vec),6)))
 summary(lm(A[,1]~A[,2]))
-
-
-
-dgamma(1:21,scale =5.028338,shape =2.332779)
 ```
 
 ```{r}
@@ -226,11 +226,11 @@ MergedDF$N1Filtered <- ReplacementFilter(7,MergedDF$N1,MergedDF$LoessN1)
 
 
 MadData <- MergedDF%>%
-  mutate(MovedCases = lag(Cases2,5))%>%
+  mutate(MovedCases = lag(SLDCases,5))%>%
   mutate(Week=as.numeric(Date)%/%21)%>%
   group_by(Week)%>%
   summarise(N1M=median(N1Filtered,na.rm=TRUE),CasesM=mean(MovedCases,na.rm = TRUE))
-  #select(N1,LoessN1,N1Filtered,Cases,Cases2,Cases2.PreRolled,N1M,CasesM,Date)
+  #select(N1,LoessN1,N1Filtered,Cases,SLDCases,SLDCases.PreRolled,N1M,CasesM,Date)
 
 
 
@@ -269,34 +269,32 @@ plot(resid(LM))
 ```{r}
 # MergedDF%>%
 #   ggplot()+
-#   aes(x=Cases2.PreRolled,y=lead(LoessN1,14))+
+#   aes(x=SLDCases.PreRolled,y=lead(LoessN1,14))+
 #   geom_point()+
 #   labs(x="SLD Cases",
 #        y="loess smoothing of N1")+
-#   annotate("text", x=300, y=4e4, label= paste("R^2:", signif(summary(lm(Cases2.PreRolled~lead(LoessN1,14),data=MergedDF))[[8]],3)))+
-#   annotate("text", x=300, y=1e5, label= paste("Cor:", signif(cor(MergedDF$Cases2.PreRolled,lead(MergedDF$LoessN1,14),use="pairwise.complete.obs"),3)))
+#   annotate("text", x=300, y=4e4, label= paste("R^2:", signif(summary(lm(SLDCases.PreRolled~lead(LoessN1,14),data=MergedDF))[[8]],3)))+
+#   annotate("text", x=300, y=1e5, label= paste("Cor:", signif(cor(MergedDF$SLDCases.PreRolled,lead(MergedDF$LoessN1,14),use="pairwise.complete.obs"),3)))
 # 
 # 
 # MergedDF%>%
 #   ggplot()+
-#   aes(x=Cases2.PreRolled,y=lead(N1Filtered,LeadN))+
+#   aes(x=SLDCases.PreRolled,y=lead(N1Filtered,LeadN))+
 #   geom_point()+
 #   labs(x="SLD Cases")+
-#   annotate("text", x=300, y=4e4, label= paste("R^2:", signif(summary(lm((Cases2.PreRolled)~(lead(N1Filtered,LeadN)),data=MergedDF))[[8]],3)))+
-#   annotate("text", x=300, y=1e5, label= paste("Cor:", signif(cor(MergedDF$Cases2.PreRolled,lead(MergedDF$N1Filtered,LeadN),use="pairwise.complete.obs"),3)))
+#   annotate("text", x=300, y=4e4, label= paste("R^2:", signif(summary(lm((SLDCases.PreRolled)~(lead(N1Filtered,LeadN)),data=MergedDF))[[8]],3)))+
+#   annotate("text", x=300, y=1e5, label= paste("Cor:", signif(cor(MergedDF$SLDCases.PreRolled,lead(MergedDF$N1Filtered,LeadN),use="pairwise.complete.obs"),3)))
 # 
-# summary(lm((Cases2.PreRolled)~(lead(N1,LeadN)),data=MergedDF))
-# summary(lm((Cases2.PreRolled)~(lead(N1Filtered,LeadN)),data=MergedDF))
+# summary(lm((SLDCases.PreRolled)~(lead(N1,LeadN)),data=MergedDF))
+# summary(lm((SLDCases.PreRolled)~(lead(N1Filtered,LeadN)),data=MergedDF))
 # summary(lm(CasesM~N1M,data=MadData))
-# summary(lm(Cases2.PreRolled~lead(LoessN1,14),data=MergedDF))
+# summary(lm(SLDCases.PreRolled~lead(LoessN1,14),data=MergedDF))
 ```
 
 
 --------------------------
 
 ```{r Mad Full Graphic, include=FALSE}
-
-source("../../Scripts/HelperFunctions.R")
 N1Rel <- SLDGraphics("Madison",log(SLDPreRolledVec),(loessN1Vec),"SLD","log(N1)")
 N2Rel <- SLDGraphics("Madison",log(SLDPreRolledVec),(loessN2Vec),"SLD","log(N1)")
 
@@ -319,7 +317,7 @@ N2Rel <- SLDGraphics("Madison",log(SLDPreRolledVec),(loessN2Vec),"SLD","log(N1)"
 # model <- VARselect(log(SLDPreRolledVec),lag.max = 50, exogen = cbind(loessN1Vec,loessN2Vec))
 # model
 # 
-# Model1 <- VAR(cbind(SLDPreRolledVec,exp(loessN1Vec)), p = 2, type = "const", season = NULL) 
+# Model1 <- VAR(cbind(SLDPreRolledVec,(loessN1Vec)), p = 2, type = "const", season = NULL) 
 # summary(Model1)
 # 
 # Serial1 <- serial.test(Model1, lags.pt = 5, type = "PT.asymptotic")
@@ -330,8 +328,8 @@ N2Rel <- SLDGraphics("Madison",log(SLDPreRolledVec),(loessN2Vec),"SLD","log(N1)"
 # #N1 on Linear scale made sense
 # #Difference
 # #
-# plot((SLDPreRolledVec),exp(loessN1Vec))
-# plot(diff(SLDPreRolledVec),diff(exp(loessN1Vec)))
+# plot((SLDPreRolledVec),(loessN1Vec))
+# plot(diff(SLDPreRolledVec),diff((loessN1Vec)))
 ```
 
 ```{r, warning=FALSE}
@@ -346,7 +344,7 @@ N2Rel <- SLDGraphics("Madison",log(SLDPreRolledVec),(loessN2Vec),"SLD","log(N1)"
 #First diff acts as derivative for perfect smooth
 #First diff is hard to interpret with noisy data
 #goal is not perfect correlation: goal is to have principled analysis that helps 
-#explain what we see to test different changes
+#lain what we see to test different changes
 #
 #is we get something that works great for madison. Nathan will finish
 
@@ -462,17 +460,17 @@ Verbose=TRUE
 rbind(LMTestLagPloting(log(N1Vec),SLDPreRolledVec,Show=Verbose),
 LMTestLagPloting(N1Vec,SLDPreRolledVec,Show=Verbose),
 LMTestLagPloting(log(loessN1Vec),SLDPreRolledVec,Show=Verbose),
-LMTestLagPloting(loessN1Vec,SLDPreRolledVec,Show=Verbose),
-LMTestLagPloting(log(RollingN1),SLDPreRolledVec,Show=Verbose),
-LMTestLagPloting(RollingN1,SLDPreRolledVec,Show=Verbose))
+LMTestLagPloting(loessN1Vec,SLDPreRolledVec,Show=Verbose))
+#LMTestLagPloting(log(RollingN1),SLDPreRolledVec,Show=Verbose),
+#LMTestLagPloting(RollingN1,SLDPreRolledVec,Show=Verbose))
 
 
 rbind(LMTestLagPloting(diff(log(N1Vec)),diff(SLDPreRolledVec),Show=Verbose),
 LMTestLagPloting(diff(N1Vec),diff(SLDPreRolledVec),Show=Verbose),
 LMTestLagPloting(diff(log(loessN1Vec)),diff(SLDPreRolledVec),Show=Verbose),
-LMTestLagPloting(diff(loessN1Vec),diff(SLDPreRolledVec),Show=Verbose),
-LMTestLagPloting(diff(log(RollingN1)),diff(SLDPreRolledVec),Show=Verbose),
-LMTestLagPloting(diff(RollingN1),diff(SLDPreRolledVec),Show=Verbose))
+LMTestLagPloting(diff(loessN1Vec),diff(SLDPreRolledVec),Show=Verbose))
+#LMTestLagPloting(diff(log(RollingN1)),diff(SLDPreRolledVec),Show=Verbose),
+#LMTestLagPloting(diff(RollingN1),diff(SLDPreRolledVec),Show=Verbose))
 ```
 
 
@@ -606,7 +604,7 @@ LMTestLagPloting(diff(RollingN1),diff(SLDPreRolledVec),Show=Verbose))
 # MergedDF$LoessN1 <- DFLoessFNC(MergedDF,SiteS="Madison",span=.2)
 # 
 # MergedDF <- MergedDF%>%
-#   select(Date,Site,Cases,Cases2,Cases2.PreRolled,N1,LoessN1,N1Error)
+#   select(Date,Site,Cases,SLDCases,SLDCases.PreRolled,N1,LoessN1,N1Error)
 # 
 # TSDF <- ts(MergedDF,start = 18520)
 # SLDPreRolledVec <- TSDF[,5]
@@ -618,7 +616,7 @@ LMTestLagPloting(diff(RollingN1),diff(SLDPreRolledVec),Show=Verbose))
 # 
 # source("../../Scripts/HelperFunctions.R")
 # 
-# TSPloting2(list(SLDPreRolledVec,exp(loessN1Vec),CaseVec),MergedDF,
+# TSPloting2(list(SLDPreRolledVec,(loessN1Vec),CaseVec),MergedDF,
 #             SubTitle="Madison",span=.2)
 # #[190:221]
 # 
@@ -647,7 +645,7 @@ LMTestLagPloting(diff(RollingN1),diff(SLDPreRolledVec),Show=Verbose))
 #                        by=c("Date","Site"))
 # 
 # MergedDF <- MergedDF%>%
-#   select(Date,Site,Cases,Cases2,N1,LoessN1,N1Error)
+#   select(Date,Site,Cases,SLDCases,N1,LoessN1,N1Error)
 # 
 # TSDF <- ts(MergedDF,start = 18520)
 # SLDCaseVec <- TSDF[,4]
@@ -682,10 +680,10 @@ DormGraphics <- function(Site,InDepth=FALSE,Short=TRUE){
   MergedDF <- inner_join(SCPDF3,FullLimsDF, by=c("Date","Site"))
   
   
-  MergedDF$LoessN1 <- DFLoessFNC(MergedDF,SiteS=Site)
+  MergedDF$LoessN1 <- DFLoessFNC(MergedDF)
   
   MergedDF <- MergedDF%>%
-    select(Date,Site,Cases,Cases2,Cases2.PreRolled,N1,LoessN1,N1Error)
+    select(Date,Site,Cases,SLDCases,SLDCases.PreRolled,N1,LoessN1,N1Error)
   
   TSDF <- ts(MergedDF,start = 18520)
   SLDPreRolledVec <- TSDF[,5]

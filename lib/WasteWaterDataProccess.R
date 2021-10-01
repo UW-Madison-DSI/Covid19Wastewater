@@ -52,55 +52,64 @@ HFGWastePARSER = function(data){
 
 
 LIMSDataPARSER <- function(LIMSFN){
-
+  NumericVars=c("average_flow_rate","avg_sars_cov2_conc","bcov_rec_rate",
+                "bcov_spike_conc","capacity_mgd","conductivity",
+                "equiv_sewage_amt","n1_lod","n1_loq","n1_num_no_target_control",
+                "n1_sars_cov2_conc","n1_sars_cov2_error","n1_sars_cov2_lod",
+                "n2_lod","n2_loq","n2_num_no_target_control","n2_sars_cov2_conc",
+                "n2_sars_cov2_error","ph","pmmov_conc","population_served",
+                "temperature","tss")
   missing_codes <- MissingCode()
   
-  LIMSDF <- read_excel(LIMSFN,
-                                  na  =  missing_codes,
-                                  col_types = c(rep("guess",48),"text",rep("guess",12)))%>%
-    rename(Site=wwtp_name,
-           FlowRate=average_flow_rate,
-           Cov1_below_lod=avg_sars_cov2_below_lod,
-           cov2_conc=avg_sars_cov2_conc,
-           BCoV=bcov_rec_rate,
-           BCoVConc=bcov_spike_conc,
-           county=county_names,
-           Date=unformatted_collectdate,
-           N1=n1_sars_cov2_conc,
-           N1Error=n1_sars_cov2_error,
-           N2=n2_sars_cov2_conc,
-           N2Error=n2_sars_cov2_error,
-           PMMoV=pmmov_conc,
-           Pop=population_served)%>%
-    mutate(Date=as.Date(Date),
-           N1=as.numeric(N1),
-           N2=as.numeric(N2),
-           Pop=as.numeric(Pop),
-           N1Error=as.numeric(N1Error),
-           N2Error=as.numeric(N2Error),
-           PMMoV=as.numeric(PMMoV),
-           BCoV=as.numeric(BCoV),FlowRate=as.numeric(FlowRate))%>%
-    mutate(Site=ifelse(Site=="Madison Metro","Madison",Site),
-           Site=ifelse(Site=="Covid Sewage UW DORM","UW-LakeShore",Site),
-           Site=ifelse(Site=="Covid Sewage UW Sell","UW-Sellery",Site),
-           Site=ifelse(Site=="Madison-P2-Central","MMSD-P2",Site),
-           Site=ifelse(Site=="Madison-P7-SE","MMSD-P7",Site),
-           Site=ifelse(Site=="Madison-P8-West","MMSD-P8",Site),
-           Site=ifelse(Site=="Madison-P11-SW","MMSD-P11",Site),
-           Site=ifelse(Site=="Madison-P18-NE","MMSD-P18",Site),
-           AVG = AVGGenFN(N1, N2),
-           wt = 2 - is.na(N1) - is.na(N2))%>%
-     mutate(isDorm = ifelse(Site %in% c("UW-LakeShore","UW-Sellery"),TRUE,FALSE),
-           Site = ifelse(isDorm&Date>=ymd("2021-01-11"),paste("Spring",Site),Site),
-           Site = ifelse(isDorm&Date<=ymd("2020-12-25"),paste("Fall",Site),Site),
-           Site = ifelse(isDorm&Date>ymd("2020-12-25")&
-                           Date<ymd("2021-01-11"),paste("Break",Site),Site))%>%
+  LIMSDF <- read_excel(LIMSFN,na  =  MissingCode(),col_types = c(rep("text",61)))
+  LIMSDF <- suppressWarnings(mutate(LIMSDF,
+      across(all_of(NumericVars),as.numeric),
+      test_result_date=as.POSIXlt(test_result_date,format="%m/%d/%Y %H:%M"),
+      sample_collect_date=mdy(sample_collect_date)
+    ))%>%
+    rename(
+      Site=wwtp_name,
+      FlowRate=average_flow_rate,
+      Cov1_below_lod=avg_sars_cov2_below_lod,
+      cov2_conc=avg_sars_cov2_conc,
+      BCoV=bcov_rec_rate,
+      BCoVConc=bcov_spike_conc,
+      county=county_names,
+      Date=sample_collect_date,
+      RepDate=test_result_date,
+      N1=n1_sars_cov2_conc,
+      N1Error=n1_sars_cov2_error,
+      N2=n2_sars_cov2_conc,
+      N2Error=n2_sars_cov2_error,
+      PMMoV=pmmov_conc,
+      Pop=population_served
+    )%>%
+    mutate(#Standardizing the Site names names
+      Site=ifelse(Site=="Madison Metro","Madison",Site),
+      Site=ifelse(Site=="Covid Sewage UW DORM","UW-LakeShore",Site),
+      Site=ifelse(Site=="Covid Sewage UW Sell","UW-Sellery",Site),
+      Site=ifelse(Site=="Madison-P2-Central","MMSD-P2",Site),
+      Site=ifelse(Site=="Madison-P7-SE","MMSD-P7",Site),
+      Site=ifelse(Site=="Madison-P8-West","MMSD-P8",Site),
+      Site=ifelse(Site=="Madison-P11-SW","MMSD-P11",Site),
+      Site=ifelse(Site=="Madison-P18-NE","MMSD-P18",Site),
+      AVG = AVGGenFN(N1, N2),
+      wt = 2 - is.na(N1) - is.na(N2),
+      #Giving the different semesters unique names
+      isDorm = ifelse(Site %in% c("UW-LakeShore","UW-Sellery"),TRUE,FALSE),
+      Site = ifelse(isDorm&Date>=ymd("2021-01-11"),paste("Spring",Site),Site),
+      Site = ifelse(isDorm&Date<=ymd("2020-12-25"),paste("Fall",Site),Site),
+      Site = ifelse(isDorm&Date>ymd("2020-12-25")&
+                      Date<ymd("2021-01-11"),paste("Break",Site),Site)
+    )%>%
     select(-isDorm)%>%
     #converting -1 meaning missing data to NA
     mutate(N1=ifelse(N1==-1,NA,N1),
            N2=ifelse(N2==-1,NA,N2),
            PMMoV=ifelse(PMMoV==-1,NA,PMMoV),
-           BCoV=ifelse(BCoV==-1,NA,BCoV))
+           BCoV=ifelse(BCoV==-1,NA,BCoV))%>%
+    mutate(AVG = AVGGenFN(N1, N2),
+           wt = 2 - is.na(N1) - is.na(N2),)
   
   return(LIMSDF)
 }

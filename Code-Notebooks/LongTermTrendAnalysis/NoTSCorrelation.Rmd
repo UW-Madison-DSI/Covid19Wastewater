@@ -1,6 +1,6 @@
 ---
 params:
-  BaseDir: "R:/"
+  BaseDir: "Z:/"
   ##BaseDir: "/Volumes/byandell/"
 title: "No TS Correlation"
 author: "Marlin"
@@ -24,18 +24,18 @@ library(lubridate)
 library(forecast)
 library(lmtest)
 library(lubridate)
-library(limma)
+#library(limma)
 library(zoo)
 library(dplyr)
 library(RColorBrewer)
 library(tidyverse)
 library(readxl)
 #BiocManager::install("limma")
-
 #Data Files and prep work
 source("../../lib/GenPlotMaking.R")
 source("../../lib/WasteWaterDataProccess.R")
 source("../../lib/CasesDataProccess.R")
+source("../../lib/HelperFunctions.R")
 
 
 
@@ -66,7 +66,6 @@ LIMSFN <- paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/WATERMICRO_WW_COV
 
 HFGCasesFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/HighFreq_CaseData_2021-05-07.csv")
 
-stopifnot(find("read.csv")=="package:utils")
 LatCaseDF <- CovidDataPARSER(
   LatSpringDormFN, LatFallDormFN,MMSDFN = LatMMSDFN
   )%>% 
