@@ -128,10 +128,10 @@ MainHFGCaseDF <- HFGCaseDF%>%
 MainHFGCaseDF%>%
   ggplot()+
   aes(x=Date)+
-  geom_point(aes(y=ReportedCases,color="ReportedCases"),size=1)+
-  geom_point(aes(y=EpisodeCases,color="EpisodeCases"),size=1)+
-  geom_point(aes(y=CollectedCases,color="CollectedCases"),size=1)+
-  geom_point(aes(y=ConfirmedCases,color="ConfirmedCases"),size=1)+
+  geom_smooth(aes(y=ReportedCases,color="ReportedCases"),span =.4,se=FALSE)+
+  geom_smooth(aes(y=EpisodeCases,color="EpisodeCases"),span =.4,se=FALSE)+
+  geom_smooth(aes(y=CollectedCases,color="CollectedCases"),span =.4,se=FALSE)+
+  geom_smooth(aes(y=ConfirmedCases,color="ConfirmedCases"),span =.4,se=FALSE)+
   scale_x_date(limits=c(mdy("1/1/2021"),mdy("4/1/2021")))+
   facet_wrap(~Site,scales="free")
 
@@ -141,6 +141,18 @@ MainHFGCaseDF%>%
             EpisodeCases=mean(EpisodeCases,na.rm=TRUE),
             CollectedCases=mean(CollectedCases,na.rm=TRUE),
             ConfirmedCases=mean(ConfirmedCases,na.rm=TRUE))
+
+
+full_join(MainHFGCaseDF,MainHFGWasteDF)%>%
+  filter(Site %in% c("Kenosha","Madison","Oshkosh","Sun Prairie","Wausau"),Filter=="1")%>%
+  ggplot()+
+  aes(x=Date)+
+  geom_smooth(aes(y=EpisodeCases,color="EpisodeCases"),span =.4,se=FALSE)+
+  geom_smooth(aes(y=CollectedCases,color="CollectedCases"),span =.4,se=FALSE)+
+  geom_smooth(aes(y=ConfirmedCases,color="ConfirmedCases"),span =.4,se=FALSE)+
+  geom_smooth(aes(y=N1/10000,color="N1"),span =.4,se=FALSE)+
+  scale_x_date(limits=c(mdy("1/20/2021"),mdy("3/1/2021")))+
+  facet_wrap(~Site)
 ```
 
 ```{r LIMS Data}
@@ -327,3 +339,29 @@ MadisonCaseDF%>%
   scale_x_log10()
 ```
 
+```{r Case format comperison}
+ColsName <- c(colnames(MadisonCaseDF),
+#colnames(LIMSDF),
+#colnames(HFGWasteDF),
+colnames(HFGCaseDF))
+
+UniqueColsName <- unique(ColsName)
+
+length(ColsName)
+length(UniqueColsName)
+
+UniqueColsName
+```
+
+```{r WasteWater format comperison}
+ColsName <- c(
+colnames(LIMSDF),
+colnames(HFGWasteDF))
+
+UniqueColsName <- unique(ColsName)
+
+length(ColsName)
+length(UniqueColsName)
+
+UniqueColsName
+```
