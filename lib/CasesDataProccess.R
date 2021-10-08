@@ -47,7 +47,12 @@ CovidDataPARSER= function(File1=NA,File2=NA,MMSDFN=NA){
       group_by(Site)%>%
       mutate(Cases=Cases - lag(Cases, n=lag,default = NA),
              Tests=Tests- lag(Tests, n=lag,default = NA))%>%
-      mutate(Per_pos=100*Cases/Tests)
+      mutate(Per_pos=100*Cases/Tests)%>%
+      mutate(Site = ifelse(Site == "MMSD P18", "MMSD-P18", Site),
+             Site = ifelse(Site == "MMSD P11", "MMSD-P11", Site),
+             Site = ifelse(Site == "MMSD P2", "MMSD-P2", Site),
+             Site = ifelse(Site == "MMSD P7", "MMSD-P7", Site),
+             Site = ifelse(Site == "MMSD P8", "MMSD-P8", Site))
   } else {
     FullData <- DormDF
     MMSDdata <- NA
@@ -58,12 +63,6 @@ CovidDataPARSER= function(File1=NA,File2=NA,MMSDFN=NA){
     FullData <- MMSDdata 
   }
   stopifnot(is.data.frame(FullData))
-  FullData <- FullData%>%
-    mutate(Site = ifelse(Site == "MMSD P18", "MMSD-P18", Site),
-           Site = ifelse(Site == "MMSD P11", "MMSD-P11", Site),
-           Site = ifelse(Site == "MMSD P2", "MMSD-P2", Site),
-           Site = ifelse(Site == "MMSD P7", "MMSD-P7", Site),
-           Site = ifelse(Site == "MMSD P8", "MMSD-P8", Site))
     
   return(FullData)
 }

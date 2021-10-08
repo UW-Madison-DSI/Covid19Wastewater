@@ -49,14 +49,6 @@ HFGFrame <- HFGWastePARSER(HFGWasteFN)%>%
 
 HFGCaseDFNoReported <- HFGCasesPARSER(HFGCaseFN)
 
-#Reported Cases match census level case data
-HFGCaseDFReportedOnly <- HFGCaseDFNoReported%>%
-  mutate(Date=Date+1,ReportedCases=ConfirmedCases)%>%
-  select(Date,Site,ReportedCases)
-
-HFGCaseDF  <-  full_join(HFGCaseDFReportedOnly,HFGCaseDFNoReported,by=c("Date","Site"))
-
-
 HFGCaseDFRoll <- HFGCaseDF%>%
   mutate(EpisodeCases=ifelse(EpisodeCases==-999,2.5,EpisodeCases),
          CollectedCases=ifelse(CollectedCases==-999,2.5,CollectedCases),
