@@ -1,4 +1,7 @@
 ---
+params:
+  BaseDir: "Z:/"
+  ##BaseDir: "/Volumes/byandell/"
 title: "HFG Variance"
 author: "Marlin"
 date: "7/9/2021"
@@ -10,25 +13,23 @@ editor_options:
 ```{r warning = FALSE, message = FALSE,echo = FALSE}
 library(ggpubr)
 library(dplyr)
-
 library(lubridate)
+library(readxl)
 
 #Data Files and prep work
-source("../../Scripts/GenPlotMaking.R")
-source("../../Scripts/WasteWaterDataProccess.R")
-source("../../Scripts/CasesDataProccess.R")
-source("../../Scripts/HelperFunctions.R")
+source("../../lib/GenPlotMaking.R")
+source("../../lib/WasteWaterDataProccess.R")
+source("../../lib/CasesDataProccess.R")
+source("../../lib/HelperFunctions.R")
 
-PathStarter="R:/"
-HFGCasesFN  <-  paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/HighFreq_CaseData_2021-05-07.csv")
-HFGWasteFN <-  paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/HFG data for stats corrected 071421.xlsx")
-HFGPop <- paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/HFGPop.csv")
+BaseDir <- params$BaseDir
+HFGCasesFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/HighFreq_CaseData_2021-05-07.csv")
+HFGWasteFN <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/HFG data for stats corrected 071421.xlsx")
+HFGPop <- paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/HFGPop.csv")
 
 HFGWasteDF <- HFGWastePARSER(HFGWasteFN)
 HFGCaseDF <- HFGCasesPARSER(HFGCasesFN)
   #mutate(across(c("ReportedCases", "EpisodeCases","",""), scale2))
-
-
 
 Mod1 <- HFGWasteDF%>%
   group_by(Plant,Date,Filter)%>%
@@ -39,10 +40,6 @@ Mod2 <- Mod1%>%
   group_by(Plant,Date)%>%
   summarise(AL=mean(VL),BL=var(ML),
             A=mean(VN),B=var(MN))
-
-Mod1%>%
-  ggplot()+
-  geom_point(aes(x=log(A),y=log(B)))
 
 summary(lm(VL~I(VN/MN^2),data=Mod1))
 summary(lm(VL~I(VN),data=Mod1))
@@ -62,10 +59,9 @@ Mod1%>%
   ungroup()%>%
   summarise(ME=mean(A),FilterVar=fishmethods::combinevar(ML,VL,rep(3,length(ML)))[[2]])
 
-plot(lm(VL~I(VN/MN^2)-1,data=Mod))
+#plot(lm(VL~I(VN/MN^2)-1,data=Mod))
 
 mean(Mod1$VL,na.rm=TRUE)
-
 
 HFGWasteDF%>%
   mutate(LogN1=log(N1GC))%>%
@@ -114,9 +110,5 @@ HFGDataMod <- full_join(full_join(LoessHFG,HFGWasteDF,by=c("Date","Plant")),
 SSM <- function(Messured,Real){
   return(sum((log(Messured)-log(Real))^2,na.rm=TRUE)/(length(Real)-1))
 }
-
 SSM(HFGDataMod$N1GC,HFGDataMod$RealN1)
-
-
-
 ```

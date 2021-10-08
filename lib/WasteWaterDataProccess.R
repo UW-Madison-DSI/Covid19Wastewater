@@ -109,7 +109,7 @@ LIMSDataPARSER <- function(LIMSFN){
            PMMoV=ifelse(PMMoV==-1,NA,PMMoV),
            BCoV=ifelse(BCoV==-1,NA,BCoV))%>%
     mutate(AVG = AVGGenFN(N1, N2),
-           wt = 2 - is.na(N1) - is.na(N2),)
+           wt = 2 - is.na(N1) - is.na(N2))
   
   return(LIMSDF)
 }

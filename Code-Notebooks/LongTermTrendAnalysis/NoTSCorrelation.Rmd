@@ -230,34 +230,34 @@ Pops <- c(P2Int,
 
 Show=FALSE
 Smooth=7
-IntercepterSlopes <- signif(bind_rows(
-summary(BinRelationGen(IntercepterDFList[[1]],Weights=WeightVec,1,Smooth,-2,
-                       Ret="LM",Show=Show))$coefficients[1:2],
-summary(BinRelationGen(IntercepterDFList[[2]],Weights=WeightVec,5,Smooth,-2,
-                       Ret="LM",Show=Show))$coefficients[1:2],
-summary(BinRelationGen(IntercepterDFList[[3]],Weights=WeightVec,7,Smooth,-2,
-                       Ret="LM",Show=Show))$coefficients[1:2],
-summary(BinRelationGen(IntercepterDFList[[4]],Weights=WeightVec,1,Smooth,-2,
-                       Ret="LM",Show=Show))$coefficients[1:2],
-summary(BinRelationGen(IntercepterDFList[[5]],Weights=WeightVec,2,Smooth,-2,
-                       Ret="LM",Show=Show))$coefficients[1:2]
-),2)
-rownames(IntercepterSlopes) <- Intercepters
-colnames(IntercepterSlopes) <- c("Slope","SE")
-IntercepterSlopes
-Slopes <- IntercepterSlopes[,1]
-plot(Pops,Slopes)
-plot(Pops,Slopes/Pops)
-#Flow for Norm. comp flow to pop
-#hard to interp-mess around 
-LocPops <- c(PS2,
-          PS7,
-          PS8,
-          PS11,
-          PS18)
-
-LocPops/max(LocPops)
-Pops/max(Pops)
+# IntercepterSlopes <- signif(bind_rows(
+# summary(BinRelationGen(IntercepterDFList[[1]],Weights=WeightVec,1,Smooth,-2,
+#                        Ret="LM",Show=Show))$coefficients[1:2],
+# summary(BinRelationGen(IntercepterDFList[[2]],Weights=WeightVec,5,Smooth,-2,
+#                        Ret="LM",Show=Show))$coefficients[1:2],
+# summary(BinRelationGen(IntercepterDFList[[3]],Weights=WeightVec,7,Smooth,-2,
+#                        Ret="LM",Show=Show))$coefficients[1:2],
+# summary(BinRelationGen(IntercepterDFList[[4]],Weights=WeightVec,1,Smooth,-2,
+#                        Ret="LM",Show=Show))$coefficients[1:2],
+# summary(BinRelationGen(IntercepterDFList[[5]],Weights=WeightVec,2,Smooth,-2,
+#                        Ret="LM",Show=Show))$coefficients[1:2]
+# ),2)
+# rownames(IntercepterSlopes) <- Intercepters
+# colnames(IntercepterSlopes) <- c("Slope","SE")
+# IntercepterSlopes
+# Slopes <- IntercepterSlopes[,1]
+# plot(Pops,Slopes)
+# plot(Pops,Slopes/Pops)
+# #Flow for Norm. comp flow to pop
+# #hard to interp-mess around 
+# LocPops <- c(PS2,
+#           PS7,
+#           PS8,
+#           PS11,
+#           PS18)
+# 
+# LocPops/max(LocPops)
+# Pops/max(Pops)
 ```
 
 

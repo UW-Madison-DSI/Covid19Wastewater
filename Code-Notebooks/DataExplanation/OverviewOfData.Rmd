@@ -1,0 +1,58 @@
+---
+params:
+  BaseDir: "Z:/"
+  ##BaseDir: "/Volumes/byandell/"
+title: "Overview Of Data"
+author: "Marlin"
+output: html_document
+---
+
+##HFG Covid concentration data***
+```{r File name, include=FALSE}
+BaseDir <- params$BaseDir
+HFGWasteFN <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/HFG data for stats corrected 071421.xlsx")
+```
+
+```{r Gen need functions}
+
+AVGGenFN <- function(N1, N2) {
+  AVG <- sqrt(N1 * N2)
+  AVG <- ifelse(is.na(N1), N2, AVG)
+  AVG <- ifelse(is.na(N2), N1, AVG)
+}
+
+```
+
+```{r parse data}
+#needs: readxl, tidyverse, lubridate
+library(readxl)
+library(tidyverse)
+library(lubridate)
+MissingCode <-c("","NA","0","Undetected","Not Detected",
+           "Field Parameters to be filled in", 
+           "Inhibited-to be re-ran", "#DIV/0!","-","In progress","Undetermined","LA")
+
+HFGWasteDF <- read_excel(HFGWasteFN, na = MissingCode,
+                         col_types = c(rep("text", 3), rep("numeric", 4),"text",rep("numeric", 2),"text",rep("numeric", 3)),
+                                                 sheet = 1)%>%
+    rename(repName="qpCR Sample Name",
+           Date="Collection Date",
+           N1Ct="N1 CT",
+           N1="N1 GC/L",
+           N1LOD="N1 <LOD",
+           N2Ct="N2 CT",
+           N2="N2 GC/L",
+           N2LOD="N2 <LOD",
+           PMMOVCT="PMMOV CT",
+           PMMOVGC="PMMOV GC/L",
+           BCoV="BCoV% recovery",
+           Filter = "Filter Rep",
+           Well = "Well Rep")%>%
+    mutate(N1LOD=N1LOD=="Y",
+           N2LOD=N2LOD=="Y",
+           wt = 2 - is.na(N1) - is.na(N2),
+           AVG = AVGGenFN(N1, N2),
+           Date=coalesce(suppressWarnings(as.numeric(Date))-1+ymd("1900-01-01"),
+                           suppressWarnings(mdy(Date))))
+HFGWasteDF
+```

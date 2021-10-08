@@ -1,4 +1,7 @@
 ---
+params:
+  BaseDir: "Z:/"
+  ##BaseDir: "/Volumes/byandell/"
 title: "N1 measurement is the arithmetic mean of 3 replicates"
 output: html_notebook
 ---
@@ -7,16 +10,53 @@ output: html_notebook
 
 library(ggpubr)
 library(dplyr)
-
-
+library(tidyverse)
+library(readxl)
+#BiocManager::install("limma")
 #Data Files and prep work
-source("../Scripts/GenPlotMaking.R")
-source("../Scripts/WasteWaterDataProccess.R")
-source("../Scripts/CasesDataProccess.R")
-source("../Scripts/HelperFunctions.R")
+source("../../lib/GenPlotMaking.R")
+source("../../lib/WasteWaterDataProccess.R")
+source("../../lib/CasesDataProccess.R")
+source("../../lib/HelperFunctions.R")
+```
 
-source("../Scripts/WasteShiny/PrepData.R", local = TRUE)
+```{r DF Set Up, include=TRUE}
+BaseDir <- params$BaseDir
+LatMMSDFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/MMSD_Cases.csv")
+LatSpringDormFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/SpringSemester_CasesByDorm.TSV")
+LatFallDormFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/FallSemester_CasesByDorm.TSV")
+HFGWasteFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/HFG data for stats corrected 071421.xlsx")
 
+LIMSFN <- paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/WATERMICRO_WW_COVID-2021-06-30 17 40.xlsx")
+
+HFGCasesFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/HighFreq_CaseData_2021-05-07.csv")
+
+LatCaseDF <- CovidDataPARSER(
+  LatSpringDormFN, LatFallDormFN,MMSDFN = LatMMSDFN
+  )%>% 
+  
+  filter(!is.na(Site)) %>%
+  select(Date,Site,Cases,Tests,Per_pos)
+
+HFGCaseDF <- HFGCasesPARSER(FN = HFGCasesFN)%>%
+  filter(!is.na(Site))%>%
+  mutate(Tests=NA,Per_pos=NA)%>%
+  select(Date,Site,Cases=ReportedCases,Tests,Per_pos)%>%
+  mutate(Cases = ifelse(Cases==-999,2.5,Cases))%>%
+  filter(Site!="Madison")
+
+FullCase <- bind_rows(HFGCaseDF,LatCaseDF)
+
+FullCaseRoll <- RollPerPos(FullCase,"Cases","Tests",Facet="Site",n = 14)%>%
+  filter(Per_pos!=-500)
+
+LIMSFullDF <- LIMSDataPARSER(LIMSFN)%>%
+  select(Date,Site, BCoV, N1,N1Error,N2, N2Error,PMMoV,Pop,FlowRate)
+
+HFGFrame <- HFGWastePARSER(HFGWasteFN)%>%
+  rename(Site=Plant,N1=N1GC,N2=N2GC,PMMoV=PMMOVGC,Pct_BCoV=BCoV)%>%
+  mutate(Filter=as.character(Filter),Well=as.character(Well))%>%
+  rename(`Filter replicates`=Filter)
 ```
 
 ```{r Data set has comp to previous data sets, fig.height = 6, fig.width = 13}
@@ -31,7 +71,7 @@ MadLIMSDF=LIMSFullDF%>%
 N1Start=min(MadHFDF$Date)-1
 N1End=max(MadHFDF$Date)+1
 
-MadLongDF=LatWasteDF%>%
+MadLongDF=LIMSFullDF%>%
   filter(Site=="Madison")%>%
   select(Date,N1)
 
@@ -51,17 +91,14 @@ MadHFMeanDF=MadHFDF%>%
 
 ggplot()+
   geom_point(aes(x=Date,y=N1,shape="HF DF",color=`Filter replicates`),data=MadHFDF)+
-  geom_point(aes(x=Date-1,y=N1,shape="Longitudinal"), data = MadLongDF ,size=3)+
-  geom_point(aes(x=Date-.25,y=N1GeoMean,shape="HF Geo Mean"),data = MadHFMeanDF,size=3)+
-  geom_point(aes(x=Date+.25,y=N1Mean,shape="HF Mean"),data = MadHFMeanDF,size=3)+
+  geom_point(aes(x=Date,y=N1,shape="Longitudinal"), data = MadLongDF ,size=3)+
+  geom_point(aes(x=Date,y=N1GeoMean,shape="HF Geo Mean"),data = MadHFMeanDF,size=3)+
+  geom_point(aes(x=Date,y=N1Mean,shape="HF Mean"),data = MadHFMeanDF,size=3)+
   #geom_point(aes(x=Date-1,y=N1,shape="LIMS"),data = MadLIMSDF,size=3)+
   scale_y_log10()+
   scale_x_date(limits=c(N1Start,N1End))+
   ggtitle("Both datasets are identical to a point")+
-  ylab("N1")+ Header_theme(ConfigOption)+
-      theme(axis.text.x = element_text(size = ConfigOption$XAxisLabSiz, colour = "black"),
-            axis.title.x = element_text(size = ConfigOption$GenFontSiz, colour = "black"),
-            plot.margin = unit(c(.5,0,0,0), "cm"))
+  ylab("N1")
 
 
 MadLongDF2=MadLongDF%>%

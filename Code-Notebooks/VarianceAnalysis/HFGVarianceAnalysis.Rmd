@@ -1,4 +1,7 @@
 ---
+params:
+  BaseDir: "Z:/"
+  ##BaseDir: "/Volumes/byandell/"
 title: "HFGAnalysis"
 author: "Marlin"
 date: "7/23/2021"
@@ -31,10 +34,9 @@ source("../../Scripts/HelperFunctions.R")
 ```{r DF Set Up, warning=FALSE,message=FALSE}
 
 
-PathStarter="Z:/"
-
-HFGWasteFN  <-  paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/HFG data for stats corrected 071421.xlsx")
-HFGCaseFN <- paste0(PathStarter,"COVID-19_WastewaterAnalysis/data/raw/HighFreq_CaseData_2021-05-07.csv")
+BaseDir <- params$BaseDir
+HFGCasesFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/HighFreq_CaseData_2021-05-07.csv")
+HFGWasteFN <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/HFG data for stats corrected 071421.xlsx")
 #Z:\COVID-19_WastewaterAnalysis\data\raw
 
 #Reads Transformed HFG Data
