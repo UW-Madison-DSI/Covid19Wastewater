@@ -1,4 +1,7 @@
 ---
+params:
+  BaseDir: "Z:/"
+  ##BaseDir: "/Volumes/byandell/"
 title: "TSAnalysis"
 author: "Marlin"
 date: "7/9/2021"
@@ -21,28 +24,23 @@ library(lmtest)
 library(lubridate)
 
 #Data Files and prep work
-source("../../Scripts/GenPlotMaking.R")
-source("../../Scripts/WasteWaterDataProccess.R")
-source("../../Scripts/CasesDataProccess.R")
-source("../../Scripts/HelperFunctions.R")
+source("../../lib/GenPlotMaking.R")
+source("../../lib/WasteWaterDataProccess.R")
+source("../../lib/CasesDataProccess.R")
+source("../../lib/HelperFunctions.R")
 ```
 
 ```{r DF Set Up}
+BaseDir <- params$BaseDir
+MadisonCaseFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/MMSD_Cases_processed.csv")
+LIMSFN <- paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/LIMSWasteData_2021-06-30_17-40.csv")
 
-LatMMSDFN  <-  "../../CaseData/results/2021-06-24/MMSD_Cases.csv"
-LatSpringCaseFN <- "../../../UntrackedData/SpringSemester_CasesByDorm.tsv"
-LatFallCaseFN <- "../../../UntrackedData/FallSemester_CasesByDorm.tsv"
-LIMSFN <- "../../../UntrackedData/WATERMICRO_WW_COVID-2021-06-30 17 40.xlsx"
 
-LatCaseDF <- CovidDataPARSER(LatSpringCaseFN,LatFallCaseFN,LatMMSDFN)%>%
+LIMSCaseDF <- ParseData(MadisonCaseFN)%>%
   filter(!is.na(Site))%>%
   select(Date,Site,Cases,Tests,Per_pos)
 
-missing_codes <- c("","NA","0","Undetected","Not Detected",
-                   "Field Parameters to be filled in", 
-                   "Inhibited-to be re-ran", "#DIV/0!","-","In progress")
-
-LIMSFullDFAllCols <- LIMSDataPARSER(LIMSFN)
+LIMSFullDFAllCols <- ParseData(LIMSFN)
 
 LIMSFullDF <- LIMSFullDFAllCols%>%
   select(Date,Site, BCoV, N1,N1Error,N2, N2Error, AVG,PMMoV,Pop,FlowRate)
@@ -110,13 +108,13 @@ summary(aov(Per_pos~weekday+Site,data=WeekdaySmoothedCaseDF))
 ```{r Start}
 library(lmtest)
 library(astsa)
-source("../../Scripts/HelperFunctions.R")
+source("../../lib/HelperFunctions.R")
 RAN <- 14
 # LIMSMadDF=LIMSFullDF%>%
 #   filter(Site=="Madison")
 # grangertest(formula=log(N1)~log(N2),data=LIMSMadDF)
 
-MadCasedat<-DFSmoothingFNC(LatCaseDF)%>%
+MadCasedat<-DFSmoothingFNC(LatCaseDF, SiteS="Madison")%>%
   filter(Site=="Madison")
 #filter(abs(N1.x-N1.y)>500000)
 #select(filter(LIMSFullDF,Site=="Madison"),Date,N1)
@@ -222,7 +220,7 @@ LIMSFullDF%>%
 
 ```{r Loess MA Comp}
 library(limma)
-
+library(tidyr)
 TrueMadData <- LIMSFullDF%>%
   filter(Site == "Madison")
 FullDayDF <- data.frame(Date=seq(min(Maddata$Date),max(Maddata$Date),1))
@@ -238,12 +236,12 @@ WeightedPred <- loessFit(y=log(TrueMadData$N1),
   
   
 loessPred <- ts(WeightedPred)
+rollingCase <- rollmean(UnSmoothedCasesTSVec,14)
 
-
-ts.plot(CasesTSVec,
+ts.plot(CasesTSVec/500,
         rollingCase,
-         80*loessPred-800,
-         80*log(N1TSVec)-800,
+         100*loessPred-800,
+         100*log(N1TSVec)-1500,
          col=c("pink","red","blue", "dark green"), 
          gpars=list(xlab="Time (Days)", ylab="Cases"))
  legend("topright", legend=c("14 MA Cases","SLD Cases","Loess Smoothing",paste(RAN, "MA N1")), col=c(2,4,3), lty=1, cex=1)
@@ -251,16 +249,7 @@ ts.plot(CasesTSVec,
  
  
 ```{r}
-#CCF visual relationship
-#CDC "Trajectory" first derivative / second derivative
-#first wave fits bests - after that it starts to have issues due to SLD
-#21 days truncation
- 
-#can we apply a reverse process to get a leading indicator of cases
-#behavior of N1 with changing SLD - might be about derivatives
-#might be able to subtract terms to get a view of future cases
- 
- #finalize model
+#finalize model
  #finalize math showing it works
  #seeing how much it can generalize
  #tool: see how it predicts cases
@@ -281,20 +270,15 @@ ts.plot(CasesTSVec,
  #redo in ARIMA?
  #rigorous way of finding relationships
  #look for exact or near exact translations
- #
  #selecting lag indicators
  #might be flawed if we already used a moving average
- #
- #
  #14MACASES~14MAN1
-#adf.test(CasesTSVec)
-#plot(log(tsclean(N1TSVec)))
 
 library(MTS)
 
-data <- cbind(CasesTSVec,log(N1TSVec))
+data <- cbind(CasesTSVec,N1TSVec)
 Eccm(data)
-mod <- VARMA(data, p = 1, q = 0)
+mod <- VARMA(data,p=1,q=1)
 
 summary(mod)
 ```
@@ -317,7 +301,7 @@ tryit1a  <- lm(Pred~N1Norm+N1A+N1B, data = alldata1)
 summary(tryit1a)
 
 ts.plot(diff(CasesTSVec),
-        predict(tryit1a),
+        ts(predict(tryit1a)),
          col=c("red","blue"), 
          gpars=list(xlab="Time (Days)", ylab="Cases"))
  legend("topright", legend=c("Diff Cases","Diff Model"), col=c("red","blue"), lty=1, cex=1)
@@ -325,20 +309,16 @@ ts.plot(diff(CasesTSVec),
 
 ```{r Loess CCF}
 
-#library(zoo)
-rollingCase <- rollmean(UnSmoothedCasesTSVec,14)
-
-
 ccfvalues2  <-  ccf(loessPred,rollingCase,type = c("correlation"),na.action = na.pass)
 
 alldata1 <- ts.intersect(rollingCase,loessPred,
                          N1TSVec,
-                         N1A=stats::lag(loessPred,20),
-                         N1B=stats::lag(loessPred,7),
-                         N1C=stats::lag(loessPred,-20))
+                         N1A=stats::lag(exp(loessPred),20),
+                         N1B=stats::lag(exp(loessPred),7),
+                         N1C=stats::lag(exp(loessPred),-20))
 
 
-tryit1a  <- lm(rollingCase~N1A+N1B, data = alldata1)
+tryit1a  <- lm(rollingCase~N1A, data = alldata1)
 
 summary(tryit1a)
 

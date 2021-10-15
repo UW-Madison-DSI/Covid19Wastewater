@@ -1,3 +1,5 @@
+
+#Generate the dataframe structure used for rest of code
 DFPrepAnalysis <- function(DF,
                            Weights,
                            StartDate,
@@ -131,7 +133,7 @@ LocInput <- function(Mat,Loc,StartDate,DaySmoothing,Lag){
   return(c(iL,jL,kL))
 }
 
-
+#Makes matrix exploring the parameter space
 BinRelMatrix <- function(DF,
                          Weights,
                          StartDate=0:7,
@@ -219,7 +221,7 @@ BinRelMatrix <- function(DF,
 }
 
 
-
+#makes plot of heatmap matrix
 HeatMapMaker <- function(NVector,N,ColNames,RowNames,Main,ColorName,Site){
   ColorLegend <- brewer.pal(n = 3, name = ColorName)
   Color <- brewer.pal(n = 8, name = ColorName)
@@ -235,15 +237,9 @@ HeatMapMaker <- function(NVector,N,ColNames,RowNames,Main,ColorName,Site){
   title(xlab="time laged",ylab="Binning Start",sub=Site)
 }
 
+
 BestCorDFGen <- function(Site,DFCases,DFN1,DateFilt=mdy("9/15/2020"),
                          keep=c("N1","N2")){
-  
-  # if(is.na(Site)){
-  #   stopifnot(length(unique(DFCases$Site))==1&length(unique(DFN1$Site))==1)
-  #   stopifnot(unique(DFCases$Site)[1]==unique(DFN1$Site)[1])
-  #   Site=unique(DFCases$Site)[1]
-  # }
-  
   SiteLimsDF <- DataPrep(DFN1,
                          keep=keep,
                          Site)
@@ -263,7 +259,7 @@ BestCorDFGen <- function(Site,DFCases,DFN1,DateFilt=mdy("9/15/2020"),
     filter(Date>DateFilt)%>%
     select(Date,Site,Cases,SLDCases,SLDCases.PreRolled,N1,N2)
   
-  MergedDF
+  return(MergedDF)
 }
 
 VecToDF <- function(DF,StartDate=0:7,

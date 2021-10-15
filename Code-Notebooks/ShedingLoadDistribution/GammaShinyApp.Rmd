@@ -12,12 +12,13 @@ library(limma)
 library(dplyr)
 library(lmtest)
 library(plotly)
+library(readxl)
 
 #Data Files and prep work
-source("../../Scripts/GenPlotMaking.R")
-source("../../Scripts/WasteWaterDataProccess.R")
-source("../../Scripts/CasesDataProccess.R")
-source("../../Scripts/HelperFunctions.R")
+source("../../lib/GenPlotMaking.R")
+source("../../lib/WasteWaterDataProccess.R")
+source("../../lib/CasesDataProccess.R")
+source("../../lib/HelperFunctions.R")
 ```
 
 
@@ -135,11 +136,11 @@ DataPrepS <- DormGraphics <- function(Site,shape,scale,delay,Span){
   MergedDF <- inner_join(SCPDF3,FullLimsDF, by=c("Date","Site"))
   
   
-  MergedDF$LoessN1 <- DFLoessFNC(MergedDF,SiteS=Site,span=Span)
+  MergedDF$LoessN1 <- DFLoessFNC(MergedDF,Site=Site,span=Span)
   
   MergedDF <- MergedDF%>%
-    select(Date,Site,Cases,Cases2,Cases2.PreRolled,N1,LoessN1,N1Error)%>%
-    filter(!is.na(Cases)&!is.na(Cases2.PreRolled),!is.na(N1),!is.na(LoessN1))
+    select(Date,Site,Cases,SLDCases,SLDCases.PreRolled,N1,LoessN1,N1Error)%>%
+    filter(!is.na(Cases)&!is.na(SLDCases.PreRolled),!is.na(N1),!is.na(LoessN1))
   
   TSDF <- ts(MergedDF,start = 18520)
   SLDPreRolledVec <- TSDF[,5]

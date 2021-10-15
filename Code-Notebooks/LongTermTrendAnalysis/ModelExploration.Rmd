@@ -47,7 +47,6 @@ N1Plot <- function(SiteList){
     scale_y_log10()
 }
 lapply(SiteSubLists,N1Plot)
-
 ```
 
 ```{r}

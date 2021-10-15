@@ -146,7 +146,7 @@ HeatMapCor(DF=LIMSDF,
            CasesUsed="SLDThenBinningCases",
            DateStart=mdy("11/13/2020"),
            ShowPlots=FALSE)
-
+knitr::knit_exit()
 ```
 
 ```{r Intercepters}

@@ -20,11 +20,11 @@ library(ggpubr)
 library(dplyr)
 
 #Data Files and prepwork
-source("../../Scripts/GenPlotMaking.R")
-source("../../Scripts/WasteWaterDataProccess.R")
-source("../../Scripts/CasesDataProccess.R")
-source("../../Scripts/HelperFunctions.R")
-source("../../Scripts/WasteShiny/PrepData.R", local = TRUE)
+source("../../lib/GenPlotMaking.R")
+source("../../lib/WasteWaterDataProccess.R")
+source("../../lib/CasesDataProccess.R")
+source("../../lib/HelperFunctions.R")
+source("../../lib/WasteShiny/PrepData.R", local = TRUE)
 #"../../../HFG data for stats corrected 071421.xlsx"
 ```
 

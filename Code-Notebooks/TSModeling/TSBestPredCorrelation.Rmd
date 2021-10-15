@@ -26,13 +26,14 @@ library(lubridate)
 library(limma)
 library(zoo)
 library(dplyr)
+library(readxl)
 library("robets")
 
 #Data Files and prep work
-source("../../Scripts/GenPlotMaking.R")
-source("../../Scripts/WasteWaterDataProccess.R")
-source("../../Scripts/CasesDataProccess.R")
-source("../../Scripts/HelperFunctions.R")
+source("../../lib/GenPlotMaking.R")
+source("../../lib/WasteWaterDataProccess.R")
+source("../../lib/CasesDataProccess.R")
+source("../../lib/HelperFunctions.R")
 
 ```
 
@@ -98,7 +99,7 @@ IsFull <- function(DF){
 ```
 
 ```{r Madison Prep, fig.height=3,include=FALSE}
-MergedDF <- BestCorDFGen("Madison")
+MergedDF <- BestCorDFGen("Madison",LatCaseDF,LIMSFullDF)
 ```
 
 ```{r}
@@ -109,7 +110,7 @@ MergedDF <- BestCorDFGen("Madison")
 MethodPlot <- function(DF){
   
   DF2 <- DF
-  DF2$RobMod <- fitted.values(robets((DF$"N1Filtered"),
+  DF2$RobMod <- fitted.values(robets((DF$"N1"),
                            alpha=.0131,model="AAN"))
   
   DF2 <- DF2%>%
@@ -119,11 +120,11 @@ MethodPlot <- function(DF){
   par(new = TRUE)
   plot((DF2$"Cases2"),col="Red",type="l",yaxt='n', ann=FALSE)
   par(new = TRUE)
-  plot((zoo::rollapply(data=DF2$"N1Filtered",
+  plot((zoo::rollapply(data=DF2$"N1",
                       width=35,FUN=mean,align="right",fill=NA)),
        col="Green",type="l",yaxt='n', ann=FALSE)
   par(new = TRUE)
-  plot((zoo::rollapply(data=DF2$"N1Filtered",
+  plot((zoo::rollapply(data=DF2$"N1",
                       width=3,FUN=median,align="center",fill=NA)),
        col="Blue",type="l",yaxt='n', ann=FALSE)
   par(new = TRUE)
