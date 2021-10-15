@@ -1,3 +1,12 @@
+#Works on all processed data
+ParseData <- function(FileName){
+  DF <- read.csv(FileName)%>%
+    mutate(Date=as.Date(Date))
+  return(DF)
+}
+
+
+
 #Needs
 #tidyverse
 #lubridate

@@ -7,6 +7,12 @@ author: "Marlin"
 output: html_document
 ---
 
+
+```{r Used in last step, include=FALSE}
+
+source("../../lib/DataProccess.R")
+```
+
 ##HFG Covid concentration data***
 ```{r File name, include=FALSE}
 BaseDir <- params$BaseDir
@@ -55,6 +61,11 @@ HFGWasteDF <- read_excel(HFGWasteFN, na = MissingCode,
            wt = 2 - is.na(N1) - is.na(N2),
            Date=coalesce(suppressWarnings(as.numeric(Date))-1+ymd("1900-01-01"),
                            suppressWarnings(mdy(Date))))
+
+#write.csv(HFGWasteDF,paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/HFGWasteData071421.csv"),row.names=FALSE)
+
+HFGWasteDF <- read.csv(paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/HFGWasteData071421.csv"))%>%
+  mutate(Date=as.Date(Date))
 ```
 
 ```{r top level data exploration}
@@ -109,6 +120,12 @@ HFGCaseDFReportedOnly <- HFGCaseDFNoReported%>%
   select(Date,Site,ReportedCases)
   
 HFGCaseDF  <-  full_join(HFGCaseDFReportedOnly,HFGCaseDFNoReported,by=c("Date","Site"))
+
+
+#write.csv(HFGCaseDF,paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/HFGCaseData_2021-05-07.csv"),row.names=FALSE)
+
+HFGCaseDF <- read.csv(paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/HFGCaseData_2021-05-07.csv"))%>%
+  mutate(Date=as.Date(Date))
 ```
 
 ```{r}
@@ -214,7 +231,19 @@ LIMSDF <- suppressWarnings(mutate(LIMSDF,
            PMMoV=ifelse(PMMoV==-1,NA,PMMoV),
            BCoV=ifelse(BCoV==-1,NA,BCoV))%>%
     mutate(AVG = AVGGenFN(N1, N2),
-           wt = 2 - is.na(N1) - is.na(N2))
+           wt = 2 - is.na(N1) - is.na(N2))%>%
+  select(Site,Date,everything())
+
+
+
+LIMSDFParsedFN <- paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/LIMSWasteData_2021-06-30_17-40.csv")
+
+#write.csv(LIMSDF,LIMSDFParsedFN,row.names=FALSE)
+
+LIMSDF <- read.csv(LIMSDFParsedFN)%>%
+  mutate(Date=as.Date(Date))
+
+LIMSDF <- ParseData(LIMSDFParsedFN)
 ```
 
 ```{r LIMS top level data exploration,fig.height=20,fig.width=20}
@@ -320,6 +349,12 @@ MMSDdata  <-  read.csv(LIMSCaseMMSDFN)%>%
 
 
 MadisonCaseDF <- rbind(rbind(MMSDdata,SpringDorms,FallDorms))
+
+
+#write.csv(MadisonCaseDF,paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/MMSD_Cases_processed.csv"),row.names=FALSE)
+
+MadisonCaseDF <- read.csv(paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/MMSD_Cases_processed.csv"))%>%
+  mutate(Date=as.Date(Date))
 ```
 
 ```{r Madison Case Top level exploration}
@@ -349,8 +384,6 @@ UniqueColsName <- unique(ColsName)
 
 length(ColsName)
 length(UniqueColsName)
-
-UniqueColsName
 ```
 
 ```{r WasteWater format comperison}
@@ -364,4 +397,19 @@ length(ColsName)
 length(UniqueColsName)
 
 UniqueColsName
+```
+
+
+```{r Gen graphing function}
+
+datasetgraphing= function(DF){
+  Directions <- ColsName(DF)
+  if("x" %in% Directions){
+    aesx=Directions
+  }else{
+    aesx=NA
+  }
+  
+}#tough question. not worth. Not writeing production code.
+#write.csv check the csv and the previous one
 ```

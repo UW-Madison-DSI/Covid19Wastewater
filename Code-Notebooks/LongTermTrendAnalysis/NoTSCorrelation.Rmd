@@ -23,57 +23,32 @@ library(ggpubr)
 library(lubridate)
 library(forecast)
 library(lmtest)
-library(lubridate)
 #library(limma)
 library(zoo)
-library(dplyr)
 library(RColorBrewer)
 library(tidyverse)
 library(readxl)
 #BiocManager::install("limma")
 #Data Files and prep work
 source("../../lib/GenPlotMaking.R")
-source("../../lib/WasteWaterDataProccess.R")
-source("../../lib/CasesDataProccess.R")
+#source("../../lib/WasteWaterDataProccess.R")
+#source("../../lib/CasesDataProccess.R")
 source("../../lib/HelperFunctions.R")
-
-
-
-#ideas: scatter plot
-#predicting future
-#interplerating
-#break things down to ideas
-#SLD
-#Rem
-#make code more functional in design
-#param code
-#r script knit by param
-#Direc structure for testing
-#?Test first book
-#remove unneeded branch
-#add read me explaining presentation
-#Store what rmd gen fig and perhaps encription
-#**look into best practace
+source("../../lib/DataProccess.R")
+source("../../lib/NoTSCorrelationFunctions.R")
 ```
 
 ```{r DF Set Up, include=TRUE}
 BaseDir <- params$BaseDir
-LatMMSDFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/MMSD_Cases.csv")
-LatSpringDormFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/SpringSemester_CasesByDorm.TSV")
-LatFallDormFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/FallSemester_CasesByDorm.TSV")
+MadisonCaseFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/MMSD_Cases_processed.csv")
+LIMSFN <- paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/LIMSWasteData_2021-06-30_17-40.csv")
+HFGCasesFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/HFGWasteData071421.csv")
 
-LIMSFN <- paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/WATERMICRO_WW_COVID-2021-06-30 17 40.xlsx")
-
-HFGCasesFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/HighFreq_CaseData_2021-05-07.csv")
-
-LatCaseDF <- CovidDataPARSER(
-  LatSpringDormFN, LatFallDormFN,MMSDFN = LatMMSDFN
-  )%>% 
-  
+LatCaseDF <- ParseData(MadisonCaseFN)%>% 
   filter(!is.na(Site)) %>%
   select(Date,Site,Cases,Tests,Per_pos)
 
-HFGCaseDF <- HFGCasesPARSER(FN = HFGCasesFN)%>%
+HFGCaseDF <- ParseData(HFGCasesFN)%>%
   filter(!is.na(Site))%>%
   mutate(Tests=NA,Per_pos=NA)%>%
   select(Date,Site,Cases=ReportedCases,Tests,Per_pos)%>%
@@ -85,7 +60,7 @@ FullCase <- bind_rows(HFGCaseDF,LatCaseDF)
 FullCaseRoll <- RollPerPos(FullCase,"Cases","Tests",Facet="Site",n = 14)%>%
   filter(Per_pos!=-500)
 
-LIMSFullDF <- LIMSDataPARSER(LIMSFN)%>%
+LIMSFullDF <- ParseData(LIMSFN)%>%
   select(Date,Site, BCoV, N1,N1Error,N2, N2Error,PMMoV,Pop,FlowRate)
 ```
 
@@ -120,8 +95,8 @@ BinRelationGen(LIMSDF,
                DaySmoothing=14,
                Lag=2,
                Show=TRUE,
-               Ret="R2",
-               LogModel=TRUE,
+               Ret="Plot",
+               LogModel=FALSE,
                Intercept=FALSE)
 #Ret options |Plot/R2/COR/PVal/LM|
 ```
