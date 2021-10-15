@@ -238,19 +238,19 @@ HeatMapMaker <- function(NVector,N,ColNames,RowNames,Main,ColorName,Site){
 }
 
 
-BestCorDFGen <- function(Site,DFCases,DFN1,DateFilt=mdy("9/15/2020"),
+BestCorDFGen <- function(Site,DFCases,DFN1,Rolling="Cases",DateFilt=mdy("9/15/2020"),
                          keep=c("N1","N2")){
   SiteLimsDF <- DataPrep(DFN1,
                          keep=keep,
                          Site)
   
-  SCPDF <- DFSmoothingFNC(DFCases,SiteS=Site)%>%
+  SCPDF <- DFSmoothingFNC(DFCases,Site=Site,Rolling=Rolling)%>%
     mutate(Site=Site)
   
-  SCPDF2 <- DFSmoothingFNC(DFCases,PreRoll=TRUE,SiteS=Site)%>%
+  SCPDF2 <- DFSmoothingFNC(DFCases,PreRoll=TRUE,Site=Site,Rolling=Rolling)%>%
     mutate(Site=Site)
   
-  SCPDF3 <- inner_join(SCPDF,SCPDF2,by=c("Date","Site","Cases"),suffix=c("",".PreRolled"))
+  SCPDF3 <- inner_join(SCPDF,SCPDF2,by=c("Date","Site",!!sym(Rolling)),suffix=c("",".PreRolled"))
   
   MergedDF <- full_join(SCPDF3,SiteLimsDF, by=c("Date","Site"))
   

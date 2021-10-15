@@ -65,7 +65,7 @@ LIMSFullDF <- ParseData(LIMSFN)%>%
 ```
 
 ```{r}
-LIMSDF <- BestCorDFGen(DFCases=FullCase,DFN1=LIMSFullDF,Site="Madison",keep=c("N1","N2"))
+LIMSDF <- BestCorDFGen(DFCases=FullCase,DFN1=LIMSFullDF,Rolling="Per_pos",Site="Madison",keep=c("N1","N2"))
 ```
 
 ```{r LM binning}
@@ -91,13 +91,13 @@ WeightVec <- unlist(lapply((split(dgamma(1:21,scale =5.028338,shape =2.332779),c
 #Makes model based on bined and shifted data. many return options.
 BinRelationGen(LIMSDF,
                Weights=WeightVec,
-               StartDate=1,
+               StartDate=3,
                DaySmoothing=14,
-               Lag=2,
+               Lag=4,
                Show=TRUE,
                Ret="Plot",
                LogModel=FALSE,
-               Intercept=FALSE)
+               Intercept=TRUE)
 #Ret options |Plot/R2/COR/PVal/LM|
 ```
 

@@ -183,24 +183,26 @@ IsFull <- function(DF){
 
 ```
 
-```{r Madison Prep, fig.height=3,include=FALSE}
+```{r Madison Prep, fig.height=5,include=FALSE}
+
+CaseAnalysis="Per_pos"
 FullMadLimsDF <- DataPrep(LIMSFullDF,keep=c("N1","N1Error","N2","N2Error"),"Madison")
 
-SCPDF <- DFSmoothingFNC(FullCase,SiteS="Madison")%>%
+SCPDF <- DFSmoothingFNC(FullCase,Rolling=CaseAnalysis,Site="Madison")%>%
   mutate(Site="Madison")
 
-SCPDF2 <- DFSmoothingFNC(FullCase,PreRoll=TRUE,SiteS="Madison")%>%
+SCPDF2 <- DFSmoothingFNC(FullCase,Rolling=CaseAnalysis,PreRoll=TRUE,Site="Madison")%>%
   mutate(Site="Madison")
 
-SCPDF3 <- inner_join(SCPDF,SCPDF2,by=c("Date","Site","Cases"),suffix=c("",".PreRolled"))
+SCPDF3 <- inner_join(SCPDF,SCPDF2,by=c("Date","Site",CaseAnalysis),suffix=c("",".PreRolled"))
 
 MergedDF <- full_join(SCPDF3,FullMadLimsDF, by=c("Date","Site"))
-
+  
 MergedDF$LoessN1 <- (DFLoessFNC(MergedDF,span=.2))
 MergedDF$LoessN2 <- (DFLoessFNC(MergedDF,Var="N2",span=.2))
 
 MergedDF <- MergedDF%>%
-  select(Date,Site,Cases,SLDCases,SLDCases.PreRolled,N1,LoessN1,N1Error,N2,LoessN2,N2Error)%>%
+  select(Date,Site,!!sym(CaseAnalysis),SLDCases,SLDCases.PreRolled,N1,LoessN1,N1Error,N2,LoessN2,N2Error)%>%
   filter(!is.na(LoessN1),!is.na(SLDCases.PreRolled))
 
 TSDF <- ts(MergedDF,start = 18520)
@@ -218,6 +220,15 @@ ccf(diff((loessN1Vec)),diff(SLDPreRolledVec))
 A <- ts.union(diff(log(SLDPreRolledVec)),
                 diff(stats::lag((loessN1Vec),6)))
 summary(lm(A[,1]~A[,2]))
+
+
+
+MergedDF%>%
+  ggplot(aes(x=Date))+
+  geom_smooth(aes(y=Per_pos,color="Per_pos"),span=.2)+
+  geom_smooth(aes(y=SLDCases,color="SLDCases"),span=.2)+
+  geom_smooth(aes(y=SLDCases.PreRolled,color="SLDCases.PreRolled"),span=.2)+
+  geom_smooth(aes(y=N1/2e4,color="N1"),span=.4)
 ```
 
 ```{r}
@@ -237,8 +248,8 @@ MadData <- MergedDF%>%
 MadData%>%
   ggplot()+
   aes(x=Week)+
-  geom_line(aes(y=(N1M)/8e2),color="red")+
-  geom_line(aes(y=CasesM))
+  geom_line(aes(y=(N1M)/1e3,color="N1M"))+
+  geom_line(aes(y=CasesM,color="CasesM"))
 
 MadData%>%
   ggplot()+
@@ -294,7 +305,7 @@ plot(resid(LM))
 
 --------------------------
 
-```{r Mad Full Graphic, include=FALSE}
+```{r Mad Full Graphic, include=TRUE}
 N1Rel <- SLDGraphics("Madison",log(SLDPreRolledVec),(loessN1Vec),"SLD","log(N1)")
 N2Rel <- SLDGraphics("Madison",log(SLDPreRolledVec),(loessN2Vec),"SLD","log(N1)")
 

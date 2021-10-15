@@ -149,24 +149,25 @@ DFLoessFNC <- function(Data,Var="N1",span=.3,Site="Madison"){#makes loess smooth
 }
 
 DFSmoothingFNC <- function(CaseDF,
-                           SiteS,
+                           Site,
+                           Rolling="Cases",
                            PreRoll=FALSE,
                            Weights=dgamma(1:21,scale =5.028338,shape =2.332779)){
   #5.028338
   #2.332779
   
-  FullDayDF <- DataPrep(CaseDF,"Cases",SiteS=SiteS)
+  FullDayDF <- DataPrep(CaseDF,Rolling,SiteS=Site)
   
   if(PreRoll){
     FullDayDF <- FullDayDF%>%
       group_by(Site)%>%
       mutate(SLDCases = c(rep(NA,6),
-                        rollapply(Cases,width=7,
+                        rollapply(!!sym(Rolling),width=7,
                                   FUN=mean,
                                   na.rm = TRUE)))
   }else{
     FullDayDF <- FullDayDF%>%
-      mutate(SLDCases=Cases)
+      mutate(SLDCases=!!sym(Rolling))
   }
   FullDayDF <- FullDayDF%>%
     group_by(Site)%>%
