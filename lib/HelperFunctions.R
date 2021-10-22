@@ -115,9 +115,9 @@ WeekendGen = function(DateVec){
 }
 
 
-DataPrep <- function(DF=NA,SiteS=NA,keep=c()){
-  if(!is.na(SiteS)){
-    FilteredVec1 <- filter(DF,Site==SiteS)
+DataPrep <- function(DF=NA,Site=NA,keep=c()){
+  if(!is.na(Site)){
+    FilteredVec1 <- filter(DF,Site==Site)
   }else{
     FilteredVec1 <- DF
   }
@@ -126,7 +126,7 @@ DataPrep <- function(DF=NA,SiteS=NA,keep=c()){
                                    max(FilteredVec1$Date),1))
   ReadyDF <- full_join(FullDayDF,FilteredVec1, by = c("Date"))%>%
     #fill(one_of(keep), .direction = "down")%>%
-    mutate(Site=SiteS)%>%
+    mutate(Site=Site)%>%
     select(Date,Site,one_of(keep))
   return(ReadyDF)
 }
@@ -148,6 +148,18 @@ DFLoessFNC <- function(Data,Var="N1",span=.3,Site="Madison"){#makes loess smooth
   return(exp(loessModel$fitted))
 }
 
+SLDSmoothing <- function(CaseDF,CaseColumns,Weights=dgamma(1:21,scale =5.028338,shape =2.332779)){
+  FullDayDF <- CaseDF%>%
+    group_by(Site)%>%
+    mutate(SLDCases = c(rep(NA,20),
+                        rollapply(!!sym(CaseColumns),width=21,FUN=weighted.mean,
+                                  w=Weights,
+                                  na.rm = TRUE)))
+  return(FullDayDF)
+  
+}
+
+
 DFSmoothingFNC <- function(CaseDF,
                            Site,
                            Rolling="Cases",
@@ -156,7 +168,7 @@ DFSmoothingFNC <- function(CaseDF,
   #5.028338
   #2.332779
   
-  FullDayDF <- DataPrep(CaseDF,Rolling,SiteS=Site)
+  FullDayDF <- DataPrep(CaseDF,Rolling,Site=Site)
   
   if(PreRoll){
     FullDayDF <- FullDayDF%>%
@@ -165,16 +177,11 @@ DFSmoothingFNC <- function(CaseDF,
                         rollapply(!!sym(Rolling),width=7,
                                   FUN=mean,
                                   na.rm = TRUE)))
-  }else{
+  }else{#refactor to work iwth diffretn SLD function. support optimization
     FullDayDF <- FullDayDF%>%
       mutate(SLDCases=!!sym(Rolling))
   }
-  FullDayDF <- FullDayDF%>%
-    group_by(Site)%>%
-    mutate(SLDCases = c(rep(NA,20),
-                      rollapply(SLDCases,width=21,FUN=weighted.mean,
-                                w=Weights,
-                                na.rm = TRUE)))
+  FullDayDF <- SLDSmoothing(FullDayDF,CaseColumns="SLDCases",Weights=Weights)
   return(FullDayDF)
 }
 

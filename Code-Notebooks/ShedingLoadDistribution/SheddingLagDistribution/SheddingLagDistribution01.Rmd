@@ -1,0 +1,119 @@
+---
+params:
+  BaseDir: "Z:/"
+  ##BaseDir: "/Volumes/byandell/"
+title: "SheddingLagDistribution"
+author: "Marlin"
+date: "7/22/2021"
+knit: (function(inputFile, encoding) {
+  rmarkdown::render(inputFile, encoding = encoding, output_file = "./test/output/SheddingLagDistribution01.2.html")})
+editor_options:
+  chunk_output_type: inline
+---
+
+```{r set up markdown settings, echo=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+```{r Start enviroment, message=FALSE, warning=FALSE}
+library(ggpubr)
+library(forecast)
+library(lmtest)
+library(lubridate)
+library(limma)
+library(zoo)
+library(dplyr)
+library(readxl)
+
+#Data Files and prep work
+source("../../../lib/GenPlotMaking.R")
+#source("../../../lib/WasteWaterDataProccess.R")
+#source("../../../lib/CasesDataProccess.R")
+source("../../../lib/DataProccess.R")
+source("../../../lib/HelperFunctions.R")
+
+```
+
+```{r DF Set Up, include=TRUE}
+BaseDir <- params$BaseDir
+
+MadisonCaseFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/MMSD_Cases_processed.csv")
+LIMSFN <- paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/LIMSWasteData_2021-06-30_17-40.csv")
+
+LatCaseDF <- ParseData(MadisonCaseFN)%>% 
+  filter(!is.na(Site)) %>%
+  select(Date,Site,Cases,Tests,Per_pos)
+
+LatCaseDFRoll <- RollPerPos(LatCaseDF,"Cases","Tests",Facet="Site",n = 14)
+
+FullLatCaseDFRoll <- full_join(LatCaseDF,LatCaseDFRoll,by=c("Date","Site"),suffix=c("",".Rolled"))
+
+LIMSFullDF <- ParseData(LIMSFN)%>%
+  select(Date,Site, BCoV, N1,N1Error,N2, N2Error,PMMoV,Pop,FlowRate)
+```
+
+
+
+```{r CaseSmoothing, include=TRUE}
+#5.028338
+scale =5.028338
+  #2.332779
+shape =2.332779
+  
+plot(dgamma(1:21,scale =scale,shape =shape), 
+            main=paste("Gamma Distribution with mean =, 11.73 ,days and SD = 7.68"),
+            ylab = "Weight",
+            xlab = "Lag")
+
+
+plot(c(rep(0,10),dgamma(1:21,scale =scale,shape =shape)[11:21]), 
+            main="Gamma Distribution with mean = 11.73 days and SD = 7.68",
+            ylab = "Weight",
+            xlab = "Lag")
+```
+
+
+```{r SLD Case comp}
+SLDDF <- SLDSmoothing(FullLatCaseDFRoll,"Cases",Weights=dgamma(1:21,scale =5.028338,shape =2.332779))%>%
+  filter(Site %in% c("Madison"))
+SLDDF%>%
+  ggplot(aes(x=Date))+
+  geom_point(aes(y=Cases,color="Cases"))+
+  geom_point(aes(y=Cases.Rolled,color="Cases.Rolled"))+
+  geom_point(aes(y=SLDCases,color="SLDCases"))+
+  facet_wrap(~Site)
+```
+
+```{r SLD Case N1 comp}
+MinMaxNormal <- function(Vec){
+  #print((1-min(Vec,na.rm=TRUE)/(max(Vec,na.rm=TRUE)-min(Vec,na.rm=TRUE))))
+  
+  Val=(Vec-min(Vec,na.rm=TRUE))/(max(Vec,na.rm=TRUE)-min(Vec,na.rm=TRUE))
+  return(Val)
+}
+
+Medianmean <- function(Vec,Nremoved=2){
+  ReducedVec <- Vec[Vec < max(Vec,na.rm=TRUE)&&Vec > min(Vec,na.rm=TRUE)]
+  return(mean(ReducedVec,na.rm=TRUE))
+}
+
+
+SLDN1DF <- full_join(SLDDF,LIMSFullDF)%>%
+  filter(Site=="Madison")%>%
+  mutate(N1Roll=c(rep(NA,6),rollapply(N1,width=7,FUN=Medianmean)))
+SLDN1DF$LoessN1 <- DFLoessFNC(SLDN1DF,span=.15)
+
+SLDN1DF%>%
+  ggplot(aes(x=Date))+
+  geom_point(aes(y=MinMaxNormal(Cases),color="Cases.Rolled"))+
+  geom_point(aes(y=MinMaxNormal(SLDCases),color="SLDCases"))+
+  geom_point(aes(y=MinMaxNormal(LoessN1),color="LoessN1"))+
+  facet_wrap(~Site)
+```
+
+
+
