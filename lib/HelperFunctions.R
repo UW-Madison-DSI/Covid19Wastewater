@@ -149,10 +149,11 @@ DFLoessFNC <- function(Data,Var="N1",span=.3,Site="Madison"){#makes loess smooth
 }
 
 SLDSmoothing <- function(CaseDF,CaseColumns,Weights=dgamma(1:21,scale =5.028338,shape =2.332779)){
+  SmoothSize <- length(Weights)
   FullDayDF <- CaseDF%>%
     group_by(Site)%>%
-    mutate(SLDCases = c(rep(NA,20),
-                        rollapply(!!sym(CaseColumns),width=21,FUN=weighted.mean,
+    mutate(SLDCases = c(rep(NA,SmoothSize-1),
+                        rollapply(!!sym(CaseColumns),width=SmoothSize,FUN=weighted.mean,
                                   w=Weights,
                                   na.rm = TRUE)))
   return(FullDayDF)

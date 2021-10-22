@@ -1,12 +1,14 @@
 ---
 params:
   BaseDir: "Z:/"
+  ##weights: "Default"
+  weights: "c(2^(10:0))"
   ##BaseDir: "/Volumes/byandell/"
 title: "SheddingLagDistribution"
 author: "Marlin"
 date: "7/22/2021"
 knit: (function(inputFile, encoding) {
-  rmarkdown::render(inputFile, encoding = encoding, output_file = "./test/output/SheddingLagDistribution01.2.html")})
+  rmarkdown::render(inputFile, encoding = encoding, output_file = "./test/output/SheddingLagDistribution01.4.html")})
 editor_options:
   chunk_output_type: inline
 ---
@@ -56,29 +58,44 @@ LIMSFullDF <- ParseData(LIMSFN)%>%
   select(Date,Site, BCoV, N1,N1Error,N2, N2Error,PMMoV,Pop,FlowRate)
 ```
 
-
-
-```{r CaseSmoothing, include=TRUE}
+```{r}
 #5.028338
 scale =5.028338
   #2.332779
 shape =2.332779
-  
-plot(dgamma(1:21,scale =scale,shape =shape), 
+
+weights <- dgamma(1:21,scale =scale,shape =shape)
+if(params$weights!="Default"){
+  weights <- eval(parse(text=params$weights))
+}
+```
+
+
+
+```{r CaseSmoothing, include=TRUE}
+
+if(params$weights=="Default"){
+  plot(weights, 
             main=paste("Gamma Distribution with mean =, 11.73 ,days and SD = 7.68"),
             ylab = "Weight",
             xlab = "Lag")
 
 
-plot(c(rep(0,10),dgamma(1:21,scale =scale,shape =shape)[11:21]), 
+  plot(c(rep(0,10),weights[11:21]), 
             main="Gamma Distribution with mean = 11.73 days and SD = 7.68",
             ylab = "Weight",
             xlab = "Lag")
+}else{
+  plot(weights, 
+            main=paste("Chosen weights"),
+            ylab = "Weight",
+            xlab = "Lag")
+}
 ```
 
 
 ```{r SLD Case comp}
-SLDDF <- SLDSmoothing(FullLatCaseDFRoll,"Cases",Weights=dgamma(1:21,scale =5.028338,shape =2.332779))%>%
+SLDDF <- SLDSmoothing(FullLatCaseDFRoll,"Cases",Weights=weights)%>%
   filter(Site %in% c("Madison"))
 SLDDF%>%
   ggplot(aes(x=Date))+
@@ -97,15 +114,19 @@ MinMaxNormal <- function(Vec){
 }
 
 Medianmean <- function(Vec,Nremoved=2){
-  ReducedVec <- Vec[Vec < max(Vec,na.rm=TRUE)&&Vec > min(Vec,na.rm=TRUE)]
+  OrderedVec <- sort(Vec)
+  if((length(Vec)-length(OrderedVec))>=2*Nremoved){
+    return(mean(OrderedVec,na.rm=TRUE))
+  }
+  ReducedVec <- OrderedVec[(1+Nremoved):(length(OrderedVec)-Nremoved)]
   return(mean(ReducedVec,na.rm=TRUE))
 }
 
 
 SLDN1DF <- full_join(SLDDF,LIMSFullDF)%>%
   filter(Site=="Madison")%>%
-  mutate(N1Roll=c(rep(NA,6),rollapply(N1,width=7,FUN=Medianmean)))
-SLDN1DF$LoessN1 <- DFLoessFNC(SLDN1DF,span=.15)
+  mutate(N1Roll=c(rep(NA,8),rollapply(N1,width=9,FUN=Medianmean)))
+SLDN1DF$LoessN1 <- DFLoessFNC(SLDN1DF,Var="N1Roll",span=.15)
 
 SLDN1DF%>%
   ggplot(aes(x=Date))+
@@ -115,5 +136,34 @@ SLDN1DF%>%
   facet_wrap(~Site)
 ```
 
+```{r}
+TSSLDN1 <- SLDN1DF%>%
+  tidyr::fill(everything(), .direction = "down")%>%
+  filter(!is.na(Cases),!is.na(SLDCases),!is.na(LoessN1))
+
+
+TSDF <- ts(TSSLDN1,start = 18520)
+CasesTS <- TSDF[,3]
+SLDCasesTS <- TSDF[,9]
+N1TS <- TSDF[,11]
+LoessN1TS <- TSDF[,19]
+
+par(mfrow=c(2,2))
+ccf(CasesTS,N1TS)
+ccf(SLDCasesTS,N1TS)
+ccf(CasesTS,LoessN1TS)
+ccf(SLDCasesTS,LoessN1TS)
+par(mfrow=c(1,1))
+ts.plot(MinMaxNormal(SLDCasesTS),MinMaxNormal(LoessN1TS))
+```
+```{r diff ccf}
+par(mfrow=c(2,2))
+ccf(diff((CasesTS)),diff(N1TS))
+ccf(diff((CasesTS)),diff(LoessN1TS))
+ccf(diff((SLDCasesTS)),diff(N1TS))
+ccf(diff((SLDCasesTS)),diff(LoessN1TS))
+par(mfrow=c(1,1))
+ts.plot(MinMaxNormal(diff((SLDCasesTS))),MinMaxNormal(diff(LoessN1TS)))
+```
 
 
