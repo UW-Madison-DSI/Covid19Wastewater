@@ -2,13 +2,13 @@
 params:
   BaseDir: "Z:/"
   ##weights: "Default"
-  weights: "c(1.05^(20:0))"
+  weights: "Default"
   ##BaseDir: "/Volumes/byandell/"
 title: "SheddingLagDistribution"
 author: "Marlin"
 date: "7/22/2021"
 knit: (function(inputFile, encoding) {
-  rmarkdown::render(inputFile, encoding = encoding, output_file = "./test/output/SheddingLagDistribution01.4.html", params = "ask")})
+  rmarkdown::render(inputFile, encoding = encoding, output_file = "./test/output/SheddingLagDistribution01.Sin.html", params = "ask")})
 editor_options:
   chunk_output_type: inline
 ---
@@ -58,12 +58,18 @@ FullLatCaseDFRoll <- full_join(LatCaseDF,LatCaseDFRoll,by=c("Date","Site"),suffi
 
 LIMSFullDF <- ParseData(LIMSFN)%>%
   select(Date,Site, BCoV, N1,N1Error,N2, N2Error,PMMoV,Pop,FlowRate)
+
+# LIMSFullDF%>%
+#   group_by(Site)%>%
+#   summarise(m=mean(equiv_sewage_amt),sd=sd(equiv_sewage_amt))%>%
+#   ggplot+
+#   geom_point(aes(y=m,x=sd))
 ```
 
 ```{r}
 #5.028338
 scale =5.028338
-  #2.332779
+#2.332779
 shape =2.332779
 
 weights <- dgamma(1:21,scale =scale,shape =shape)
@@ -158,7 +164,7 @@ ccf(SLDCasesTS,LoessN1TS)
 par(mfrow=c(1,1))
 ts.plot(MinMaxNormal(SLDCasesTS),MinMaxNormal(LoessN1TS))
 ```
-```{r diff ccf}
+```{r diff ccf,eval=FALSE,echo=FALSE}
 par(mfrow=c(2,2))
 ccf(diff((CasesTS)),diff(N1TS))
 ccf(diff((CasesTS)),diff(LoessN1TS))
@@ -169,7 +175,7 @@ ts.plot(MinMaxNormal(diff((SLDCasesTS))),MinMaxNormal(diff(LoessN1TS)))
 ```
 
 
-```{r ARima}
+```{r VARMA,eval=FALSE,echo=FALSE}
 library(MTS)
 Fit <- VARMA(cbind(CasesTS,N1TS),p=5,q=1)
   Eccm(cbind(CasesTS,N1TS))
