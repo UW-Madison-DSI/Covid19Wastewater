@@ -1,0 +1,138 @@
+---
+params:
+  BaseDir: "Z:/"
+  ##BaseDir: "/Volumes/byandell/"
+title: "MainStory"
+author: "Marlin"
+date: "10/28/2021"
+output: html_document
+---
+
+Overview
+There is mainly 3 parts to this story:
+1) A simple easy to communicate model of the key relationship
+2) A medium complexity smoothing analysis
+3) A full power time series analysis with causal inference
+
+
+The two data set used in this analysis are the Madison case and waste water concentration data.
+
+```{r set up markdown settings, echo=FALSE}
+knitr::opts_chunk$set(
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+
+```{r Start enviroment, message=FALSE, warning=FALSE, echo=FALSE}
+library(ggpubr)
+library(forecast)
+library(lmtest)
+library(lubridate)
+library(limma)
+library(zoo)
+library(dplyr)
+library(readxl)
+
+#Data Files and prep work
+source("../../lib/GenPlotMaking.R")
+#source("../../lib/WasteWaterDataProccess.R")
+#source("../../lib/CasesDataProccess.R")
+source("../../lib/DataProccess.R")
+source("../../lib/HelperFunctions.R")
+
+
+source("../../lib/NoTSCorrelationFunctions.R")
+```
+
+```{r DF Set Up, echo=FALSE}
+BaseDir <- params$BaseDir
+
+MadisonCaseFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/MMSD_Cases_processed.csv")
+LIMSFN <- paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/LIMSWasteData_2021-06-30_17-40.csv")
+
+LatCaseDF <- ParseData(MadisonCaseFN)%>% 
+  filter(!is.na(Site)) %>%
+  select(Date,Site,Cases,Tests,Per_pos)
+
+LatCaseDFRoll <- RollPerPos(LatCaseDF,"Cases","Tests",Facet="Site",n = 14)
+
+FullLatCaseDFRoll <- full_join(LatCaseDF,LatCaseDFRoll,by=c("Date","Site"),suffix=c("",".Rolled"))%>%
+  filter(Site=="Madison",
+         Per_pos.Rolled!=-500,
+         Date>=ymd("2020-08-15"))
+  
+
+LIMSFullDF <- ParseData(LIMSFN)%>%
+  select(Date,Site, N1,N1Error)%>%
+  filter(Site=="Madison")
+
+head(FullLatCaseDFRoll)
+head(LIMSFullDF)
+```
+
+A simple display of the data shows the core components of this story. First that both data sets are extremely noisy.
+And that there is a hint of a relationship between the two signals. 
+
+```{r plot of base relationship}
+ggplot()+
+  geom_line(aes(x=Date,y=(N1-min(N1,na.rm=TRUE))/max(N1,na.rm=TRUE),color="N1"),data=LIMSFullDF)+
+  geom_line(aes(x=Date,y=(Cases-min(Cases,na.rm=TRUE))/max(Cases,na.rm=TRUE),color="Cases"),data=FullLatCaseDFRoll)+
+  labs(y="variable min max normalized")
+```
+
+[Where do we put the SLD into the story]
+
+To isolate this relationship we used a primitive binning relationship. This clarifies the relationship we see hints of in the previous graphic and masks the noise in the data. 
+
+
+```{r binning part}
+medianMean <- function(Vec){
+  return(mean(replace(Vec, c(which.min(Vec), which.max(Vec)), NA), na.rm = TRUE))
+}
+
+
+StartDate=2
+DaySmoothing=7
+Lag=14
+
+BinDF <- full_join(FullLatCaseDFRoll,LIMSFullDF,by=c("Date","Site"))%>%
+  select(Date,Cases,N1)%>%
+    mutate(MovedCases = data.table::shift(Cases,Lag),
+           Week=(as.numeric(Date)+StartDate)%/%DaySmoothing)%>%
+    group_by(Week)%>%
+  filter(N1<max(N1,na.rm=TRUE)/1.5)%>%
+  summarise(BinnedCases=mean(MovedCases,na.rm=TRUE),BinnedN1=mean(N1,na.rm=TRUE))
+
+
+BinDF%>%
+  ggplot()+
+  geom_line(aes(x=Week,y=(BinnedN1-min(BinnedN1,na.rm=TRUE))/max(BinnedN1,na.rm=TRUE),color="N1"))+
+  geom_line(aes(x=Week,y=(BinnedCases-min(BinnedCases,na.rm=TRUE))/max(BinnedCases,na.rm=TRUE),color="Cases"))+
+  labs(y="Binned variable min max normalized")
+
+
+BinDF%>%
+  ggplot()+
+  geom_point(aes(x=BinnedCases,y=BinnedN1))
+```
+
+To generate this relationship without reducing the amount of data we rely on a Loess smoothing of the data along with a shedding lag distribution.
+
+```{r loess smoothing and some intro CCF processes}
+
+
+```
+
+
+
+Finally we wish to get a fatalistically powerful analysis we turn to formal time series tools like ARIMA models.
+```{r arima models, var models, some predictive relationship}
+
+
+
+```
+
+
+

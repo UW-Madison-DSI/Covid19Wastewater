@@ -1,0 +1,7 @@
+Within sewer factors. Does sewer transit time and or seasonal (temperature?) changes impact virus signal survival
+Relationship with WaterFlow
+Population demographics/behaviors
+What drives day-day changes
+Weekday effect
+difference in N1/N2
+how often do we need to sample to have high confidence

@@ -58,12 +58,6 @@ FullLatCaseDFRoll <- full_join(LatCaseDF,LatCaseDFRoll,by=c("Date","Site"),suffi
 
 LIMSFullDF <- ParseData(LIMSFN)%>%
   select(Date,Site, BCoV, N1,N1Error,N2, N2Error,PMMoV,Pop,FlowRate)
-
-# LIMSFullDF%>%
-#   group_by(Site)%>%
-#   summarise(m=mean(equiv_sewage_amt),sd=sd(equiv_sewage_amt))%>%
-#   ggplot+
-#   geom_point(aes(y=m,x=sd))
 ```
 
 ```{r}
