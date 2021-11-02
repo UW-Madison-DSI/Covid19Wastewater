@@ -70,22 +70,8 @@ LIMSDF <- BestCorDFGen(DFCases=FullCase,DFN1=LIMSFullDF,Rolling="Per_pos",Site="
 ```
 
 ```{r LM binning}
-
-#Creates 7 day mean weighting from gamma distribution explored elsewhere
 WeightVec <- unlist(lapply((split(dgamma(1:21,scale =5.028338,shape =2.332779),c(rep(1,7),rep(2,7),rep(3,7))
               )),mean))
-# 
-# MadData <- MergedDF%>%
-#     mutate(MovedCases = data.table::shift(Cases2,2))%>%
-#     mutate(Week=as.numeric(Date+6)%/%7)%>%
-#     group_by(Week)%>%
-#     summarise(N1M=median(N1,na.rm=TRUE),CasesM=mean(MovedCases,na.rm = TRUE))
-# A <- (lm(CasesM~N1M-1,data=MadData))
-# B <- (lm(CasesM~N1M,data=MadData))
-
-
-
-# CheckFunction(DaySmoothing=c(7,14),Show2=FALSE,Mat=TRUE,Ret="LM",CasesUsed="Cases4")
 ```
 
 ```{r Single Fit function}

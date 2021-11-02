@@ -9,10 +9,15 @@ output: html_document
 ---
 
 Overview
+
 There is mainly 3 parts to this story:
+
 1) A simple easy to communicate model of the key relationship
+
 2) A medium complexity smoothing analysis
+
 3) A full power time series analysis with causal inference
+
 
 
 The two data set used in this analysis are the Madison case and waste water concentration data.
@@ -127,7 +132,7 @@ To generate this relationship without reducing the amount of data we rely on a L
 
 
 
-Finally we wish to get a fatalistically powerful analysis we turn to formal time series tools like ARIMA models.
+Finally we wish to get a statistically powerful analysis we turn to formal time series tools like ARIMA models.
 ```{r arima models, var models, some predictive relationship}
 
 

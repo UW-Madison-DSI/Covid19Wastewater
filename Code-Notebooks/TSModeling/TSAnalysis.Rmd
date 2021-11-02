@@ -44,64 +44,8 @@ LIMSFullDFAllCols <- ParseData(LIMSFN)
 
 LIMSFullDF <- LIMSFullDFAllCols%>%
   select(Date,Site, BCoV, N1,N1Error,N2, N2Error, AVG,PMMoV,Pop,FlowRate)
-
-
-
 ```
 
-
-
-```{r weekend effect proof}
-WeekdayDF <- LIMSFullDF%>%
-  mutate(weekday=weekdays(Date))%>%
-  filter(N1>0,N1Error>0)
-WeekdayDF$weekday <- factor(WeekdayDF$weekday,
-                        levels= c("Monday", "Tuesday", "Wednesday", "Thursday","Friday","Saturday","Sunday"))
-
-WeekdayDF%>%
-  group_by(weekday)%>%
-  summarize(N1M=mean(N1),n())
-# t.test(filter(WeekdayDF,weekday=="Tuesday")$N1,filter(WeekdayDF,weekday=="Saturday")$N1)
-
-summary(aov(N1~weekday+Site,data=WeekdayDF))
-#24/34/45/47/67
-
-WeekdaySmoothedDF <- RollAvg(LIMSFullDF,var=c("N1"))%>%
-  mutate(weekday=weekdays(Date))%>%
-  filter(N1>0,N1Error>0)
-
-WeekdaySmoothedDF$weekday <- factor(WeekdaySmoothedDF$weekday,
-                        levels= c("Monday", "Tuesday", "Wednesday", "Thursday","Friday","Saturday","Sunday"))
-
-summary(aov(N1~weekday+Site,data=WeekdaySmoothedDF))
-
-```
-
-```{r smoothed analyis}
-WeekdayCaseDF <- LatCaseDF%>%
-  mutate(weekday=weekdays(Date))%>%
-  filter(Cases>0,Per_pos>0)
-WeekdayDF$weekday <- factor(WeekdayDF$weekday,
-                        levels= c("Monday", "Tuesday", "Wednesday", "Thursday","Friday","Saturday","Sunday"))
-
-WeekdayCaseDF%>%
-  group_by(weekday)%>%
-  summarize(CasesM=mean(Cases),Per_posM=mean(Per_pos),n())
-#t.test(filter(WeekdayDF,weekday=="Monday")$N1,filter(WeekdayDF,weekday=="Thursday")$N1)
-
-summary(aov(Per_pos~weekday+Site,data=WeekdayCaseDF))
-#24/34/45/47/67
-
-WeekdaySmoothedCaseDF <- RollPerPos(LatCaseDF,"Cases","Tests",Facet="Site")%>%
-  mutate(weekday=weekdays(Date))%>%
-  filter(Cases>0,Per_pos>0)
-
-WeekdaySmoothedCaseDF$weekday <- factor(WeekdaySmoothedCaseDF$weekday,
-                        levels= c("Monday", "Tuesday", "Wednesday", "Thursday","Friday","Saturday","Sunday"))
-
-summary(aov(Per_pos~weekday+Site,data=WeekdaySmoothedCaseDF))
-
-```
 
 
 
@@ -114,7 +58,7 @@ RAN <- 14
 #   filter(Site=="Madison")
 # grangertest(formula=log(N1)~log(N2),data=LIMSMadDF)
 
-MadCasedat<-DFSmoothingFNC(LatCaseDF, SiteS="Madison")%>%
+MadCasedat<-DFSmoothingFNC(LatCaseDF, Site="Madison")%>%
   filter(Site=="Madison")
 #filter(abs(N1.x-N1.y)>500000)
 #select(filter(LIMSFullDF,Site=="Madison"),Date,N1)
@@ -123,7 +67,7 @@ MadLIMsdata<-LIMSFullDF%>%
   RollAvg(var=c("N1","N2","AVG","PMMoV","BCoV"),n=RAN)%>%
   filter(Site=="Madison")%>%
   select(Site,Date,N1,N2,PMMoV,BCoV,AVG)
-full_join(MadLIMsdata,
+LIMSFullDFAllCols <- full_join(MadLIMsdata,
           select(filter(LIMSFullDF,Site=="Madison"),Date,N1))
 
 
@@ -142,11 +86,11 @@ Maddata <- inner_join(MadCasedat,MadLIMsdata2,by=c("Date","Site"))%>%
 #,start=min(Maddata$Date),end=max(Maddata$Date)
 
 TSMad <- ts(Maddata)
-N1TSVec <- TSMad[,7]
-N2TSVec <- TSMad[,8]
-AVGTSVec <- TSMad[,11]
-PMMoVTSVec <- TSMad[,9]
-BCoVTSVec <- TSMad[,10]
+N1TSVec <- TSMad[,5]
+N2TSVec <- TSMad[,6]
+AVGTSVec <- TSMad[,9]
+PMMoVTSVec <- TSMad[,7]
+BCoVTSVec <- TSMad[,8]
 FlowRateTSVec <- TSMad[,13]
 ConductivityTSVec <- TSMad[,23]
 temperatureTSVec <- TSMad[,59]
@@ -278,9 +222,9 @@ library(MTS)
 
 data <- cbind(CasesTSVec,N1TSVec)
 Eccm(data)
-mod <- VARMA(data,p=1,q=1)
+#mod <- VARMA(data,p=1,q=1)
 
-summary(mod)
+#summary(mod)
 ```
 
 
@@ -444,10 +388,10 @@ legend("bottomleft", legend=c("N1 TS Model","Cases"), col=1:3, lty=1, cex=1)
 
 
 SellCasedat <- RollPerPos(LatCaseDF,"Cases","Tests",Facet="Site")%>%
-  filter(Site=="UW-Sellery")
+  filter(Site=="Spring UW-Sellery")
 
 SellLIMsdata <- RollAvg(LIMSFullDF,var=c("N1","N2","PMMoV"))%>%
-  filter(Site=="UW-Sellery")%>%
+  filter(Site=="Spring UW-Sellery")%>%
   select(Date,N1,N2,PMMoV,BCoV)
 
 
@@ -491,53 +435,20 @@ legend("topright", legend=c("N1 TS Model","Cases"), col=1:3, lty=1, cex=1)
 ```
 
 
-```{r by season}
-MinConc=min(LIMSFullDF$Date)
-MaxConc=max(LIMSFullDF$Date)
-  
-FallRange=c(MinConc,mdy("12/11/2020"))
-SpringRange=c(mdy("1/25/2021"),MaxConc)
-
-SellSpringdata <- Selldata%>%
-    filter(Date >= SpringRange[1] & Date <= SpringRange[2])
-
-
-TSSellSpring <- ts(SellSpringdata)
-N1TSVecSellSpring <- TSSellSpring[,6]
-Per_posTSVecSellSpring <- TSSellSpring[,5]
-
-plot(Per_posTSVecSellSpring)
-plot(log(N1TSVecSellSpring))
-
-ccfvaluesSellSpring  <-  ccf(Per_posTSVecSellSpring,log(N1TSVecSellSpring),type = c("correlation"),na.action = na.pass)
-
-alldataSellSpring <- ts.intersect(Per_posTSVecSellSpring,N1TSVecSellSpring,
-                         N1A=stats::lag(N1TSVecSellSpring,-13),
-                         N1B=stats::lag(N1TSVecSellSpring,6),
-                         N1C <- stats::lag(N1TSVecSellSpring,-11),
-                         N1D=stats::lag(N1TSVecSellSpring,-8))
-
-
-tryitSellSpring  <-  lm(Per_posTSVecSellSpring~N1A+N1B, data = alldataSellSpring)
-
-summary(tryitSellSpring)
-
-acf2(residuals(tryitSellSpring))
-
-
-R2=0.439
-#small numbers mean low confidence in results
-#Stationary
-#
-
-```
-
 ```{r by season Fall}
-FallSpringdata <- Selldata%>%
-    filter(Date >= FallRange[1] & Date <= FallRange[2])
+SellCasedat <- RollPerPos(LatCaseDF,"Cases","Tests",Facet="Site")%>%
+  filter(Site=="Fall UW-Sellery")
+
+SellLIMsdata <- RollAvg(LIMSFullDF,var=c("N1","N2","PMMoV"))%>%
+  filter(Site=="Fall UW-Sellery")%>%
+  select(Date,N1,N2,PMMoV,BCoV)
 
 
-TSSellSpring <- ts(SellSpringdata)
+Selldata <- inner_join(SellCasedat,SellLIMsdata,by=c("Date"))
+
+
+
+TSSellSpring <- ts(Selldata)
 N1TSVecSellFall <- TSSellSpring[,6]
 Per_posTSVecSellFall <- TSSellSpring[,5]
 
@@ -658,15 +569,6 @@ LIMSFullDFAllRows%>%
   scale_y_log10()+
   ggtitle("No clear relation between ph and N1/N1Error")
 
-#FlowRate
-LIMSFullDFAllRows%>%
-  mutate(FlowRate=as.numeric(FlowRate))%>%
-  select(FlowRate,!FlowRate)%>%
-  group_by(Site)%>%
-  summarise(FlowRateS=mean(FlowRate,na.rm=TRUE),Pop=mean(Pop,na.rm=TRUE))%>%
-  ggplot()+
-  geom_point(aes(x=Pop,y=FlowRateS))+
-  ggtitle("Nearly Perfect linear relation between Pop and Flowrate")
 
 LIMSFullDFAllRows%>%
   group_by(Site)%>%
