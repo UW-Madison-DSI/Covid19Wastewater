@@ -66,7 +66,7 @@ scale =5.028338
 #2.332779
 shape =2.332779
 
-weights <- dgamma(1:21,scale =scale,shape =shape)
+weights <- dgamma(1:21,scale = scale,shape = shape)
 if(params$weights!="Default"){
   weights <- eval(parse(text=params$weights))
 }
@@ -78,13 +78,13 @@ if(params$weights!="Default"){
 
 if(params$weights=="Default"){
   plot(weights, 
-            main=paste("Gamma Distribution with mean =, 11.73 ,days and SD = 7.68"),
+            main=paste("Gamma Distribution with mean = 11.73 days, and SD = 7.68"),
             ylab = "Weight",
             xlab = "Lag")
 
 
   plot(c(rep(0,10),weights[11:21]), 
-            main="Gamma Distribution with mean = 11.73 days and SD = 7.68",
+            main="Gamma Distribution with mean = 11.73 days, and SD = 7.68",
             ylab = "Weight",
             xlab = "Lag")
 }else{

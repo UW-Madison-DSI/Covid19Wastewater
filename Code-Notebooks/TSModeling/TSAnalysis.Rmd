@@ -182,7 +182,7 @@ WeightedPred <- loessFit(y=log(TrueMadData$N1),
 loessPred <- ts(WeightedPred)
 rollingCase <- rollmean(UnSmoothedCasesTSVec,14)
 
-ts.plot(CasesTSVec/500,
+ts.plot(CasesTSVec/600,
         rollingCase,
          100*loessPred-800,
          100*log(N1TSVec)-1500,
