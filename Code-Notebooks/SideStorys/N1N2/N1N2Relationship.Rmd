@@ -1,0 +1,83 @@
+---
+params:
+  BaseDir: "Z:/"
+  ##BaseDir: "/Volumes/byandell/"
+title: "N1N2 Relationship"
+author: "Marlin"
+date: "11/2/2021"
+output: html_document
+---
+
+```{r set up markdown settings, echo=FALSE}
+knitr::opts_chunk$set(
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+
+```{r Start enviroment, message=FALSE, warning=FALSE, echo=FALSE}
+library(ggpubr)
+library(forecast)
+library(lmtest)
+library(lubridate)
+library(limma)
+library(zoo)
+library(dplyr)
+library(readxl)
+
+#Data Files and prep work
+source("../../lib/GenPlotMaking.R")
+#source("../../lib/WasteWaterDataProccess.R")
+#source("../../lib/CasesDataProccess.R")
+source("../../lib/DataProccess.R")
+source("../../lib/HelperFunctions.R")
+
+
+source("../../lib/NoTSCorrelationFunctions.R")
+```
+
+```{r DF Set Up, echo=FALSE}
+BaseDir <- params$BaseDir
+
+MadisonCaseFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/MMSD_Cases_processed.csv")
+LIMSFN <- paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/LIMSWasteData_2021-06-30_17-40.csv")
+
+LatCaseDF <- ParseData(MadisonCaseFN)%>% 
+  filter(!is.na(Site)) %>%
+  select(Date,Site,Cases,Tests,Per_pos)
+
+LatCaseDFRoll <- RollPerPos(LatCaseDF,"Cases","Tests",Facet="Site",n = 14)
+
+FullLatCaseDFRoll <- full_join(LatCaseDF,LatCaseDFRoll,by=c("Date","Site"),suffix=c("",".Rolled"))%>%
+  filter(Site=="Madison",
+         Per_pos.Rolled!=-500,
+         Date>=ymd("2020-08-15"))
+  
+
+LIMSFullDF <- ParseData(LIMSFN)%>%
+  select(Date,Site, N1,N1Error,N2,N2Error)%>%
+  filter(Site=="Madison")
+```
+
+Strong trend between N1 and N2 with a correlation of .93
+
+```{r N1vsN2,warning=FALSE}
+LIMSFullDF%>%
+  ggplot()+
+  aes(x=N1,y=N2)+
+  geom_point()+
+  ggtitle("non log plot")
+
+
+LIMSFullDF%>%
+  ggplot()+
+  aes(x=N1,y=N2)+
+  geom_point()+
+  scale_y_log10()+
+  scale_x_log10()+
+  ggtitle("log plot")
+
+cor(LIMSFullDF$N1,LIMSFullDF$N2,use="complete.obs")
+```
+
