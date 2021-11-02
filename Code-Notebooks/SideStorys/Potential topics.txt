@@ -10,6 +10,6 @@ What drives day-day changes - Need to look at trend analysis
 
 how often do we need to sample to have high confidence - Need to look at trend analysis
 
-Within sewer factors. Does sewer transit time and or seasonal (temperature?) changes impact virus signal survival
+Within sewer factors. Does sewer transit time and or seasonal (temperature?) changes impact virus signal survival - analysis not done yet
 
 Population demographics/behaviors - Not feasable with current analysis/data
