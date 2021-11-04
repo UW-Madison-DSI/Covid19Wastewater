@@ -12,7 +12,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r include=FALSE}
+```{r Start enviroment include=FALSE}
 library(ggpubr)
 library(forecast)
 library(lmtest)
@@ -27,12 +27,9 @@ library(stringr)
 source("../../../lib/GenPlotMaking.R")
 source("../../../lib/DataProccess.R")
 source("../../../lib/HelperFunctions.R")
-
-
-source("../../lib/NoTSCorrelationFunctions.R")
 ```
 
-```{r echo=FALSE}
+```{r Data processing echo=FALSE}
 BaseDir <- params$BaseDir
 MadisonCaseFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/MMSD_Cases_processed.csv")
 LIMSFN <- paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/LIMSWasteData_2021-06-30_17-40.csv")
@@ -53,13 +50,13 @@ LIMSFullDF <- ParseData(LIMSFN)%>%
   select(Date,Site, N1,N1Error,FlowRate,Pop)
 ```
 
-On a first past population can be used for three purposes.
+On a first pass FlowRate can be used for three purposes.
 
 1) Normalize data across sites.
 
 2) Normalize data within sites
 
-The below show that it is largly useless to use flow to normalize across site because it so strongly correlates with population.
+The below show that it is largely useless to use flow to normalize across site because it strongly correlates with population.
 
 ```{r pop vs Flow, warning=FALSE}
 LIMSFullDF%>%
@@ -95,6 +92,5 @@ LIMSFullDF%>%
   mutate(FlowRate=(FlowRate-MeanFlowRate)/sdFlowRate)%>%
   ggplot()+
   scale_x_log10()+
-  geom_point(aes(x=N1,y=FlowRate),alpha=.1)+
-  ggtitle("Nearly Perfect linear relation between N1 and Flowrate")
+  geom_point(aes(x=N1,y=FlowRate),alpha=.1)
 ```

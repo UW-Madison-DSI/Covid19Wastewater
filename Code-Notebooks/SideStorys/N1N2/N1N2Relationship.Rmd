@@ -27,14 +27,14 @@ library(dplyr)
 library(readxl)
 
 #Data Files and prep work
-source("../../lib/GenPlotMaking.R")
-#source("../../lib/WasteWaterDataProccess.R")
-#source("../../lib/CasesDataProccess.R")
-source("../../lib/DataProccess.R")
-source("../../lib/HelperFunctions.R")
+source("../../../lib/GenPlotMaking.R")
+#source("../../../lib/WasteWaterDataProccess.R")
+#source("../../../lib/CasesDataProccess.R")
+source("../../../lib/DataProccess.R")
+source("../../../lib/HelperFunctions.R")
 
 
-source("../../lib/NoTSCorrelationFunctions.R")
+source("../../../lib/NoTSCorrelationFunctions.R")
 ```
 
 ```{r DF Set Up, echo=FALSE}
@@ -58,6 +58,8 @@ FullLatCaseDFRoll <- full_join(LatCaseDF,LatCaseDFRoll,by=c("Date","Site"),suffi
 LIMSFullDF <- ParseData(LIMSFN)%>%
   select(Date,Site, N1,N1Error,N2,N2Error)%>%
   filter(Site=="Madison")
+
+
 ```
 
 Strong trend between N1 and N2 with a correlation of .93

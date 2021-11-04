@@ -58,7 +58,7 @@ There are two kind issues day of the week can create in data analysis.
   2) Missing values concentrate on some weekdays
   
   
-The waste water does not signifigenty depend on the day of the week but there is only half as many entrys for Sunday and only 1 for Saturday meaning that any analysis done will over value weekday trends.
+The waste water does not significantly depend on the day of the week but there is only half as many entrys for Sunday and only 1 for Saturday meaning that any analysis done will over value weekday trends.
 
 ```{r weekend effect proof}
 WeekdayDF <- LIMSFullDF%>%
@@ -76,7 +76,7 @@ summary(aov(N1~weekday,data=WeekdayDF))
 ```
 
 
-The case data is heavily dependent on the day of the week with thursday having nearly twice the amount of cases on average.
+The case data is heavily dependent on the day of the week with Thursday having nearly twice the amount of cases on average.
 
 ```{r smoothed analyis}
 WeekdayCaseDF <- LatCaseDF%>%
