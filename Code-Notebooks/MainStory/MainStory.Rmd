@@ -20,8 +20,6 @@ There is mainly 3 parts to this story:
 
 2) A medium complexity smoothing analysis
 
-3) A full power time series analysis with causal inference
-
 
 The two data set used in this analysis are the Madison case and waste water concentration data.
 
@@ -42,6 +40,7 @@ library(limma)
 library(zoo)
 library(readxl)
 library(dplyr)
+library(tidyr)
 library(plotly)
   #library(lintr)
 
@@ -97,6 +96,12 @@ NoNa <- function(DF,...){#Removes NA from the reverent columns
       )
   return(NoNaDF)
 }
+FillNA <- function(DF,...){#Fills NA with previous values
+  ColumnNames <- c(...)
+  NoNaDF <- DF%>%
+    fill(ColumnNames)
+  return(NoNaDF)
+}
 
 FirstImpression <- FullDF%>%
   NoNa("N1","Cases")%>%#Removing outliers
@@ -108,14 +113,24 @@ FirstImpression <- FullDF%>%
 ggplotly(FirstImpression,tooltip=c("info","Date"))
 ```
 
+Cross correlation and Granger Causality are key component to this analysis. Cross correlation looks at the correlation at a range of time shifts and Granger analysis preform a test for predictive power. We find that there is to much noise to find significance.
 
+```{r CCF and Granger test 1}
+Cases <- FullDF$Cases
+N1 <- FullDF$N1
+
+ccf(Cases,N1,na.action=na.pass)
+
+grangertest(Cases, N1, order = 1)
+grangertest(N1,Cases, order = 1)
+```
 
 
 
 `r if(params$RemoveOutliers){"From a first pass it is clear that the waste water measurements before 11/20/2020 did not function as an effective measure of the amount of waste water shed in the community. So for this analysis we are removing waste water data from before that point. Also there are some extreme outliers that we remove for more effective analysis"}`
 
 
-```{r remove unusual N1 data points,eval = params$RemoveOutliers,echo = FALSE}
+```{r remove unusual N1 data points,eval = params$RemoveOutliers}
 IntermediateOutlierGraphic <- FALSE
 
 DaySmoothed=21#Very wide smoothing to find where the data strong deviate from trend
@@ -129,7 +144,7 @@ FullDF3 <- FullDF2%>%#Remove older data that clearly has no relationship to Case
          SmoothN1=ifelse(is.na(SmoothN1),N1,SmoothN1),#Fixing issue where rollapply fills NA on right border
          LargeError=N1>1.5*SmoothN1,#Calculating error Limits
          N1=ifelse(LargeError,SmoothN1,N1))%>%#replacing data points that variance is to large
-  select(-SmoothN1)#Removing unneeded calculated columns
+  select(-SmoothN1,-LargeError)#Removing unneeded calculated columns
 
 if(IntermediateOutlierGraphic){
   OutlierGraphic <- FullDF%>%
@@ -154,8 +169,36 @@ FullDF3%>%
   labs(y="variable min max normalized")
 ```
 
+```{r Dont remove outliers,eval = !params$RemoveOutliers,include=FALSE}
+
+FullDF3 <- FullDF
+
+```
 
 
+`r if(params$RemoveOutliers){"We now find a signifigent relationship. However there is some danger of doing These kind of tests on non statinary time series"}`
+```{r CCF and Granger test 2,eval = params$RemoveOutliers}
+library(tseries)
+
+TestDF2 <- FullDF3%>%
+  FillNA("N1","Cases")%>%
+  NoNa("N1","Cases")
+
+
+Cases <- TestDF2$Cases
+N1 <- TestDF2$N1
+
+# kpss.test(Cases)
+# adf.test(Cases)
+# 
+# kpss.test(N1)
+# adf.test(N1)
+
+ccf(Cases,N1,na.action=na.pass)
+
+grangertest(Cases, N1, order = 1)
+grangertest(N1,Cases, order = 1)
+```
 
 
 A key component to this relationship is that the relationship between N1 and Case involves a gamma distribution modeling both the time between catching Covid-19 and getting a test and the concentration of the shedded particles. We found a gamma distribution with mean 11.73 days and a sd of 7.68 match's other research and gives good results.
@@ -187,6 +230,24 @@ SLDSmoothedDF%>%
   facet_wrap(~Site)+
   labs(y="variable min max normalized")
 ```
+
+
+`r if(params$RemoveOutliers){"The SLD improves the shape of the CCF. However it removes the signifigence of N1 predictiing Cases. This makes sense looking at the data."} else{"The SLD Cause a signfigent improvement in the relationship now showing a statisticly signifigent test result"}`
+
+```{r CCF and Granger test 3}
+TestDF3 <- SLDSmoothedDF%>%
+  FillNA("N1","SLDCases")%>%
+  NoNa("N1","SLDCases")
+
+SLDCases <- TestDF3$SLDCases
+N1 <- TestDF3$N1
+
+ccf(SLDCases,N1,na.action=na.pass)
+
+grangertest(SLDCases, N1, order = 1)
+grangertest(N1,SLDCases, order = 1)
+```
+
 
 
 To isolate this relationship we used a primitive binning relationship. This clarifies the relationship we see hints of in the previous graphic and masks the noise in the data. 
@@ -228,16 +289,7 @@ summary(lm(BinnedCases~BinnedN1, data=BinDF))
 
 
 
-To generate this relationship without reducing the amount of data we rely on a Loess smoothing of the data. The first step is to get a more rigorous measure of the relationship of the data. Here we will use cross correlation. These figures support the work done in previous steps.
-
-```{r ccf on previous data structures}
-ccf(SLDSmoothedDF$Cases, SLDSmoothedDF$N1, na.action=na.pass)
-
-ccf(SLDSmoothedDF$SLDCases, SLDSmoothedDF$N1, na.action=na.pass)
-
-ccf(BinDF$BinnedCases, BinDF$BinnedN1, na.action=na.pass)
-```
-The loess smoothing is a way of generating smooth curves from noisy data. The displayed plot shows the visual power of this smoothing. We see a relationship in the big patterns but also multiple sub patterns match. We see in general that smoothed N1 both lags and leads the case data.
+To generate this relationship without reducing the amount of data we rely on a loess smoothing of the data. The loess smoothing is a way of generating smooth curves from noisy data. The displayed plot shows the visual power of this smoothing. We see a relationship in the big patterns but also multiple sub patterns match. We see in general that smoothed N1 both lags and leads the case data.
 
 ```{r loess smoothing and some intro CCF processes}
 SLDSmoothedDF$loessN1 <- loessFit(y=(SLDSmoothedDF$N1), 
@@ -253,16 +305,26 @@ SLDSmoothedDF%>%
   geom_line(aes(x=Date, y=MinMaxNorm(SLDCases), color="SLDCases"))+
   facet_wrap(~Site)+
   labs(y="variable min max normalized")
+```
 
+`r if(params$RemoveOutliers){"The loess smoothing gives the best ccf relation and shape. It also insignifigently changes granger tests"}else{"The loess smoothing roughly doubled the correlation at all time lags. The two granger tests p value also got signifigently smaller"}`
 
+```{r CCF and Granger test 4}
+TestDF4 <- SLDSmoothedDF%>%
+  FillNA("loessN1","SLDCases")%>%
+  NoNa("loessN1","SLDCases")
 
+SLDCases <- TestDF4$SLDCases
+N1 <- TestDF4$loessN1
 
-ccf(SLDSmoothedDF$loessN1, SLDSmoothedDF$SLDCases, na.action=na.pass)
+ccf(SLDCases,N1,na.action=na.pass)
+
+grangertest(SLDCases, N1, order = 1)
+grangertest(N1,SLDCases, order = 1)
 ```
 
 
-```{r example, Ignore for now obvs, eval = FALSE}
-
+```{r example, Ignore for now obvs, include = FALSE,eval=FALSE}
 input <- initialize data
           loess
           SLD smooth
