@@ -6,5 +6,3 @@ LongTermTrendAnalysis: Looks at first level analysis of the waste water and case
 ShedingLoadDistribution: Explores using a weighted rolling average to get the amount of sheding we expect the population to produce
 
 TSModeling: Looks into ts dependent models to understand the case and wastewater trend
-
-VarianceAnalysis: Exploration of the hierarchical variance of the data.
