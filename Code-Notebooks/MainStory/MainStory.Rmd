@@ -116,8 +116,13 @@ ggplotly(FirstImpression,tooltip=c("info","Date"))
 Cross correlation and Granger Causality are key component to this analysis. Cross correlation looks at the correlation at a range of time shifts and Granger analysis preform a test for predictive power. We find that there is to much noise to find significance.
 
 ```{r CCF and Granger test 1}
-Cases <- FullDF$Cases
-N1 <- FullDF$N1
+TestDF1 <- FullDF%>%
+  FillNA("N1","Cases")%>%#filling in missing data in range with previous values
+  NoNa("N1","Cases")#removing rows from before both series started#filling in missing data in range with previous values
+
+
+Cases <- TestDF1$Cases
+N1 <- TestDF1$N1
 
 ccf(Cases,N1,na.action=na.pass)
 
@@ -178,19 +183,19 @@ FullDF3 <- FullDF
 
 `r if(params$RemoveOutliers){"We now find a signifigent relationship. However there is some danger of doing These kind of tests on non statinary time series"}`
 ```{r CCF and Granger test 2,eval = params$RemoveOutliers}
-library(tseries)
+
 
 TestDF2 <- FullDF3%>%
-  FillNA("N1","Cases")%>%
-  NoNa("N1","Cases")
+  FillNA("N1","Cases")%>%#filling in missing data in range with previous values
+  NoNa("N1","Cases")#removing rows from before both series started
 
 
 Cases <- TestDF2$Cases
 N1 <- TestDF2$N1
 
+#library(tseries) Tests for stationality. potential use is obvious
 # kpss.test(Cases)
 # adf.test(Cases)
-# 
 # kpss.test(N1)
 # adf.test(N1)
 
@@ -236,8 +241,8 @@ SLDSmoothedDF%>%
 
 ```{r CCF and Granger test 3}
 TestDF3 <- SLDSmoothedDF%>%
-  FillNA("N1","SLDCases")%>%
-  NoNa("N1","SLDCases")
+  FillNA("N1","SLDCases")%>%#filling in missing data in range with previous values
+  NoNa("N1","SLDCases")#removing rows from before both series started
 
 SLDCases <- TestDF3$SLDCases
 N1 <- TestDF3$N1
@@ -258,24 +263,25 @@ medianMean <- function(Vec){
   return(mean(replace(Vec, c(which.min(Vec), which.max(Vec)), NA), na.rm = TRUE))
 }
 
-StartDate <- 1
-DaySmoothing <- 14
-Lag <- 4
+StartDate <- 1 #Where the bining starts
+DaySmoothing <- 14 #The size of the bins
+Lag <- 4 #The offset between Cases and N1
 
 BinDF <- SLDSmoothedDF%>%
   select(Date, SLDCases, N1)%>%
-    mutate(MovedCases = data.table::shift(SLDCases, Lag), 
-           Week=(as.numeric(Date)+StartDate)%/%DaySmoothing)%>%
+    mutate(MovedCases = data.table::shift(SLDCases, Lag),#moving  SLD lag days backwards
+           Week=(as.numeric(Date)+StartDate)%/%DaySmoothing)%>%#puting variables into bins via integer division
   group_by(Week)%>%
   #filter(Week>2670)%>%
-  summarise(BinnedCases=mean(MovedCases, na.rm=TRUE), BinnedN1=exp(mean(log(N1), na.rm=TRUE)))
+  summarise(BinnedCases=mean(MovedCases, na.rm=TRUE), BinnedN1=exp(mean(log(N1), na.rm=TRUE)))#summarize data within bins. Use geo mean for N1.
 
 
 
 BinDF%>%
-  ggplot()+
-  geom_line(aes(x=Week, y=MinMaxNorm(BinnedN1), color="N1"))+
-  geom_line(aes(x=Week, y=MinMaxNorm(BinnedCases), color="Cases"))+
+  NoNa("BinnedN1","BinnedCases")%>%#No NA but remove in case of future data
+  ggplot(aes(x=Week))+
+  geom_line(aes(y=MinMaxNorm(BinnedN1), color="N1"))+
+  geom_line(aes(y=MinMaxNorm(BinnedCases), color="Cases"))+
   labs(y="Binned variable min max normalized")
 
 BinDF%>%
@@ -293,16 +299,16 @@ To generate this relationship without reducing the amount of data we rely on a l
 
 ```{r loess smoothing and some intro CCF processes}
 SLDSmoothedDF$loessN1 <- loessFit(y=(SLDSmoothedDF$N1), 
-                      x=SLDSmoothedDF$Date, 
-                      span=.2, 
-                      iterations=2)$fitted
+                      x=SLDSmoothedDF$Date, #create loess fit of the data
+                      span=.2, #span of .2 seems to give the best result, not rigourusly chosen
+                      iterations=2)$fitted#2 iterations remove some bad patterns
 
 
 SLDSmoothedDF%>%
   NoNa("loessN1","SLDCases")%>%
-  ggplot()+
-  geom_line(aes(x=Date, y=MinMaxNorm(loessN1), color="loessN1"))+
-  geom_line(aes(x=Date, y=MinMaxNorm(SLDCases), color="SLDCases"))+
+  ggplot(aes(x=Date))+
+  geom_line(aes(y=MinMaxNorm(loessN1), color="loessN1"))+
+  geom_line(aes(y=MinMaxNorm(SLDCases), color="SLDCases"))+
   facet_wrap(~Site)+
   labs(y="variable min max normalized")
 ```
@@ -311,8 +317,8 @@ SLDSmoothedDF%>%
 
 ```{r CCF and Granger test 4}
 TestDF4 <- SLDSmoothedDF%>%
-  FillNA("loessN1","SLDCases")%>%
-  NoNa("loessN1","SLDCases")
+  FillNA("loessN1","SLDCases")%>%#filling in missing data in range with previous values
+  NoNa("loessN1","SLDCases")#removing rows from before both series started
 
 SLDCases <- TestDF4$SLDCases
 N1 <- TestDF4$loessN1
