@@ -32,25 +32,52 @@ knitr::opts_chunk$set(
 
 
 ```{r Start enviroment, message=FALSE, warning=FALSE, echo=FALSE}
-library(ggpubr)
-library(forecast)
+library(dplyr)
+library(ggplot2)
 library(lmtest)
 library(lubridate)
 library(limma)
-library(zoo)
-library(readxl)
-library(dplyr)
 library(tidyr)
 library(plotly)
   #library(lintr)
 
 
 #Data Files and prep work
-source("../../lib/GenPlotMaking.R")
+#source("../../lib/GenPlotMaking.R")
 source("../../lib/DataProccess.R")
-source("../../lib/HelperFunctions.R")
-source("../../lib/NoTSCorrelationFunctions.R")
+#source("../../lib/HelperFunctions.R")
 ```
+
+```{r helpful data manipulations, include = FALSE}
+MinMaxNorm <- function(Vec){#normalizes the data to range from 0 and 1
+  normVec <- (Vec-min(Vec,na.rm=TRUE))/max(Vec,na.rm=TRUE)
+  return(normVec)
+}
+
+NoNa <- function(DF,...){#Removes NA from the reverent columns
+  ColumnNames <- c(...)
+  NoNaDF <- DF%>%
+    filter(
+      across(
+      .cols = ColumnNames,
+      .fns = ~ !is.na(.x))
+      )
+  return(NoNaDF)
+}
+FillNA <- function(DF,...){#Fills NA with previous values
+  ColumnNames <- c(...)
+  NoNaDF <- DF%>%
+    fill(ColumnNames)
+  return(NoNaDF)
+}
+
+medianMean <- function(Vec){# take the mean drooping the highest and lowest values
+  return(mean(replace(Vec, c(which.min(Vec), which.max(Vec)), NA), na.rm = TRUE))
+}
+
+```
+
+
 
 ```{r DF Set Up, echo=FALSE}
 BaseDir <- params$BaseDir#get the root of the directory where the data is stored
@@ -81,28 +108,6 @@ A simple display of the data shows the core components of this story. First that
 And that there is a hint of a relationship between the two signals. 
 
 ```{r plot of base relationship}
-MinMaxNorm <- function(Vec){#normalizes the data to range from 0 and 1
-  normVec <- (Vec-min(Vec,na.rm=TRUE))/max(Vec,na.rm=TRUE)
-  return(normVec)
-}
-
-NoNa <- function(DF,...){#Removes NA from the reverent columns
-  ColumnNames <- c(...)
-  NoNaDF <- DF%>%
-    filter(
-      across(
-      .cols = ColumnNames,
-      .fns = ~ !is.na(.x))
-      )
-  return(NoNaDF)
-}
-FillNA <- function(DF,...){#Fills NA with previous values
-  ColumnNames <- c(...)
-  NoNaDF <- DF%>%
-    fill(ColumnNames)
-  return(NoNaDF)
-}
-
 FirstImpression <- FullDF%>%
   NoNa("N1","Cases")%>%#Removing outliers
   ggplot(aes(x=Date))+#Data depends on time
@@ -181,7 +186,7 @@ FullDF3 <- FullDF
 ```
 
 
-`r if(params$RemoveOutliers){"We now find a signifigent relationship. However there is some danger of doing These kind of tests on non statinary time series"}`
+`r if(params$RemoveOutliers){"We now find a signifigent relationship. However there is some danger of doing this kind of tests on non statinary time series"}`
 ```{r CCF and Granger test 2,eval = params$RemoveOutliers}
 
 
@@ -193,7 +198,7 @@ TestDF2 <- FullDF3%>%
 Cases <- TestDF2$Cases
 N1 <- TestDF2$N1
 
-#library(tseries) Tests for stationality. potential use is obvious
+#library(tseries) Tests for stationarity. potential use is obvious
 # kpss.test(Cases)
 # adf.test(Cases)
 # kpss.test(N1)
@@ -206,7 +211,7 @@ grangertest(N1,Cases, order = 1)
 ```
 
 
-A key component to this relationship is that the relationship between N1 and Case involves a gamma distribution modeling both the time between catching Covid-19 and getting a test and the concentration of the shedded particles. We found a gamma distribution with mean 11.73 days and a sd of 7.68 match's other research and gives good results.
+A key component to this relationship is that the relationship between N1 and Case involves a gamma distribution modeling both the time between catching Covid-19 and getting a test and the concentration of the shedded particles. We found a gamma distribution with mean 11.73 days and a standard deviation of 7.68 match's other research and gives good results.
 
 ```{r SLD}
 SLDWidth <- 21
@@ -237,7 +242,7 @@ SLDSmoothedDF%>%
 ```
 
 
-`r if(params$RemoveOutliers){"The SLD improves the shape of the CCF. However it removes the signifigence of N1 predictiing Cases. This makes sense looking at the data."} else{"The SLD Cause a signfigent improvement in the relationship now showing a statisticly signifigent test result"}`
+`r if(params$RemoveOutliers){"The SLD improves the shape of the CCF. However it removes the signifigence of N1 predicting Cases. This makes sense looking at the data."} else{"The SLD Cause a signfigent improvement in the relationship now showing a statisticly signifigent test result"}`
 
 ```{r CCF and Granger test 3}
 TestDF3 <- SLDSmoothedDF%>%
@@ -259,26 +264,22 @@ To isolate this relationship we used a primitive binning relationship. This clar
 
 
 ```{r binning part}
-medianMean <- function(Vec){
-  return(mean(replace(Vec, c(which.min(Vec), which.max(Vec)), NA), na.rm = TRUE))
-}
-
-StartDate <- 1 #Where the bining starts
+StartDate <- 1 #Where the binning starts
 DaySmoothing <- 14 #The size of the bins
 Lag <- 4 #The offset between Cases and N1
 
 BinDF <- SLDSmoothedDF%>%
-  select(Date, SLDCases, N1)%>%
-    mutate(MovedCases = data.table::shift(SLDCases, Lag),#moving  SLD lag days backwards
-           Week=(as.numeric(Date)+StartDate)%/%DaySmoothing)%>%#puting variables into bins via integer division
+  select(Date, Cases, N1)%>%
+    mutate(MovedCases = data.table::shift(Cases, Lag),#moving  SLD lag days backwards
+           Week=(as.numeric(Date)+StartDate)%/%DaySmoothing)%>%#putting variables into bins via integer division
   group_by(Week)%>%
   #filter(Week>2670)%>%
-  summarise(BinnedCases=mean(MovedCases, na.rm=TRUE), BinnedN1=exp(mean(log(N1), na.rm=TRUE)))#summarize data within bins. Use geo mean for N1.
+  summarise(BinnedCases=mean(MovedCases, na.rm=TRUE), BinnedN1=(mean((N1), na.rm=TRUE)))#summarize data within bins.
 
 
 
 BinDF%>%
-  NoNa("BinnedN1","BinnedCases")%>%#No NA but remove in case of future data
+  NoNa("BinnedN1","BinnedCases")%>%#Remove NA
   ggplot(aes(x=Week))+
   geom_line(aes(y=MinMaxNorm(BinnedN1), color="N1"))+
   geom_line(aes(y=MinMaxNorm(BinnedCases), color="Cases"))+
@@ -300,7 +301,7 @@ To generate this relationship without reducing the amount of data we rely on a l
 ```{r loess smoothing and some intro CCF processes}
 SLDSmoothedDF$loessN1 <- loessFit(y=(SLDSmoothedDF$N1), 
                       x=SLDSmoothedDF$Date, #create loess fit of the data
-                      span=.2, #span of .2 seems to give the best result, not rigourusly chosen
+                      span=.2, #span of .2 seems to give the best result, not rigorously chosen
                       iterations=2)$fitted#2 iterations remove some bad patterns
 
 
