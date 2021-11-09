@@ -2,6 +2,7 @@
 params:
   BaseDir: "Z:/"
   ##BaseDir: "/Volumes/byandell/"
+  RemoveOutliers: TRUE
 title: "MainStory"
 author: "Marlin"
 date: "10/28/2021"
@@ -20,7 +21,6 @@ There is mainly 3 parts to this story:
 2) A medium complexity smoothing analysis
 
 3) A full power time series analysis with causal inference
-
 
 
 The two data set used in this analysis are the Madison case and waste water concentration data.
@@ -42,7 +42,8 @@ library(limma)
 library(zoo)
 library(readxl)
 library(dplyr)
-#library(lintr)
+library(plotly)
+  #library(lintr)
 
 
 #Data Files and prep work
@@ -53,67 +54,104 @@ source("../../lib/NoTSCorrelationFunctions.R")
 ```
 
 ```{r DF Set Up, echo=FALSE}
-BaseDir <- params$BaseDir
+BaseDir <- params$BaseDir#get the root of the directory where the data is stored
 
+#All the Madison data is contained in these two files
 MadisonCaseFN  <-  paste0(BaseDir, "COVID-19_WastewaterAnalysis/data/processed/MMSD_Cases_processed.csv")
 LIMSFN <- paste0(BaseDir, "COVID-19_WastewaterAnalysis/data/processed/LIMSWasteData_2021-06-30_17-40.csv")
 
+
+#Importing the Madison case data
 LatCaseDF <- ParseData(MadisonCaseFN)%>% 
-  filter(!is.na(Site))%>%
   filter(Site == "Madison")%>%
   select(Date, Site, Cases)
 
+#Importing the Madison waste water data
 LIMSFullDF <- ParseData(LIMSFN)%>%
   filter(Site == "Madison")%>%
   select(Date, Site,  N1, N1Error)
 
+#joining the two data frames together
 FullDF <- full_join(LatCaseDF,LIMSFullDF, by = c("Date","Site"))
 
-
-head(FullDF)
+#what does the data look like? 
+tail(FullDF)
 ```
 
 A simple display of the data shows the core components of this story. First that both data sets are extremely noisy.
 And that there is a hint of a relationship between the two signals. 
 
 ```{r plot of base relationship}
-MinMaxNorm <- function(Vec){
+MinMaxNorm <- function(Vec){#normalizes the data to range from 0 and 1
   normVec <- (Vec-min(Vec,na.rm=TRUE))/max(Vec,na.rm=TRUE)
   return(normVec)
 }
-NoNa <- function(DF,Vec,Vec2){
+
+NoNa <- function(DF,...){#Removes NA from the reverent columns
+  ColumnNames <- c(...)
   NoNaDF <- DF%>%
-    filter(!is.na(!!sym(Vec)),!is.na(!!sym(Vec2)))
+    filter(
+      across(
+      .cols = ColumnNames,
+      .fns = ~ !is.na(.x))
+      )
   return(NoNaDF)
 }
 
-FullDF%>%
-  NoNa("N1","Cases")%>%
-  ggplot(aes(x=Date))+
-  geom_line(aes(y=MinMaxNorm(N1), color="N1"))+
-  geom_line(aes(y=MinMaxNorm(Cases), color="Cases"))+
+FirstImpression <- FullDF%>%
+  NoNa("N1","Cases")%>%#Removing outliers
+  ggplot(aes(x=Date))+#Data depends on time
+  geom_line(aes(y=MinMaxNorm(N1), color="N1",info=N1))+#compares N1 to Cases
+  geom_line(aes(y=MinMaxNorm(Cases), color="Cases",info=Cases))+
   labs(y="variable min max normalized")
+
+ggplotly(FirstImpression,tooltip=c("info","Date"))
 ```
-From a first pass it is clear that the waste water measurements before 11/20/2020 did not function as an effective measure of the amount of waste water shed in the community. So for this analysis we are removing waste water data from before that point. Also there are some extreme outliers that we remove for more effective analysis
 
 
-```{r remove unusual N1 data points,eval=TRUE,echo=FALSE}
-DaySmoothed=21
 
-FullDF <- FullDF%>%
-  mutate(N1 = ifelse(Date < mdy("11/20/2020"),NA,N1),
-         SmoothN1=rollapply(data = N1, width = DaySmoothed, FUN = median, 
-                            na.r = TRUE,fill=NA),
-         N1=ifelse(N1>1.5*SmoothN1,SmoothN1,N1))%>%
-  select(-SmoothN1)
 
-FullDF%>%
-  NoNa("N1","Cases")%>%
-  ggplot(aes(x=Date))+
-  geom_line(aes(y=MinMaxNorm(N1), color="N1"))+
+
+`r if(params$RemoveOutliers){"From a first pass it is clear that the waste water measurements before 11/20/2020 did not function as an effective measure of the amount of waste water shed in the community. So for this analysis we are removing waste water data from before that point. Also there are some extreme outliers that we remove for more effective analysis"}`
+
+
+```{r remove unusual N1 data points,eval = params$RemoveOutliers,echo = FALSE}
+IntermediateOutlierGraphic <- FALSE
+
+DaySmoothed=21#Very wide smoothing to find where the data strong deviate from trend
+
+FullDF2 <- FullDF%>%
+  mutate(N1 = ifelse(Date < mdy("11/20/2020"),NA,N1))
+
+FullDF3 <- FullDF2%>%#Remove older data that clearly has no relationship to Cases
+  mutate(SmoothN1=rollapply(data = N1, width = DaySmoothed, FUN = median, 
+                            na.r = TRUE,fill=NA),#Finding very smooth version of the data with no outliers
+         SmoothN1=ifelse(is.na(SmoothN1),N1,SmoothN1),#Fixing issue where rollapply fills NA on right border
+         LargeError=N1>1.5*SmoothN1,#Calculating error Limits
+         N1=ifelse(LargeError,SmoothN1,N1))%>%#replacing data points that variance is to large
+  select(-SmoothN1)#Removing unneeded calculated columns
+
+if(IntermediateOutlierGraphic){
+  OutlierGraphic <- FullDF%>%
+    mutate(SmoothN1=rollapply(data = N1, width = DaySmoothed, FUN = median, 
+                            na.r = TRUE,fill=NA),#creating smooth data
+           SmoothN1=ifelse(is.na(SmoothN1),N1,SmoothN1))%>%#Fixing issue where rollapply fills NA on right border)%>%
+    mutate(Outliers=Date < mdy("11/20/2020")|N1>1.5*SmoothN1)%>%
+    NoNa("N1","Cases")%>%#Removing outliers
+    ggplot(aes(x=Date))+#Data depends on time
+    geom_point(aes(y=MinMaxNorm(N1), color="N1",shape=Outliers,info=N1))+#compares N1 to Cases
+    geom_point(aes(y=MinMaxNorm(Cases), color="Cases",info=Cases))+
+    labs(y="variable min max normalized")
+  ggplotly(OutlierGraphic,tooltip=c("info","Date"))
+}
+
+
+FullDF3%>%
+  NoNa("N1","Cases")%>%#Removing outliers
+  ggplot(aes(x=Date))+#Data depends on time
+  geom_line(aes(y=MinMaxNorm(N1), color="N1"))+#compares N1 to Cases
   geom_line(aes(y=MinMaxNorm(Cases), color="Cases"))+
   labs(y="variable min max normalized")
-
 ```
 
 
@@ -123,27 +161,29 @@ FullDF%>%
 A key component to this relationship is that the relationship between N1 and Case involves a gamma distribution modeling both the time between catching Covid-19 and getting a test and the concentration of the shedded particles. We found a gamma distribution with mean 11.73 days and a sd of 7.68 match's other research and gives good results.
 
 ```{r SLD}
+SLDWidth <- 21
 scale  <- 5.028338
-shape  <- 2.332779 #These parameters are equivilent to the mean and sd above
+shape  <- 2.332779 #These parameters are equivalent to the mean and sd above
 
-weights <- dgamma(1:21, scale = scale, shape = shape)
+weights <- dgamma(1:SLDWidth, scale = scale, shape = shape)
 plot(weights,  
             main=paste("Gamma Distribution with mean = 11.73 days,and SD = 7.68"), 
             ylab = "Weight", 
             xlab = "Lag")
 
-SLDSmoothedDF <- FullDF%>%
-  mutate(SLDCases = c(rep(NA,20),
-                        rollapply(Cases,width=21,FUN=weighted.mean,
+SLDSmoothedDF <- FullDF3%>%
+  mutate(
+    SLDCases = c(rep(NA,SLDWidth-1),#elimination of starting values not relevant as we have a 50+ day buffer of case data
+                        rollapply(Cases,width=SLDWidth,FUN=weighted.mean,
                                   w=weights,
-                                  na.rm = TRUE)))
+                                  na.rm = FALSE)))#no missing data to remove
 
 
 SLDSmoothedDF%>%
-  NoNa("N1","SLDCases")%>%
+  NoNa("N1","SLDCases")%>%#same plot as earlier but with the SLD smoothing
   ggplot(aes(x=Date))+
-  geom_line(aes(y=MinMaxNorm(N1), color="N1"))+
   geom_line(aes(y=MinMaxNorm(SLDCases), color="SLDCases"))+
+  geom_line(aes(y=MinMaxNorm(N1), color="N1"))+
   facet_wrap(~Site)+
   labs(y="variable min max normalized")
 ```
@@ -158,7 +198,7 @@ medianMean <- function(Vec){
 }
 
 StartDate <- 1
-DaySmoothing <- 7
+DaySmoothing <- 14
 Lag <- 4
 
 BinDF <- SLDSmoothedDF%>%
@@ -188,7 +228,7 @@ summary(lm(BinnedCases~BinnedN1, data=BinDF))
 
 
 
-To generate this relationship without reducing the amount of data we rely on a Loess smoothing of the data. The first step is to get a more rigorous measure of the relationship of the data. Here we will use cross correlation. These figures sup port the work done in previous steps.
+To generate this relationship without reducing the amount of data we rely on a Loess smoothing of the data. The first step is to get a more rigorous measure of the relationship of the data. Here we will use cross correlation. These figures support the work done in previous steps.
 
 ```{r ccf on previous data structures}
 ccf(SLDSmoothedDF$Cases, SLDSmoothedDF$N1, na.action=na.pass)
@@ -196,7 +236,6 @@ ccf(SLDSmoothedDF$Cases, SLDSmoothedDF$N1, na.action=na.pass)
 ccf(SLDSmoothedDF$SLDCases, SLDSmoothedDF$N1, na.action=na.pass)
 
 ccf(BinDF$BinnedCases, BinDF$BinnedN1, na.action=na.pass)
-
 ```
 The loess smoothing is a way of generating smooth curves from noisy data. The displayed plot shows the visual power of this smoothing. We see a relationship in the big patterns but also multiple sub patterns match. We see in general that smoothed N1 both lags and leads the case data.
 
@@ -204,7 +243,7 @@ The loess smoothing is a way of generating smooth curves from noisy data. The di
 SLDSmoothedDF$loessN1 <- loessFit(y=(SLDSmoothedDF$N1), 
                       x=SLDSmoothedDF$Date, 
                       span=.2, 
-                      iterations=3)$fitted
+                      iterations=2)$fitted
 
 
 SLDSmoothedDF%>%
@@ -222,437 +261,13 @@ ccf(SLDSmoothedDF$loessN1, SLDSmoothedDF$SLDCases, na.action=na.pass)
 ```
 
 
+```{r example, Ignore for now obvs, eval = FALSE}
 
-Finally we wish to get a statistically powerful analysis we turn to formal time series tools like ARIMA models.
-```{r arima models,  var models,  some predictive relationship}
-#library(vars)
-
-
-#arimaMod <- auto.arima(SLDSmoothedDF$SLDCases, xreg=SLDSmoothedDF$N1,stepwise=TRUE)
-arimaMod <- arima(SLDSmoothedDF$SLDCases, xreg=SLDSmoothedDF$N1,order=c(0,1,0))
-summary(arimaMod)
-checkresiduals(arimaMod)
-# 
-# 
-# SLDSmoothedDF <- SLDSmoothedDF%>%
-#   filter(!is.na(N1),!is.na(SLDCases))
-
-# VAR_data <- ts(SLDSmoothedDF[c("N1","SLDCases")])
-# VAR_est <- VAR(y = VAR_data, p = 2)
-# VAR_est
+input <- initialize data
+          loess
+          SLD smooth
+          
+Analysis <- plot
+Analysis <- CCF
 ```
-
-
-
-
-We look at the error and see that it has a normal shape.
-```{r Error analysis 1, eval=FALSE, echo=FALSE}
-LMLoess <- lm(SLDCases~loessN1-1,data = SLDSmoothedDF)
-LMRob2 <- lm(diff(SLDSmoothedDF$SLDCases)~diff(SLDSmoothedDF$loessN1))
-summary(LMRob)
-summary(LMRob2)
-```
-
-
-[//]: #Still needs to be refactored
-
-```{r Error analysis 2, eval=FALSE, echo=FALSE}
-MergedDF3 <- SLDSmoothedDF%>%
-  select(Date, SLDCases, N1, N1Error)
-
-MergedDF3$Trend <- SmoothFullDF$loessN1
-MergedDF3$Resid <- MergedDF3$SLDCases-predict(LMRob)
-MergedDF3$ResidLog <- log(MergedDF3$SLDCases/predict(LMRob))
-MergedDF3 <- MergedDF3%>%
-  filter(!is.na(Trend), !is.nan(Trend))
-MergedDF3$DIFFResid <- c(diff(MergedDF3$SLDCases), NA) - c(predict(LMRob2), NA)
-
-MergedDF3%>%
-  ggplot()+
-  aes(x=Date)+
-  geom_line(aes(y=SLDCases, color="SLD"))+
-  geom_line(aes(y=predict(LMRob), color="Trend"))+
-  ggtitle("SLD vs Trend")
-
-
-MergedDF3%>%
-  ggplot()+
-  geom_histogram(aes(x=Resid))
-
-
-MergedDF3%>%
-  ggplot()+
-  aes(x=Date)+
-  geom_point(aes(y=Resid))
-
-acf(MergedDF3$Resid)
-pacf(MergedDF3$Resid)
-
-MergedDF3$TRUEResid <- auto.arima(MergedDF3$Resid)$residuals
-
-
-MergedDF3%>%
-  ggplot()+
-  #aes(x=Date)+
-  geom_histogram(aes(x=TRUEResid))
-
-
-MergedDF3%>%
-  ggplot()+
-  aes(x=Date)+
-  geom_point(aes(y=TRUEResid))
-
-acf(MergedDF3$TRUEResid)
-pacf(MergedDF3$TRUEResid)
-```
-
-[//]: #Still needs to be refactored
-
-```{r Error analysis 3, eval=FALSE, echo=FALSE, echo=FALSE}
-MergedDF3$Resid <- MergedDF3$N1-MergedDF3$Trend
-MergedDF3$ResidLog <- log(MergedDF3$N1/MergedDF3$Trend)
-MergedDF3%>%
-  ggplot()+
-  aes(x=Date)+
-  geom_line(aes(y=N1, color="N1"))+
-  geom_line(aes(y=Trend, color="Trend"))+
-  ggtitle("N1 vs Trend")
-
-MergedDF3%>%
-  ggplot()+
-  #aes(x=Date)+
-  geom_histogram(aes(x=ResidLog))
-
-MergedDF3%>%
-  ggplot()+
-  aes(x=Date)+
-  geom_point(aes(y=Resid))
-
-MergedDF3%>%
-  ggplot()+
-  aes(x=log(Trend))+
-  geom_point(aes(y=ResidLog))
-
-
-par(mfrow=c(1, 2))
-acf(MergedDF3$ResidLog)
-pacf(MergedDF3$ResidLog)
-
-
-ARMod <-arima(MergedDF3$ResidLog, order=c(2, 0, 0), optim.control=list(maxit = 1000))
-par(mfrow=c(1, 2))
-acf(resid(ARMod))
-pacf(resid(ARMod))
-
-MergedDF3$TruLogResid <- resid(ARMod)
-
-
-TrendRemovedVar <- MergedDF3%>%
-  # ggplot()+
-  # geom_histogram(aes(x=TruLogResid))
-  summarise(VarDetrended=var(TruLogResid))
-
-WellFilterVar <- HFGWasteDF%>%
-  mutate(LogN1=log(N1GC))%>%
-  filter(!is.na(LogN1))%>%
-  group_by(Plant, Date)%>%
-  mutate(MeanDay=mean(LogN1))%>%
-  group_by(Plant, Date, Filter)%>%
-  mutate(MeanFilter=mean(LogN1))%>%
-  ungroup()%>%
-  #ggplot()+
-  #geom_histogram(aes(x=LogN1-MeanFilter))
-  summarise(VarFilter=var(LogN1-MeanDay), 
-            VarWell=var(LogN1-MeanFilter))
-
-cbind(TrendRemovedVar, WellFilterVar)
-```
-
-
-[//]: #Still needs to be refactored
-
-```{r Error analysis 4, eval=FALSE, echo=FALSE}
-
-MergedDF3%>%
-  ggplot()+
-  aes(x=Date)+
-  geom_point(aes(y=ResidLog, color="LogResid"))+
-  geom_point(aes(y=TruLogResid, color="ArimaResid"))
-
-
-MergedDF3%>%
-  ggplot()+
-  #aes(x=Date)+
-  geom_histogram(aes(x=TruLogResid))
-
-
-MergedDF3%>%
-  ggplot()+
-  aes(x=log(Trend))+
-  geom_point(aes(y=TruLogResid))
-
-
-sum((MergedDF3$TruLogResid)^2)/(length(MergedDF3$TruLogResid)-1)
-sum((MergedDF3$ResidLog)^2)/(length(MergedDF3$ResidLog)-1)
-
-
-#0.9856061
-#Validate this on HF data
-LogMeans <- log(MergedDF3$N1)
-LogVariances <- (3*MergedDF3$N1Error^2)/MergedDF3$N1^2
-mean(LogVariances)
-fishmethods::combinevar(LogMeans, LogVariances, rep(3, length(LogVariances)))
-
-#library(survcomp)
-
-MergedDF3%>%
-  ggplot()+
-  geom_histogram(aes(x=TruLogResid))
-
-
-MergedDF3%>%
-  ggplot()+
-  geom_histogram(aes(x=(N1Error/N1)))
-
-MergedDF3%>%
-  ggplot()+
-  geom_histogram(aes(x=log(N1Error)))
-```
-
-[//]: #Still needs to be refactored
-
-```{r Error analysis 5, eval=FALSE, echo=FALSE}
-MergedDF3 <- MergedDF%>%
-  select(Date, SLDCases, SLDCases.PreRolled, N1, N1Error)%>%
-  filter(!is.na(N1))
-MergedDF3$Resid <-MergedDF3$SLDCases.PreRolled-MergedDF3$N1
-MergedDF3$LogResid <-log(MergedDF3$SLDCases.PreRolled/MergedDF3$N1)
-MergedDF3 <- MergedDF3%>%
-  filter(!is.na(LogResid))
-
-MergedDF3%>%
-  ggplot()+
-  aes(x=Date)+
-  geom_line(aes(y=SLDCases.PreRolled, color="SLD"))+
-  geom_line(aes(y=.00057*N1, color="N1"))+
-  ggtitle("SLD vs N1")
-
-
-MergedDF3%>%
-  ggplot()+
-  #aes(x=Date)+
-  geom_histogram(aes(x=LogResid))
-
-
-MergedDF3%>%
-  ggplot()+
-  aes(x=Date)+
-  geom_point(aes(y=Resid))
-
-acf(MergedDF3$Resid)
-pacf(MergedDF3$Resid)
-
-MergedDF3$TRUEResid <- auto.arima(MergedDF3$LogResid)$residuals
-MergedDF3$TRUEResidTest <- auto.arima(log(MergedDF3$SLDCases), 
-                                      xreg=log(MergedDF3$N1))$residuals
-
-MergedDF3%>%
-  ggplot()+
-  #aes(x=Date)+
-  #geom_histogram(aes(x=TRUEResid))+
-  geom_histogram(aes(x=TRUEResidTest), fill="dark Red")
-
-
-MergedDF3%>%
-  ggplot()+
-  aes(x=Date)+
-  geom_point(aes(y=TRUEResidTest))
-
-
-MergedDF3$ArimaArimaErrors <- auto.arima(MergedDF3$TRUEResidTest)$residuals
-
-
-MergedDF3%>%
-  ggplot()+
-  aes(x=Date)+
-  geom_point(aes(y=ArimaArimaErrors))
-
-
-acf(MergedDF3$TRUEResidTest)
-pacf(MergedDF3$TRUEResidTest)
-
-BestMod <- auto.arima(log(MergedDF3$SLDCases), 
-                                      xreg=log(MergedDF3$N1))
-checkresiduals(BestMod)
-
-
-
-
-SLDVec <- (MergedDF3$SLDCases)
-N1Vec <- (MergedDF3$N1)
-TrendVec <- exp(log(c(RobMod3, rep(NA, 20))))
-Model <- arima(log(SLDVec), order=c(1, 1, 0), 
-                                      xreg=log(N1Vec))
-
-auto.arima(log(SLDVec))
-```
-
-
-
-Here is extensive Cross validation to check the predictive quality of the models
-
-needs some refactoring
-
-```{r Cross validation}
-#library(forecast)
-SLD_Data <- ts(log(FullDF$SLDCases),  start = 2020,  frequency = 365)
-N1_Data_xreg <- ts(log(FullDF$loessN1),  start = 2020,  frequency = 365)
-Trend_Data_xreg <- ts(log(FullDF$loessN1),  start = 2020,  frequency = 365)
-
-far2_xreg <- function(x,  h,  xreg,  newxreg) {
-  forecast(Arima(x,  order=c(1, 1, 0),  xreg=xreg),  xreg=newxreg)
-}
-far <- function(x,  h){forecast(Arima(x,  order=c(0, 2, 0)),  h=h)}
-far2 <- function(x,  h){forecast(auto.arima(x),  h=h)}
-HAcVecGen <- function(TargetVec, 
-                      MaxForcast=70, ForcastMethod, ...){
-  
-  ForcastResid <- tsCV(SLD_Data,  ForcastMethod, 
-                       h=MaxForcast, ...)
-  PerAVec <- vector()
-  for(i in 1:MaxForcast){
-    Hvec <- ForcastResid[-((282-i):281), i]
-    SLDData <- TargetVec[-(1:i)]
-    PerAVec[i] <- accuracy(ts(SLDData - Hvec), 
-                   ts(SLDData))[, 2]
-  }
-  return(list(PerAVec, ForcastResid))
-}
-
-CustomLag <- function(x){
-  x2 <- strsplit(x,  "[ ]")
-  LagN <- as.numeric(x2[[1]][1])
-  Vec1 <- unlist(x2)[!(as.numeric(unlist(x2))%%1==0)]
-  Vec2 <- c(rep(NA, LagN), Vec1[1:(length(Vec1)-LagN)])
-  return(Vec2)
-}
-
-ForcastLength <- 7
-
-XregMode <- HAcVecGen(SLD_Data, 
-                 ForcastMethod=far2_xreg, 
-                 MaxForcast=ForcastLength, 
-                 xreg=N1_Data_xreg)
-
-XregTrendMode <- HAcVecGen(SLD_Data, 
-                 ForcastMethod=far2_xreg, 
-                 MaxForcast=ForcastLength, 
-                 xreg=Trend_Data_xreg)
-
-ArimaMode <- HAcVecGen(SLD_Data, 
-                 ForcastMethod=far, 
-                 MaxForcast=ForcastLength)
-
-AutoArimaMode <- HAcVecGen(SLD_Data, 
-                 ForcastMethod=far2, 
-                 MaxForcast=ForcastLength)
-
-RandWalkMode <- HAcVecGen(SLD_Data, 
-                   ForcastMethod=rwf, 
-                   MaxForcast=ForcastLength, 
-                   drift=TRUE)
-
-naiveMode <- HAcVecGen(SLD_Data, 
-                   ForcastMethod=naive, 
-                   MaxForcast=ForcastLength)
-
-#library(tidyr)
-
-
-ErrorDF <- cbind("XregMode"=XregMode[[1]], 
-      "XregTrendMode"=XregTrendMode[[1]], 
-      "ArimaMode"=ArimaMode[[1]], 
-      "RandWalkMode"=RandWalkMode[[1]], 
-      "AutoArimaMode"=AutoArimaMode[[1]], 
-      "naiveMode"=naiveMode[[1]])%>%
-  data.frame(ForcastDistance=1:ForcastLength)%>%
-  pivot_longer(XregMode:naiveMode, values_to ="Resid")
-
-ErrorDF%>%
-  ggplot()+
-  aes(x=ForcastDistance)+
-  geom_point(aes(y=Resid, color=name))+
-  scale_y_log10()
-
-DFNames <- paste0("h.", 1:ForcastLength)
-```
-
-```{R Prediction Errors}
-
-ErrorPredictPlot <- function(X2){
-  data.frame(X2[[2]], h=1:length(SLD_Data), SLD_Data)%>%
-  pivot_longer(DFNames)%>%
-  mutate(lagA= as.numeric(sub("h.",  "" ,  name)))%>%
-  group_by(lagA)%>%
-  mutate(Error=paste(lagA, value))%>%
-  mutate(Error=CustomLag(Error))%>%
-  filter(!is.na(Error))
-}
-ErrorForcastPlot <- function(X2){
-  data.frame(X2[[2]], h=1:length(SLD_Data), SLD_Data)%>%
-  pivot_longer(DFNames)%>%
-  mutate(lagA= as.numeric(sub("h.",  "" ,  name)))%>%
-  group_by(lagA)%>%
-  mutate(Error=paste(lagA, value))%>%
-  mutate(Error=CustomLag(Error))%>%
-  filter(!is.na(Error))
-}
-WalkPredictResid <- suppressWarnings(ErrorForcastPlot(RandWalkMode))%>%
-  ggplot()+
-  aes(x=h)+
-  geom_line(aes(y=SLD_Data-as.numeric(Error), color=lagA))+
-    scale_color_gradient(low="blue",  high="red")+
-  geom_line(aes(y=SLD_Data), color="black", size=1)+
-  ggtitle("Walk")
-
-ArimaPredictResid <- suppressWarnings(ErrorForcastPlot(ArimaMode))%>%
-  ggplot()+
-  aes(x=h)+
-  geom_line(aes(y=SLD_Data-as.numeric(Error), color=lagA))+
-    scale_color_gradient(low="blue",  high="red")+
-  geom_line(aes(y=SLD_Data), color="black", size=1)+
-  ggtitle("Arima")
-
-XregPredictResid <- suppressWarnings(ErrorForcastPlot(XregMode))%>%
-  ggplot()+
-  aes(x=h)+
-  geom_line(aes(y=SLD_Data-as.numeric(Error), color=lagA))+
-    scale_color_gradient(low="blue",  high="red")+
-  geom_line(aes(y=SLD_Data), color="black", size=1)+
-  ggtitle("Xreg")
-
-XregTrendPredictResid <- suppressWarnings(ErrorForcastPlot(XregTrendMode))%>%
-  ggplot()+
-  aes(x=h)+
-  geom_line(aes(y=SLD_Data-as.numeric(Error), color=lagA))+
-    scale_color_gradient(low="blue",  high="red")+
-  geom_line(aes(y=SLD_Data), color="black", size=1)+
-  ggtitle("XregTrend")
-
-AutoArimaPredictResid <- suppressWarnings(ErrorForcastPlot(AutoArimaMode))%>%
-  ggplot()+
-  aes(x=h)+
-  geom_line(aes(y=SLD_Data-as.numeric(Error), color=lagA))+
-    scale_color_gradient(low="blue",  high="red")+
-  geom_line(aes(y=SLD_Data), color="black", size=1)+
-  ggtitle("AutoArima")
-
-WalkPredictResid
-ArimaPredictResid
-AutoArimaPredictResid
-XregPredictResid
-XregTrendPredictResid
-```
-
-
 
