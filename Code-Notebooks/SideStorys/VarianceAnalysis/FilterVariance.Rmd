@@ -1,0 +1,79 @@
+---
+params:
+  BaseDir: "Z:/"
+title: "Filter Variance"
+author: "Marlin"
+date: "11/15/2021"
+output: html_document
+---
+
+---
+params:
+  BaseDir: "Z:/"
+title: "Well Variance"
+author: "Marlin"
+date: "11/15/2021"
+output: html_document
+---
+
+```{r}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+
+```{r Start enviroment, echo=FALSE, message=FALSE, warning=FALSE}
+library(dplyr)
+library(ggplot2)
+library(lmtest)
+library(lubridate)
+library(limma)
+library(tidyr)
+library(plotly)
+  #library(lintr)
+
+
+#Data Files and prep work
+source("../../../lib/DataProccess.R")
+```
+
+
+
+```{r DF Set Up, echo=FALSE}
+BaseDir <- params$BaseDir#get the root of the directory where the data is stored
+HFGWasteFN <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/HFGWasteData071421.csv")
+
+
+HFGDF <- ParseData(HFGWasteFN)%>%
+  select(Site,Date,Filter,Well,N1)
+
+tail(HFGDF)
+```
+
+Lets start by removing all other sources of error by subtracting the mean of each day from each set 
+```{r Initial distribution of errors }
+
+CompDF <- HFGDF%>%
+  group_by(Site,Date)%>%
+  mutate(Error = log(N1) - mean(log(N1)),
+         Filter = as.factor(Filter))
+
+
+CompDF%>%
+  ggplot()+
+  geom_point(aes(x=Error,y=N1) , size=1)+
+  scale_y_log10()+
+  facet_wrap(~Site)
+```
+
+From this we can calculate the variance to get a handle on this.
+
+```{r}
+
+var(CompDF$Error, na.rm = TRUE)
+
+```
+

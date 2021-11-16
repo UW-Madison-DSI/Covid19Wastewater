@@ -398,18 +398,3 @@ length(UniqueColsName)
 
 UniqueColsName
 ```
-
-
-```{r Gen graphing function}
-
-datasetgraphing= function(DF){
-  Directions <- ColsName(DF)
-  if("x" %in% Directions){
-    aesx=Directions
-  }else{
-    aesx=NA
-  }
-  
-}#tough question. not worth. Not writeing production code.
-#write.csv check the csv and the previous one
-```

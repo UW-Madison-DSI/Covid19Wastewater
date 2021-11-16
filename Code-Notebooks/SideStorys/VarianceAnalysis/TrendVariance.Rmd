@@ -1,0 +1,163 @@
+---
+params:
+  BaseDir: "Z:/"
+title: "Trend variance"
+author: "Marlin"
+date: "11/15/2021"
+output: html_document
+---
+
+```{r Start enviroment, echo=FALSE, message=FALSE, warning=FALSE}
+library(dplyr)
+library(ggplot2)
+library(lmtest)
+library(lubridate)
+library(limma)
+library(tidyr)
+library(plotly)
+  #library(lintr)
+
+
+#Data Files and prep work
+source("../../../lib/DataProccess.R")
+```
+
+
+
+```{r DF Set Up, echo=FALSE}
+BaseDir <- params$BaseDir#get the root of the directory where the data is stored
+LIMSFN <- paste0(BaseDir, "COVID-19_WastewaterAnalysis/data/processed/LIMSWasteData_2021-06-30_17-40.csv")
+HFGWasteFN <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/HFGWasteData071421.csv")
+HFGCasesFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/HFGCaseData_2021-05-07.csv")
+
+HFGCaseDF <- ParseData(HFGCasesFN)
+
+HFGDF <- ParseData(HFGWasteFN)%>%
+  select(Site,Date,Filter,Well,HFGN1=N1)
+
+StartHFG <- min(HFGDF$Date)
+EndHFG <- max(HFGDF$Date)
+
+
+HFGLocations <- unique(HFGFrame$Site)
+
+
+#Importing the LIMS waste water data
+LIMSHFGLocationsDF <- ParseData(LIMSFN)%>%
+  filter(Site %in% HFGLocations)%>%
+  select(Date, Site,  N1, N1Error)%>%
+  mutate(Filter=1,Well=1)#Merge columns for DFs
+
+#joining the two data frames together
+FullDF <- full_join(LIMSHFGLocationsDF,HFGDF, by = c("Date","Site","Filter","Well"))%>%
+  mutate(Filter=as.factor(Filter))
+
+#what does the data look like? 
+tail(FullDF)
+```
+
+
+LIMS N1 agrees with HFG data implying that using it to find an underlying trend should be faithful to the HFG data.
+
+```{r LIMS HFG data relation}
+CompFullDF <- FullDF%>%
+  filter(Date > StartHFG - 14,
+          Date < EndHFG + 14,
+          HFGN1 < 1e7)
+
+
+CompN1DF <- CompFullDF%>%
+  filter(!is.na(N1))
+
+CompHFGDF <- CompFullDF%>%
+  filter(!is.na(HFGN1))
+
+
+
+ggplot()+
+  aes(x=Date)+
+  geom_point(aes(y=HFGN1,color=Filter) , size=.1 , data = CompHFGDF)+
+  geom_line(aes(y=N1,color="Lims Data") , size=1 , data = CompN1DF)+
+  scale_y_log10()+
+  facet_wrap(~Site)
+```
+
+using smoothing found in the main story on the N1 data.
+
+```{r }
+GroupLoess <- function(SmoothedSite){
+  FilteredDF <- FullDF%>%
+    filter(Site == SmoothedSite)
+  FilteredDF$loessN1 <- loessFit(y=(FilteredDF$N1), 
+                      x=FilteredDF$Date, #create loess fit of the data
+                      span=.2, #span of .2 seems to give the best result, not rigorously chosen
+                      iterations=2)$fitted#2 iterations remove some bad patterns
+  return(FilteredDF)
+}
+
+
+FullDF <- bind_rows(lapply(HFGLocations,GroupLoess))
+```
+
+
+
+With the small amount of case data in the region the smoothing seems to generalize reasonably.
+
+```{r LIMS HFG Smoothed relation}
+CompFullDF <- FullDF%>%
+  filter(Date > StartHFG - 14,
+          Date < EndHFG + 14,
+          HFGN1 < 1e7)
+
+
+CompN1DF <- CompFullDF%>%
+  filter(!is.na(loessN1))
+
+CompCaseHFGDF <- HFGCaseDF%>%
+  #mutate(ReportedCases = ifelse(ReportedCases == -999, NA, ReportedCases))%>%
+  filter(!is.na(ReportedCases))
+
+
+
+ggplot()+
+  aes(x=Date)+
+  geom_point(aes(y=ReportedCases) , size=1 , data = CompCaseHFGDF)+
+  geom_line(aes(y=loessN1,color="Lims Data") , size=1 , data = CompN1DF)+
+  scale_y_log10()+
+  facet_wrap(~Site)
+```
+
+Once we remove the trend we have a dataset of errors.
+
+```{r Remove trend from data}
+
+LoessN1DF <- FullDF%>%
+  select(Date,Site,loessN1)
+  
+
+CompFullDF <- full_join(HFGDF,LoessN1DF,by=c("Date","Site"))%>%
+  filter(HFGN1 < 1e7)%>%
+  mutate(TrendError = log(HFGN1) - log(loessN1),
+         Filter = as.factor(Filter))%>%
+  filter(!is.na(TrendError))
+
+ggplot()+
+  geom_point(aes(x=HFGN1,y=TrendError,color=Filter) , size=1 , data = CompFullDF)+
+  facet_wrap(~Site)+
+  scale_x_log10()
+
+
+
+ggplot()+
+  geom_histogram(aes(x=TrendError) , size=1 , data = CompFullDF)+
+  facet_wrap(~Site)
+```
+
+From this we can calculate the variance to get a handle on this.
+
+```{r}
+
+var(CompFullDF$TrendError, na.rm = TRUE)
+
+```
+
