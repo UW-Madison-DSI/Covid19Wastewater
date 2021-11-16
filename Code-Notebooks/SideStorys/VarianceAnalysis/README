@@ -1,8 +1,10 @@
 A key component of data analysis is understanding how and where messurement variance occur.
 There are ___ components to the variance.
 
-2) Trend variance - 
+1) Trend variance - 
+
+2) filter variance - 
 
 3) well variance - 
 
-4) filter variance - 
+a) between locations - HFG,Madison,intercept

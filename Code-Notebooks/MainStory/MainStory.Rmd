@@ -31,7 +31,7 @@ knitr::opts_chunk$set(
 ```
 
 
-```{r Start enviroment, message=FALSE, warning=FALSE, echo=FALSE}
+```{r Start enviroment, echo=FALSE, message=FALSE, warning=FALSE}
 library(dplyr)
 library(ggplot2)
 library(lmtest)
@@ -43,13 +43,11 @@ library(plotly)
 
 
 #Data Files and prep work
-#source("../../lib/GenPlotMaking.R")
 source("../../lib/DataProccess.R")
-#source("../../lib/HelperFunctions.R")
 ```
 
 ```{r helpful data manipulations, include = FALSE}
-MinMaxNorm <- function(Vec){#normalizes the data to range from 0 and 1
+MinMaxNormalization <- function(Vec){#normalizes the data to range from 0 and 1
   normVec <- (Vec-min(Vec,na.rm=TRUE))/max(Vec,na.rm=TRUE)
   return(normVec)
 }
@@ -64,6 +62,7 @@ NoNa <- function(DF,...){#Removes NA from the reverent columns
       )
   return(NoNaDF)
 }
+
 FillNA <- function(DF,...){#Fills NA with previous values
   ColumnNames <- c(...)
   NoNaDF <- DF%>%
@@ -71,8 +70,10 @@ FillNA <- function(DF,...){#Fills NA with previous values
   return(NoNaDF)
 }
 
-medianMean <- function(Vec){# take the mean drooping the highest and lowest values
-  return(mean(replace(Vec, c(which.min(Vec), which.max(Vec)), NA), na.rm = TRUE))
+MedianMean <- function(Vec){# take the mean drooping the highest and lowest values
+  RemoveBorderPoints <- replace(Vec, c(which.min(Vec), which.max(Vec)), NA)
+  MeanValue <- mean(RemoveBorderPoints, na.rm = TRUE)
+  return(MeanValue)
 }
 
 ```
@@ -111,8 +112,8 @@ And that there is a hint of a relationship between the two signals.
 FirstImpression <- FullDF%>%
   NoNa("N1","Cases")%>%#Removing outliers
   ggplot(aes(x=Date))+#Data depends on time
-  geom_line(aes(y=MinMaxNorm(N1), color="N1",info=N1))+#compares N1 to Cases
-  geom_line(aes(y=MinMaxNorm(Cases), color="Cases",info=Cases))+
+  geom_line(aes(y=MinMaxNormalization(N1), color="N1",info=N1))+#compares N1 to Cases
+  geom_line(aes(y=MinMaxNormalization(Cases), color="Cases",info=Cases))+
   labs(y="variable min max normalized")
 
 ggplotly(FirstImpression,tooltip=c("info","Date"))
@@ -141,7 +142,7 @@ grangertest(N1,Cases, order = 1)
 
 
 ```{r remove unusual N1 data points,eval = params$RemoveOutliers}
-IntermediateOutlierGraphic <- FALSE
+IntermediateOutlierGraphic <- TRUE #
 
 DaySmoothed=21#Very wide smoothing to find where the data strong deviate from trend
 
@@ -152,7 +153,7 @@ FullDF3 <- FullDF2%>%#Remove older data that clearly has no relationship to Case
   mutate(SmoothN1=rollapply(data = N1, width = DaySmoothed, FUN = median, 
                             na.r = TRUE,fill=NA),#Finding very smooth version of the data with no outliers
          SmoothN1=ifelse(is.na(SmoothN1),N1,SmoothN1),#Fixing issue where rollapply fills NA on right border
-         LargeError=N1>1.5*SmoothN1,#Calculating error Limits
+         LargeError=N1>5*SmoothN1,#Calculating error Limits
          N1=ifelse(LargeError,SmoothN1,N1))%>%#replacing data points that variance is to large
   select(-SmoothN1,-LargeError)#Removing unneeded calculated columns
 
@@ -161,11 +162,11 @@ if(IntermediateOutlierGraphic){
     mutate(SmoothN1=rollapply(data = N1, width = DaySmoothed, FUN = median, 
                             na.r = TRUE,fill=NA),#creating smooth data
            SmoothN1=ifelse(is.na(SmoothN1),N1,SmoothN1))%>%#Fixing issue where rollapply fills NA on right border)%>%
-    mutate(Outliers=Date < mdy("11/20/2020")|N1>1.5*SmoothN1)%>%
+    mutate(Outliers=Date < mdy("11/20/2020")|N1>5*SmoothN1)%>%
     NoNa("N1","Cases")%>%#Removing outliers
     ggplot(aes(x=Date))+#Data depends on time
-    geom_point(aes(y=MinMaxNorm(N1), color="N1",shape=Outliers,info=N1))+#compares N1 to Cases
-    geom_point(aes(y=MinMaxNorm(Cases), color="Cases",info=Cases))+
+    geom_point(aes(y=MinMaxNormalization(Cases), color="Cases",info=Cases))+
+    geom_point(aes(y=MinMaxNormalization(N1), color="N1",shape=Outliers,info=N1))+#compares N1 to Cases
     labs(y="variable min max normalized")
   ggplotly(OutlierGraphic,tooltip=c("info","Date"))
 }
@@ -174,15 +175,13 @@ if(IntermediateOutlierGraphic){
 FullDF3%>%
   NoNa("N1","Cases")%>%#Removing outliers
   ggplot(aes(x=Date))+#Data depends on time
-  geom_line(aes(y=MinMaxNorm(N1), color="N1"))+#compares N1 to Cases
-  geom_line(aes(y=MinMaxNorm(Cases), color="Cases"))+
+  geom_line(aes(y=MinMaxNormalization(N1), color="N1"))+#compares N1 to Cases
+  geom_line(aes(y=MinMaxNormalization(Cases), color="Cases"))+
   labs(y="variable min max normalized")
 ```
 
 ```{r Dont remove outliers,eval = !params$RemoveOutliers,include=FALSE}
-
 FullDF3 <- FullDF
-
 ```
 
 
@@ -235,14 +234,14 @@ SLDSmoothedDF <- FullDF3%>%
 SLDSmoothedDF%>%
   NoNa("N1","SLDCases")%>%#same plot as earlier but with the SLD smoothing
   ggplot(aes(x=Date))+
-  geom_line(aes(y=MinMaxNorm(SLDCases), color="SLDCases"))+
-  geom_line(aes(y=MinMaxNorm(N1), color="N1"))+
+  geom_line(aes(y=MinMaxNormalization(SLDCases), color="SLDCases"))+
+  geom_line(aes(y=MinMaxNormalization(N1), color="N1"))+
   facet_wrap(~Site)+
   labs(y="variable min max normalized")
 ```
 
 
-`r if(params$RemoveOutliers){"The SLD improves the shape of the CCF. However it removes the signifigence of N1 predicting Cases. This makes sense looking at the data."} else{"The SLD Cause a signfigent improvement in the relationship now showing a statisticly signifigent test result"}`
+`r if(params$RemoveOutliers){"The SLD improves the shape of the CCF. However it removes the signifigence of N1 predicting Cases. This makes sense looking at the data."}else{"The SLD Cause a signfigent improvement in the relationship now showing a statisticly signifigent test result"}`
 
 ```{r CCF and Granger test 3}
 TestDF3 <- SLDSmoothedDF%>%
@@ -281,8 +280,8 @@ BinDF <- SLDSmoothedDF%>%
 BinDF%>%
   NoNa("BinnedN1","BinnedCases")%>%#Remove NA
   ggplot(aes(x=Week))+
-  geom_line(aes(y=MinMaxNorm(BinnedN1), color="N1"))+
-  geom_line(aes(y=MinMaxNorm(BinnedCases), color="Cases"))+
+  geom_line(aes(y=MinMaxNormalization(BinnedN1), color="N1"))+
+  geom_line(aes(y=MinMaxNormalization(BinnedCases), color="Cases"))+
   labs(y="Binned variable min max normalized")
 
 BinDF%>%
@@ -299,19 +298,22 @@ summary(lm(BinnedCases~BinnedN1, data=BinDF))
 To generate this relationship without reducing the amount of data we rely on a loess smoothing of the data. The loess smoothing is a way of generating smooth curves from noisy data. The displayed plot shows the visual power of this smoothing. We see a relationship in the big patterns but also multiple sub patterns match. We see in general that smoothed N1 both lags and leads the case data.
 
 ```{r loess smoothing and some intro CCF processes}
+
 SLDSmoothedDF$loessN1 <- loessFit(y=(SLDSmoothedDF$N1), 
                       x=SLDSmoothedDF$Date, #create loess fit of the data
                       span=.2, #span of .2 seems to give the best result, not rigorously chosen
                       iterations=2)$fitted#2 iterations remove some bad patterns
 
-
 SLDSmoothedDF%>%
   NoNa("loessN1","SLDCases")%>%
   ggplot(aes(x=Date))+
-  geom_line(aes(y=MinMaxNorm(loessN1), color="loessN1"))+
-  geom_line(aes(y=MinMaxNorm(SLDCases), color="SLDCases"))+
+  geom_line(aes(y=MinMaxNormalization(loessN1), color="loessN1"))+
+  geom_line(aes(y=MinMaxNormalization(SLDCases), color="SLDCases"))+
   facet_wrap(~Site)+
   labs(y="variable min max normalized")
+
+
+
 ```
 
 `r if(params$RemoveOutliers){"The loess smoothing gives the best ccf relation and shape. It also insignifigently changes granger tests"}else{"The loess smoothing roughly doubled the correlation at all time lags. The two granger tests p value also got signifigently smaller"}`
