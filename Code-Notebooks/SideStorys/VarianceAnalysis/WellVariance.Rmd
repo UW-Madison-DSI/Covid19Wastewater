@@ -34,7 +34,7 @@ source("../../../lib/DataProccess.R")
 
 ```{r DF Set Up, echo=FALSE}
 BaseDir <- params$BaseDir#get the root of the directory where the data is stored
-HFGWasteFN <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/HFGWasteData071421.csv")
+HFGWasteFN <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/UpdatedHFGFN.csv")
 
 
 HFGDF <- ParseData(HFGWasteFN)%>%#Reads in preprocessed data into consistent format
@@ -62,7 +62,7 @@ CompDF%>% #Plot of the shape of the errors
 
 CompDF%>%
   ggplot() +
-  geom_point(aes(x=Error,y=MeanN1) , size=1)+
+  geom_point(aes(x=MeanN1,y=Error) , size=1)+
   #Using logN1 because that is what we used to generate the errors
   facet_wrap(~Site)#looking for relationship between error and N1. Should be flat
 ```

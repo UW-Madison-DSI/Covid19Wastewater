@@ -39,7 +39,7 @@ BaseDir <- params$BaseDir#get the root of the directory where the data is stored
 #HFGWasteData071421.csv
 
 LIMSFN <- paste0(BaseDir, "COVID-19_WastewaterAnalysis/data/processed/LIMSWasteData_2021-06-30_17-40.csv")
-HFGWasteFN <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/HFGWasteData071421.csv")
+HFGWasteFN <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/UpdatedHFGFN.csv")
 HFGCasesFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/HFGCaseData_2021-05-07.csv")
 
 HFGCaseDF <- ParseData(HFGCasesFN)#Reads in preprocessed data into consistent format

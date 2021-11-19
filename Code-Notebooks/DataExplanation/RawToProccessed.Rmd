@@ -389,14 +389,41 @@ UpdatedHFGDF <- read.csv(UpdatedHFGFN,na.strings=MissingCode)%>%
          N2 = as.numeric(gsub(",", "", N2)),
          PMMOV = as.numeric(gsub(",", "", PMMOV)),
          CrP = as.numeric(gsub(",", "", CrP)),
-         HF183 = as.numeric(gsub(",", "", HF183)))
+         HF183 = as.numeric(gsub(",", "", HF183)),
+         Date = as.Date(Date,format="%m/%d/%Y"))
 
 
-write.csv(UpdatedHFGDF,paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/UpdatedHFGFN.csv"),row.names=FALSE)
-#write.csv(UpdatedHFGDF,"C:/Users/marli/Downloads/UpdatedHFGFN.csv",row.names=FALSE)
+#write.csv(UpdatedHFGDF,paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/UpdatedHFGFN.csv"),row.names=FALSE)
 
 UpdatedHFGDF <- read.csv(paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/UpdatedHFGFN.csv"))%>%
-  mutate(Date=mdy(Date))
+  mutate(Date=as.Date(Date))
+
+
+
+A <- UpdatedHFGDF%>%
+  select(Site,Date,Filter,Well,N1)%>%
+  filter(Date>as.Date("2000-1-1"))
+B <- HFGWasteDF%>%
+  select(Site,Date,Filter,Well,N1)  
+
+full_join(A,B,by=c("Site","Date","Filter","Well"))%>%
+  filter(abs(N1.x-N1.y)<100)
+#11 within 100
+
+MergedDF <- full_join(A,B,by=c("Site","Date","Filter","Well"))%>%
+  mutate(DIFF = N1.x-N1.y,
+         Filter = as.factor(Filter))
+
+DiffPlot <- MergedDF%>%
+  ggplot()+
+  aes(x=Date,y=DIFF,color = Filter)+
+  geom_point(size=.25)+
+  facet_wrap(~Site,scales="free")
+
+UpdatedHFGDF%>%
+  filter(Date<as.Date("2000-1-1"))
+
+ggplotly(DiffPlot)
 ```
 
 
