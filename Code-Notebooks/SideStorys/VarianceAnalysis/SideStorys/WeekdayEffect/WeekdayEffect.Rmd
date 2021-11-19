@@ -1,0 +1,98 @@
+---
+params:
+  BaseDir: "Z:/"
+  ##BaseDir: "/Volumes/byandell/"
+title: "Weekday Effect"
+author: "Marlin"
+date: "11/1/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r Start enviroment, message=FALSE, warning=FALSE, echo=FALSE}
+library(ggpubr)
+library(forecast)
+library(lmtest)
+library(lubridate)
+library(limma)
+library(zoo)
+library(dplyr)
+library(readxl)
+#Data Files and prep work
+source("../../../lib/GenPlotMaking.R")
+source("../../../lib/DataProccess.R")
+source("../../../lib/HelperFunctions.R")
+source("../../../lib/NoTSCorrelationFunctions.R")
+```
+
+```{r DF Set Up, include=FALSE}
+BaseDir <- params$BaseDir
+MadisonCaseFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/MMSD_Cases_processed.csv")
+LIMSFN <- paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/LIMSWasteData_2021-06-30_17-40.csv")
+
+LatCaseDF <- ParseData(MadisonCaseFN)%>% 
+  filter(!is.na(Site)) %>%
+  select(Date,Site,Cases,Tests,Per_pos)
+
+LatCaseDFRoll <- RollPerPos(LatCaseDF,"Cases","Tests",Facet="Site",n = 14)
+
+FullLatCaseDFRoll <- full_join(LatCaseDF,LatCaseDFRoll,by=c("Date","Site"),suffix=c("",".Rolled"))%>%
+  filter(Site=="Madison",
+         Per_pos.Rolled!=-500,
+         Date>=ymd("2020-08-15"))
+  
+
+LIMSFullDF <- ParseData(LIMSFN)%>%
+  select(Date,Site, N1,N1Error)%>%
+  filter(Site=="Madison")
+```
+
+There are two kind issues day of the week can create in data analysis.
+
+  1) The data value depends on the day of the week
+  
+  2) Missing values concentrate on some weekdays
+  
+  
+The waste water does not significantly depend on the day of the week but there is only half as many entrys for Sunday and only 1 for Saturday meaning that any analysis done will over value weekday trends.
+
+```{r weekend effect proof}
+WeekdayDF <- LIMSFullDF%>%
+  mutate(weekday=weekdays(Date))%>%
+  filter(N1>0,N1Error>0)
+
+WeekdayDF$weekday <- factor(WeekdayDF$weekday,
+                        levels= c("Monday", "Tuesday", "Wednesday", "Thursday","Friday","Saturday","Sunday"))
+
+WeekdayDF%>%
+  group_by(weekday)%>%
+  summarize(N1M=mean(N1),n())
+
+summary(aov(N1~weekday,data=WeekdayDF))
+```
+
+
+The case data is heavily dependent on the day of the week with Thursday having nearly twice the amount of cases on average.
+
+```{r smoothed analyis}
+WeekdayCaseDF <- LatCaseDF%>%
+  mutate(weekday=weekdays(Date))%>%
+  filter(Cases>0,Per_pos>0)
+WeekdayDF$weekday <- factor(WeekdayDF$weekday,
+                        levels= c("Monday", "Tuesday", "Wednesday", "Thursday","Friday","Saturday","Sunday"))
+
+WeekdayCaseDF%>%
+  group_by(weekday)%>%
+  summarize(CasesM=mean(Cases),Per_posM=mean(Per_pos),n())
+#t.test(filter(WeekdayDF,weekday=="Monday")$N1,filter(WeekdayDF,weekday=="Thursday")$N1)
+
+summary(aov(Per_pos~weekday+Site,data=WeekdayCaseDF))
+```
+
+
+
+

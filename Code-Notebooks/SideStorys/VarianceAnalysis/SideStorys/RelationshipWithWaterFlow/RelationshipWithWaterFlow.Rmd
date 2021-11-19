@@ -1,0 +1,96 @@
+---
+params:
+  BaseDir: "Z:/"
+  ##BaseDir: "/Volumes/byandell/"
+title: "Relationship with WaterFlow"
+author: "Marlin"
+date: "10/1/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r Start enviroment include=FALSE}
+library(ggpubr)
+library(forecast)
+library(lmtest)
+library(lubridate)
+library(limma)
+library(zoo)
+library(dplyr)
+library(readxl)
+library(stringr)
+
+#Data Files and prep work
+source("../../../lib/GenPlotMaking.R")
+source("../../../lib/DataProccess.R")
+source("../../../lib/HelperFunctions.R")
+```
+
+```{r Data processing echo=FALSE}
+BaseDir <- params$BaseDir
+MadisonCaseFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/MMSD_Cases_processed.csv")
+LIMSFN <- paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/LIMSWasteData_2021-06-30_17-40.csv")
+
+LatCaseDF <- ParseData(MadisonCaseFN)%>% 
+  filter(!is.na(Site)) %>%
+  select(Date,Site,Cases,Tests,Per_pos)
+
+LatCaseDFRoll <- RollPerPos(LatCaseDF,"Cases","Tests",Facet="Site",n = 14)
+
+FullLatCaseDFRoll <- full_join(LatCaseDF,LatCaseDFRoll,by=c("Date","Site"),suffix=c("",".Rolled"))%>%
+  filter(Site=="Madison",
+         Per_pos.Rolled!=-500,
+         Date>=ymd("2020-08-15"))
+  
+
+LIMSFullDF <- ParseData(LIMSFN)%>%
+  select(Date,Site, N1,N1Error,FlowRate,Pop)
+```
+
+On a first pass FlowRate can be used for three purposes.
+
+1) Normalize data across sites.
+
+2) Normalize data within sites
+
+The below show that it is largely useless to use flow to normalize across site because it strongly correlates with population.
+
+```{r pop vs Flow, warning=FALSE}
+LIMSFullDF%>%
+  filter(!str_detect(Site, "^MMSD"))%>%
+  filter(Site!="Madison-P7-SE and P18-NE")%>%
+  mutate(FlowRate=as.numeric(FlowRate))%>%
+  select(FlowRate,!FlowRate)%>%
+  group_by(Site)%>%
+  summarise(FlowRate=mean(FlowRate,na.rm=TRUE),Pop=mean(Pop,na.rm=TRUE))%>%
+  ggplot()+
+  geom_point(aes(x=Pop,y=FlowRate))+
+  ggtitle("Nearly Perfect linear relation between Pop and Flowrate")
+```
+
+
+Within this plot show that the day to day variance is much smaller then the Site wide variance so any data process would need to account for that.
+
+```{r Site vs FlowRate}
+LIMSFullDF%>%
+  ggplot()+
+  geom_jitter(aes(x=Site,y=FlowRate))+
+  ggtitle("Flowrate grouped by Site")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+```
+
+When the flow rate is adjusted to have a constant mean and standard deviation no pattern emerges between the relationship between N1 and Flow. 
+
+```{r N1 vs FlowRate adjusted}
+
+LIMSFullDF%>%
+  group_by(Site)%>%
+  mutate(MeanFlowRate=mean(FlowRate,na.rm=TRUE),sdFlowRate=sd(FlowRate,na.rm=TRUE))%>%
+  mutate(FlowRate=(FlowRate-MeanFlowRate)/sdFlowRate)%>%
+  ggplot()+
+  scale_x_log10()+
+  geom_point(aes(x=N1,y=FlowRate),alpha=.1)
+```

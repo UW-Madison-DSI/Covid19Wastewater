@@ -14,9 +14,9 @@ output:
 
 Overview
 
-There is mainly 3 parts to this story:
+There is mainly two parts to this story:
 
-1) A simple easy to communicate model of the key relationship
+1) A simple easy model of the key relationship
 
 2) A medium complexity smoothing analysis
 
@@ -134,6 +134,11 @@ ccf(Cases,N1,na.action=na.pass)
 
 grangertest(Cases, N1, order = 1)
 grangertest(N1,Cases, order = 1)
+
+
+
+MadisonCaseDF <- read.csv(paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/UpdatedHFGFN.csv"))%>%
+  mutate(Date=as.Date(Date))
 ```
 
 

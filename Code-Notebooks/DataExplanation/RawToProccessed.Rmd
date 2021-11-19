@@ -357,6 +357,51 @@ MadisonCaseDF <- read.csv(paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/proce
   mutate(Date=as.Date(Date))
 ```
 
+
+```{r HFG Updated Data}
+
+MissingCode <-c("","NA","0","Undetected","Not Detected",
+           "Field Parameters to be filled in", 
+           "Inhibited-to be re-ran", "#DIV/0!","-","In progress","Undetermined",
+           "LA","omitted")
+
+UpdatedHFGFN <- "HFG_data_corrected_w_HF183&CrP_F.csv"
+UpdatedHFGDF <- read.csv(UpdatedHFGFN,na.strings=MissingCode)%>%
+  rename(Site = Plant,
+         Date = Collection.Date,
+         Filter = Filter.Rep,
+         Well = Well.Rep,
+         N1Ct =  N1.CT,
+         N1 = N1.GC.L,
+         BCoV = BCoV...Recovery,
+         HF183CT = HF183.CT,
+         HF183 = HF183.GC.L,
+         CrPCT = CrP.CT,
+         CrP = CrP.GC.L,
+         N2CT = N2.CT,
+         N2 = N2.GC.L,
+         PMMOVCT = PMMOV.CT,
+         PMMOV = PMMOV.GC.L,
+         N1LOD = N1..LOD,
+         N2LOD = N2..LOD)%>%
+  filter(!is.na(Filter))%>%
+  mutate(N1 = as.numeric(gsub(",", "", N1)),
+         N2 = as.numeric(gsub(",", "", N2)),
+         PMMOV = as.numeric(gsub(",", "", PMMOV)),
+         CrP = as.numeric(gsub(",", "", CrP)),
+         HF183 = as.numeric(gsub(",", "", HF183)))
+
+
+write.csv(UpdatedHFGDF,paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/UpdatedHFGFN.csv"),row.names=FALSE)
+#write.csv(UpdatedHFGDF,"C:/Users/marli/Downloads/UpdatedHFGFN.csv",row.names=FALSE)
+
+UpdatedHFGDF <- read.csv(paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/UpdatedHFGFN.csv"))%>%
+  mutate(Date=mdy(Date))
+```
+
+
+
+
 ```{r Madison Case Top level exploration}
 
 head(MadisonCaseDF)

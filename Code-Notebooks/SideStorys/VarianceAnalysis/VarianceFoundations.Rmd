@@ -8,10 +8,9 @@ output: html_document
 ---
 
 
-```{r}
+```{r, echo = FALSE}
 knitr::opts_chunk$set(
 	echo = FALSE,
-	message = FALSE,
 	warning = FALSE
 )
 ```
@@ -20,12 +19,6 @@ knitr::opts_chunk$set(
 ```{r Start enviroment, echo=FALSE, message=FALSE, warning=FALSE}
 library(dplyr)
 library(ggplot2)
-# library(lmtest)
-# library(lubridate)
-# library(limma)
-# library(tidyr)
-# library(plotly)
-  #library(lintr)
 
 
 #Data Files and prep work
