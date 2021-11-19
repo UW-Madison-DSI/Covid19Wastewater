@@ -56,6 +56,16 @@ FullDF <- full_join(LIMSHFGLocationsDF,HFGDF, by = c("Date","Site","Filter","Wel
 tail(FullDF)
 ```
 
+```{r }
+
+FullDF%>%
+  ggplot()+
+ aes(x=log(HFGN1))+
+ stat_bin(aes(y=..count..))
+
+```
+
+
 
 LIMS N1 agrees with HFG data implying that using it to find an underlying trend should be faithful to the HFG data.
 
@@ -87,7 +97,8 @@ using smoothing found in the main story on the N1 data.
 ```{r }
 GroupLoess <- function(SmoothedSite){
   FilteredDF <- FullDF%>%
-    filter(Site == SmoothedSite)
+    filter(Site == SmoothedSite)%>%
+    select(Site,Date,N1)
   FilteredDF$loessN1 <- loessFit(y=(FilteredDF$N1), 
                       x=FilteredDF$Date, #create loess fit of the data
                       span=.2, #span of .2 seems to give the best result, not rigorously chosen
@@ -95,8 +106,21 @@ GroupLoess <- function(SmoothedSite){
   return(FilteredDF)
 }
 
+FullLoessData <- bind_rows(lapply(HFGLocations,GroupLoess))
 
-FullDF <- bind_rows(lapply(HFGLocations,GroupLoess))
+FullDF2 <- inner_join(HFGDF , FullLoessData , by = c("Date","Site"))%>%
+  filter(!is.na(loessN1))%>%
+  mutate(Filter = as.factor(Filter))
+
+
+FullDF2%>%
+  filter(HFGN1<4e7)%>%
+  ggplot()+
+  aes(x=Date)+
+  geom_point(aes(y=HFGN1,color=Filter) , size=.1)+
+  geom_line(aes(y=loessN1) , size=1)+
+  scale_y_log10()+
+  facet_wrap(~Site)
 ```
 
 
@@ -104,8 +128,8 @@ FullDF <- bind_rows(lapply(HFGLocations,GroupLoess))
 With the small amount of case data in the region the smoothing seems to generalize reasonably.
 
 ```{r LIMS HFG Smoothed relation}
-CompFullDF <- FullDF%>%
-  filter(Date > StartHFG - 14,
+CompFullDF <- FullDF2%>%
+  filter(Date > StartHFG - 21,
           Date < EndHFG + 14,
           HFGN1 < 1e7)
 
@@ -121,43 +145,75 @@ CompCaseHFGDF <- HFGCaseDF%>%
 
 ggplot()+
   aes(x=Date)+
-  geom_point(aes(y=ReportedCases) , size=1 , data = CompCaseHFGDF)+
-  geom_line(aes(y=loessN1,color="Lims Data") , size=1 , data = CompN1DF)+
+  geom_point(aes(y=ReportedCases,color="ReportedCases") , size=1 , data = CompCaseHFGDF)+
+  geom_line(aes(y=loessN1/1000,color="Lims Data") , size=1 , data = CompN1DF)+
   scale_y_log10()+
-  facet_wrap(~Site)
+  facet_wrap(~Site)+
+  ggtitle("Simple shape analysis")
 ```
 
 Once we remove the trend we have a dataset of errors.
 
 ```{r Remove trend from data}
 
-LoessN1DF <- FullDF%>%
-  select(Date,Site,loessN1)
-  
-
-CompFullDF <- full_join(HFGDF,LoessN1DF,by=c("Date","Site"))%>%
+CompFullDF <- FullDF2%>%
   filter(HFGN1 < 1e7)%>%
-  mutate(TrendError = log(HFGN1) - log(loessN1),
-         Filter = as.factor(Filter))%>%
+  mutate(TrendError = log(HFGN1) - log(loessN1))%>%
   filter(!is.na(TrendError))
 
 ggplot()+
-  geom_point(aes(x=HFGN1,y=TrendError,color=Filter) , size=1 , data = CompFullDF)+
+  geom_point(aes(x=HFGN1,y=TrendError) , size=1 , data = CompFullDF)+
   facet_wrap(~Site)+
   scale_x_log10()
 
-
+ggplot()+
+  geom_point(aes(x=Date,y=TrendError) , size=1 , data = CompFullDF)+
+  facet_wrap(~Site)
 
 ggplot()+
   geom_histogram(aes(x=TrendError) , size=1 , data = CompFullDF)+
   facet_wrap(~Site)
 ```
 
+we can redo this but with the mean of the replicates to try to remove other errors:
+
+```{r Remove trend from data}
+
+CompFullDFSum <- FullDF2%>%
+  filter(HFGN1 < 1e7)%>%
+  group_by(Date,Site)%>%
+  summarize(HFGN1 = mean(log(HFGN1)), loessN1 = loessN1)%>%
+  mutate(TrendError = (HFGN1) - log(loessN1))%>%
+  filter(!is.na(TrendError))
+
+ggplot()+
+  geom_point(aes(x=HFGN1,y=TrendError) , size=1 , data = CompFullDF)+
+  facet_wrap(~Site)
+  scale_x_log10()
+
+
+ggplot()+
+  geom_line(aes(x=Date,y=TrendError) , size=1 , data = CompFullDF)+
+  facet_wrap(~Site)
+
+
+ggplot()+
+  geom_histogram(aes(x=TrendError) , size=1 , data = CompFullDF)+
+  facet_wrap(~Site)
+
+
+#
+```
+
+
 From this we can calculate the variance to get a handle on this.
 
 ```{r}
 
-var(CompFullDF$TrendError, na.rm = TRUE)
+TrendError <- var(CompFullDF$TrendError, na.rm = TRUE)
+TrendErrorMean <- var(CompFullDFSum$TrendError, na.rm = TRUE)
 
+TrendError
+TrendErrorMean
 ```
 

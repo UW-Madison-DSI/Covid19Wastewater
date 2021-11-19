@@ -49,15 +49,18 @@ Lets start by removing all other sources of error by subtracting the mean of eac
 
 CompDF <- HFGDF%>%
   group_by(Site,Date,Filter)%>%
-  mutate(Error = log(N1) - mean(log(N1)),
+  mutate(Error = (N1) - mean((N1)),
          Filter = as.factor(Filter))
 
-
+#
 CompDF%>%
   ggplot()+
   geom_point(aes(x=Error,y=N1) , size=1)+
   scale_y_log10()+
   facet_wrap(~Site)
+
+
+#look at ways to remove trends
 ```
 
 From this we can calculate the variance to get a handle on this.
