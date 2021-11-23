@@ -2,7 +2,7 @@
 params:
   BaseDir: "Z:/"
   ##BaseDir: "/Volumes/byandell/"
-  RemoveOutliers: TRUE
+  RemoveOutliers: FALSE
 title: "MainStory"
 author: "Marlin"
 date: "10/28/2021"
@@ -118,7 +118,7 @@ FirstImpression <- FullDF%>%
 
 ggplotly(FirstImpression,tooltip=c("info","Date"))
 ```
-
+  
 Cross correlation and Granger Causality are key component to this analysis. Cross correlation looks at the correlation at a range of time shifts and Granger analysis preform a test for predictive power. We find that there is to much noise to find significance.
 
 ```{r CCF and Granger test 1}
@@ -134,11 +134,6 @@ ccf(Cases,N1,na.action=na.pass)
 
 grangertest(Cases, N1, order = 1)
 grangertest(N1,Cases, order = 1)
-
-
-
-MadisonCaseDF <- read.csv(paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/UpdatedHFGFN.csv"))%>%
-  mutate(Date=as.Date(Date))
 ```
 
 
