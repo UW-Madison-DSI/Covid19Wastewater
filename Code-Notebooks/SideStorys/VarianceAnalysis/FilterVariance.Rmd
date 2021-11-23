@@ -45,8 +45,6 @@ HFGDF <- ParseData(HFGWasteFN)%>%#Reads in preprocessed data into consistent for
   filter(!is.na(N1))
 
 tail(HFGDF)#Quick look into structure of data frame
-
-HFGDF
 ```
 
 

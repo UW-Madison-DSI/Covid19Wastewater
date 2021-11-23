@@ -76,6 +76,18 @@ MedianMean <- function(Vec){# take the mean drooping the highest and lowest valu
   return(MeanValue)
 }
 
+gg_color_hue <- function(n) {
+  hues = seq(15, 375, length = n + 1)
+  hcl(h = hues, l = 65, c = 100)[1:n]
+}
+
+ColorRule <- scale_color_manual(values = c("N1" = "#F8766D",
+                                "Cases"="#00BFC4",
+                                "SLDCases"="#00BFB4",
+                                "loessN1" = "#E8766D"))
+
+
+gg_color_hue(4)
 ```
 
 
@@ -114,7 +126,8 @@ FirstImpression <- FullDF%>%
   ggplot(aes(x=Date))+#Data depends on time
   geom_line(aes(y=MinMaxNormalization(N1), color="N1",info=N1))+#compares N1 to Cases
   geom_line(aes(y=MinMaxNormalization(Cases), color="Cases",info=Cases))+
-  labs(y="variable min max normalized")
+  labs(y="variable min max normalized")+
+  ColorRule
 
 ggplotly(FirstImpression,tooltip=c("info","Date"))
 ```
@@ -146,10 +159,10 @@ IntermediateOutlierGraphic <- TRUE #
 
 DaySmoothed=21#Very wide smoothing to find where the data strong deviate from trend
 
-FullDF2 <- FullDF%>%
+FullDF2 <- FullDF%>%#Remove older data that clearly has no relationship to Cases
   mutate(N1 = ifelse(Date < mdy("11/20/2020"),NA,N1))
 
-FullDF3 <- FullDF2%>%#Remove older data that clearly has no relationship to Cases
+FullDF3 <- FullDF2%>%
   mutate(SmoothN1=rollapply(data = N1, width = DaySmoothed, FUN = median, 
                             na.r = TRUE,fill=NA),#Finding very smooth version of the data with no outliers
          SmoothN1=ifelse(is.na(SmoothN1),N1,SmoothN1),#Fixing issue where rollapply fills NA on right border
@@ -172,12 +185,15 @@ if(IntermediateOutlierGraphic){
 }
 
 
-FullDF3%>%
+Ref <- FullDF3%>%
   NoNa("N1","Cases")%>%#Removing outliers
   ggplot(aes(x=Date))+#Data depends on time
-  geom_line(aes(y=MinMaxNormalization(N1), color="N1"))+#compares N1 to Cases
-  geom_line(aes(y=MinMaxNormalization(Cases), color="Cases"))+
-  labs(y="variable min max normalized")
+  geom_line(aes(y=MinMaxNormalization(N1), color="N1", info = N1))+#compares N1 to Cases
+  geom_line(aes(y=MinMaxNormalization(Cases), color="Cases",info = Cases))+
+  labs(y="variable min max normalized")+
+  ColorRule
+
+ggplotly(Ref,tooltip=c("info","Date"))
 ```
 
 ```{r Dont remove outliers,eval = !params$RemoveOutliers,include=FALSE}
@@ -231,13 +247,16 @@ SLDSmoothedDF <- FullDF3%>%
                                   na.rm = FALSE)))#no missing data to remove
 
 
-SLDSmoothedDF%>%
+SLDPlot = SLDSmoothedDF%>%
   NoNa("N1","SLDCases")%>%#same plot as earlier but with the SLD smoothing
   ggplot(aes(x=Date))+
-  geom_line(aes(y=MinMaxNormalization(SLDCases), color="SLDCases"))+
-  geom_line(aes(y=MinMaxNormalization(N1), color="N1"))+
+  geom_line(aes(y=MinMaxNormalization(SLDCases), color="SLDCases",info = SLDCases))+
+  geom_line(aes(y=MinMaxNormalization(N1), color="N1",info = N1))+
   facet_wrap(~Site)+
-  labs(y="variable min max normalized")
+  labs(y="variable min max normalized")+
+  ColorRule
+
+ggplotly(SLDPlot,tooltip=c("info","Date"))
 ```
 
 
@@ -265,7 +284,7 @@ To isolate this relationship we used a primitive binning relationship. This clar
 ```{r binning part}
 StartDate <- 1 #Where the binning starts
 DaySmoothing <- 14 #The size of the bins
-Lag <- 4 #The offset between Cases and N1
+Lag <- 7 #The offset between Cases and N1
 
 BinDF <- SLDSmoothedDF%>%
   select(Date, Cases, N1)%>%
@@ -273,20 +292,24 @@ BinDF <- SLDSmoothedDF%>%
            Week=(as.numeric(Date)+StartDate)%/%DaySmoothing)%>%#putting variables into bins via integer division
   group_by(Week)%>%
   #filter(Week>2670)%>%
-  summarise(BinnedCases=mean(MovedCases, na.rm=TRUE), BinnedN1=(mean((N1), na.rm=TRUE)))#summarize data within bins.
+  summarise(BinnedCases=median(MovedCases, na.rm=TRUE), BinnedN1=(median((N1), na.rm=TRUE)), Date = mean(Date,na.rm = TRUE))#summarize data within bins.
 
 
 
-BinDF%>%
+BinedGraph <- BinDF%>%
   NoNa("BinnedN1","BinnedCases")%>%#Remove NA
-  ggplot(aes(x=Week))+
-  geom_line(aes(y=MinMaxNormalization(BinnedN1), color="N1"))+
-  geom_line(aes(y=MinMaxNormalization(BinnedCases), color="Cases"))+
-  labs(y="Binned variable min max normalized")
+  ggplot(aes(x=Date))+
+  geom_line(aes(y=MinMaxNormalization(BinnedN1), color="N1" , info = BinnedN1))+
+  geom_line(aes(y=MinMaxNormalization(BinnedCases), color="Cases", info = BinnedCases))+
+  labs(y="Binned variable min max normalized")+
+  ColorRule
 
-BinDF%>%
+ggplotly(BinedGraph,tooltip=c("info","Date"))
+BinedGraph
+BinedCorrGraph <- BinDF%>%
   ggplot()+
-  geom_point(aes(x=BinnedCases, y=BinnedN1))
+  geom_point(aes(x=BinnedCases, y=BinnedN1, info = Date))
+ggplotly(BinedCorrGraph,tooltip=c("x","y","info"))
 
 cor(BinDF$BinnedN1, BinDF$BinnedCases, use="pairwise.complete.obs")
 summary(lm(BinnedCases~BinnedN1, data=BinDF))
@@ -304,16 +327,17 @@ SLDSmoothedDF$loessN1 <- loessFit(y=(SLDSmoothedDF$N1),
                       span=.2, #span of .2 seems to give the best result, not rigorously chosen
                       iterations=2)$fitted#2 iterations remove some bad patterns
 
-SLDSmoothedDF%>%
+SLDLoessGraphic <- SLDSmoothedDF%>%
   NoNa("loessN1","SLDCases")%>%
   ggplot(aes(x=Date))+
-  geom_line(aes(y=MinMaxNormalization(loessN1), color="loessN1"))+
-  geom_line(aes(y=MinMaxNormalization(SLDCases), color="SLDCases"))+
+  geom_line(aes(y=MinMaxNormalization(loessN1), color="loessN1" , info = loessN1))+
+  geom_line(aes(y=MinMaxNormalization(SLDCases), color="SLDCases" , info = SLDCases))+
   facet_wrap(~Site)+
-  labs(y="variable min max normalized")
+  labs(y="variable min max normalized")+
+  ColorRule
 
 
-
+ggplotly(SLDLoessGraphic,tooltip=c("info","Date"))
 ```
 
 `r if(params$RemoveOutliers){"The loess smoothing gives the best ccf relation and shape. It also insignifigently changes granger tests"}else{"The loess smoothing roughly doubled the correlation at all time lags. The two granger tests p value also got signifigently smaller"}`
