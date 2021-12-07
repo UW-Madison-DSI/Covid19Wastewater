@@ -394,23 +394,15 @@ UpdatedHFGDF <- read.csv(UpdatedHFGFN,na.strings=MissingCode)%>%
          Date = as.Date(Date,format="%m/%d/%Y"))
 
 
-write.csv(UpdatedHFGDF,paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/UpdatedHFGFN.csv"),row.names=FALSE)
+#write.csv(UpdatedHFGDF,paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/UpdatedHFGFN.csv"),row.names=FALSE)
 
 UpdatedHFGDF <- read.csv(paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/UpdatedHFGFN.csv"))%>%
-  mutate(Date=as.Date(Date))
+  mutate(Date=as.Date(Date),N1 = as.numeric(N1),N1Ct = as.numeric(N1Ct))
+HFGWasteDF
 
-
-
-UpdatedHFGDF%>%
-  #mutate(Date = ifelse(Date<as.Date("2020-1-1"),Date+ years(2000),Date))%>%
-  filter(Date<as.Date("2000-1-1"))
+HFGDataDiff <- full_join(UpdatedHFGDF,HFGWasteDF)
 
 ggplotly(DiffPlot)
-
-library(lubridate)
-
-UpdatedHFGDF <- UpdatedHFGDF%>%
-  mutate(Date = ifelse(Date<as.Date("2020-1-1"),Date+ years(2000),Date))
 ```
 
 

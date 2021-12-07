@@ -41,7 +41,6 @@ library(tidyr)
 library(plotly)
   #library(lintr)
 
-
 #Data Files and prep work
 source("../../lib/DataProccess.R")
 ```
@@ -76,18 +75,12 @@ MedianMean <- function(Vec){# take the mean drooping the highest and lowest valu
   return(MeanValue)
 }
 
-gg_color_hue <- function(n) {
-  hues = seq(15, 375, length = n + 1)
-  hcl(h = hues, l = 65, c = 100)[1:n]
-}
-
+#Custom_color_scale
 ColorRule <- scale_color_manual(values = c("N1" = "#F8766D",
                                 "Cases"="#00BFC4",
                                 "SLDCases"="#00BFB4",
                                 "loessN1" = "#E8766D"))
 
-
-gg_color_hue(4)
 ```
 
 
@@ -296,7 +289,7 @@ BinDF <- SLDSmoothedDF%>%
 
 
 
-BinedGraph <- BinDF%>%
+BinnedGraph <- BinDF%>%
   NoNa("BinnedN1","BinnedCases")%>%#Remove NA
   ggplot(aes(x=Date))+
   geom_line(aes(y=MinMaxNormalization(BinnedN1), color="N1" , info = BinnedN1))+
@@ -304,8 +297,7 @@ BinedGraph <- BinDF%>%
   labs(y="Binned variable min max normalized")+
   ColorRule
 
-ggplotly(BinedGraph,tooltip=c("info","Date"))
-BinedGraph
+ggplotly(BinnedGraph,tooltip=c("info","Date"))
 BinedCorrGraph <- BinDF%>%
   ggplot()+
   geom_point(aes(x=BinnedCases, y=BinnedN1, info = Date))

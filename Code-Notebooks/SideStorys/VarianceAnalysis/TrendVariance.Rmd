@@ -44,24 +44,24 @@ HFGCasesFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/HFGCa
 
 HFGCaseDF <- ParseData(HFGCasesFN)#Reads in preprocessed data into consistent format
 
-HFGDF <- ParseData(HFGWasteFN)%>%
+HFGDF <- ParseData(HFGWasteFN)%>%#reads HFG data in
   select(Site,Date,Filter,Well,HFGN1=N1)
 
 StartHFG <- min(HFGDF$Date)#DateRange that HFG analysis makes sense in
 EndHFG <- max(HFGDF$Date)#used for graphing ranges later
 
 
-HFGLocations <- unique(HFGDF$Site)
+HFGLocations <- unique(HFGDF$Site)#Obtain list of Sites in the HFG dataset
 
 
 #Importing the LIMS waste water data
 LIMSHFGLocationsDF <- ParseData(LIMSFN)%>%
-  filter(Site %in% HFGLocations)%>%#Filter LIMS data to only the Sites we care about
+  filter(Site %in% HFGLocations)%>%#Filter LIMS data to only select Sites
   select(Date, Site,  N1, N1Error)
 
 #joining the two data frames together
 FullDF <- full_join(LIMSHFGLocationsDF,HFGDF, by = c("Date","Site"))%>%
-  mutate(Filter=as.factor(Filter))
+  mutate(Filter=as.factor(Filter))#Get DF we will use for most of section
 
 #what does the data look like? 
 tail(FullDF)
@@ -73,13 +73,12 @@ LIMS N1 agrees with HFG data implying that using it to find an underlying trend 
 ```{r LIMS HFG data relation}
 CompFullDF <- FullDF%>%
   filter(Date > StartHFG - 14,
-          Date < EndHFG + 14,
-          HFGN1 < 1e7)
+          Date < EndHFG + 14)#Reduces to only data around the HFG data
+          #HFGN1 < 1e7)
 
 
-CompN1DF <- CompFullDF%>%
+CompN1DF <- CompFullDF%>%#Remove rows with missing data 
   filter(!is.na(N1))
-
 CompHFGDF <- CompFullDF%>%
   filter(!is.na(HFGN1))
 
@@ -88,7 +87,7 @@ CompHFGDF <- CompFullDF%>%
 CompPlot <- ggplot()+
   aes(x=Date)+
   geom_point(aes(y = HFGN1,color = Filter) , size = .1 , data = CompHFGDF) +
-  geom_line(aes(y = N1,color = "Lims Data") , size = 1 , data = CompN1DF) +
+  geom_line(aes(y = N1,color = "Lims Data") , size = .5 , data = CompN1DF) +
   scale_y_log10() +
   facet_wrap(~Site) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
@@ -105,7 +104,7 @@ GroupLoess <- function(SmoothedSite){
     select(Site,Date,N1)
   FilteredDF$loessN1 <- loessFit(y=(FilteredDF$N1), 
                       x=FilteredDF$Date, #create loess fit of the data
-                      span=.2, #span of .2 seems to give the best result, not rigorously chosen
+                      span=.4, #span of .2 seems to give the best result, not rigorously chosen
                       iterations=2)$fitted#2 iterations remove some bad patterns
   return(FilteredDF)
 }
@@ -133,6 +132,8 @@ ggplotly(CompPlot2)
 
 
 
+
+
 With the small amount of case data in the region the smoothing seems to generalize reasonably.
 
 ```{r LIMS HFG Smoothed relation}
@@ -146,7 +147,7 @@ CompN1DF <- CompFullDF%>%
   filter(!is.na(loessN1))
 
 CompCaseHFGDF <- HFGCaseDF%>%
-  #mutate(ReportedCases = ifelse(ReportedCases == -999, NA, ReportedCases))%>%
+  #mutate(ReportedCases = ifelse(ReportedCases == -999, 2.5, #ReportedCases))%>%
   filter(!is.na(ReportedCases))
 
 
