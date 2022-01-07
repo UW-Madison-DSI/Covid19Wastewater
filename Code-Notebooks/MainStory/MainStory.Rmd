@@ -152,12 +152,12 @@ IntermediateOutlierGraphic <- TRUE #
 
 DaySmoothed=21#Very wide smoothing to find where the data strong deviate from trend
 
-FullDF2 <- FullDF%>%#Remove older data that clearly has no relationship to Cases
-  mutate(N1 = ifelse(Date < mdy("11/20/2020"),NA,N1))
+FullDF2 <- FullDF%>%#Remove older N1 data that clearly has no relationship to Cases
+  mutate(N1 = ifelse(Date < mdy("11/20/2020"),NA,N1))#replace old. make tone more neutral
 
 FullDF3 <- FullDF2%>%
   mutate(SmoothN1=rollapply(data = N1, width = DaySmoothed, FUN = median, 
-                            na.r = TRUE,fill=NA),#Finding very smooth version of the data with no outliers
+                            na.rm = TRUE,fill=NA),#Finding very smooth version of the data with no outliers
          SmoothN1=ifelse(is.na(SmoothN1),N1,SmoothN1),#Fixing issue where rollapply fills NA on right border
          LargeError=N1>5*SmoothN1,#Calculating error Limits
          N1=ifelse(LargeError,SmoothN1,N1))%>%#replacing data points that variance is to large
@@ -187,6 +187,8 @@ Ref <- FullDF3%>%
   ColorRule
 
 ggplotly(Ref,tooltip=c("info","Date"))
+
+
 ```
 
 ```{r Dont remove outliers,eval = !params$RemoveOutliers,include=FALSE}
@@ -206,11 +208,6 @@ TestDF2 <- FullDF3%>%
 Cases <- TestDF2$Cases
 N1 <- TestDF2$N1
 
-#library(tseries) Tests for stationarity. potential use is obvious
-# kpss.test(Cases)
-# adf.test(Cases)
-# kpss.test(N1)
-# adf.test(N1)
 
 ccf(Cases,N1,na.action=na.pass)
 
@@ -255,7 +252,7 @@ ggplotly(SLDPlot,tooltip=c("info","Date"))
 
 `r if(params$RemoveOutliers){"The SLD improves the shape of the CCF. However it removes the signifigence of N1 predicting Cases. This makes sense looking at the data."}else{"The SLD Cause a signfigent improvement in the relationship now showing a statisticly signifigent test result"}`
 
-```{r CCF and Granger test 3}
+```{r CCF and Granger test 3, include=FALSE}
 TestDF3 <- SLDSmoothedDF%>%
   FillNA("N1","SLDCases")%>%#filling in missing data in range with previous values
   NoNa("N1","SLDCases")#removing rows from before both series started
@@ -310,7 +307,7 @@ summary(lm(BinnedCases~BinnedN1, data=BinDF))
 
 
 
-To generate this relationship without reducing the amount of data we rely on a loess smoothing of the data. The loess smoothing is a way of generating smooth curves from noisy data. The displayed plot shows the visual power of this smoothing. We see a relationship in the big patterns but also multiple sub patterns match. We see in general that smoothed N1 both lags and leads the case data.
+To generate this relationship without reducing the amount of data we rely on a loess smoothing of the data. The loess smoothing [Discription of what loess does and how it optimaly extract trend/continunes ]. The displayed plot shows the visual power of this smoothing. We see a relationship in the big patterns but also multiple sub patterns match. We see in general that smoothed N1 both lags and leads the case data.
 
 ```{r loess smoothing and some intro CCF processes}
 

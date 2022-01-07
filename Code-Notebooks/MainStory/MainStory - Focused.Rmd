@@ -1,0 +1,452 @@
+---
+params:
+  BaseDir: "Z:/"
+  ##BaseDir: "/Volumes/byandell/"
+title: "Heuristic exploration of the relationship between cases and viral load"
+author: "Marlin Lee"
+date: "12/24/2021"
+output: 
+  bookdown::html_document2: 
+    fig_width: 8
+    fig_height: 4
+    code_folding: hide
+bibliography: references.bib  
+---
+
+This report looks at exploring the relationship between wastewater and cases. 
+There are four components to this analysis.
+
+  1) Removing putative outliers
+  
+  2) Binning analysis
+  
+  3) Smoothing signal
+  
+  4) Statistical analysis
+
+  This report does not present any final answers but presents some very convincing heuristics.
+
+
+
+```{r set up markdown settings, echo=FALSE}
+knitr::opts_chunk$set(
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+
+```{r Start enviroment, echo=FALSE, message=FALSE, warning=FALSE}
+library(dplyr)
+library(ggplot2)
+library(lmtest)
+library(lubridate)
+library(limma)
+library(tidyr)
+library(plotly)
+library(gridExtra)
+library(data.table)
+library(formattable)
+
+#Data Files and prep work
+source("../../lib/DataProccess.R")
+```
+
+```{r helpful data manipulations, include = FALSE}
+#returns vector of the min and max of function
+MinMaxCollector <- function(Vec){
+  if(is.na(Vec)){
+    return(NA)
+  }
+  return(range(Vec, na.rm = TRUE))
+}
+
+#normalizes data to be between 0 and 1. 
+#Not used significantly in newest build
+MinMaxNormalization <- function(Vec,minMax=NA){#normalizes the data to range from 0 and 1
+    if(all(!is.na(minMax))){
+      normVec <- (Vec-minMax[1])/minMax[2]
+    }else{
+      normVec <- (Vec-min(Vec,na.rm=TRUE))/max(Vec,na.rm=TRUE)
+    }
+    return(normVec)
+}
+
+#Makes First Vector have the same min and max as the second one.
+MinMaxFixing <- function(Vec, Bar, SubVec=NA){
+  NormVec = MinMaxNormalization(Vec,MinMaxCollector(SubVec))
+  BarRange = MinMaxCollector(Bar)
+  RefitVec = NormVec*(BarRange[2]-BarRange[1])+BarRange[1]
+  return(RefitVec)
+}
+
+NoNa <- function(DF,...){#Removes NA from the reverent columns
+  ColumnNames <- c(...)
+  NoNaDF <- DF%>%
+    filter(
+      across(
+      .cols = ColumnNames,
+      .fns = ~ !is.na(.x))
+      )
+  return(NoNaDF)
+}
+
+FillNA <- function(DF,...){#Fills NA with previous values
+  ColumnNames <- c(...)
+  NoNaDF <- DF%>%
+    fill(ColumnNames)
+  return(NoNaDF)
+}
+
+MedianMean <- function(Vec){# take the mean drooping the highest and lowest values
+  RemoveBorderPoints <- replace(Vec, c(which.min(Vec), which.max(Vec)), NA)
+  MeanValue <- mean(RemoveBorderPoints, na.rm = TRUE)
+  return(MeanValue)
+}
+
+#Custom_color_scale
+ColorRule <- scale_color_manual(values = c("N1" = "#F8766D",
+                                           "Cases"="#00BFC4",
+                                           "Seven Day MA Cases" = "#4057A2",
+                                           "SLDCases"="#800080",
+                                           "loessN1" = "#D6544B"))
+
+NameingRule <- c("N1" = "N1",
+                "Cases"="Cases",
+                "SevenDayMACases" = "Seven Day MA Cases",
+                "SLDCases"="SLDCases",
+                "loessN1" = "loessN1")
+
+SecondAxisFormat <- list(#Second Axis components
+  tickfont = list(size=11.7),
+  titlefont=list(size=14.6),
+  overlaying = "y",
+  nticks = 4,
+  dtick = 5e5,
+  side = "right",
+  title = "N1 (GC/L)",
+  exponentformat = "e"
+)
+```
+
+# Data: The first look
+
+The two data sets used in this analysis are the Madison case data sourced from the Wisconsin DHS and wastewater  concentration data produced by the Wisconsin State Laboratory of Hygiene. This wastewater data has entries every couple of days from November 15 2020 to June 24 2021.
+
+```{r DF Set Up, echo=FALSE}
+BaseDir <- params$BaseDir#get the root of the directory where the data is stored
+
+#All the Madison data is contained in these two files
+MadisonCaseFN  <-  paste0(BaseDir, "COVID-19_WastewaterAnalysis/data/processed/MMSD_Cases_processed.csv")
+LIMSFN <- paste0(BaseDir, "COVID-19_WastewaterAnalysis/data/processed/LIMSWasteData_2021-06-30_17-40.csv")
+
+
+#Importing the Madison case data
+LatCaseDF <- ParseData(MadisonCaseFN)%>% 
+  filter(Site == "Madison")%>%
+  mutate(SevenDayMACases = rollapply(data = Cases, width = 7, FUN = mean, 
+                            na.rm = TRUE,fill=NA))%>%
+  filter(Date>ymd("2020-9-10"))%>%
+  select(Date, Site, Cases,SevenDayMACases)
+
+#Importing the Madison waste water data
+LIMSFullDF <- ParseData(LIMSFN)%>%
+  filter(Site == "Madison")%>%
+  select(Date, Site,  N1)
+
+#joining the two data frames together
+FullDF <- full_join(LatCaseDF,LIMSFullDF, by = c("Date","Site"))
+
+#what does the data look like? 
+FullDF%>%
+head()%>%
+formattable()
+
+#diff()
+AVGLimsSample <- LIMSFullDF%>%
+  NoNa("N1")%>%
+  pull(Date)%>%
+  sort()%>%
+  diff()%>%
+  mean()%>%
+  as.numeric()
+```
+
+The case data has a strong weekend effect so for this section we look at a seven day smoothing of cases. The simple display of the data shows the core components of this story. First that wastewater data is very noisy. And that there is a hint of a relationship between the two signals.
+
+```{r BaseRelationship}
+FirstImpressionDF <- FullDF%>%
+  NoNa("N1","Cases")
+
+FirstImpression <- FirstImpressionDF%>%#Removing outliers
+  ggplot(aes(x=Date))+#Data depends on time
+  geom_point(aes(y=(Cases), color="Cases",info=Cases),size = 1)+
+  geom_line(aes(y=MinMaxFixing(N1,Cases), color="N1",info=N1))+#compares N1 to Cases
+  geom_line(aes(y=(SevenDayMACases), color="Seven Day MA Cases",info=Cases))+
+  labs(y="reported cases")+
+  ColorRule
+
+
+
+ggplotly(FirstImpression)%>%
+    add_lines(x=~Date, y=~N1,
+            yaxis="y2", data=FirstImpressionDF, showlegend=FALSE, inherit=FALSE) %>%
+    layout(yaxis2 = SecondAxisFormat,
+           legend=list(title=list(text=''),x = 1.15, y = 0.9),
+           margin = list(l = 50, r = 75, b = 50, t = 50, pad = 4))
+
+
+#To remoive weekend effects we are looking at the 7 day smoothing of cases.
+```
+  
+
+# Removing potential outliers
+
+Looking at the wastewater measurements we observe minimal movement in N1 until it spikes up to expected levels. This is a sign that N1 before 11/20/2020 might have failed to capture the true amount of Covid shed in the community. To get the best picture between N1 and cases we removed these points from the analysis. In addition there were some points many times larger than adjacent values hinting at them being outliers. For the same reason we removed these points from the analysis.
+
+
+```{r remove unusual N1 data points}
+DaySmoothed=21#Very wide smoothing to find where the data strong deviate from trend
+
+EarlyDF <- FullDF%>%#Remove older N1 data that clearly has no relationship to Cases
+  mutate(EarlyOutlier = ifelse(Date < mdy("11/20/2020"),TRUE,FALSE))#replace old. 
+
+ErrorMarkedDF <- EarlyDF%>%
+  mutate(SmoothN1 = ifelse(EarlyOutlier,NA,N1))%>%
+  mutate(SmoothN1=rollapply(data = SmoothN1, width = DaySmoothed, FUN = median, 
+                            na.rm = TRUE,fill=NA),#Finding very smooth version of the data with no outliers
+         SmoothN1=ifelse(is.na(SmoothN1),N1,SmoothN1),#Fixing issue where rollapply fills NA on right border
+         LargeError=N1>4*SmoothN1)#Calculating error Limits
+
+ErrorRemovedDF <- ErrorMarkedDF%>%
+  mutate(N1 = ifelse(EarlyOutlier,NA,N1),
+         N1 = ifelse(LargeError,SmoothN1,N1))%>%#replacing data points that variance is to large
+         select(-SmoothN1,-LargeError,-EarlyOutlier)#Removing unneeded calculated columns
+
+MaxBaseN1 <- max(ErrorRemovedDF$N1,na.rm=TRUE)
+MinBaseN1 <- min(ErrorRemovedDF$N1,na.rm=TRUE)
+
+ErrorOnlyDF <- ErrorMarkedDF%>%
+  filter(EarlyOutlier|LargeError,!is.na(N1))%>%
+  rename(N1Outliers=N1)
+
+#SevenDayMACases
+Ref <- ErrorRemovedDF%>%
+  NoNa("N1","Cases")%>%#Removing outliers
+  ggplot(aes(x=Date))+#Data depends on time
+  geom_line(aes(y=MinMaxFixing(N1,Cases), color="N1", info = N1))+#compares N1 to Cases
+  geom_line(aes(y=Cases, color="Cases",info = Cases),
+            data = ErrorMarkedDF)+
+  geom_line(aes(y=SevenDayMACases, color="Seven Day MA Cases",info=Cases),data = ErrorMarkedDF)+
+  geom_point(aes(y=MinMaxFixing(N1Outliers,Cases),
+                 color="N1 Outliers",info = N1Outliers),data = ErrorOnlyDF)+
+  labs(y="variable min max normalized")+
+  ColorRule
+
+
+ggplotly(Ref,tooltip=c("info","Date"))%>%
+    add_lines(x=~Date, y=~N1Outliers,
+            yaxis="y2", data=ErrorOnlyDF, showlegend=FALSE, inherit=FALSE) %>%
+    layout(yaxis2 = SecondAxisFormat,
+           legend=list(title=list(text=''),x = 1.15, y = 0.9),
+           margin = list(l = 50, r = 75, b = 50, t = 50, pad = 4))
+```
+
+
+# Binning
+
+To isolate this relationship we used a primitive binning relationship. We used non overlapping bins of 2 weeks and took the median of the data within that range. This reduces autocorrelation issues and masks potential noise in the data. We see a very strong trend once the potential outliers are removed.
+
+```{r binning part}
+#StartDate is Where the binning starts
+#DaySmoothing is The size of the bins
+#Lag is The offset between Cases and N1
+
+Bining <- function(DF,StartDate=1,DaySmoothing=14,Lag=0){
+  BinDF <- DF%>%
+    select(Date, Cases, N1)%>%
+    mutate(MovedCases = data.table::shift(Cases, Lag),#moving  SLD lag days backwards
+        Week=(as.numeric(Date)+StartDate)%/%DaySmoothing)%>%#putting variables into bins via integer division
+    group_by(Week)%>%
+  #filter(Week>2670)%>%
+    summarise(BinnedCases=median(MovedCases, na.rm=TRUE), BinnedN1=(median((N1),
+        na.rm=TRUE)), Date = mean(Date,na.rm = TRUE))#summarize data within bins.
+  return(BinDF)
+}
+
+BinErrorRemovedDF <- Bining(ErrorRemovedDF)
+BinErrorKeptDF <- Bining(FullDF)
+
+DiffrenceDF <- inner_join(BinErrorRemovedDF,BinErrorKeptDF,by=c("Week","Date"))%>%
+  filter(BinnedN1.x!=BinnedN1.y)
+
+BinedCorrGraph <- ggplot()+
+  geom_segment(aes(x = BinnedCases.x, y = BinnedN1.x, xend = BinnedCases.y, yend = BinnedN1.y),
+                data = DiffrenceDF)+
+  geom_point(aes(x=BinnedCases, y=BinnedN1,color="outliers not removed", info = Date),
+             size = 2, data = BinErrorKeptDF,shape=15)+
+  geom_point(aes(x=BinnedCases, y=BinnedN1,color="outliers removed", info = Date),
+             data = BinErrorRemovedDF)+
+  ggtitle("Binned N1,Cases removed potential outliers")+
+  labs(x="Binned Cases",y="Binned N1")
+ggplotly(BinedCorrGraph,tooltip=c("x","y","info"))%>%
+    layout(legend=list(title=list(text=''),x = 1.15, y = 0.9),
+           margin = list(l = 50, r = 75, b = 50, t = 50, pad = 4))
+
+
+#cor(BinDF$BinnedN1, BinDF$BinnedCases, use="pairwise.complete.obs")
+#summary(lm(BinnedCases~BinnedN1, data=BinDF))
+Output <- data.frame(row.names=c("correlation"),
+  WithOutliers = c(cor(BinErrorKeptDF$BinnedN1, BinErrorKeptDF$BinnedCases, use="pairwise.complete.obs")),
+  WithOutOutliers = c(cor(BinErrorRemovedDF$BinnedN1, BinErrorRemovedDF$BinnedCases, use="pairwise.complete.obs")))
+formattable(Output)
+```
+
+
+
+# Data smoothing
+
+The goal in this section is to smooth the data to get a similar effect without losing
+resolution.
+
+## Case smoothing
+
+A key component to this is that the relationship between N1 and Case involves a gamma distribution modeling both the time between catching Covid-19 and getting a test and the concentration of the shedded particles. We found a gamma distribution with mean 11.73 days and a standard deviation of 7.68 gives good results and match's other research [@SLDPaper].
+
+
+```{r SLD}
+Mean <- 11.73
+StandardDeviation <- 7.68
+Scale = StandardDeviation^2/Mean
+Shape = Mean/Scale
+SLDWidth <- 21
+
+weights <- dgamma(1:SLDWidth, scale = Scale, shape = Shape)
+par(mar=c(4,4,4,10))
+plot(weights,  
+        main=paste("Gamma Distribution with mean =",Mean, "days,and SD =",StandardDeviation), 
+            ylab = "Weight", 
+            xlab = "Lag")
+
+SLDSmoothedDF <- ErrorRemovedDF%>%
+  mutate(
+    SLDCases = c(rep(NA,SLDWidth-1),#elimination of starting values not relevant as we have a 50+ day buffer of case data
+                        rollapply(Cases,width=SLDWidth,FUN=weighted.mean,
+                                  w=weights,
+                                  na.rm = FALSE)))#no missing data to remove
+
+#CasesMinMaxPrep = MinMaxNormalization(SLDSmoothedDF$SLDCases,Prep=TRUE)
+SLDPlot = SLDSmoothedDF%>%
+  NoNa("N1","SLDCases")%>%#same plot as earlier but with the SLD smoothing
+  ggplot(aes(x=Date))+
+  geom_line(aes(y=Cases, 
+                color="Cases" , info = Cases),alpha=.2)+
+  geom_line(aes(y=SevenDayMACases,
+                color="Seven Day MA Cases" , info = SevenDayMACases),alpha=.4)+
+  geom_line(aes(y=SLDCases, color="SLDCases",info = SLDCases))+
+  labs(y="Reported Cases")+
+  ColorRule
+
+ggplotly(SLDPlot,tooltip=c("info","Date"))%>%
+  layout(legend=list(title=list(text=''),x = 1.15, y = 0.9),
+         margin = list(l = 50, r = 75, b = 50, t = 50, pad = 4))
+```
+```{r, include=FALSE}
+
+SpanConstant = .2
+```
+
+
+
+## viral load smoothing
+
+To get a good smoothing of the N1 measurement we employ loess smoothing. Loess smoothing takes a locally weighted sliding window using some number of points. we found the best smoothing when it uses data within approximately `r floor(AVGLimsSample*length(LIMSFullDF$N1)*SpanConstant/14)` weeks of both sides of the data. The displayed plot shows the visual power of this smoothing. We see in general the smoothing trails SLD. However loess is symmetric meaning that it can not be used in predictive modeling due to it using points from the future to smooth points.
+
+```{r loess smoothing and some intro CCF processes}
+SpanConstant = .2
+
+SLDSmoothedDF$loessN1 <- loessFit(y=(SLDSmoothedDF$N1), 
+                      x=SLDSmoothedDF$Date, #create loess fit of the data
+                      span=SpanConstant, #span of .2 seems to give the best result, not rigorously chosen
+                      iterations=2)$fitted#2 iterations remove some bad patterns
+
+
+SLDLoessGraphic <- SLDSmoothedDF%>%
+  NoNa("loessN1","SLDCases")%>%
+  ggplot(aes(x=Date))+
+  geom_line(aes(y=Cases, color="Cases" , info = Cases),alpha=.1)+
+  geom_line(aes(y=MinMaxFixing(N1,Cases), color="N1",
+                info = N1),alpha=.2)+
+  geom_line(aes(y=SevenDayMACases,
+                color="Seven Day MA Cases" , info = SevenDayMACases),alpha=.3)+
+  geom_line(aes(y=MinMaxFixing(loessN1,Cases,N1), color="loessN1" , info = loessN1))+
+  geom_line(aes(y=SLDCases, color="SLDCases" , info = SLDCases))+
+  labs(y="variable min max normalized")+
+  ColorRule
+
+
+ggplotly(SLDLoessGraphic,tooltip=c("info","Date"))%>%
+    add_lines(x=~Date, y=~N1,
+            yaxis="y2", data=SLDSmoothedDF, showlegend=FALSE, inherit=FALSE) %>%
+    layout(yaxis2 = SecondAxisFormat,
+           legend=list(title=list(text=''),x = 1.15, y = 0.9),
+           margin = list(l = 50, r = 75, b = 50, t = 50, pad = 4))
+
+
+```
+
+# Towards a formal analysis
+
+
+Cross correlation and Granger Causality are key components to formalize this analysis. Cross correlation looks at the correlation at a range of time shifts and Granger analysis performs a test for predictive power. These results must be kept in mind that the data removal was not done rigorously and the resulting data set has aspects of being non stationary. Therefore these statistics are good to keep in mind they should not be used for concrete results.
+
+
+```{r}
+CCFChar <- function(ccfObject){
+  LargestC = max(ccfObject$acf)
+  Lag = which.max(ccfObject$acf)-21
+  return(c(LargestC,Lag))
+}
+
+ModelTesting <- function(DF,Var1,Var2){
+  UsedDF <- DF%>%
+    FillNA(Var1,Var2)%>%#filling in missing data in range with previous values
+    NoNa(Var1,Var2)#removing rows from before both series started
+  
+  
+  Vec1 <- unname(unlist(UsedDF[Var1]))
+  Vec2 <- unname(unlist(UsedDF[Var2]))
+
+  CCFReport <- CCFChar(ccf(Vec1,Vec2,na.action=na.pass,plot = FALSE))
+
+  N1PredCase <- grangertest(Vec1, Vec2, order = 1)$"Pr(>F)"[2]
+  CasePredN1 <- grangertest(Vec2,Vec1, order = 1)$"Pr(>F)"[2]
+  return(round(c(CCFReport,CasePredN1,N1PredCase),4))
+}
+
+#ErrorRemovedDF
+BaseLine <- ModelTesting(FullDF,"N1","Cases")
+BaseLineSevenDay <- ModelTesting(FullDF,"N1","SevenDayMACases")
+ErrorRemoved <- ModelTesting(ErrorRemovedDF,"N1","SevenDayMACases")
+SLDN1 <- ModelTesting(SLDSmoothedDF,"N1","SLDCases")
+SevenLoess <- ModelTesting(SLDSmoothedDF,"loessN1","SevenDayMACases")
+SLDLoess <- ModelTesting(SLDSmoothedDF,"loessN1","SLDCases")
+
+
+Output <- data.frame(row.names=c("Max Cross Correlation","Lag of largest Cross correlation","P-value WasteWater predicts Cases","P-value Cases predicts wastewater"),
+  CasesvsN1 = BaseLine,
+  SevenDayMACasesvsN1 = BaseLineSevenDay,
+  ErrorRemoved = ErrorRemoved,
+  SLDN1 = SLDN1,
+  SevenLoess = SevenLoess,
+  SLDLoess = SLDLoess)
+
+OutputRightPosition <- transpose(Output)
+colnames(OutputRightPosition) <- rownames(Output)
+rownames(OutputRightPosition) <- c("Section 1: Cases  vs  N1"," Section 1: 7 Day MA Cases  vs  N1","Section 2: Cases vs  N1"," Section 4.1: SLD Cases vs N1","Section 4.2: 7 Day MA Cases vs Loess smoothing of N1","Section 4.2: SLD Cases vs Loess smoothing of N1")
+
+formattable(OutputRightPosition)
+
+
+```
+
