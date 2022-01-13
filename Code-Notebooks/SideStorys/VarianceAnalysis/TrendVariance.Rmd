@@ -147,7 +147,7 @@ CompN1DF <- CompFullDF%>%
   filter(!is.na(loessN1))
 
 CompCaseHFGDF <- HFGCaseDF%>%
-  #mutate(ReportedCases = ifelse(ReportedCases == -999, 2.5, #ReportedCases))%>%
+  mutate(ReportedCases = ifelse(ReportedCases == -999, NA, ReportedCases))%>%
   filter(!is.na(ReportedCases))
 
 
@@ -155,8 +155,8 @@ CompCaseHFGDF <- HFGCaseDF%>%
 CompPlot3 <- ggplot()+
   aes(x=Date)+
   geom_point(aes(y=ReportedCases,color="ReportedCases") , size=1 , data = CompCaseHFGDF)+
-  geom_line(aes(y=loessN1/1000,color="Lims Data") , size=1 , data = CompN1DF)+
-  scale_y_log10()+
+  geom_line(aes(y=loessN1/1e4,color="Lims Data") , size=1 , data = CompN1DF)+
+  #scale_y_log10()+
   facet_wrap(~Site)+
   ggtitle("Simple shape analysis") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
@@ -189,7 +189,7 @@ ggplot()+
   facet_wrap(~Site)
 ```
 
-We can control for filter to filter difference in variance by taking the variance of the errors for each Day. The resulting data is log normal and does not significantly with N1.
+We can control for filter to filter difference in variance by taking the variance of the errors for each Day. The resulting data is log normal and does not significantly scale with N1.
 
 ```{r sample variance}
 
@@ -216,7 +216,7 @@ CompFullDF2%>%#Relation between logN1 and the measured variance
 
 ```
 
-From this we can calculate the variance to get a handle on this. We can either take the variance of the errors or we can take the mean of the sample variances. Both give similar answers and which one is better depends on what assumptions we want to make about the errors.
+From this we can calculate the variance to get a handle on the day to day fluctuations. We can either take the variance of the errors or we can take the mean of the sample variances. Both give similar answers and which one is better depends on what assumptions we want to make about the errors.
 
 ```{r}
 

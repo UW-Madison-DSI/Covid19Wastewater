@@ -26,7 +26,6 @@ AVGGenFN <- function(N1, N2) {
   AVG <- ifelse(is.na(N1), N2, AVG)
   AVG <- ifelse(is.na(N2), N1, AVG)
 }
-
 ```
 
 ```{r parse data}
@@ -173,7 +172,7 @@ full_join(MainHFGCaseDF,MainHFGWasteDF)%>%
 ```
 
 ```{r LIMS Data}
-LIMSFN <- paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/WATERMICRO_WW_COVID-2021-06-30 17 40.xlsx")
+LIMSFN <- paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/WATERMICRO_WW_COVID_01-25-21_01-05-22.xlsx")
 
 NumericVars=c("average_flow_rate","avg_sars_cov2_conc","bcov_rec_rate",
                 "bcov_spike_conc","capacity_mgd","conductivity",
@@ -236,7 +235,7 @@ LIMSDF <- suppressWarnings(mutate(LIMSDF,
 
 
 
-LIMSDFParsedFN <- paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/LIMSWasteData_2021-06-30_17-40.csv")
+LIMSDFParsedFN <- paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/LIMSWasteData_01-25-21_01-05-22.csv")
 
 #write.csv(LIMSDF,LIMSDFParsedFN,row.names=FALSE)
 

@@ -138,7 +138,7 @@ BaseDir <- params$BaseDir#get the root of the directory where the data is stored
 
 #All the Madison data is contained in these two files
 MadisonCaseFN  <-  paste0(BaseDir, "COVID-19_WastewaterAnalysis/data/processed/MMSD_Cases_processed.csv")
-LIMSFN <- paste0(BaseDir, "COVID-19_WastewaterAnalysis/data/processed/LIMSWasteData_2021-06-30_17-40.csv")
+LIMSFN <- paste0(BaseDir, "COVID-19_WastewaterAnalysis/data/processed/LIMSWasteData_01-25-21_01-05-22.csv")
 
 
 #Importing the Madison case data
@@ -175,15 +175,15 @@ AVGLimsSample <- LIMSFullDF%>%
 The case data has a strong weekend effect so for this section we look at a seven day smoothing of cases. The simple display of the data shows the core components of this story. First that wastewater data is very noisy. And that there is a hint of a relationship between the two signals.
 
 ```{r BaseRelationship}
-FirstImpressionDF <- FullDF%>%
-  NoNa("N1","Cases")
+FirstImpressionDF <- FullDF#%>%
+  #NoNa("N1","Cases")
 
 FirstImpression <- FirstImpressionDF%>%#Removing outliers
   ggplot(aes(x=Date))+#Data depends on time
   geom_point(aes(y=(Cases), color="Cases",info=Cases),size = 1)+
   geom_line(aes(y=MinMaxFixing(N1,Cases), color="N1",info=N1))+#compares N1 to Cases
   geom_line(aes(y=(SevenDayMACases), color="Seven Day MA Cases",info=Cases))+
-  labs(y="reported cases")+
+  labs(y="Reported cases")+
   ColorRule
 
 
@@ -210,7 +210,8 @@ DaySmoothed=21#Very wide smoothing to find where the data strong deviate from tr
 
 EarlyDF <- FullDF%>%#Remove older N1 data that clearly has no relationship to Cases
   mutate(EarlyOutlier = ifelse(Date < mdy("11/20/2020"),TRUE,FALSE))#replace old. 
-
+#"11/20/2020"
+#"1/1/2021"
 ErrorMarkedDF <- EarlyDF%>%
   mutate(SmoothN1 = ifelse(EarlyOutlier,NA,N1))%>%
   mutate(SmoothN1=rollapply(data = SmoothN1, width = DaySmoothed, FUN = median, 
@@ -240,7 +241,7 @@ Ref <- ErrorRemovedDF%>%
   geom_line(aes(y=SevenDayMACases, color="Seven Day MA Cases",info=Cases),data = ErrorMarkedDF)+
   geom_point(aes(y=MinMaxFixing(N1Outliers,Cases),
                  color="N1 Outliers",info = N1Outliers),data = ErrorOnlyDF)+
-  labs(y="variable min max normalized")+
+  labs(y="Reported cases")+
   ColorRule
 
 
@@ -381,7 +382,7 @@ SLDLoessGraphic <- SLDSmoothedDF%>%
                 color="Seven Day MA Cases" , info = SevenDayMACases),alpha=.3)+
   geom_line(aes(y=MinMaxFixing(loessN1,Cases,N1), color="loessN1" , info = loessN1))+
   geom_line(aes(y=SLDCases, color="SLDCases" , info = SLDCases))+
-  labs(y="variable min max normalized")+
+  labs(y="Reported cases")+
   ColorRule
 
 
