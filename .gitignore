@@ -1,4 +1,4 @@
 ##### dot R files and csv files.
 .R*
 .csv*
-"*Shiny*/"
+**/*_autosave*
