@@ -1,8 +1,0 @@
-## Cases and tests for each MMSD interceptor flowage area
-
-## git commit
-[master 957562f] ready to push; still needs functional tests and
-validation
-
-# command
-Rscript --vanilla bin/MMSD_Cases.R -inFile data/raw/dhsData.2020-01-04.csv -outFile results/2021-01-07/MMSD_Cases.csv

@@ -1,7 +1,0 @@
-## git commit: 91c3bcccbe48f
-
-## cmds
- cat data/processed/Oct2020toEndFall_CasesByDorm.tsv | bin/parseDormCases.pl > results/2021-05-07/Oct2020toEndFall_CasesByDorm.tsv
-
-cat data/processed/SpringSemester_CasesByDorm.tsv | bin/parseDormCases.pl > results/2021-05-07/SpringSemester_CasesByDorm.tsv
-

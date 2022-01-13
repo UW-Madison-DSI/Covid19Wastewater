@@ -1,5 +1,5 @@
 ##### dot R files and csv files.
-*.R
 *.Rhistory
 *.RData
 *.csv
+*.tsv
