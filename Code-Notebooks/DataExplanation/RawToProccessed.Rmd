@@ -302,7 +302,7 @@ MainLIMSDFWasteDF%>%
 ```
 
 ```{r Madison Case Data}
-LIMSCaseMMSDFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/MMSD_Cases.csv")
+LIMSCaseMMSDFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/MMSD_Cases_2022_01_12.csv")
 LIMSSpringDormFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/SpringSemester_CasesByDorm.TSV")
 LIMSFallDormFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/FallSemester_CasesByDorm.TSV")
 
@@ -350,7 +350,7 @@ MMSDdata  <-  read.csv(LIMSCaseMMSDFN)%>%
 MadisonCaseDF <- rbind(rbind(MMSDdata,SpringDorms,FallDorms))
 
 
-#write.csv(MadisonCaseDF,paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/MMSD_Cases_processed.csv"),row.names=FALSE)
+write.csv(MadisonCaseDF,paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/MMSD_Cases_2022_01_12_processed.csv"),row.names=FALSE)
 
 MadisonCaseDF <- read.csv(paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/MMSD_Cases_processed.csv"))%>%
   mutate(Date=as.Date(Date))

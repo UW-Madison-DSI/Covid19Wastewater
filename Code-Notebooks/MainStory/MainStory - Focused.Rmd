@@ -136,8 +136,8 @@ The two data sets used in this analysis are the Madison case data sourced from t
 ```{r DF Set Up, echo=FALSE}
 BaseDir <- params$BaseDir#get the root of the directory where the data is stored
 
-#All the Madison data is contained in these two files
-MadisonCaseFN  <-  paste0(BaseDir, "COVID-19_WastewaterAnalysis/data/processed/MMSD_Cases_processed.csv")
+#All the Madison data is contained in these two files#MMSD_Cases_processed
+MadisonCaseFN  <-  paste0(BaseDir, "COVID-19_WastewaterAnalysis/data/processed/MMSD_Cases_2022_01_12_processed.csv")
 LIMSFN <- paste0(BaseDir, "COVID-19_WastewaterAnalysis/data/processed/LIMSWasteData_01-25-21_01-05-22.csv")
 
 
@@ -170,13 +170,14 @@ AVGLimsSample <- LIMSFullDF%>%
   diff()%>%
   mean()%>%
   as.numeric()
+
 ```
 
 The case data has a strong weekend effect so for this section we look at a seven day smoothing of cases. The simple display of the data shows the core components of this story. First that wastewater data is very noisy. And that there is a hint of a relationship between the two signals.
 
 ```{r BaseRelationship}
-FirstImpressionDF <- FullDF#%>%
-  #NoNa("N1","Cases")
+FirstImpressionDF <- FullDF%>%
+  NoNa("N1","Cases")
 
 FirstImpression <- FirstImpressionDF%>%#Removing outliers
   ggplot(aes(x=Date))+#Data depends on time
@@ -392,6 +393,8 @@ ggplotly(SLDLoessGraphic,tooltip=c("info","Date"))%>%
     layout(yaxis2 = SecondAxisFormat,
            legend=list(title=list(text=''),x = 1.15, y = 0.9),
            margin = list(l = 50, r = 75, b = 50, t = 50, pad = 4))
+
+
 
 
 ```

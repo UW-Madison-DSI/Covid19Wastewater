@@ -6,12 +6,15 @@ getDHS_Data <- function(dataSource) {
   fields <- c("GEOID","DATE","POSITIVE", "NEGATIVE")  
   dhsData <-
     read.csv(dataSource,stringsAsFactors = FALSE) %>% 
+    rename(POSITIVE = POS_CP,
+           NEGATIVE = NEG,
+           DATE = Date)%>%
     ## testing hook
     #write.csv(dhsData1,"data/raw/dhsData.2020-01-04.csv",
     #          quote = FALSE, row.names = FALSE)
     select(all_of(fields))  %>% 
     #filter(GEO == "County" | GEO == "State") %>% 
-    mutate(DATE = ymd(as.Date(.$DATE))) %>%
+    mutate(DATE = mdy((.$DATE))) %>%
     rename(Date = "DATE") %>% 
     mutate(POSITIVE = sub(-999,0,POSITIVE)) %>% 
     mutate(NEGATIVE = sub(-999,0,NEGATIVE))

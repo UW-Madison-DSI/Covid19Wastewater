@@ -8,20 +8,20 @@ library(readxl)
 source("lib/processData.R")
 
 defaultArgs <- list (
-  outFile =  NULL,
+  outFile =  "results/2022-01-12/MMSD_Cases.csv",
   inFile = NULL,        ## hook to by-pass download for functional tests
-  censusFile = NULL    # 
+  censusFile = "data/raw/censustract-00-10.xlsx"    # 
   #lag = 7,              ## smoothing interval (days)
 )
 
-args <- R.utils::commandArgs(trailingOnly = TRUE,
-                             asValues = TRUE ,
-                             defaults = defaultArgs)
+args <- defaultArgs#R.utils::commandArgs(trailingOnly = TRUE,
+        #                     asValues = TRUE ,
+        #                     defaults = defaultArgs)
 
 #lag <- as.integer(args$lag)
-dhsURL <- 'https://opendata.arcgis.com/datasets/81a5286520a44e2c8f3546c840265f63_13.csv?outSR=%7B%22latestWkid%22%3A3857%2C%22wkid%22%3A102100%7D'
-
-#censusURL <- "https://www2.census.gov/programs-surveys/popest/datasets/2010-2019/counties/totals/co-est2019-alldata.csv"
+dhsURL <- "C:/Users/marli/Downloads/COVID19-Historical-V2-TRCT.csv"
+#https://dhsgis.page.link/v2EF
+#censusURL <- "https://www2.census.gov/programs-surveys/popest/datasetgetDHS_Data/2010-2019/counties/totals/co-est2019-alldata.csv"
 censusURL <- 
   "http://www2.census.gov/programs-surveys/decennial/tables/time-series/tract-change-00-10/censustract-00-10.xlsx"
 
