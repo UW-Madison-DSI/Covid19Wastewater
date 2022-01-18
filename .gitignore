@@ -1,4 +1,4 @@
-##### dot R files and csv files.
+##### Ignore DF files and RStudio workFiles
 *.Rhistory
 *.RData
 *.csv

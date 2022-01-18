@@ -218,7 +218,7 @@ ErrorMarkedDF <- EarlyDF%>%
   mutate(SmoothN1=rollapply(data = SmoothN1, width = DaySmoothed, FUN = median, 
                             na.rm = TRUE,fill=NA),#Finding very smooth version of the data with no outliers
          SmoothN1=ifelse(is.na(SmoothN1),N1,SmoothN1),#Fixing issue where rollapply fills NA on right border
-         LargeError=N1>4*SmoothN1)#Calculating error Limits
+         LargeError=N1>5*SmoothN1)#Calculating error Limits
 
 ErrorRemovedDF <- ErrorMarkedDF%>%
   mutate(N1 = ifelse(EarlyOutlier,NA,N1),
@@ -355,7 +355,9 @@ ggplotly(SLDPlot,tooltip=c("info","Date"))%>%
 ```
 ```{r, include=FALSE}
 
-SpanConstant = .2
+SpanConstant = .165
+
+AVGLimsSample*length(LIMSFullDF$N1)*SpanConstant/14
 ```
 
 
@@ -365,7 +367,7 @@ SpanConstant = .2
 To get a good smoothing of the N1 measurement we employ loess smoothing. Loess smoothing takes a locally weighted sliding window using some number of points. we found the best smoothing when it uses data within approximately `r floor(AVGLimsSample*length(LIMSFullDF$N1)*SpanConstant/14)` weeks of both sides of the data. The displayed plot shows the visual power of this smoothing. We see in general the smoothing trails SLD. However loess is symmetric meaning that it can not be used in predictive modeling due to it using points from the future to smooth points.
 
 ```{r loess smoothing and some intro CCF processes}
-SpanConstant = .2
+SpanConstant = .1
 
 SLDSmoothedDF$loessN1 <- loessFit(y=(SLDSmoothedDF$N1), 
                       x=SLDSmoothedDF$Date, #create loess fit of the data
