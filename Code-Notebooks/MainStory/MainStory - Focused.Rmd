@@ -154,7 +154,8 @@ LIMSFullDF <- ParseData(LIMSFN)%>%
   mutate(N1Pure = ifelse(is.na(N1),N2,N1),
          N2Pure = ifelse(is.na(N2),N1,N2),
          GeoMeanN12 = exp((log(N1Pure)+log(N2Pure))/2))%>%
-  select(Date, Site, N1, BCoV , N2 , PMMoV, GeoMeanN12)
+  select(Date, Site, N1, BCoV , N2 , PMMoV,
+         GeoMeanN12,FlowRate,temperature,equiv_sewage_amt)
 
 #joining the two data frames together
 FullDF <- full_join(LatCaseDF,LIMSFullDF, by = c("Date","Site"))
@@ -252,15 +253,17 @@ ErrorMarkedDF <- EarlyDF%>%
          SmoothVarMedian =rollapply(data = SmoothVarBase, width = DaySmoothed, FUN = median, 
                             na.rm = TRUE,fill=NA),#Finding very smooth version of the data with no outliers
          SmoothVarMedian = ifelse(is.na(SmoothVarMedian),!!sym(SelectedIndVar),SmoothVarMedian),
-         LargeError = !!sym(SelectedIndVar)>(4*SmoothVarMedian)|!!sym(SelectedIndVar)<(SmoothVarMedian/4))
-         #LargeError = !!sym(SelectedIndVar)>SmoothVarIQRHigh|!!sym(SelectedIndVar)<SmoothVarIQRLow)
+         LargeError2 = !!sym(SelectedIndVar)>(4*SmoothVarMedian)|!!sym(SelectedIndVar)<(SmoothVarMedian/4),
+         LargeError = !!sym(SelectedIndVar)>SmoothVarIQRHigh|!!sym(SelectedIndVar)<SmoothVarIQRLow)
 #Calculating error Limits
                       #was 4
 ErrorRemovedDF <- ErrorMarkedDF%>%
-  mutate(!!OutlierName:=ifelse(EarlyOutlier|LargeError,!!sym(SelectedIndVar),NA),
+  mutate(!!OutlierName := ifelse(EarlyOutlier | LargeError | LargeError2 , !!sym(SelectedIndVar),NA),
+         OutlierType = ifelse(LargeError&LargeError2,"Both Detect Outliers" , ifelse(LargeError,"Only IQR","Only Median")),
+         
          !!SelectedIndVar := ifelse(EarlyOutlier,NA,!!sym(SelectedIndVar)),
          !!SelectedIndVar := ifelse(LargeError,SmoothVarMedian,!!sym(SelectedIndVar)))%>%#replacing data points that variance is to large
-         select(-LargeError,-EarlyOutlier)#Removing unneeded calculated columns
+         select(-EarlyOutlier)#Removing unneeded calculated columns
 
 
 
@@ -279,16 +282,22 @@ Ref <- ErrorRemovedDF%>%
                 color="Seven Day MA Cases",
                 info=Cases))+
   geom_point(aes(y=MinMaxFixing(!!sym(OutlierName),Cases,!!sym(SelectedIndVar)),
-                 color=OutlierName,
+                 color=OutlierType,
                  info = !!sym(OutlierName)))+
-  #geom_line(aes(y=MinMaxFixing(SmoothVarMedian/4,Cases,!!sym(SelectedIndVar)),
-  #               color="SmoothVarIQR",
-  #               info = SmoothVarMedian))+
-  #geom_line(aes(y=MinMaxFixing(4*SmoothVarMedian,Cases,!!sym(SelectedIndVar)),
-  #               color="SmoothVarIQR",
-  #               info = SmoothVarMedian))+
-  labs(y="Reported cases")+
-  ColorRule
+  geom_line(aes(y=MinMaxFixing(SmoothVarMedian/4,Cases,!!sym(SelectedIndVar)),
+                 color="SmoothVarMedian",
+                 info = SmoothVarMedian))+
+  geom_line(aes(y=MinMaxFixing(4*SmoothVarMedian,Cases,!!sym(SelectedIndVar)),
+                 color="SmoothVarMedian",
+                 info = SmoothVarMedian))+
+  geom_line(aes(y=MinMaxFixing(SmoothVarIQRLow,Cases,!!sym(SelectedIndVar)),
+                 color="SmoothVarIQR",
+                 info = SmoothVarMedian))+
+  geom_line(aes(y=MinMaxFixing(SmoothVarIQRHigh,Cases,!!sym(SelectedIndVar)),
+                 color="SmoothVarIQR",
+                 info = SmoothVarMedian))+
+  labs(y="Reported cases")
+  #ColorRule
 
 
 ggplotly(Ref,tooltip=c("info","Date"))%>%
@@ -467,10 +476,29 @@ ggplotly(SLDLoessGraphic,tooltip=c("info","Date"))%>%
     layout(yaxis2 = SecondAxisFormat,
            legend=list(title=list(text=''),x = 1.15, y = 0.9),
            margin = list(l = 50, r = 75, b = 50, t = 50, pad = 4))
+```
+
+```{r,eval=FALSE}
+RelationShipDF <- SLDSmoothedDF%>%
+  select(Date,Cases,SevenDayMACases,SLDCases,N1,N2,BCoV,PMMoV,"N1 Outlier",loessN1,FlowRate,temperature,equiv_sewage_amt)
+
+RelationShipDF%>%
+  filter(!is.na(!!sym("N1 Outlier")))
 
 
+DiffDF <- RelationShipDF%>%
+  mutate(DiffLoessN1 = c(NA,diff(loessN1)),
+         DiffSLDCases = c(NA,diff(SLDCases)))%>%
+  select(Date,DiffLoessN1,DiffSLDCases)
 
+DiffDF%>%
+  NoNa("DiffLoessN1")%>%
+  ggplot()+
+  aes(x=Date)+
+  geom_line(aes(y=DiffSLDCases,color="DiffSLDCases"))+
+  geom_line(aes(y=MinMaxFixing(DiffLoessN1,DiffSLDCases),color="DiffLoessN1"))
 
+ccf(DiffDF$DiffLoessN1,DiffDF$DiffSLDCases,na.action=na.pass)
 ```
 
 # Towards a formal analysis

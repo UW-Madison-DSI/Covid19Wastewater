@@ -1,4 +1,6 @@
 ---
+params:
+  BaseDir: "Z:/"
 title: "Covariants"
 author: "Marlin"
 date: "1/18/2022"
@@ -134,7 +136,6 @@ The case data has a strong weekend effect so for this section we look at a seven
 FirstImpressionDF <- FullDF%>%
   NoNa("N1","Cases")
 
-#temperature
 FirstImpression <- FirstImpressionDF%>%#Removing outliers
   ggplot(aes(x=Date))+#Data depends on time
   geom_line(aes(y=N1, color="N1",info=N1))+#compares N1 to Cases
@@ -155,11 +156,66 @@ ggplotly(FirstImpression)
 
 #To remove weekend effects we are looking at the 7 day smoothing of cases.
 ```
+```{r outlierDetection}
+IQRRollingFunc <- function(Vector,High=TRUE,Gap=1.5,na.rm=TRUE){
+  Base <- quantile(Vector,c(.25,.75),na.rm=na.rm)
+  IQR <- IQR(Vector,na.rm=na.rm)
+  if(High){
+    return(Base[2]+1.5*IQR)
+  }else{
+   return(Base[1]-1.5*IQR)
+  }
+}
 
-```{r n2}
 
-FirstImpressionDF%>%#Removing outliers
-  ggplot(aes(x=Date))+#Data depends on time
-  geom_line(aes(y=N1/N2, color="N1"))
+DaySmoothed=21#Very wide smoothing to find where the data strong deviate from trend
 
+EarlyDF <- FullDF%>%#Remove older Var data that clearly has no relationship to Cases
+  mutate(EarlyOutlier = ifelse(Date < mdy("11/20/2020"),TRUE,FALSE))#replace old. 
+#"11/20/2020"
+#"1/1/2021"
+#N1
+ErrorMarkedDF <- EarlyDF%>%
+  mutate(SmoothVarBase = ifelse(EarlyOutlier,NA,N1),
+         SmoothVarMean =rollapply(data = SmoothVarBase, width = DaySmoothed, FUN = mean, 
+                            na.rm = TRUE,fill=NA),
+         #Fixing issue where rollapply fills NA on right border
+         SmoothVarMean = ifelse(is.na(SmoothVarMean),N1,SmoothVarMean),
+         SmoothVarIQRHigh =rollapply(data = SmoothVarBase, 
+                                     width = DaySmoothed,
+                                     FUN = IQRRollingFunc, 
+                            na.rm = TRUE,fill=NA),
+         SmoothVarIQRLow =rollapply(data = SmoothVarBase, 
+                                     width = DaySmoothed, 
+                                     FUN = IQRRollingFunc, 
+                                     High = FALSE,
+                            na.rm = TRUE,fill=NA),
+         SmoothVarIQRHigh = ifelse(is.na(SmoothVarIQRHigh),N1,SmoothVarIQRHigh),
+         SmoothVarIQRLow = ifelse(is.na(SmoothVarIQRLow),N1,SmoothVarIQRLow),
+         SmoothVarMedian =rollapply(data = SmoothVarBase, width = DaySmoothed, FUN = median, 
+                            na.rm = TRUE,fill=NA),#Finding very smooth version of the data with no outliers
+         SmoothVarMedian = ifelse(is.na(SmoothVarMedian),N1,SmoothVarMedian),
+         LargeError = N1>(4*SmoothVarMedian)|N1<(SmoothVarMedian/4))
+```
+
+
+```{r covariants outliers}
+
+CoVarGraphic <- ErrorMarkedDF%>%
+  ggplot()+
+  aes(x = log(N1))
+
+CoVarGraphicPMMoV <- CoVarGraphic+
+  geom_point(aes(y = PMMoV,color = LargeError))
+CoVarGraphicFlowRate <- CoVarGraphic+
+  geom_point(aes(y = FlowRate,color = LargeError))
+CoVarGraphicBCoV <- CoVarGraphic+
+  geom_point(aes(y = BCoV,color = LargeError))
+CoVarGraphicequiv_sewage_amt <- CoVarGraphic+#temperature,equiv_sewage_amt
+  geom_point(aes(y = equiv_sewage_amt,color = LargeError))
+#PMMoV,FlowRate,BCoV,temperature,equiv_sewage_amt
+ggplotly(CoVarGraphicPMMoV)
+ggplotly(CoVarGraphicBCoV)
+ggplotly(CoVarGraphicFlowRate)
+ggplotly(CoVarGraphicequiv_sewage_amt)
 ```
