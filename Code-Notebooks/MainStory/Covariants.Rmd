@@ -1,0 +1,165 @@
+---
+title: "Covariants"
+author: "Marlin"
+date: "1/18/2022"
+output: html_document
+---
+```{r set up markdown settings, echo=FALSE}
+knitr::opts_chunk$set(
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+
+```{r Start enviroment, echo=FALSE, message=FALSE, warning=FALSE}
+library(dplyr)
+library(ggplot2)
+library(lmtest)
+library(lubridate)
+library(limma)
+library(tidyr)
+library(plotly)
+library(gridExtra)
+library(data.table)
+library(formattable)
+
+#Data Files and prep work
+source("../../lib/DataProccess.R")
+```
+
+```{r helpful data manipulations, include = FALSE}
+#returns vector of the min and max of function
+MinMaxCollector <- function(Vec){
+  if(is.na(Vec)){
+    return(NA)
+  }
+  return(range(Vec, na.rm = TRUE))
+}
+
+#normalizes data to be between 0 and 1. 
+#Not used significantly in newest build
+MinMaxNormalization <- function(Vec,minMax=NA){#normalizes the data to range from 0 and 1
+    if(all(!is.na(minMax))){
+      normVec <- (Vec-minMax[1])/minMax[2]
+    }else{
+      normVec <- (Vec-min(Vec,na.rm=TRUE))/max(Vec,na.rm=TRUE)
+    }
+    return(normVec)
+}
+
+#Makes First Vector have the same min and max as the second one.
+MinMaxFixing <- function(Vec, Bar, SubVec=NA){
+  NormVec = MinMaxNormalization(Vec,MinMaxCollector(SubVec))
+  BarRange = MinMaxCollector(Bar)
+  RefitVec = NormVec*(BarRange[2]-BarRange[1])+BarRange[1]
+  return(RefitVec)
+}
+
+NoNa <- function(DF,...){#Removes NA from the reverent columns
+  ColumnNames <- c(...)
+  NoNaDF <- DF%>%
+    filter(
+      across(
+      .cols = ColumnNames,
+      .fns = ~ !is.na(.x))
+      )
+  return(NoNaDF)
+}
+
+FillNA <- function(DF,...){#Fills NA with previous values
+  ColumnNames <- c(...)
+  NoNaDF <- DF%>%
+    fill(ColumnNames)
+  return(NoNaDF)
+}
+
+MedianMean <- function(Vec){# take the mean drooping the highest and lowest values
+  RemoveBorderPoints <- replace(Vec, c(which.min(Vec), which.max(Vec)), NA)
+  MeanValue <- mean(RemoveBorderPoints, na.rm = TRUE)
+  return(MeanValue)
+}
+
+#Custom_color_scale
+ColorRule <- scale_color_manual(values = c("N1" = "#F8766D",
+                                           "Cases"="#00BFC4",
+                                           "Seven Day MA Cases" = "#4057A2",
+                                           "SLDCases"="#800080",
+                                           "loessN1" = "#D6544B"))
+
+NameingRule <- c("N1" = "N1",
+                "Cases"="Cases",
+                "SevenDayMACases" = "Seven Day MA Cases",
+                "SLDCases"="SLDCases",
+                "loessN1" = "loessN1")
+```
+
+# Data: The first look
+
+The two data sets used in this analysis are the Madison case data sourced from the Wisconsin DHS and wastewater  concentration data produced by the Wisconsin State Laboratory of Hygiene. This wastewater data has entries every couple of days from November 15 2020 to June 24 2021.
+
+```{r DF Set Up, echo=FALSE}
+BaseDir <- params$BaseDir#get the root of the directory where the data is stored
+
+#All the Madison data is contained in these two files#MMSD_Cases_processed
+MadisonCaseFN  <-  paste0(BaseDir, "COVID-19_WastewaterAnalysis/data/processed/MMSD_Cases_2022_01_12_processed.csv")
+LIMSFN <- paste0(BaseDir, "COVID-19_WastewaterAnalysis/data/processed/LIMSWasteData_01-25-21_01-05-22.csv")
+
+
+#Importing the Madison case data
+LatCaseDF <- ParseData(MadisonCaseFN)%>% 
+  filter(Site == "Madison")%>%
+  mutate(SevenDayMACases = rollapply(data = Cases, width = 7, FUN = mean, 
+                            na.rm = TRUE,fill=NA))%>%
+  filter(Date>ymd("2020-9-10"))%>%
+  select(Date, Site, Cases,SevenDayMACases)
+
+#Importing the Madison waste water data
+LIMSFullDF <- ParseData(LIMSFN)%>%
+  filter(Site == "Madison")
+
+#joining the two data frames together
+FullDF <- full_join(LatCaseDF,LIMSFullDF, by = c("Date","Site"))
+
+#what does the data look like? 
+FullDF%>%
+head()%>%
+formattable()
+
+```
+
+The case data has a strong weekend effect so for this section we look at a seven day smoothing of cases. The simple display of the data shows the core components of this story. First that wastewater data is very noisy. And that there is a hint of a relationship between the two signals.
+
+```{r BaseRelationship}
+FirstImpressionDF <- FullDF%>%
+  NoNa("N1","Cases")
+
+#temperature
+FirstImpression <- FirstImpressionDF%>%#Removing outliers
+  ggplot(aes(x=Date))+#Data depends on time
+  geom_line(aes(y=N1, color="N1",info=N1))+#compares N1 to Cases
+  geom_line(aes(y=MinMaxFixing(PMMoV,N1), color="PMMoV",info=PMMoV))+
+  geom_line(aes(y=MinMaxFixing(FlowRate,N1), color="FlowRate",info=FlowRate))+
+  geom_line(aes(y=MinMaxFixing(BCoV,N1), color="BCoV",info=BCoV))+
+  #geom_line(aes(y=MinMaxFixing(temperature,N1), color="temperature",info=temperature))+
+  #geom_line(aes(y=MinMaxFixing(tss,N1), color="tss",info=tss))+
+  geom_line(aes(y=MinMaxFixing(equiv_sewage_amt,N1), color="equiv_sewage_amt",info=equiv_sewage_amt))+
+  geom_line(aes(y=MinMaxFixing(SevenDayMACases,N1), color="Seven Day MA Cases",info=Cases))+
+  geom_line(aes(y=MinMaxFixing(N2,N1), color="N2",info=N2))+
+  labs(y="N1")
+
+
+
+ggplotly(FirstImpression)
+
+
+#To remove weekend effects we are looking at the 7 day smoothing of cases.
+```
+
+```{r n2}
+
+FirstImpressionDF%>%#Removing outliers
+  ggplot(aes(x=Date))+#Data depends on time
+  geom_line(aes(y=N1/N2, color="N1"))
+
+```
