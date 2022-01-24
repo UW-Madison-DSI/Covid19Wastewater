@@ -215,54 +215,70 @@ Looking at the wastewater measurements we observe minimal movement in `r Selecte
 
 
 ```{r remove unusual Var data points}
-IQRRollingFunc <- function(Vector,High=TRUE,Gap=1.5,na.rm=TRUE){
-  Base <- quantile(Vector,c(.25,.75),na.rm=na.rm)
-  IQR <- IQR(Vector,na.rm=na.rm)
-  if(High){
-    return(Base[2]+1.5*IQR)
-  }else{
-   return(Base[1]-1.5*IQR)
-  }
+IQRFunc <- function(Vector,Gap=1.5,na.rm=TRUE,Ret=1){
+  BaseQuimt <- quantile(Vector,c(.25,.75),na.rm=na.rm)
+  IQRVal <- IQR(Vector,na.rm=na.rm)
+  MedianVal <- median(Vector,na.rm=na.rm)
+  ReturnVals <- list(MedianVal,BaseQuimt[[2]]+Gap*IQRVal,BaseQuimt[[1]]-Gap*IQRVal)
+  return(ReturnVals[[Ret]])
+}
+MedianFunc <- function(Vector,Gap=4,na.rm=TRUE,Ret=1){
+  BaseVal <- median(Vector,na.rm=na.rm)
+  ReturnVals <- list(BaseVal,Gap*BaseVal,BaseVal/Gap)
+  return(ReturnVals[[Ret]])
+}
+MeanSDFunc <- function(Vector,Gap=2.5,na.rm=TRUE,Ret=1){
+  MeanVal <- mean(Vector,na.rm=na.rm)
+  SD <- sd(Vector,na.rm=na.rm)
+  ReturnVals <- list(MeanVal,MeanVal+Gap*SD,MeanVal-Gap*SD)
+  return(ReturnVals[[Ret]])
+}
+RollingFunc <- function(Vector,Method,DaySmoothed=21){
+  ReturnThresh <- rollapply(data = Vector, width = DaySmoothed, FUN = Method, 
+                            Ret=1,fill=NA)
+  LowThresh <- rollapply(data = Vector, width = DaySmoothed, FUN = Method, 
+                            Ret=2,fill=NA)
+  HighThresh <- rollapply(data = Vector, width = DaySmoothed, FUN = Method, 
+                            Ret=3,fill=NA)
+
+  return(list(ReturnThresh,LowThresh,HighThresh))
 }
 
+#method returns list of outlier best guess of data
+OutlierDetectRobustFunc <- function(Vector,method,n = 5,Bin = 21){
+  methReturn <- RollingFunc(Vector,method,DaySmoothed=Bin)
+  BestVector <- Vector
+  for(i in 1:n){
+    methReturn <- RollingFunc(BestVector,method,DaySmoothed=Bin)
+    BestVector <- ifelse(BestVector>methReturn[[2]]|
+                           BestVector<methReturn[[3]],methReturn[[1]],BestVector)
+  }
+  BestVector <- ifelse(is.na(BestVector),methReturn[[1]],BestVector)
+  return(BestVector)
+}
 
 DaySmoothed=21#Very wide smoothing to find where the data strong deviate from trend
 
-EarlyDF <- FullDF%>%#Remove older Var data that clearly has no relationship to Cases
+ErrorMarkedDF <- FullDF%>%#Remove older Var data that clearly has no relationship to Cases
   mutate(EarlyOutlier = ifelse(Date < mdy("11/20/2020"),TRUE,FALSE))#replace old. 
 #"11/20/2020"
 #"1/1/2021"
-#!!sym(SelectedIndVar)
-ErrorMarkedDF <- EarlyDF%>%
-  mutate(SmoothVarBase = ifelse(EarlyOutlier,NA,!!sym(SelectedIndVar)),
-         SmoothVarMean =rollapply(data = SmoothVarBase, width = DaySmoothed, FUN = mean, 
-                            na.rm = TRUE,fill=NA),
-         #Fixing issue where rollapply fills NA on right border
-         SmoothVarMean = ifelse(is.na(SmoothVarMean),!!sym(SelectedIndVar),SmoothVarMean),
-         SmoothVarIQRHigh =rollapply(data = SmoothVarBase, 
-                                     width = DaySmoothed,
-                                     FUN = IQRRollingFunc, 
-                            na.rm = TRUE,fill=NA),
-         SmoothVarIQRLow =rollapply(data = SmoothVarBase, 
-                                     width = DaySmoothed, 
-                                     FUN = IQRRollingFunc, 
-                                     High = FALSE,
-                            na.rm = TRUE,fill=NA),
-         SmoothVarIQRHigh = ifelse(is.na(SmoothVarIQRHigh),!!sym(SelectedIndVar),SmoothVarIQRHigh),
-         SmoothVarIQRLow = ifelse(is.na(SmoothVarIQRLow),!!sym(SelectedIndVar),SmoothVarIQRLow),
-         SmoothVarMedian =rollapply(data = SmoothVarBase, width = DaySmoothed, FUN = median, 
-                            na.rm = TRUE,fill=NA),#Finding very smooth version of the data with no outliers
-         SmoothVarMedian = ifelse(is.na(SmoothVarMedian),!!sym(SelectedIndVar),SmoothVarMedian),
-         LargeError2 = !!sym(SelectedIndVar)>(4*SmoothVarMedian)|!!sym(SelectedIndVar)<(SmoothVarMedian/4),
-         LargeError = !!sym(SelectedIndVar)>SmoothVarIQRHigh|!!sym(SelectedIndVar)<SmoothVarIQRLow)
+
+ErrorMarkedDF$IQRRobustOutlier <- 
+              OutlierDetectRobustFunc(ErrorMarkedDF[[SelectedIndVar]],IQRFunc)
+ErrorMarkedDF$MedianRobustOutlier <-
+              OutlierDetectRobustFunc(ErrorMarkedDF[[SelectedIndVar]],MedianFunc)
+ErrorMarkedDF$SDMeanRobustOutlier <-
+              OutlierDetectRobustFunc(ErrorMarkedDF[[SelectedIndVar]],MeanSDFunc)
+ErrorMarkedDF$SelectedOutlierMethod <- (ErrorMarkedDF[["MedianRobustOutlier"]] + ErrorMarkedDF$SDMeanRobustOutlier + ErrorMarkedDF[["IQRRobustOutlier"]]) / 3
+ErrorMarkedDF$DetectedOutlier <- 
+              ErrorMarkedDF[[SelectedIndVar]] != ErrorMarkedDF$SelectedOutlierMethod
 #Calculating error Limits
-                      #was 4
+#EarlyOutlier | LargeError | LargeError2| LargeError3
 ErrorRemovedDF <- ErrorMarkedDF%>%
-  mutate(!!OutlierName := ifelse(EarlyOutlier | LargeError | LargeError2 , !!sym(SelectedIndVar),NA),
-         OutlierType = ifelse(LargeError&LargeError2,"Both Detect Outliers" , ifelse(LargeError,"Only IQR","Only Median")),
-         
+  mutate(!!OutlierName := ifelse(DetectedOutlier, !!sym(SelectedIndVar),NA),
          !!SelectedIndVar := ifelse(EarlyOutlier,NA,!!sym(SelectedIndVar)),
-         !!SelectedIndVar := ifelse(LargeError,SmoothVarMedian,!!sym(SelectedIndVar)))%>%#replacing data points that variance is to large
+         !!SelectedIndVar := SelectedOutlierMethod)%>%#replacing data points that variance is to large
          select(-EarlyOutlier)#Removing unneeded calculated columns
 
 
@@ -280,24 +296,12 @@ Ref <- ErrorRemovedDF%>%
                 info = Cases))+
   geom_line(aes(y=SevenDayMACases, 
                 color="Seven Day MA Cases",
-                info=Cases))+
+                info=SevenDayMACases))+
   geom_point(aes(y=MinMaxFixing(!!sym(OutlierName),Cases,!!sym(SelectedIndVar)),
-                 color=OutlierType,
+                 color=OutlierName,
                  info = !!sym(OutlierName)))+
-  geom_line(aes(y=MinMaxFixing(SmoothVarMedian/4,Cases,!!sym(SelectedIndVar)),
-                 color="SmoothVarMedian",
-                 info = SmoothVarMedian))+
-  geom_line(aes(y=MinMaxFixing(4*SmoothVarMedian,Cases,!!sym(SelectedIndVar)),
-                 color="SmoothVarMedian",
-                 info = SmoothVarMedian))+
-  geom_line(aes(y=MinMaxFixing(SmoothVarIQRLow,Cases,!!sym(SelectedIndVar)),
-                 color="SmoothVarIQR",
-                 info = SmoothVarMedian))+
-  geom_line(aes(y=MinMaxFixing(SmoothVarIQRHigh,Cases,!!sym(SelectedIndVar)),
-                 color="SmoothVarIQR",
-                 info = SmoothVarMedian))+
-  labs(y="Reported cases")
-  #ColorRule
+  labs(y="Reported cases")+
+  ColorRule
 
 
 ggplotly(Ref,tooltip=c("info","Date"))%>%
@@ -306,6 +310,11 @@ ggplotly(Ref,tooltip=c("info","Date"))%>%
     layout(yaxis2 = SecondAxisFormat,
            legend=list(title=list(text=''),x = 1.15, y = 0.9),
            margin = list(l = 50, r = 75, b = 50, t = 50, pad = 4))
+
+
+UpdatedDF <- ErrorRemovedDF%>%
+  select(-IQRRobustOutlier, -MedianRobustOutlier, -SDMeanRobustOutlier, -SelectedOutlierMethod, -"N1 Outlier"
+)
 ```
 
 
@@ -332,7 +341,7 @@ Bining <- function(DF,StartDate=1,DaySmoothing=14,Lag=0){
   return(BinDF)
 }
 
-BinErrorRemovedDF <- Bining(ErrorRemovedDF)
+BinErrorRemovedDF <- Bining(UpdatedDF)
 BinErrorKeptDF <- Bining(FullDF)
 
 DiffrenceDF <- inner_join(BinErrorRemovedDF,BinErrorKeptDF,by=c("Week","Date"))%>%
@@ -357,6 +366,7 @@ BinedCorrGraph <- ggplot()+
                  info = Date),
              data = BinErrorRemovedDF)+
   ggtitle(paste(BinnedVarName,",Cases removed potential outliers"))+
+  #geom_abline(slope = 3000)+
   labs(x="Binned Cases",y=BinnedVarName)
 
 ggplotly(BinedCorrGraph,tooltip=c("x","y","info"))%>%
@@ -403,12 +413,14 @@ plot(weights,
             ylab = "Weight", 
             xlab = "Lag")
 
-SLDSmoothedDF <- ErrorRemovedDF%>%
+SLDSmoothedDF <- UpdatedDF%>%
   mutate(
     SLDCases = c(rep(NA,SLDWidth-1),#elimination of starting values not relevant as we have a 50+ day buffer of case data
                         rollapply(Cases,width=SLDWidth,FUN=weighted.mean,
                                   w=weights,
-                                  na.rm = FALSE)))#no missing data to remove
+                                  na.rm = FALSE)
+                 #,rep(NA,10)
+                 ))#no missing data to remove
 
 #CasesMinMaxPrep = MinMaxNormalization(SLDSmoothedDF$SLDCases,Prep=TRUE)
 SLDPlot = SLDSmoothedDF%>%
@@ -427,8 +439,8 @@ ggplotly(SLDPlot,tooltip=c("info","Date"))%>%
          margin = list(l = 50, r = 75, b = 50, t = 50, pad = 4))
 ```
 ```{r, include=FALSE}
-
-SpanConstant = .165
+#.165
+SpanConstant = .15
 #4.047397
 AVGLimsSample*length(LIMSFullDF[[SelectedIndVar]])*SpanConstant/14
 ```
@@ -480,10 +492,10 @@ ggplotly(SLDLoessGraphic,tooltip=c("info","Date"))%>%
 
 ```{r,eval=FALSE}
 RelationShipDF <- SLDSmoothedDF%>%
-  select(Date,Cases,SevenDayMACases,SLDCases,N1,N2,BCoV,PMMoV,"N1 Outlier",loessN1,FlowRate,temperature,equiv_sewage_amt)
+  select(Date, Cases, SevenDayMACases, SLDCases, N1, N2, BCoV, PMMoV, loessN1, FlowRate, DetectedOutlier, temperature, equiv_sewage_amt)
 
 RelationShipDF%>%
-  filter(!is.na(!!sym("N1 Outlier")))
+  filter(!is.na(DetectedOutlier))
 
 
 DiffDF <- RelationShipDF%>%
@@ -498,7 +510,8 @@ DiffDF%>%
   geom_line(aes(y=DiffSLDCases,color="DiffSLDCases"))+
   geom_line(aes(y=MinMaxFixing(DiffLoessN1,DiffSLDCases),color="DiffLoessN1"))
 
-ccf(DiffDF$DiffLoessN1,DiffDF$DiffSLDCases,na.action=na.pass)
+x <- ccf(RelationShipDF$loessN1,RelationShipDF$SLDCases,na.action=na.pass)
+max(x$acf)
 ```
 
 # Towards a formal analysis
@@ -516,7 +529,6 @@ CCFChar <- function(ccfObject){
 
 ModelTesting <- function(DF,Var1,Var2){
   UsedDF <- DF%>%
-    FillNA(Var1,Var2)%>%#filling in missing data in range with previous values
     NoNa(Var1,Var2)#removing rows from before both series started
   
   
@@ -533,7 +545,7 @@ ModelTesting <- function(DF,Var1,Var2){
 #ErrorRemovedDF
 BaseLine <- ModelTesting(FullDF,SelectedIndVar,"Cases")
 BaseLineSevenDay <- ModelTesting(FullDF,SelectedIndVar,"SevenDayMACases")
-ErrorRemoved <- ModelTesting(ErrorRemovedDF,SelectedIndVar,"SevenDayMACases")
+ErrorRemoved <- ModelTesting(UpdatedDF,SelectedIndVar,"SevenDayMACases")
 SLDVar <- ModelTesting(SLDSmoothedDF,SelectedIndVar,"SLDCases")
 SevenLoess <- ModelTesting(SLDSmoothedDF,loessVar,"SevenDayMACases")
 SLDLoess <- ModelTesting(SLDSmoothedDF,loessVar,"SLDCases")

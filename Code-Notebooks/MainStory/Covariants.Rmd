@@ -156,66 +156,178 @@ ggplotly(FirstImpression)
 
 #To remove weekend effects we are looking at the 7 day smoothing of cases.
 ```
+
+
 ```{r outlierDetection}
-IQRRollingFunc <- function(Vector,High=TRUE,Gap=1.5,na.rm=TRUE){
-  Base <- quantile(Vector,c(.25,.75),na.rm=na.rm)
-  IQR <- IQR(Vector,na.rm=na.rm)
-  if(High){
-    return(Base[2]+1.5*IQR)
-  }else{
-   return(Base[1]-1.5*IQR)
-  }
+IQRFunc <- function(Vector,Gap=1.5,na.rm=TRUE,Ret=1){
+  BaseQuimt <- quantile(Vector,c(.25,.75),na.rm=na.rm)
+  IQRVal <- IQR(Vector,na.rm=na.rm)
+  MedianVal <- median(Vector,na.rm=na.rm)
+  ReturnVals <- list(MedianVal,BaseQuimt[[2]]+Gap*IQRVal,BaseQuimt[[1]]-Gap*IQRVal)
+  return(ReturnVals[[Ret]])
+}
+MedianFunc <- function(Vector,Gap=4,na.rm=TRUE,Ret=1){
+  BaseVal <- median(Vector,na.rm=na.rm)
+  ReturnVals <- list(BaseVal,Gap*BaseVal,BaseVal/Gap)
+  return(ReturnVals[[Ret]])
+}
+MeanSDFunc <- function(Vector,Gap=2.5,na.rm=TRUE,Ret=1){
+  MeanVal <- mean(Vector,na.rm=na.rm)
+  SD <- sd(Vector,na.rm=na.rm)
+  ReturnVals <- list(MeanVal,MeanVal+Gap*SD,MeanVal-Gap*SD)
+  return(ReturnVals[[Ret]])
+}
+RollingFunc <- function(Vector,Method,DaySmoothed=21){
+  ReturnThresh <- rollapply(data = Vector, width = DaySmoothed, FUN = Method, 
+                            Ret=1,fill=NA)
+  LowThresh <- rollapply(data = Vector, width = DaySmoothed, FUN = Method, 
+                            Ret=2,fill=NA)
+  HighThresh <- rollapply(data = Vector, width = DaySmoothed, FUN = Method, 
+                            Ret=3,fill=NA)
+
+  return(list(ReturnThresh,LowThresh,HighThresh))
 }
 
+#method returns list of outlier best guess of data
+OutlierDetectRobustFunc <- function(Vector,method,n = 5,Bin = 21,Lines=FALSE){
+  methReturn <- RollingFunc(Vector,method,DaySmoothed=Bin)
+  BestVector <- Vector
+  for(i in 1:n){
+    methReturn <- RollingFunc(BestVector,method,DaySmoothed=Bin)
+    BestVector <- ifelse(BestVector>methReturn[[2]]|
+                           BestVector<methReturn[[3]],methReturn[[1]],BestVector)
+  }
+  BestVector <- ifelse(is.na(BestVector),methReturn[[1]],BestVector)
+  if(Lines){
+    return(methReturn)
+  }
+  return(BestVector)
+}
 
 DaySmoothed=21#Very wide smoothing to find where the data strong deviate from trend
 
-EarlyDF <- FullDF%>%#Remove older Var data that clearly has no relationship to Cases
+ErrorMarkedDF <- FullDF%>%#Remove older Var data that clearly has no relationship to Cases
   mutate(EarlyOutlier = ifelse(Date < mdy("11/20/2020"),TRUE,FALSE))#replace old. 
 #"11/20/2020"
 #"1/1/2021"
-#N1
-ErrorMarkedDF <- EarlyDF%>%
-  mutate(SmoothVarBase = ifelse(EarlyOutlier,NA,N1),
-         SmoothVarMean =rollapply(data = SmoothVarBase, width = DaySmoothed, FUN = mean, 
-                            na.rm = TRUE,fill=NA),
-         #Fixing issue where rollapply fills NA on right border
-         SmoothVarMean = ifelse(is.na(SmoothVarMean),N1,SmoothVarMean),
-         SmoothVarIQRHigh =rollapply(data = SmoothVarBase, 
-                                     width = DaySmoothed,
-                                     FUN = IQRRollingFunc, 
-                            na.rm = TRUE,fill=NA),
-         SmoothVarIQRLow =rollapply(data = SmoothVarBase, 
-                                     width = DaySmoothed, 
-                                     FUN = IQRRollingFunc, 
-                                     High = FALSE,
-                            na.rm = TRUE,fill=NA),
-         SmoothVarIQRHigh = ifelse(is.na(SmoothVarIQRHigh),N1,SmoothVarIQRHigh),
-         SmoothVarIQRLow = ifelse(is.na(SmoothVarIQRLow),N1,SmoothVarIQRLow),
-         SmoothVarMedian =rollapply(data = SmoothVarBase, width = DaySmoothed, FUN = median, 
-                            na.rm = TRUE,fill=NA),#Finding very smooth version of the data with no outliers
-         SmoothVarMedian = ifelse(is.na(SmoothVarMedian),N1,SmoothVarMedian),
-         LargeError = N1>(4*SmoothVarMedian)|N1<(SmoothVarMedian/4))
+
+ErrorMarkedDF$IQRRobustOutlier <- 
+              OutlierDetectRobustFunc(ErrorMarkedDF[[SelectedIndVar]],IQRFunc)
+ErrorMarkedDF$MedianRobustOutlier <-
+              OutlierDetectRobustFunc(ErrorMarkedDF[[SelectedIndVar]],MedianFunc)
+ErrorMarkedDF$SDMeanRobustOutlier <-
+              OutlierDetectRobustFunc(ErrorMarkedDF[[SelectedIndVar]],MeanSDFunc)
+ErrorMarkedDF$SelectedOutlierMethod <- (ErrorMarkedDF[["MedianRobustOutlier"]] + ErrorMarkedDF$SDMeanRobustOutlier + ErrorMarkedDF[["IQRRobustOutlier"]]) / 3
+ErrorMarkedDF$DetectedOutlier <- 
+              ErrorMarkedDF[[SelectedIndVar]] != ErrorMarkedDF$SelectedOutlierMethod
+#Calculating error Limits
+IQRThresh <- OutlierDetectRobustFunc(ErrorMarkedDF$N1, IQRFunc,Lines = TRUE)
+MedThresh <- OutlierDetectRobustFunc(ErrorMarkedDF$N1, MedianFunc,Lines = TRUE)
+SDThresh <- OutlierDetectRobustFunc(ErrorMarkedDF$N1, MeanSDFunc,Lines = TRUE)
+ErrorMarkedDF$IQRLow <- IQRThresh[[2]]
+ErrorMarkedDF$IQRHigh <- IQRThresh[[3]]
+ErrorMarkedDF$MedLow <- MedThresh[[2]]
+ErrorMarkedDF$MedHigh <- MedThresh[[3]]
+ErrorMarkedDF$SDLow <- SDThresh[[2]]
+ErrorMarkedDF$SDHigh <- SDThresh[[3]]
+ErrorRemovedDF <- ErrorMarkedDF%>%
+  mutate(PotentialOutlier = Date>mdy("03/31/2021")&mdy("05/12/2021")>Date)%>%
+         select(-EarlyOutlier)#Removing unneeded calculated columns
+
 ```
+
+```{r}
+OutlierLines <- ErrorRemovedDF%>%
+  ggplot(aes(x=Date))+
+  geom_point(aes(y=N1,color=DetectedOutlier),size=1)+
+  geom_line(aes(y=IQRHigh,color = "IQR"))+
+  geom_line(aes(y=IQRLow,color = "IQR"))+
+  geom_line(aes(y=MedHigh,color = "Median"))+
+  geom_line(aes(y=MedLow,color = "Median"))+
+  geom_line(aes(y=SDLow,color = "SD"))+
+  geom_line(aes(y=SDHigh,color = "SD"))
+
+ggplotly(OutlierLines)
+
+
+ErrorMarkedDF%>%
+  filter(!is.na(N1),
+         DetectedOutlier)
+
+#26 total outliers
+#3 are outliers everywhere
+```
+
 
 
 ```{r covariants outliers}
 
-CoVarGraphic <- ErrorMarkedDF%>%
-  ggplot()+
-  aes(x = log(N1))
-
+CoVarGraphic <- ErrorRemovedDF%>%
+  ggplot()+#LargeError
+  aes(y = N1,color=PotentialOutlier,info = Date)
+#PotentialOutlier#DetectedOutlier
 CoVarGraphicPMMoV <- CoVarGraphic+
-  geom_point(aes(y = PMMoV,color = LargeError))
+  geom_point(aes(x = PMMoV))+
+  geom_vline(xintercept = 25822285)+
+  geom_vline(xintercept = 29760688)+
+  geom_hline(yintercept = log(145702))+
+  geom_hline(yintercept = log(380836))
+#26203622#29931423
+#149752.0#461781.5
+
 CoVarGraphicFlowRate <- CoVarGraphic+
-  geom_point(aes(y = FlowRate,color = LargeError))
+  geom_point(aes(x = FlowRate))
 CoVarGraphicBCoV <- CoVarGraphic+
-  geom_point(aes(y = BCoV,color = LargeError))
+  geom_point(aes(x = BCoV))
 CoVarGraphicequiv_sewage_amt <- CoVarGraphic+#temperature,equiv_sewage_amt
-  geom_point(aes(y = equiv_sewage_amt,color = LargeError))
+  geom_point(aes(x = equiv_sewage_amt))
 #PMMoV,FlowRate,BCoV,temperature,equiv_sewage_amt
 ggplotly(CoVarGraphicPMMoV)
 ggplotly(CoVarGraphicBCoV)
 ggplotly(CoVarGraphicFlowRate)
 ggplotly(CoVarGraphicequiv_sewage_amt)
+
+ErrorMarkedDF%>%
+  group_by(DetectedOutlier)%>%
+  summarize(median(PMMoV),median(N1))
+
+
+AA <- ErrorRemovedDF%>%
+  ggplot(aes(x=Date,y=equiv_sewage_amt))+
+  geom_point()
+ggplotly(AA)
+```
+
+
+```{r}
+
+
+summary(lm(DetectedOutlier ~ PMMoV ,data = ErrorMarkedDF))
+
+library(rpart)
+fit <- rpart(DetectedOutlier ~ PMMoV + N1,
+   method="class", data=ErrorMarkedDF)
+
+printcp(fit)
+plotcp(fit)
+summary(fit)
+plot(fit)
+text(fit, use.n=TRUE, all=TRUE, cex=.5)
+
+CoVarGraphicPMMoV <- CoVarGraphic+
+  geom_point(aes(x = PMMoV))+
+  geom_hline(yintercept = 5.61e5)+
+  geom_vline(xintercept = 2.82e7)
+ggplotly(CoVarGraphicPMMoV)
+
+
+ErrorMarkedDF%>%
+  ggplot(aes(x = DetectedOutlier, y = log(PMMoV))) +
+        geom_boxplot()
+
+
+t.test(PMMoV ~ DetectedOutlier, data = ErrorMarkedDF)
+
+#26203622#29931423
+#149752.0#461781.5
 ```
