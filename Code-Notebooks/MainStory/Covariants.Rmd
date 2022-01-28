@@ -28,59 +28,12 @@ library(formattable)
 
 #Data Files and prep work
 source("../../lib/DataProccess.R")
+source("../../lib/NormFuncs.R")
+source("../../lib/OutlierDetectionFuncs.R")
 ```
 
 ```{r helpful data manipulations, include = FALSE}
-#returns vector of the min and max of function
-MinMaxCollector <- function(Vec){
-  if(is.na(Vec)){
-    return(NA)
-  }
-  return(range(Vec, na.rm = TRUE))
-}
 
-#normalizes data to be between 0 and 1. 
-#Not used significantly in newest build
-MinMaxNormalization <- function(Vec,minMax=NA){#normalizes the data to range from 0 and 1
-    if(all(!is.na(minMax))){
-      normVec <- (Vec-minMax[1])/minMax[2]
-    }else{
-      normVec <- (Vec-min(Vec,na.rm=TRUE))/max(Vec,na.rm=TRUE)
-    }
-    return(normVec)
-}
-
-#Makes First Vector have the same min and max as the second one.
-MinMaxFixing <- function(Vec, Bar, SubVec=NA){
-  NormVec = MinMaxNormalization(Vec,MinMaxCollector(SubVec))
-  BarRange = MinMaxCollector(Bar)
-  RefitVec = NormVec*(BarRange[2]-BarRange[1])+BarRange[1]
-  return(RefitVec)
-}
-
-NoNa <- function(DF,...){#Removes NA from the reverent columns
-  ColumnNames <- c(...)
-  NoNaDF <- DF%>%
-    filter(
-      across(
-      .cols = ColumnNames,
-      .fns = ~ !is.na(.x))
-      )
-  return(NoNaDF)
-}
-
-FillNA <- function(DF,...){#Fills NA with previous values
-  ColumnNames <- c(...)
-  NoNaDF <- DF%>%
-    fill(ColumnNames)
-  return(NoNaDF)
-}
-
-MedianMean <- function(Vec){# take the mean drooping the highest and lowest values
-  RemoveBorderPoints <- replace(Vec, c(which.min(Vec), which.max(Vec)), NA)
-  MeanValue <- mean(RemoveBorderPoints, na.rm = TRUE)
-  return(MeanValue)
-}
 
 #Custom_color_scale
 ColorRule <- scale_color_manual(values = c("N1" = "#F8766D",
@@ -118,7 +71,12 @@ LatCaseDF <- ParseData(MadisonCaseFN)%>%
 
 #Importing the Madison waste water data
 LIMSFullDF <- ParseData(LIMSFN)%>%
-  filter(Site == "Madison")
+  filter(Site == "Madison")%>%
+  mutate(N1Pure = ifelse(is.na(N1),N2,N1),
+         N2Pure = ifelse(is.na(N2),N1,N2),
+         GeoMeanN12 = exp((log(N1Pure)+log(N2Pure))/2))%>%
+  select(Date, Site, N1, BCoV , N2 , PMMoV,
+         GeoMeanN12,FlowRate,temperature,equiv_sewage_amt)
 
 #joining the two data frames together
 FullDF <- full_join(LatCaseDF,LIMSFullDF, by = c("Date","Site"))
@@ -158,52 +116,8 @@ ggplotly(FirstImpression)
 ```
 
 
+
 ```{r outlierDetection}
-IQRFunc <- function(Vector,Gap=1.5,na.rm=TRUE,Ret=1){
-  BaseQuimt <- quantile(Vector,c(.25,.75),na.rm=na.rm)
-  IQRVal <- IQR(Vector,na.rm=na.rm)
-  MedianVal <- median(Vector,na.rm=na.rm)
-  ReturnVals <- list(MedianVal,BaseQuimt[[2]]+Gap*IQRVal,BaseQuimt[[1]]-Gap*IQRVal)
-  return(ReturnVals[[Ret]])
-}
-MedianFunc <- function(Vector,Gap=4,na.rm=TRUE,Ret=1){
-  BaseVal <- median(Vector,na.rm=na.rm)
-  ReturnVals <- list(BaseVal,Gap*BaseVal,BaseVal/Gap)
-  return(ReturnVals[[Ret]])
-}
-MeanSDFunc <- function(Vector,Gap=2.5,na.rm=TRUE,Ret=1){
-  MeanVal <- mean(Vector,na.rm=na.rm)
-  SD <- sd(Vector,na.rm=na.rm)
-  ReturnVals <- list(MeanVal,MeanVal+Gap*SD,MeanVal-Gap*SD)
-  return(ReturnVals[[Ret]])
-}
-RollingFunc <- function(Vector,Method,DaySmoothed=21){
-  ReturnThresh <- rollapply(data = Vector, width = DaySmoothed, FUN = Method, 
-                            Ret=1,fill=NA)
-  LowThresh <- rollapply(data = Vector, width = DaySmoothed, FUN = Method, 
-                            Ret=2,fill=NA)
-  HighThresh <- rollapply(data = Vector, width = DaySmoothed, FUN = Method, 
-                            Ret=3,fill=NA)
-
-  return(list(ReturnThresh,LowThresh,HighThresh))
-}
-
-#method returns list of outlier best guess of data
-OutlierDetectRobustFunc <- function(Vector,method,n = 5,Bin = 21,Lines=FALSE){
-  methReturn <- RollingFunc(Vector,method,DaySmoothed=Bin)
-  BestVector <- Vector
-  for(i in 1:n){
-    methReturn <- RollingFunc(BestVector,method,DaySmoothed=Bin)
-    BestVector <- ifelse(BestVector>methReturn[[2]]|
-                           BestVector<methReturn[[3]],methReturn[[1]],BestVector)
-  }
-  BestVector <- ifelse(is.na(BestVector),methReturn[[1]],BestVector)
-  if(Lines){
-    return(methReturn)
-  }
-  return(BestVector)
-}
-
 DaySmoothed=21#Very wide smoothing to find where the data strong deviate from trend
 
 ErrorMarkedDF <- FullDF%>%#Remove older Var data that clearly has no relationship to Cases
@@ -211,52 +125,34 @@ ErrorMarkedDF <- FullDF%>%#Remove older Var data that clearly has no relationshi
 #"11/20/2020"
 #"1/1/2021"
 
-ErrorMarkedDF$IQRRobustOutlier <- 
-              OutlierDetectRobustFunc(ErrorMarkedDF[[SelectedIndVar]],IQRFunc)
-ErrorMarkedDF$MedianRobustOutlier <-
-              OutlierDetectRobustFunc(ErrorMarkedDF[[SelectedIndVar]],MedianFunc)
-ErrorMarkedDF$SDMeanRobustOutlier <-
-              OutlierDetectRobustFunc(ErrorMarkedDF[[SelectedIndVar]],MeanSDFunc)
-ErrorMarkedDF$SelectedOutlierMethod <- (ErrorMarkedDF[["MedianRobustOutlier"]] + ErrorMarkedDF$SDMeanRobustOutlier + ErrorMarkedDF[["IQRRobustOutlier"]]) / 3
-ErrorMarkedDF$DetectedOutlier <- 
-              ErrorMarkedDF[[SelectedIndVar]] != ErrorMarkedDF$SelectedOutlierMethod
-#Calculating error Limits
-IQRThresh <- OutlierDetectRobustFunc(ErrorMarkedDF$N1, IQRFunc,Lines = TRUE)
-MedThresh <- OutlierDetectRobustFunc(ErrorMarkedDF$N1, MedianFunc,Lines = TRUE)
-SDThresh <- OutlierDetectRobustFunc(ErrorMarkedDF$N1, MeanSDFunc,Lines = TRUE)
-ErrorMarkedDF$IQRLow <- IQRThresh[[2]]
-ErrorMarkedDF$IQRHigh <- IQRThresh[[3]]
-ErrorMarkedDF$MedLow <- MedThresh[[2]]
-ErrorMarkedDF$MedHigh <- MedThresh[[3]]
-ErrorMarkedDF$SDLow <- SDThresh[[2]]
-ErrorMarkedDF$SDHigh <- SDThresh[[3]]
+ErrorMarkedDF$DetectedOutlierN1 <- IdentifyOutliers(ErrorMarkedDF$N1)
+ErrorMarkedDF$DetectedOutlierN2 <- IdentifyOutliers(ErrorMarkedDF$N2)  
+ErrorMarkedDF$DetectedOutlierGeo <- IdentifyOutliers(ErrorMarkedDF$GeoMeanN12)
+
 ErrorRemovedDF <- ErrorMarkedDF%>%
   mutate(PotentialOutlier = Date>mdy("03/31/2021")&mdy("05/12/2021")>Date)%>%
          select(-EarlyOutlier)#Removing unneeded calculated columns
 
+
+ErrorMarkedDF%>%
+  select(-EarlyOutlier)%>%
+  #filter(DetectedOutlierN1|DetectedOutlierN2|DetectedOutlierGeo)%>%
+  mutate(NumberOfOutliers = DetectedOutlierN1+DetectedOutlierN2+DetectedOutlierGeo)%>%
+  group_by(NumberOfOutliers)%>%
+  summarize(n())
+
+ErrorMarkedDF%>%
+  select(-EarlyOutlier)%>%
+  summarize(N1 = sum(DetectedOutlierN1), N2 = sum(DetectedOutlierN2), Geo = sum(DetectedOutlierGeo), N12 =sum(DetectedOutlierN1*DetectedOutlierN2), N1Geo =sum(DetectedOutlierN1*DetectedOutlierGeo), N2Geo =sum(DetectedOutlierN2*DetectedOutlierGeo), AllVars =sum(DetectedOutlierN1*DetectedOutlierN2*DetectedOutlierGeo))
 ```
 
 ```{r}
-OutlierLines <- ErrorRemovedDF%>%
-  ggplot(aes(x=Date))+
-  geom_point(aes(y=N1,color=DetectedOutlier),size=1)+
-  geom_line(aes(y=IQRHigh,color = "IQR"))+
-  geom_line(aes(y=IQRLow,color = "IQR"))+
-  geom_line(aes(y=MedHigh,color = "Median"))+
-  geom_line(aes(y=MedLow,color = "Median"))+
-  geom_line(aes(y=SDLow,color = "SD"))+
-  geom_line(aes(y=SDHigh,color = "SD"))
-
-ggplotly(OutlierLines)
-
-
-ErrorMarkedDF%>%
-  filter(!is.na(N1),
-         DetectedOutlier)
-
-#26 total outliers
-#3 are outliers everywhere
+#wwtp_comments
+#analytical_comments
+ErrorRemovedDF%>%
+  filter(!is.na(analytical_comments))
 ```
+
 
 
 
@@ -264,17 +160,16 @@ ErrorMarkedDF%>%
 
 CoVarGraphic <- ErrorRemovedDF%>%
   ggplot()+#LargeError
-  aes(y = N1,color=PotentialOutlier,info = Date)
+  aes(y = N1,color=DetectedOutlier,info = Date)
 #PotentialOutlier#DetectedOutlier
 CoVarGraphicPMMoV <- CoVarGraphic+
-  geom_point(aes(x = PMMoV))+
-  geom_vline(xintercept = 25822285)+
-  geom_vline(xintercept = 29760688)+
-  geom_hline(yintercept = log(145702))+
-  geom_hline(yintercept = log(380836))
+  geom_point(aes(x = PMMoV))
+#Outliers
 #26203622#29931423
 #149752.0#461781.5
-
+#Potintial outlier
+#26463265#30048370
+#172041.0#98442.5
 CoVarGraphicFlowRate <- CoVarGraphic+
   geom_point(aes(x = FlowRate))
 CoVarGraphicBCoV <- CoVarGraphic+
@@ -287,9 +182,10 @@ ggplotly(CoVarGraphicBCoV)
 ggplotly(CoVarGraphicFlowRate)
 ggplotly(CoVarGraphicequiv_sewage_amt)
 
-ErrorMarkedDF%>%
+ErrorRemovedDF%>%
   group_by(DetectedOutlier)%>%
-  summarize(median(PMMoV),median(N1))
+  summarize(median(PMMoV,na.rm = TRUE),sd(PMMoV,na.rm = TRUE),
+            median(N1,na.rm = TRUE),sd(N1,na.rm = TRUE))
 
 
 AA <- ErrorRemovedDF%>%
@@ -331,3 +227,4 @@ t.test(PMMoV ~ DetectedOutlier, data = ErrorMarkedDF)
 #26203622#29931423
 #149752.0#461781.5
 ```
+
