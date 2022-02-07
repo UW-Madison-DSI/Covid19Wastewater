@@ -128,6 +128,8 @@ ErrorMarkedDF <- FullDF%>%#Remove older Var data that clearly has no relationshi
 ErrorMarkedDF$DetectedOutlierN1 <- IdentifyOutliers(ErrorMarkedDF$N1)
 ErrorMarkedDF$DetectedOutlierN2 <- IdentifyOutliers(ErrorMarkedDF$N2)  
 ErrorMarkedDF$DetectedOutlierGeo <- IdentifyOutliers(ErrorMarkedDF$GeoMeanN12)
+ErrorMarkedDF$DetectedOutlierPMMOV <- IdentifyOutliers(ErrorMarkedDF$PMMoV)
+ErrorMarkedDF$DetectedOutlierBCOv <- IdentifyOutliers(ErrorMarkedDF$BCoV)
 
 ErrorRemovedDF <- ErrorMarkedDF%>%
   mutate(PotentialOutlier = Date>mdy("03/31/2021")&mdy("05/12/2021")>Date)%>%
@@ -144,19 +146,45 @@ ErrorMarkedDF%>%
 ErrorMarkedDF%>%
   select(-EarlyOutlier)%>%
   summarize(N1 = sum(DetectedOutlierN1), N2 = sum(DetectedOutlierN2), Geo = sum(DetectedOutlierGeo), N12 =sum(DetectedOutlierN1*DetectedOutlierN2), N1Geo =sum(DetectedOutlierN1*DetectedOutlierGeo), N2Geo =sum(DetectedOutlierN2*DetectedOutlierGeo), AllVars =sum(DetectedOutlierN1*DetectedOutlierN2*DetectedOutlierGeo))
+
+
+OutlierComp <- ErrorMarkedDF%>%
+  filter(DetectedOutlierN1|DetectedOutlierN2|DetectedOutlierGeo)%>%
+  mutate(Name = "",Name = paste(Name,ifelse(DetectedOutlierN1,"N1","")),
+         Name = paste(Name,ifelse(DetectedOutlierN2,"N2","")),
+         Name = paste(Name,ifelse(DetectedOutlierGeo,"Geo","")))%>%
+  ggplot(aes(x=Date))+
+  geom_point(aes(y=N1,shape="N1",color=Name))+
+  geom_point(aes(y=N2,shape="N2",color=Name))+
+  geom_point(aes(y=GeoMeanN12,shape="Geo",color=Name))
+ggplotly(OutlierComp)
+#,info1=N1,info2=GeoMeanN12
+
+OutlierComp <- ErrorMarkedDF%>%
+  filter(DetectedOutlierN1|DetectedOutlierPMMOV|DetectedOutlierBCOv)%>%
+  mutate(Name = "",Name = paste(Name,ifelse(DetectedOutlierN1,"N1","")),
+         Name = paste(Name,ifelse(DetectedOutlierPMMOV,"PMMoV","")),
+         Name = paste(Name,ifelse(DetectedOutlierBCOv,"BCoV","")))%>%
+  ggplot(aes(x=Date))+
+  geom_point(aes(y=N1,color=Name,info1=PMMoV,info2=BCoV))
+ggplotly(OutlierComp)
+
+#ErrorMarkedDF%>%
+#  select(-EarlyOutlier)%>%
+#  write.csv(file="OutlierFlagDF")
 ```
 
 ```{r}
 #wwtp_comments
 #analytical_comments
-ErrorRemovedDF%>%
-  filter(!is.na(analytical_comments))
+#ErrorRemovedDF%>%
+#  filter(!is.na(analytical_comments))
 ```
 
 
 
 
-```{r covariants outliers}
+```{r covariants outliers, eval=FALSE}
 
 CoVarGraphic <- ErrorRemovedDF%>%
   ggplot()+#LargeError
@@ -195,7 +223,7 @@ ggplotly(AA)
 ```
 
 
-```{r}
+```{r, eval=FALSE}
 
 
 summary(lm(DetectedOutlier ~ PMMoV ,data = ErrorMarkedDF))

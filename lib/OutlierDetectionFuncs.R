@@ -43,7 +43,8 @@ OutlierDetectRobustFunc <- function(Vector,method,Gap,align,n = 5,Bin = 21,Lines
   return(BestVector)
 }
 
-IdentifyOutliers <- function(Vector,method="SD",align="center",n = 5,Bin = 21,Action = "Flag"){
+IdentifyOutliers <- function(Vector, method="SD", align="center",
+                             n = 5,Bin = 21, Action = "Flag"){
   MethodOptions <- c("SD","IQR","Median")
   if(method %in% MethodOptions){
     if(method == "SD"){

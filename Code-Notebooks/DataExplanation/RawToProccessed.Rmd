@@ -13,11 +13,6 @@ output: html_document
 source("../../lib/DataProccess.R")
 ```
 
-##HFG Covid concentration data***
-```{r File name, include=FALSE}
-BaseDir <- params$BaseDir
-HFGWasteFN <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/HFG data for stats corrected 071421.xlsx")
-```
 
 ```{r Gen need functions}
 
@@ -28,11 +23,15 @@ AVGGenFN <- function(N1, N2) {
 }
 ```
 
-```{r parse data}
+```{r HFG data for stats corrected 071421}
 #needs: readxl, tidyverse, lubridate
 library(readxl)
 library(tidyverse)
 library(lubridate)
+BaseDir <- params$BaseDir
+HFGWasteFN <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/HFG data for stats corrected 071421.xlsx")
+
+
 MissingCode <-c("","NA","0","Undetected","Not Detected",
            "Field Parameters to be filled in", 
            "Inhibited-to be re-ran", "#DIV/0!","-","In progress","Undetermined","LA")
@@ -103,7 +102,7 @@ MainHFGWasteDF%>%
 ```
 
 
-```{r Case Data Parsing}
+```{r HighFreq_CaseData_2021-05-07}
 HFGCasesFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/HighFreq_CaseData_2021-05-07.csv")
 
 
@@ -171,8 +170,8 @@ full_join(MainHFGCaseDF,MainHFGWasteDF)%>%
   facet_wrap(~Site)
 ```
 
-```{r LIMS Data}
-LIMSFN <- paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/WATERMICRO_WW_COVID_01-25-21_01-05-22.xlsx")
+```{r WATERMICRO_WW_COVID-2022-01-07_F_v1.1}
+LIMSFN <- paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/WATERMICRO_WW_COVID-2022-01-07_F_v1.1.xlsx")
 
 NumericVars=c("average_flow_rate","avg_sars_cov2_conc","bcov_rec_rate",
                 "bcov_spike_conc","capacity_mgd","conductivity",
@@ -182,28 +181,28 @@ NumericVars=c("average_flow_rate","avg_sars_cov2_conc","bcov_rec_rate",
                 "n2_sars_cov2_error","ph","pmmov_conc","population_served",
                 "temperature","tss")
   
-LIMSDF <- read_excel(LIMSFN,na  =  MissingCode,col_types = c(rep("text",61)))
+LIMSDF <- read_excel(LIMSFN,na  =  MissingCode,col_types = c(rep("text",58)))
 LIMSDF <- suppressWarnings(mutate(LIMSDF,
       across(all_of(NumericVars),as.numeric),
       test_result_date=as.POSIXlt(test_result_date,format="%m/%d/%Y %H:%M"),
       sample_collect_date=mdy(sample_collect_date)
     ))%>%
     rename(
-      Site=wwtp_name,
-      FlowRate=average_flow_rate,
-      Cov1_below_lod=avg_sars_cov2_below_lod,
-      cov2_conc=avg_sars_cov2_conc,
-      BCoV=bcov_rec_rate,
-      BCoVConc=bcov_spike_conc,
-      county=county_names,
-      Date=sample_collect_date,
-      RepDate=test_result_date,
-      N1=n1_sars_cov2_conc,
-      N1Error=n1_sars_cov2_error,
-      N2=n2_sars_cov2_conc,
-      N2Error=n2_sars_cov2_error,
-      PMMoV=pmmov_conc,
-      Pop=population_served
+      Site = wwtp_name,
+      FlowRate = average_flow_rate,
+      Cov1_below_lod = avg_sars_cov2_below_lod,
+      cov2_conc = avg_sars_cov2_conc,
+      BCoV = bcov_rec_rate,
+      BCoVConc = bcov_spike_conc,
+      county = county_names,
+      Date = sample_collect_date,
+      RepDate = test_result_date,
+      N1 = n1_sars_cov2_conc,
+      N1Error = n1_sars_cov2_error,
+      N2 = n2_sars_cov2_conc,
+      N2Error = n2_sars_cov2_error,
+      PMMoV = pmmov_conc,
+      Pop = population_served
     )%>%
     mutate(#Standardizing the Site names names
       Site=ifelse(Site=="Madison Metro","Madison",Site),
@@ -301,7 +300,7 @@ MainLIMSDFWasteDF%>%
   facet_wrap(~Site)
 ```
 
-```{r Madison Case Data}
+```{r MSD_Cases_2022_01_12}
 LIMSCaseMMSDFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/MMSD_Cases_2022_01_12.csv")
 LIMSSpringDormFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/SpringSemester_CasesByDorm.TSV")
 LIMSFallDormFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/FallSemester_CasesByDorm.TSV")
@@ -447,4 +446,56 @@ length(ColsName)
 length(UniqueColsName)
 
 UniqueColsName
+```
+
+
+
+```{r MSN_Interceptor_Cases 2/7/22}
+MadisonCaseFN  <-  paste0(BaseDir, "COVID-19_WastewaterAnalysis/data/raw/MSN_Interceptor_Cases.csv")
+DF <- read.csv(MadisonCaseFN)%>%
+  rename(Site = INFLUENT_F)%>%
+  mutate(Site = ifelse(Site == "18", "MMSD-P18", Site),
+          Site = ifelse(Site == "11", "MMSD-P11", Site),
+          Site = ifelse(Site == "2", "MMSD-P2", Site),
+          Site = ifelse(Site == "7", "MMSD-P7", Site),
+          Site = ifelse(Site == "8", "MMSD-P8", Site),
+          EpisodeDate = mdy(EpisodeDate),
+          SpecCollectedDate = mdy(SpecCollectedDate),
+          FirstConfirmedDt = mdy(FirstConfirmedDt))
+  
+EDate <- DF%>%
+  group_by(EpisodeDate,Site)%>%
+  summarise(EpisodeCase = n())%>%
+  rename(Date = EpisodeDate)
+SpecDate <- DF%>%
+  group_by(SpecCollectedDate,Site)%>%
+  summarise(SpecCollectedCase = n())%>%
+  rename(Date = SpecCollectedDate)
+ConDate <- DF%>%
+  group_by(FirstConfirmedDt,Site)%>%
+  summarise(FirstConfirmed = n())%>%
+  rename(Date = FirstConfirmedDt)
+
+
+
+CaseDF <- full_join(EDate,full_join(SpecDate,ConDate, by = c("Date","Site")), by = c("Date","Site"))
+
+MadDF <- CaseDF%>%
+  group_by(Date)%>%
+  summarise(EpisodeCase = sum(EpisodeCase,is.na=TRUE),
+            SpecCollectedCase = sum(SpecCollectedCase,is.na=TRUE),
+            FirstConfirmed = sum(FirstConfirmed,is.na=TRUE))%>%
+  mutate(Site="Madison")
+CaseDF <- rbind(CaseDF,MadDF)
+
+CaseDF%>%
+  ggplot()+
+  aes(x=Date)+
+  geom_point(aes(y=EpisodeCase,color="EpisodeCase"))+
+  geom_point(aes(y=SpecCollectedCase,color="SpecCollectedCase"))+
+  geom_point(aes(y=FirstConfirmed,color="FirstConfirmed"))+
+  facet_wrap(~Site)
+
+
+#write.csv(CaseDF,paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/MMSD_Interceptor_Cases_2_7_22.csv"),row.names=FALSE)
 ```
