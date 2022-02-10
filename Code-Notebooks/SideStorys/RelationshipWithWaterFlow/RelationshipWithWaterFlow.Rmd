@@ -8,11 +8,11 @@ date: "10/1/2021"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE }
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r Start enviroment include=FALSE}
+```{r Start enviroment, include=FALSE}
 library(ggpubr)
 library(forecast)
 library(lmtest)
@@ -29,10 +29,10 @@ source("../../../lib/DataProccess.R")
 source("../../../lib/HelperFunctions.R")
 ```
 
-```{r Data processing echo=FALSE}
+```{r Data processing, echo=FALSE}
 BaseDir <- params$BaseDir
-MadisonCaseFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/MMSD_Cases_processed.csv")
-LIMSFN <- paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/LIMSWasteData_2021-06-30_17-40.csv")
+MadisonCaseFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/MMSD_Cases_2022_01_12_processed.csv")
+LIMSFN <- paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/LIMSWasteData_01-25-21_01-05-22.csv")
 
 LatCaseDF <- ParseData(MadisonCaseFN)%>% 
   filter(!is.na(Site)) %>%

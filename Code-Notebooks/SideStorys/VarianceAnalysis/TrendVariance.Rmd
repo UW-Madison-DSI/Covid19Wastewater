@@ -38,7 +38,7 @@ BaseDir <- params$BaseDir#get the root of the directory where the data is stored
 #UpdatedHFGFN.csv
 #HFGWasteData071421.csv
 
-LIMSFN <- paste0(BaseDir, "COVID-19_WastewaterAnalysis/data/processed/LIMSWasteData_2021-06-30_17-40.csv")
+LIMSFN <- paste0(BaseDir, "COVID-19_WastewaterAnalysis/data/processed/LIMSWasteData_01-25-21_01-05-22.csv")
 HFGWasteFN <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/UpdatedHFGFN.csv")
 HFGCasesFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/HFGCaseData_2021-05-07.csv")
 

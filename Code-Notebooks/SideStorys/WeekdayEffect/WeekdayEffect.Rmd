@@ -31,8 +31,8 @@ source("../../../lib/NoTSCorrelationFunctions.R")
 
 ```{r DF Set Up, include=FALSE}
 BaseDir <- params$BaseDir
-MadisonCaseFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/MMSD_Cases_processed.csv")
-LIMSFN <- paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/LIMSWasteData_2021-06-30_17-40.csv")
+MadisonCaseFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/MMSD_Cases_2022_01_12_processed.csv")
+LIMSFN <- paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/LIMSWasteData_01-25-21_01-05-22.csv")
 
 LatCaseDF <- ParseData(MadisonCaseFN)%>% 
   filter(!is.na(Site)) %>%
