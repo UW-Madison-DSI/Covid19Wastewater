@@ -214,13 +214,92 @@ UpdatedDF <- DF%>%
 return(UpdatedDF)
 }
 
-MadDF <- PrepOutlierFunc(MadDF)
-P2DF <- PrepOutlierFunc(P2DF)
-P7DF <- PrepOutlierFunc(P7DF)
-P8DF <- PrepOutlierFunc(P8DF)
-P11DF <- PrepOutlierFunc(P11DF)
-P18DF <- PrepOutlierFunc(P18DF)
+#MadDF <- PrepOutlierFunc(MadDF)
+#P2DF <- PrepOutlierFunc(P2DF)
+#P7DF <- PrepOutlierFunc(P7DF)
+#P8DF <- PrepOutlierFunc(P8DF)
+#P11DF <- PrepOutlierFunc(P11DF)
+#P18DF <- PrepOutlierFunc(P18DF)
+
+
+FullDF
+
+DetectedMain <- MadDF%>%
+  filter(FlagedOutliers)%>%
+  select(Date,FlagedOutliers)
+
+StevePlot <- FullDF%>%
+  ggplot()+
+  aes(x=Date)+
+  geom_vline(aes(xintercept=Date),color="red",data=DetectedMain)+
+  geom_point(aes(y=N1))+
+  facet_wrap(~Site, scale = "free_y")
+
+StevePlot
+
+
+A <- MadDF%>%
+  filter(FlagedOutliers)
+B <- P2DF%>%
+  filter(FlagedOutliers)
+C <- P7DF%>%
+  filter(FlagedOutliers)
+D <- P8DF%>%
+  filter(FlagedOutliers)
+E <- P11DF%>%
+  filter(FlagedOutliers)
+fF <- P18DF%>%
+  filter(FlagedOutliers)
+
+AllErrors <- full_join(full_join(full_join(full_join(full_join(A,B),C),D),E),fF)
+
+AllErrors
+
+#On a given day we have 5 intercepters
+
+OutlierPlotFunc(MadDF)
+OutlierPlotFunc(P2DF)
+OutlierPlotFunc(P7DF)
+OutlierPlotFunc(P8DF)
+OutlierPlotFunc(P11DF)
+OutlierPlotFunc(P18DF)
+AllErrors%>%
+  ggplot()+
+  aes(x=Date)+
+  geom_point(aes(y=N1,color=Site),size=2)+
+  geom_vline(xintercept = ymd("2021-04-26"))+
+  geom_vline(xintercept = ymd("2021-11-18"))+
+  facet_wrap(~Site, scale = "free_y")
+
+
+AllErrors%>%
+  filter(!is.na(N1))%>%
+  group_by(Date)%>%
+  summarize(n())
+
+
+
+
+
+
+#"2021-01-26" 
+#"2021-06-06"
+#"2021-06-08"
+#"2021-10-17"
+#"2021-11-26"
+
+"2021-04-26"
+"2021-11-18"
+
+#P2 error seen in madison: maybe?
+#P7 error seen in madison: maybe?
+#P8 error seen in madison: no
+#P8 error seen in madison: no
+#P18 error seen in madison: yes, sometimes
 ```
+
+
+
 ```{r loess smoothing and some intro CCF processes}
 
 LoessPlotFunc <- function(DF,SpanConstant = .163){

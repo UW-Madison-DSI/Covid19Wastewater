@@ -44,17 +44,17 @@ OutlierDetectRobustFunc <- function(Vector,method,Gap,align,n = 5,Bin = 21,Lines
 }
 
 IdentifyOutliers <- function(Vector, method="SD", align="center",
-                             n = 5,Bin = 21, Action = "Flag"){
+                             n = 5,Bin = 21, Action = "Flag", Gap=2.5){
   MethodOptions <- c("SD","IQR","Median")
   if(method %in% MethodOptions){
-    if(method == "SD"){
-      OutputVec <- OutlierDetectRobustFunc(Vector, MeanSDFunc, Gap=2.5,
+    if(method == "SD"){#Req default for Gap is 2.5
+      OutputVec <- OutlierDetectRobustFunc(Vector, MeanSDFunc, Gap=Gap,
                                            align = align,n = n, Bin = Bin)
-    }else if(method == "IQR"){
-      OutputVec <- OutlierDetectRobustFunc(Vector, IQRFunc, Gap=1.5,
+    }else if(method == "IQR"){#Req default for Gap is 1.5
+      OutputVec <- OutlierDetectRobustFunc(Vector, IQRFunc, Gap=Gap,
                                            align = align,n = n, Bin = Bin)
-    }else if(method == "Median"){
-      OutputVec <- OutlierDetectRobustFunc(Vector, MedianFunc, Gap=4,
+    }else if(method == "Median"){#Req default for Gap is 4
+      OutputVec <- OutlierDetectRobustFunc(Vector, MedianFunc, Gap=Gap,
                                            align = align,n = n, Bin = Bin)
     }
   }else{

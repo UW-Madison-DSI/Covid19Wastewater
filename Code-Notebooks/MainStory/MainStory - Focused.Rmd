@@ -62,12 +62,12 @@ source("../../lib/OutlierDetectionFuncs.R")
 ```{r helpful data manipulations, include = FALSE}
 SelectedIndVar <- params$IndVar#Var Used in Analysis
 OutlierName <- paste(SelectedIndVar,"Outlier")
-
 loessVar <- paste0("loess",SelectedIndVar)
 #Custom_color_scale
 PlotColors <- c("#F8766D", "#00BFC4", "#4057A2", "#999999", "#800080", "#D6544B")
 PlotObjects <- c(SelectedIndVar,"Cases","Seven Day MA Cases",OutlierName,"SLD Cases",loessVar)
-ColorRule <- scale_color_manual(values = setNames(as.list(PlotColors), PlotObjects))
+ColorRule <- scale_color_manual(
+  values = setNames(as.list(PlotColors),PlotObjects))
 
 
 SecondAxisFormat <- list(#Second Axis components
