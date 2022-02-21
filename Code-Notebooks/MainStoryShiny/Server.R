@@ -111,7 +111,8 @@ Server <- function(input, output, session) {
                       xmin=Date-.25, xmax=Date+.25,
                       info=CaseVar, color = CaseVarName),
                   fill = NA,alpha=.3)+
-        geom_line(aes(y=SevDay,
+        geom_line(data=filter(MainDf, !is.na(SevDay)),
+                    aes(y=SevDay,
                       color = "Seven Day MA Cases"))
     }
     
@@ -167,7 +168,7 @@ Server <- function(input, output, session) {
       ),
              legend=list(title=list(text=''),x = 1.15, y = 0.9),
              margin = list(l = 50, r = 75, b = 50, t = 50, pad = 4))%>%
-      layout(height = 800, width = 1200)
+      layout(height = 600, width = 800)
     
     return(PlotlyVersion)
   })

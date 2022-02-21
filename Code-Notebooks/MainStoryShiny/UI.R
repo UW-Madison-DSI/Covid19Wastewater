@@ -4,7 +4,7 @@ Tab1=tabItem(tabName = "MadDash",
              # Boxes need to be put in a row (or column)
              fluidRow(
                box(width=4,
-                                  title = "tuning",
+                                  title = "parameters",
                               selectInput("Site", 
                                "Site analysed", 
                                unique(FullDF$Site), 

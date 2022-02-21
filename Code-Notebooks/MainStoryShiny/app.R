@@ -5,7 +5,7 @@ library(lmtest)
 library(lubridate)
 library(limma)
 library(tidyr)
-library(plotly)
+library(plotly) 
 library(shinydashboard)
 library(shinyjqui)
 source("DataProccess.R")
@@ -17,7 +17,7 @@ source("PrepEnvironment.R", local = TRUE)
 source('UI.R', local = TRUE)
 
 source('Server.R', local = TRUE)
-
+#UpdatedWasteInteractive
 shinyApp(
   ui = UI,
   server = Server
