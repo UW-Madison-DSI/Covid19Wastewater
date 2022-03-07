@@ -3,14 +3,12 @@ LIMSFN <- "LIMSWasteData_01-25-21_01-05-22.csv"
 MadisonCaseFN <- "MMSD_Interceptor_Cases_2_7_22.csv"
 #Importing the Madison case data
 LatCaseDF <- ParseData(MadisonCaseFN)
-
-#Importing the Madison waste water data
-LIMSFullDF <- ParseData(LIMSFN)%>%
-  filter(Site %in% unique(LatCaseDF$Site))%>%
-  select(Date, Site,  N1, N2,AVG)
-
-#joining the two data frames together
-FullDF <- full_join(LatCaseDF,LIMSFullDF, by = c("Date","Site"))
+  #Importing the Madison waste water data
+  LIMSFullDF <- ParseData(LIMSFN)%>%
+    filter(Site %in% unique(LatCaseDF$Site))%>%
+    select(Date, Site,  N1, N2,AVG)
+  #joining the two data frames together
+  FullDF <- full_join(LatCaseDF,LIMSFullDF, by = c("Date","Site"))
 
 
 MinMaxNormalization <- function(Vec,ExtreameValues =NA){#normalizes the data to range from 0 and 1
