@@ -17,8 +17,10 @@ editor_options:
 ---
 
 
-```{r import data}
+```{r import data, warning=FALSE,message=FALSE}
+#,message=FALSE, warning=FALSE
 library(dplyr)
+library(ggpubr)
 library(ggplot2)
 library(lmtest)
 library(lubridate)
@@ -29,6 +31,7 @@ library(gridExtra)
 library(data.table)
 library(formattable)
 library(readxl)
+library(data.table)
 #####################
 ## Import data 
 #####################
@@ -50,7 +53,6 @@ data<-data[which(!(data$sample_id %in% "527918001")), ]
 #####################
 ## Preparation
 #####################
-
 ## Select only the Madison samples
 data.MAD<-data[which(data$wwtp_name %like% "Madison*"), ]
 
@@ -73,8 +75,9 @@ data.MAD$Flow<-as.numeric(as.character(data.MAD$Flow))
 data.MAD$SC2<-as.numeric(as.character(data.MAD$SC2))
 data.MAD$PMMoV<-as.numeric(as.character(data.MAD$PMMoV))
 data.MAD$BCoV<-as.numeric(as.character(data.MAD$BCoV))
-data.MAD$date<-format(as.Date(as.numeric(as.character(data.MAD$date)), origin = "1899-12-30"), "%m/%d/%Y")
-
+data.MAD$date<-format(as.Date((as.character(data.MAD$date)), origin = "1899-12-30"), "%m/%d/%Y")
+  #format(as.Date(as.numeric(as.character(data.MAD$date)), origin = "1899-12-30"), "%m/%d/%Y")
+#as.Date(((data.MAD$date)), origin = "1899-12-30")
 
 # Extract the sample and duplicate it to get one line for P7 and one line for P18
 sample.row<-which(data.MAD$wwtp == "Madison-P7-SE and P18-NE")
@@ -92,12 +95,15 @@ data.MAD<-rbind(data.MAD[-sample.row, ], sample.info)
 data.MAD.melt<-reshape2::melt(data.MAD, id.var=c("wwtp", "date"))
 data.MAD.melt$wwtp.var<-paste0(data.MAD.melt$variable, "_", data.MAD.melt$wwtp)
 data.MAD.melt<-data.MAD.melt[, c("date", "wwtp.var", "value")]
+#data.MAD.melt$wwtp.var <- sub('.', '', data.MAD.melt$wwtp.var)
 data.MAD.cast<-reshape2::dcast(data.MAD.melt, date~wwtp.var)
 data.MAD.PV<-data.MAD.cast[complete.cases(data.MAD.cast), ]
-
 ## Create the weekday of the sample collection
 data.MAD.PV$day<-format(as.Date(data.MAD.PV$date, format="%m/%d/%Y"), "%A")
+  head(data.MAD.PV)
 
+
+#format(as.Date((as.character(data.MAD$date)), origin = "1899-12-30"), "%m/%d/%Y")
 ```
 
 #Comments
@@ -113,7 +119,6 @@ On 4/15/21 P7 and P8 were pooled together before being processed. The flow were 
 data.MAD.PV1 <-data.MAD.PV %>%
   group_by(date, day) %>%
   summarize(`Difference_Flow_MC:P` = round(Flow_P11+Flow_P18+Flow_P2+Flow_P7+Flow_P8 - Flow_MC, digits=4),
-
             # Compute SARS-CoV-2 Mass Loading for MC and interceptors            
             MC_SC2_Mass = (3.785*1000000)*Flow_MC*SC2_MC,
             P2_SC2_Mass = (3.785*1000000)*Flow_P2*SC2_P2,
@@ -129,8 +134,9 @@ data.MAD.PV1 <-data.MAD.PV %>%
             P8_PMMoV_Mass = (3.785*1000000)*Flow_P8*PMMoV_P8,
             P11_PMMoV_Mass = (3.785*1000000)*Flow_P11*PMMoV_P11,
             P18_PMMoV_Mass = (3.785*1000000)*Flow_P18*PMMoV_P18,
-            
             .groups = 'drop')
+
+
 data.MAD.PV2<-cbind(data.MAD.PV, data.MAD.PV1[, -c(1:2)])
 
 # Compute the Ratio: SARS-CoV-2 Mass-MC/sum(Mass-interceptors)
@@ -148,8 +154,12 @@ data.MAD.final<-data.MAD.PV2[, c("date", "day",
                                  "SC2_MC", "SC2_P2", "SC2_P7", "SC2_P8", "SC2_P11", "SC2_P18", "SC2_Mass_Ratio_MC:P",
                                  "PMMoV_MC", "PMMoV_P2", "PMMoV_P7", "PMMoV_P8", "PMMoV_P11", "PMMoV_P18", "PMMoV_Mass_Ratio_MC:P",
                                  "BCoV_MC", "BCoV_P2", "BCoV_P7", "BCoV_P8", "BCoV_P11", "BCoV_P18")]
-write.xlsx(data.MAD.final, paste0("K:\\WS\\MassBalance\\MassBalance_", format(Sys.time(), '%Y%m%d'), ".xlsx"), overwrite = TRUE)
+#write.xlsx(data.MAD.final, paste0("K:\\WS\\MassBalance\\MassBalance_", #format(Sys.time(), '%Y%m%d'), ".xlsx"), overwrite = TRUE)
 
+
+
+ZeroDetected <- data.MAD.PV2%>%
+  filter(SC2_MC==0|SC2_P11==0|SC2_P18==0| SC2_P2==0|SC2_P7==0|SC2_P8==0|SC2_MC==0)
 
 ```
 
@@ -159,7 +169,39 @@ write.xlsx(data.MAD.final, paste0("K:\\WS\\MassBalance\\MassBalance_", format(Sy
 ##Average Daily Flow
 No difference was found between the average daily flow of the Main Composite (MC) and the sum of the interceptors (Figure 1).
 
+
+
+
 ```{r NoDiff}
+#####################
+## Visualization
+#####################
+### Preparation
+data.MAD.plot<-reshape2::melt( data.MAD.PV2,id.vars=c("date"), by=c("wwtp", "date"))
+data.MAD.plot$sewershed<-ifelse(data.MAD.plot$variable %like% "MC", "MC", "P")
+data.MAD.plot$interceptor<-ifelse(data.MAD.plot$variable %like% "P2", "P2", 
+                                  ifelse(data.MAD.plot$variable %like% "P7", "P7",
+                                         ifelse(data.MAD.plot$variable %like% "P8", "P8",
+                                                ifelse(data.MAD.plot$variable %like% "P11", "P11",
+                                                       ifelse(data.MAD.plot$variable %like% "P18", "P18", "MC")))))
+data.MAD.plot$ratio<-ifelse(data.MAD.plot$variable %like% "Ratio", "Ratio", "NotRatio")
+data.MAD.plot$variable <- plyr::revalue(data.MAD.plot$variable, c("Difference_Flow_MC:P" = "FlowDifference_MC:P",
+                                                                "SC2_Mass_Ratio_MC:P" = "SC2Mass_Ratio_MC:P",
+                                                                "PMMoV_Mass_Ratio_MC:P" = "PMMoVMass_Ratio_MC:P"))
+data.MAD.plot$Ratio<-ifelse(data.MAD.plot$value < 0, "<0.0", 
+                                  ifelse(data.MAD.plot$value < 0.5, "<0.5",
+                                         ifelse(data.MAD.plot$value < 1, "<1.0",
+                                                ifelse(data.MAD.plot$value < 1.5, "<1.5",
+                                                       ifelse(data.MAD.plot$value < 2, "<2.0", ">=2.0")))))
+data.MAD.plot$value <- as.numeric(data.MAD.plot$value)
+data.MAD.plot$ratio.label<-ifelse(data.MAD.plot$value < 0 | as.numeric(data.MAD.plot$value) >= 2, toString(round(data.MAD.plot$value, digits=1)), "")
+data.MAD.plot$Ratio <- ordered(data.MAD.plot$Ratio, levels = c(">=2.0", "<2.0", "<1.5", "<1.0", "<0.5", "<0.0"))
+data.MAD.plot$Ratio.simp<-ifelse(data.MAD.plot$value < 0, "+/- >1", 
+                                  ifelse(data.MAD.plot$value < 0.5, "+/- <1",
+                                         ifelse(data.MAD.plot$value < 1, "+/- =<0.5",
+                                                ifelse(data.MAD.plot$value <= 1.5, "+/- =<0.5",
+                                                       ifelse(data.MAD.plot$value < 2, "+/- <1", "+/- >1")))))
+data.MAD.plot$Ratio.simp <- ordered(data.MAD.plot$Ratio.simp, levels = c("+/- >1", "+/- <1", "+/- =<0.5"))
 
 mc.flow<- data.MAD.plot %>% filter(sewershed=="MC" & variable %like% "Flow_")
 p.flow<-data.MAD.plot %>% filter(sewershed=="P" & variable %like% "Flow_")
@@ -181,12 +223,11 @@ flow<-ggplot(data.MAD.plot, aes(x = date)) +
         axis.title.x = element_blank()) +
   ylab("Average daily flow (MGD)") +
   geom_hline(yintercept=median(mc.flow$value), linetype = "dashed", color="black") +
+  geom_vline(xintercept = ZeroDetected$date) + 
   ggtitle("Average daily flow (MMSD)") +
   geom_text(aes(label=diff.label, y=value),  data = mc.flow, hjust=0, vjust=0.5, angle = 90, color="black", size = 3)
 
 ggplotly(flow)
-
-
 ```
 
 
@@ -208,6 +249,7 @@ SC2.mass<-ggplot(data.MAD.plot, aes(x = date)) +
   theme(axis.text.x = element_blank(), 
         axis.title.x = element_blank()) +
   ylab("N1/N2 gene copies per day") +
+  geom_vline(xintercept = ZeroDetected$date) + 
   geom_hline(yintercept=median(mc.SC2$value), color="red") +
   ggtitle("SARS-CoV-2, 24h Mass Loading (Madison)")
 
@@ -228,7 +270,10 @@ SC2.ratio.1<-ggplot(data.MAD.plot %>% filter(variable=="SC2Mass_Ratio_MC:P"), ae
 
 gg0<-ggarrange(SC2.mass, SC2.ratio.1, heights = c(2, 0.8),
           ncol = 1, nrow = 2, align = "v")
+
 gg0
+
+ggplotly(SC2.mass)
 ```
 
 #PMMoV Daily Mass Loading

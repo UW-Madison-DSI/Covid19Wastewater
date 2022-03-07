@@ -70,6 +70,7 @@ SecondAxisFormat <- list(#Second Axis components
 ```
 
 
+
 ```{r DF Set Up, echo=FALSE}
 BaseDir <- params$BaseDir#get the root of the directory where the data is stored
 #All the Madison data is contained in these two files#MMSD_Cases_processed
@@ -99,6 +100,10 @@ FullDF <- full_join(LatCaseDF,LIMSFullDF, by = c("Date","Site"))
 unique(LIMSFullDF$Site)
 
 ```
+
+
+
+
 
 # Data: The first look
 
@@ -222,7 +227,7 @@ return(UpdatedDF)
 #P18DF <- PrepOutlierFunc(P18DF)
 
 
-FullDF
+#FullDF
 
 DetectedMain <- MadDF%>%
   filter(FlagedOutliers)%>%
@@ -344,6 +349,259 @@ LoessPlotFunc(P7DF)
 LoessPlotFunc(P8DF)
 LoessPlotFunc(P11DF)
 LoessPlotFunc(P18DF)
+```
 
+
+```{r flowstuff DataPrep}
+OutlierDF <- MadDF%>%
+  filter(FlagedOutliers)
+FullDFMassRatio <- FullDF%>%
+  filter(!is.na(N1))%>%
+  mutate(SC2_mass = (3.785*1e6)*FlowRate*N1)
+
+
+MissingIntercepter <- FullDFMassRatio%>%
+  filter(Site!="Madison",!is.na(FlowRate)|!is.na(N1))%>%
+  group_by(Date)%>%
+  summarize(N = n())%>%
+  filter(N!=5)
+
+
+FullDFMassRatio.Mad <- FullDFMassRatio%>%
+  filter(!is.na(SC2_mass))%>%
+  filter(Site=="Madison")
+FullDFMassRatio.Inter <- FullDFMassRatio%>%
+  filter(!is.na(SC2_mass))%>%
+  filter(Site!="Madison")#TempErrorMetric
+
+TempErrorMetric <- FullDFMassRatio.Inter%>%
+  group_by(Date)%>%
+  summarise(InterSum = sum(SC2_mass),InterSumFlow = sum(FlowRate))%>%
+  inner_join(FullDFMassRatio.Mad)%>%
+  mutate(MassRatio = SC2_mass/InterSum,
+         ErrorRatio = 2*(SC2_mass-InterSum)/(SC2_mass+InterSum),
+         MassRatioFlow = FlowRate/InterSumFlow,
+         ErrorRatioFlow = 2*(FlowRate-InterSumFlow)/(FlowRate+InterSumFlow))
+
+
+FullDFMassRatio.Mad <- FullDFMassRatio%>%
+  filter(!is.na(SC2_mass))%>%
+  filter(Site=="Madison")%>%
+  inner_join(FullDFMassRatio.Inter["Date"])
+FullDFMassRatio.Inter <- FullDFMassRatio%>%
+  filter(Site!="Madison")
 
 ```
+
+
+```{r Stat Look}
+TempErrorMetric%>%
+  summarise(MeanError = mean(ErrorRatio, na.rm=TRUE),
+            MeanRatio = mean(MassRatio, na.rm=TRUE),
+            MedianError = median(ErrorRatio, na.rm=TRUE),
+            MedianRatio = median(MassRatio, na.rm=TRUE),
+            n())
+
+ToMergeDF <- TempErrorMetric[c("Date","ErrorRatio","MassRatio","MassRatioFlow","ErrorRatioFlow")]
+
+MadErrorRatioDF <- full_join(ToMergeDF,MadDF)%>%
+  filter(!is.na(N1),!is.na(MassRatio),!is.na(MassRatio))
+MadErrorRatioFilledDF <- MadErrorRatioDF%>%
+  setorder(Date)%>%
+  fill(ErrorRatio,MassRatio,.direction ="down")
+  
+
+
+MadErrorRatioDF%>%
+  filter(!is.na(ErrorRatio))%>%
+  group_by(FlagedOutliers)%>%
+  summarise(MeanError = mean(ErrorRatio, na.rm=TRUE),
+            MeanRatio = mean(MassRatio, na.rm=TRUE),
+            MedianError = median(ErrorRatio, na.rm=TRUE),
+            MedianRatio = median(MassRatio, na.rm=TRUE),
+            n())
+MadErrorRatioFilledDF%>%
+  filter(!is.na(ErrorRatio))%>%
+  group_by(FlagedOutliers)%>%
+  summarise(MeanError = mean(ErrorRatio, na.rm=TRUE),
+            MeanRatio = mean(MassRatio, na.rm=TRUE),
+            MedianError = median(ErrorRatio, na.rm=TRUE),
+            MedianRatio = median(MassRatio, na.rm=TRUE),
+            n())
+
+
+HighRatioVec <- ToMergeDF%>%
+  filter(MassRatio>1.5)
+
+
+
+MadErrorRatioFilledDF%>%
+  filter(FlagedOutliers)
+
+MadErrorRatioDF%>%
+  ggplot()+
+  aes(x=MassRatio,y=N1,color = FlagedOutliers)+
+  geom_point(size=5,alpha=.5)+
+  scale_y_log10()+
+  scale_x_log10()+
+  ggtitle("FlagedOutlier vs N1")
+
+MadErrorRatioFilledDF%>%
+  ggplot()+
+  aes(x=MassRatio,y=N1,color = FlagedOutliers)+
+  geom_point(size=5,alpha=.5)+
+  scale_y_log10()+
+  scale_x_log10()+
+  ggtitle("FlagedOutlier vs N1 Filled Data")
+
+
+t.test(ErrorRatio ~ FlagedOutliers, data = MadErrorRatioFilledDF)
+
+
+
+#MadErrorRatioFilledDF
+#MadErrorRatioDF
+MadErrorRatioDF%>%
+  ggplot()+
+  aes(x=MassRatioFlow,y=MassRatio,color=FlagedOutliers)+
+  geom_point(size=5,alpha=.5)+
+  ggtitle("FlowRatio vs MassFlow")
+
+
+MadErrorRatioDF%>%
+  filter(MassRatioFlow==1)
+```
+
+
+```{r Outlier}
+KeyOulierPoints <- c(ymd("2021-06-08"),
+                     ymd("2021-10-17"),
+                     ymd("2021-05-02"),
+                     ymd("2021-01-26"))
+
+OutLierPlotDF <- MadDF%>%
+  mutate(Outlier = ifelse(FlagedOutliers,N1,NA))%>%
+           mutate(N1 = NoOutlierVar)%>%
+  filter(!(is.na(N1)&is.na(Outlier)))%>%
+  ggplot(aes(x=Date))+#Data depends on time 
+  geom_line(aes(y=N1,
+                color="N1", 
+                info = !!sym(SelectedIndVar)))+#compares Var to Cases
+  geom_point(aes(y=Outlier,
+                 color="N1 Outlier",
+                 info = Outlier))+
+  scale_color_manual(values=c("#F8766D","#999999")) #+
+  #geom_vline(xintercept = KeyOulierPoints)+
+    #geom_vline(xintercept = MissingIntercepter$Date,color="Red")+
+    facet_wrap(~Site)
+
+
+ggplotly(OutLierPlotDF)
+#"2021-06-08","2021-10-17","2021-05-02","2021-01-26"
+```
+
+```{r Flow total}
+
+FlowPlot <- FullDFMassRatio.Inter%>%
+  filter(!is.na(FlowRate))%>%
+  ggplot()+
+  geom_bar(aes(x=Date,y=FlowRate,fill=Site),position="stack", stat="identity", width = 3) + 
+  scale_fill_brewer(palette="Spectral") +
+  scale_color_manual(values=c("#d60000", "#ffa600", "#7ed05c", "#5c9c43", "#3a56d6")) +
+  theme_light() +
+  geom_line(data=FullDFMassRatio.Mad,aes(x=Date,y=FlowRate),size=.5)+
+  ylab("Average daily flow (MGD)") +
+  geom_hline(yintercept=median(FullDFMassRatio.Mad$FlowRate), linetype = "dashed", color="black") +
+  #geom_vline(xintercept = KeyOulierPoints)+
+  #geom_vline(xintercept = MissingIntercepter$Date,color="Red")+
+  ggtitle("Average daily flow (MMSD)")
+
+ggplotly(FlowPlot)
+
+
+FullDF%>%
+  filter(Date==mdy("4-15-2021"))
+```
+
+```{r MassRatio}
+MassBalencePlot <- FullDFMassRatio.Inter%>%
+  filter(!is.na(FlowRate))%>%
+  ggplot()+
+  geom_bar(aes(x=Date,y=SC2_mass,fill=Site),position="stack", stat="identity", width = 3) + 
+  scale_fill_brewer(palette="Spectral") +
+  scale_color_manual(values=c("#d60000", "#ffa600", "#7ed05c", "#5c9c43", "#3a56d6")) +
+  theme_light() +
+  geom_point(data=FullDFMassRatio.Mad,aes(x=Date,y=SC2_mass),size=1)+
+  ylab("N1/N2 gene copies per day") +
+  geom_hline(yintercept=median(FullDFMassRatio.Mad$SC2_mass), color="red") +
+  
+  ggtitle("SARS-CoV-2, 24h Mass Loading (Madison)")
+  
+
+ggplotly(MassBalencePlot)
+#4-15
+```
+
+```{r MassRatio massRatio}
+MassBalencePlot2 <- FullDFMassRatio.Inter%>%
+  filter(!is.na(FlowRate))%>%
+  ggplot()+
+  geom_bar(aes(x=Date,y=FirstConfirmed,fill=Site),position="stack", stat="identity", width = 3) + 
+  scale_fill_brewer(palette="Spectral") +
+  scale_color_manual(values=c("##29ffff", "#0059ff", "#812fa3", "#a363bc", "#c5a929")) +
+  theme_light() +
+  geom_point(data=FullDFMassRatio.Mad,aes(x=Date,y=FirstConfirmed),size=1)+
+  ylab("N1/N2 gene copies per day") +
+  geom_hline(yintercept=median(FullDFMassRatio.Mad$FirstConfirmed), color="red") +
+  ggtitle("Cases, 24h Mass Loading (Madison)")
+
+ggplotly(MassBalencePlot)
+
+unique(inner_join(FullDFMassRatio.Inter,OutlierDF["Date"],by=c("Date"))$Date)
+```
+
+```{r SC2MassRatio}
+
+#ggplotly(OutLierPlotDF)
+#ggplotly(MassBalencePlot)
+#ggplotly(FlowPlot)
+
+#OutlierDF
+a <- OutLierPlotDF+
+  geom_vline(xintercept = AllOuliersDates,color="Red")+
+  geom_vline(xintercept = OutlierDatesIntercepters)+
+  #geom_vline(xintercept = MissingIntercepter$Date,color="Red")+
+  theme(title = element_blank(),
+        axis.text.x = element_blank(), 
+        axis.title.x = element_blank())
+b <- MassBalencePlot+
+  geom_vline(xintercept = AllOuliersDates,color="Red")+
+  geom_vline(xintercept = OutlierDatesIntercepters)+
+  #geom_vline(xintercept = MissingIntercepter$Date,color="Red")+
+  theme(title = element_blank(),
+    axis.text.x = element_blank(), 
+        axis.title.x = element_blank())
+c <- FlowPlot+
+  geom_vline(xintercept = OutlierDF$Date)+
+  #geom_vline(xintercept = MissingIntercepter$Date,color="Red")+
+  theme(title = element_blank(),
+        axis.text.x = element_blank(), 
+        axis.title.x = element_blank())
+library(ggpubr)
+ggarrange(a,b,c,nrow=3,align ="v")
+
+
+#FullDFMassRatio.Inter%>%
+#  filter(Date==ymd("2021-04-15"))
+#MMSD-P18/P7
+#2021-04-15
+
+OutLierPlotDF
+ggarrange(a,b,nrow=3,align ="v")
+
+FullDFMassRatio.Inter
+AllOuliersDates <- OutlierDF[["Date"]]
+OutlierDatesIntercepters <- unique(inner_join(FullDFMassRatio.Inter,OutlierDF["Date"],by=c("Date"))$Date)
+```
+
+
