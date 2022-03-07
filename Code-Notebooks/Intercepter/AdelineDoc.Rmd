@@ -104,6 +104,7 @@ data.MAD.PV$day<-format(as.Date(data.MAD.PV$date, format="%m/%d/%Y"), "%A")
 
 
 #format(as.Date((as.character(data.MAD$date)), origin = "1899-12-30"), "%m/%d/%Y")
+
 ```
 
 #Comments
@@ -249,7 +250,7 @@ SC2.mass<-ggplot(data.MAD.plot, aes(x = date)) +
   theme(axis.text.x = element_blank(), 
         axis.title.x = element_blank()) +
   ylab("N1/N2 gene copies per day") +
-  geom_vline(xintercept = ZeroDetected$date) + 
+  #geom_vline(xintercept = ZeroDetected$date) + 
   geom_hline(yintercept=median(mc.SC2$value), color="red") +
   ggtitle("SARS-CoV-2, 24h Mass Loading (Madison)")
 
@@ -274,6 +275,11 @@ gg0<-ggarrange(SC2.mass, SC2.ratio.1, heights = c(2, 0.8),
 gg0
 
 ggplotly(SC2.mass)
+
+
+flow
+
+SC2.mass
 ```
 
 #PMMoV Daily Mass Loading

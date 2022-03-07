@@ -1,10 +1,11 @@
 A key component of data analysis is understanding how and where messurement variance occur.
-There are ___ components to the variance.
+There are 3 components to the variance.
 
-1) Trend variance - var(log(TrendError)) 0.6633979
+1) Trend variance (total Variance from expected value):
+ - var(log(TrendError)) 0.6633979
 
-2) filter variance - var(log(FilterError)) is 0.257207
+2) filter variance(variance between filter sample):
+ - var(log(FilterError)) is 0.257207
 
-3) well variance - var(log(wellError)) is 0.1130328
-
-a) between locations - HFG,Madison,intercept
+3) well variance(variance between well sample):
+ - var(log(wellError)) is 0.1130328
