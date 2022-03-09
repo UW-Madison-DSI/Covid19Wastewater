@@ -23,6 +23,7 @@ AVGGenFN <- function(N1, N2) {
 }
 ```
 
+
 ```{r HFG data for stats corrected 071421}
 #needs: readxl, tidyverse, lubridate
 library(readxl)
@@ -65,6 +66,52 @@ HFGWasteDF <- read_excel(HFGWasteFN, na = MissingCode,
 HFGWasteDF <- read.csv(paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/HFGWasteData071421.csv"))%>%
   mutate(Date=as.Date(Date))
 ```
+
+`
+
+
+```{r HFG data for HFG_data_corrected_w_HF183&CrP_011422.xlsx}
+library(readxl)
+HFGCases2FN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/HFG_data_corrected_w_HF183&CrP_011422.xlsx")
+
+
+#-1 = Undeterminded
+#-2 = omitted
+#-3 = -
+HFGWaste <- read_excel(HFGCases2FN,col_types =  "text")%>%
+  rename(Site = Plant,
+         Date = `Collection Date`,
+         Filter = `Filter Rep`,
+         Well = `Well Rep`,
+         N1Ct =  `N1 CT`,
+         N1 = `N1 GC/L`,
+         BCoV = `BCoV % Recovery`,
+         HF183CT = `HF183 CT`,
+         HF183 = `HF183 GC/L`,
+         CrPCT = `CrP CT`,
+         CrP = `CrP GC/L`,
+         N2CT = `N2 CT`,
+         N2 = `N2 GC/L`,
+         PMMOVCT = `PMMOV CT`,
+         PMMOV = `PMMOV GC/L`,
+         N1LOD = `N1 <LOD`,
+         N2LOD = `N2 <LOD`)%>%
+  filter(!is.na(Site))%>%
+  mutate(Date = ifelse(is.na(as.integer(Date)), 
+                                     mdy(Date),
+                                     as.Date(as.integer(Date),
+                                             origin = "1899-12-30")))%>%
+
+
+#write.csv(HFGWaste,paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/HFGWasteData011422.csv"),row.names=FALSE)
+
+HFGWasteDF <- read.csv(paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/HFGWasteData011422.csv"))%>%
+  mutate(Date=as.Date(Date))
+
+```
+
+
+
 
 ```{r top level data exploration}
 head(HFGWasteDF)
@@ -125,6 +172,10 @@ HFGCaseDF  <-  full_join(HFGCaseDFReportedOnly,HFGCaseDFNoReported,by=c("Date","
 HFGCaseDF <- read.csv(paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/HFGCaseData_2021-05-07.csv"))%>%
   mutate(Date=as.Date(Date))
 ```
+
+
+
+
 
 ```{r}
 head(HFGCaseDF)

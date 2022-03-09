@@ -29,12 +29,10 @@ This is a short document covering some ideas important to all three variance not
 
 ```{r DF Set Up, echo=FALSE}
 BaseDir <- params$BaseDir#get the root of the directory where the data is stored
-HFGWasteFN <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/HFGWasteData071421.csv")
+source("../../../lib/DataPathName.R")
 
-
-HFGDF <- ParseData(HFGWasteFN)%>% #Reads in preprocessed data into consistent format
+HFGDF <- ParseData(HFGWastePath(BaseDir))%>% #Reads in preprocessed data into consistent format
   select(Site,Date,Filter,Well,N1)
-
 tail(HFGDF) #Quick look into structure of data frame
 ```
 

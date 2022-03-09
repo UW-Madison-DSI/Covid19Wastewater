@@ -34,18 +34,14 @@ source("../../../lib/DataProccess.R")
 
 ```{r DF Set Up, echo=FALSE}
 BaseDir <- params$BaseDir#get the root of the directory where the data is stored
+source("../../../lib/DataPathName.R")
 
-#UpdatedHFGFN.csv
-#HFGWasteData071421.csv
 
-LIMSFN <- paste0(BaseDir, "COVID-19_WastewaterAnalysis/data/processed/LIMSWasteData_01-25-21_01-05-22.csv")
-HFGWasteFN <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/UpdatedHFGFN.csv")
-HFGCasesFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/HFGCaseData_2021-05-07.csv")
+HFGCaseDF <- ParseData(HFGCasePath(BaseDir))#Reads in preprocessed data into consistent format
 
-HFGCaseDF <- ParseData(HFGCasesFN)#Reads in preprocessed data into consistent format
-
-HFGDF <- ParseData(HFGWasteFN)%>%#reads HFG data in
-  select(Site,Date,Filter,Well,HFGN1=N1)
+HFGDF <- ParseData(HFGWastePath(BaseDir))%>%#reads HFG data in
+  select(Site,Date,Filter,Well,HFGN1=N1)%>%
+  mutate(HFGN1 = as.numeric(HFGN1))
 
 StartHFG <- min(HFGDF$Date)#DateRange that HFG analysis makes sense in
 EndHFG <- max(HFGDF$Date)#used for graphing ranges later
@@ -55,7 +51,7 @@ HFGLocations <- unique(HFGDF$Site)#Obtain list of Sites in the HFG dataset
 
 
 #Importing the LIMS waste water data
-LIMSHFGLocationsDF <- ParseData(LIMSFN)%>%
+LIMSHFGLocationsDF <- ParseData(LIMSWastePath(BaseDir))%>%
   filter(Site %in% HFGLocations)%>%#Filter LIMS data to only select Sites
   select(Date, Site,  N1, N1Error)
 
@@ -109,7 +105,8 @@ GroupLoess <- function(SmoothedSite){
   return(FilteredDF)
 }
 
-FullLoessData <- bind_rows(lapply(HFGLocations,GroupLoess))
+FullLoessData <- bind_rows(lapply(HFGLocations,GroupLoess))%>%
+  distinct()
 
 FullDF2 <- inner_join(HFGDF , FullLoessData , by = c("Date","Site"))%>%
   filter(!is.na(loessN1))%>%
@@ -170,7 +167,7 @@ Once we remove the trend we have a dataset of errors. The resulting error is nor
 
 CompFullDF <- FullDF2%>%
   filter(HFGN1 < 1e7)%>%
-  mutate(TrendError = log(HFGN1) - log(loessN1))%>%
+  mutate(TrendError = log(HFGN1 - loessN1))%>%
   filter(!is.na(TrendError))
 
 
@@ -187,6 +184,7 @@ ggplot()+
 ggplot()+
   geom_point(aes(x=Date,y=TrendError) , size=1 , data = CompFullDF)+
   facet_wrap(~Site)
+
 ```
 
 We can control for filter to filter difference in variance by taking the variance of the errors for each Day. The resulting data is log normal and does not significantly scale with N1.
@@ -220,17 +218,18 @@ From this we can calculate the variance to get a handle on the day to day fluctu
 
 ```{r}
 
-VarianceError <- var(CompFullDF$TrendError) # calculate variance of all the errors.
+VarianceError <- var(CompFullDF$TrendError,na.rm = TRUE) # calculate variance of all the errors.
 #Assumes same mean for all errors. This should be true as the value is generated
 #by subtracting the mean from the original data.
 
-MeanVariance <- weighted.mean(CompFullDF2$TechnicalVariance, CompFullDF2$N) #Weighted Mean
+MeanVariance <- weighted.mean(CompFullDF2$TechnicalVariance, CompFullDF2$N,na.rm = TRUE) #Weighted Mean
 #of the variance. Does not assume each sample mean is equal but gives a larger
 #variance
 
 
 print(paste("Variance of Trend Errors:", round(VarianceError,4)))
 print(paste("weighted mean of variances", round(MeanVariance,4)))
+
 ```
 
 

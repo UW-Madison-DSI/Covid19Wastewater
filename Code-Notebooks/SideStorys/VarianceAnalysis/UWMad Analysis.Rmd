@@ -1,4 +1,6 @@
 ---
+params:
+  BaseDir: "Z:/"
 title: "UWMad Analysis"
 author: "Marlin"
 date: "1/7/2022"
@@ -32,17 +34,13 @@ source("../../../lib/DataProccess.R")
 
 ```{r DF Set Up, echo=FALSE}
 BaseDir <- params$BaseDir#get the root of the directory where the data is stored
+source("../../../lib/DataPathName.R")
 
-#UpdatedHFGFN.csv
-#HFGWasteData071421.csv
+DormNames <- c("Fall UW-LakeShore", "Fall UW-Sellery", "Spring UW-Sellery",
+               "Spring UW-LakeShore", "UW-LakeShore", "UW-Sellery")
 
-LIMSFN <- paste0(BaseDir, "COVID-19_WastewaterAnalysis/data/processed/LIMSWasteData_2021-06-30_17-40.csv")
-MadisonCaseFN  <-  paste0(BaseDir, "COVID-19_WastewaterAnalysis/data/processed/MMSD_Cases_processed.csv")
-
-DormNames <- c("Fall UW-LakeShore","Fall UW-Sellery","Spring UW-Sellery","Spring UW")
-
-LatCaseDF <- ParseData(MadisonCaseFN)
-LIMSDF <- ParseData(LIMSFN)%>%
+LatCaseDF <- ParseData(LIMSCasePath(BaseDir))
+LIMSDF <- ParseData(LIMSWastePath(BaseDir))%>%
   filter(Site %in% DormNames)%>%#Filter LIMS data to only select Sites
   select(Date, Site,  N1, N1Error)
 
