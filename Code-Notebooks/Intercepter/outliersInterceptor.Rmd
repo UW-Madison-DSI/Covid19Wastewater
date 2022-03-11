@@ -326,7 +326,7 @@ InterceptRatioPlot <- FullDFMassRatio.Inter%>%
   group_by(Date)%>%
   summarise(SC2_InterSum = sum(SC2_mass,na.rm = TRUE),
             nIntercepter = n())%>%
-  inner_join(FullDFMassRatio.Inter)%>%
+  inner_join(FullDFMassRatio)%>%
   mutate(Ratio = (SC2_mass/SC2_InterSum)*(nIntercepter/5))%>%
   arrange(Ratio)%>%
   select(Ratio,nIntercepter, everything())%>%
