@@ -237,8 +237,7 @@ LIMSDF <- read_excel(LIMSFN,na  =  MissingCode,col_types = c(rep("text",58)))
 LIMSDF
 LIMSDF <- suppressWarnings(mutate(LIMSDF,
       across(all_of(NumericVars),as.numeric),
-      test_result_date=as.POSIXlt(test_result_date,format="%m/%d/%Y %H:%M"),
-      sample_collect_date=mdy(sample_collect_date)
+      test_result_date=as.POSIXlt(test_result_date,format="%m/%d/%Y %H:%M")
     ))%>%
     rename(
       Site = wwtp_name,
@@ -256,6 +255,10 @@ LIMSDF <- suppressWarnings(mutate(LIMSDF,
       PMMoV = pmmov_conc,
       Pop = population_served
     )%>%
+   mutate(Date = as.Date(ifelse(is.na(as.numeric(Date)),
+                             as.Date(strptime(Date,format = "%m/%d/%Y")),
+                             as.Date(as.numeric(Date),origin = "1899-12-30")),
+                        origin = "1970-01-01"))%>%
     mutate(#Standardizing the Site names names
       Site=ifelse(Site=="Madison Metro","Madison",Site),
       Site=ifelse(Site=="Covid Sewage UW DORM","UW-LakeShore",Site),
@@ -288,7 +291,7 @@ LIMSDF <- suppressWarnings(mutate(LIMSDF,
 
 LIMSDFParsedFN <- paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/LIMSWasteData_01-25-21_01-05-22.csv")
 
-write.csv(LIMSDF,LIMSDFParsedFN,row.names=FALSE)
+#write.csv(LIMSDF,LIMSDFParsedFN,row.names=FALSE)
 
 LIMSDF <- read.csv(LIMSDFParsedFN)%>%
   mutate(Date=as.Date(Date))
@@ -370,30 +373,6 @@ LIMSDF2 <- read.csv(LIMSDFParsedFN)%>%
   mutate(Date=as.Date(Date))
 
 LIMSDF <- ParseData(LIMSDFParsedFN)
-
-
-LIMSDF%>%
-  rename(Date = sample_collect_date)%>%
-  select(Date)%>%
-  mutate(Temp1 = ifelse(is.na(as.numeric(Date)),
-                        NA,
-                        as.Date(as.numeric(Date),origin = "1899-12-30")),
-         Temp2 = ifelse(is.na(as.numeric(Date)),
-                        as.Date(strptime(Date,format = "%m/%d/%Y")),
-                        NA))%>%
-  mutate(Date2 = as.Date(ifelse(is.na(as.numeric(Date)),
-                             Temp2,
-                             Temp1),origin = "1970-01-01"))
-
-
-
-LIMSDF%>%
-  rename(Date = sample_collect_date)%>%
-  select(Date)%>%
-  mutate(Date = as.Date(ifelse(is.na(as.numeric(Date)),
-                             as.Date(strptime(Date,format = "%m/%d/%Y")),
-                             as.Date(as.numeric(Date),origin = "1899-12-30")),
-                        origin = "1970-01-01"))
 ```
 
 

@@ -89,8 +89,8 @@ SecondAxisFormat <- list(#Second Axis components
 BaseDir <- params$BaseDir#get the root of the directory where the data is stored
 #All the Madison data is contained in these two files#MMSD_Cases_processed
 MadisonCaseFN  <-  paste0(BaseDir, "COVID-19_WastewaterAnalysis/data/processed/MMSD_Cases_2022_01_12_processed.csv")
-LIMSFN <- paste0(BaseDir, "COVID-19_WastewaterAnalysis/data/processed/LIMSWasteData_01-25-21_01-05-22.csv")
-
+#LIMSFN <- paste0(BaseDir, "COVID-19_WastewaterAnalysis/data/processed/LIMSWasteData_01-25-21_01-05-22.csv")
+LIMSFN <- paste0(BaseDir, "COVID-19_WastewaterAnalysis/data/processed/LIMSWasteData_02-09-22.csv")
 
 #Importing the Madison case data
 LatCaseDF <- ParseData(MadisonCaseFN)%>% 
@@ -184,7 +184,9 @@ Looking at the wastewater measurements we observe there were some points many ti
 ErrorMarkedDF <- FullDF%>%#
     mutate(FlagedOutliers = IdentifyOutliers(!!sym(SelectedIndVar), Action = "Flag"),
            #Manual flagging that method misses due to boundary effect with binning
-           FlagedOutliers = ifelse(Date == mdy("01/26/2021") | Date == mdy("01/27/2021"),
+           FlagedOutliers = ifelse(Date == mdy("01/26/2021") | 
+                                   Date == mdy("01/27/2021") | 
+                                   Date == mdy("01/23/2022"),
                                    TRUE, FlagedOutliers),
            NoOutlierVar = ifelse(FlagedOutliers, NA, !!sym(SelectedIndVar)))
 

@@ -104,7 +104,6 @@ data.MAD.PV$day<-format(as.Date(data.MAD.PV$date, format="%m/%d/%Y"), "%A")
 
 
 #format(as.Date((as.character(data.MAD$date)), origin = "1899-12-30"), "%m/%d/%Y")
-
 ```
 
 #Comments
