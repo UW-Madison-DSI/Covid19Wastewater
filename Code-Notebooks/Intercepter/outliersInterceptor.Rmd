@@ -54,7 +54,6 @@ SecondAxisFormat <- list(#Second Axis components
   exponentformat = "e"
 )
 
-
 ```
 
 
@@ -64,7 +63,7 @@ BaseDir <- params$BaseDir#get the root of the directory where the data is stored
 #All the Madison data is contained in these two files#MMSD_Cases_processed
 MadisonCaseFN  <-  paste0(BaseDir, "COVID-19_WastewaterAnalysis/data/processed/MMSD_Interceptor_Cases_2_7_22.csv")
 LIMSFN <- paste0(BaseDir, "COVID-19_WastewaterAnalysis/data/processed/LIMSWasteData_01-25-21_01-05-22.csv")
-
+#LIMSFN <- paste0(BaseDir, "COVID-19_WastewaterAnalysis/data/processed/LIMSWasteData_02-09-22.csv")
 
 #Importing the Madison case data
 LatCaseDF <- ParseData(MadisonCaseFN)%>% 
@@ -76,24 +75,16 @@ SiteData <- unique(LatCaseDF$Site)
 #Importing the Madison waste water data
 LIMSFullDF <- ParseData(LIMSFN)%>%
   filter(Site %in% SiteData)%>%
-  mutate(N1Pure = ifelse(is.na(N1),N2,N1),
-         N2Pure = ifelse(is.na(N2),N1,N2),
-         GeoMeanN12 = exp((log(N1Pure)+log(N2Pure))/2))%>%
-  select(Date, Site, N1, BCoV , N2 , PMMoV,
+  mutate(N1Pure = ifelse(is.na(N1),N1,N1),
+         N1Pure = ifelse(is.na(N1),N1,N1),
+         GeoMeanN12 = exp((log(N1Pure)+log(N1Pure))/2))%>%
+  select(Date, Site, N1, BCoV , N1 , PMMoV,
          GeoMeanN12,FlowRate,temperature,equiv_sewage_amt)
 
 #joining the two data frames together
 FullDF <- full_join(LatCaseDF,LIMSFullDF, by = c("Date","Site"))
 
 #unique(LIMSFullDF$Site)
-
-
-ParseData(LIMSFN)%>%
-  inner_join(MissingFlowData)%>%
-  filter(!is.na(wwtp_comments))
-
-ParseData(LIMSFN)%>%
-  select(Date %in% c(OutlierDatesIntercepters))
 ```
 
 
@@ -300,13 +291,17 @@ MassBalencePlot <- FullDFMassRatio.Inter%>%
   scale_color_manual(values=c("#d60000", "#ffa600", "#7ed05c", "#5c9c43", "#3a56d6")) +
   theme_light() +
   geom_point(data=FullDFMassRatio.Mad,aes(x=Date,y=SC2_mass),size=1)+
-  ylab("N1/N2 gene copies per day") +
+  ylab("N1 gene copies per day") +
   
   ggtitle("SARS-CoV-2, 24h Mass Loading (Madison)")
   
 
 ggplotly(MassBalencePlot)
 #4-15
+#N1/N1 travel to find more outliers
+#Present puzzles to WSLH
+#distribution of residuals
+#if normalized resid should be iid
 ```
 
 ```{r Cases,include = FALSE}
@@ -318,7 +313,7 @@ CasesPlot2 <- FullDFMassRatio.Inter%>%
   scale_color_manual(values=c("#29ffff", "#0059ff", "#812fa3", "#a363bc", "#c5a929")) +
   theme_light() +
   geom_point(data=FullDFMassRatio.Mad,aes(x=Date,y=FirstConfirmed),size=1)+
-  ylab("N1/N2 gene copies per day") +
+  ylab("N1/N1 gene copies per day") +
   ggtitle("Cases, 24h Mass Loading (Madison)")
 
 ggplotly(CasesPlot2)
@@ -361,18 +356,28 @@ data.MAD.plot%>%
   filter(variable %like% "_SC2_Mass")%>%
   select(date,value,variable,sewershed)%>%
   inner_join(FullDFMassRatio.Inter2)
+
+
+inner_join(FullDFMassRatio.Inter,OutlierDF["Date"],by=c("Date"))
+
+FullDFMassRatio.Inter%>%
+  filter(Site=="MMSD-P8")%>%
+  arrange(N1)
+#Explore intercepter ratio
 ```
 
 
 
 arranged plots with lines to communicate where flagged outliers are. Red Lines show Where there was a flagged on a day that also has collected interceptor data.
 ```{r SC2MassRatio, fig.height=6,dpi=500}
-
+StartRange <- mdy("5-01-2021")
+EndRange <- mdy("01-30-2022")
 
 AllOuliersDates <- OutlierDF[["Date"]]
 OutlierDatesIntercepters <- unique(inner_join(FullDFMassRatio.Inter,OutlierDF["Date"],by=c("Date"))$Date)
 
 a <- OutLierPlotDF+
+  scale_x_date(limits = c(StartRange,EndRange))+
   geom_vline(xintercept = AllOuliersDates)+
   geom_vline(xintercept = OutlierDatesIntercepters,color="Red")+
   #geom_vline(xintercept = MissingIntercepter$Date,color="Red")+
@@ -381,6 +386,7 @@ a <- OutLierPlotDF+
         axis.title.x = element_blank(),
         legend.position="none")
 b <- MassBalencePlot+
+  scale_x_date(limits = c(StartRange,EndRange))+
   geom_vline(xintercept = (AllOuliersDates))+
   geom_vline(xintercept = (OutlierDatesIntercepters),color="Red")+
   #geom_vline(xintercept = MissingIntercepter$Date,color="Red")+
@@ -389,6 +395,7 @@ b <- MassBalencePlot+
         axis.title.x = element_blank(),
     legend.position="none")
 c <- FlowPlot+
+  scale_x_date(limits = c(StartRange,EndRange))+
   geom_vline(xintercept = AllOuliersDates)+
   geom_vline(xintercept = OutlierDatesIntercepters,color="Red")+
   theme(title = element_blank(),
@@ -397,6 +404,9 @@ c <- FlowPlot+
 
 
 ggarrange(a,b,c,nrow=3,align ="v",legend.grob=get_legend(MassBalencePlot),legend="right")
+
+#Cause of missing data
+OutlierDatesIntercepters
 ```
 
 

@@ -222,6 +222,7 @@ full_join(MainHFGCaseDF,MainHFGWasteDF)%>%
 ```
 
 ```{r WATERMICRO_WW_COVID-2022-01-07_F_v1.1}
+library(readxl)
 LIMSFN <- paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/WATERMICRO_WW_COVID-2022-01-07_F_v1.1.xlsx")
 
 NumericVars=c("average_flow_rate","avg_sars_cov2_conc","bcov_rec_rate",
@@ -233,6 +234,7 @@ NumericVars=c("average_flow_rate","avg_sars_cov2_conc","bcov_rec_rate",
                 "temperature","tss")
   
 LIMSDF <- read_excel(LIMSFN,na  =  MissingCode,col_types = c(rep("text",58)))
+LIMSDF
 LIMSDF <- suppressWarnings(mutate(LIMSDF,
       across(all_of(NumericVars),as.numeric),
       test_result_date=as.POSIXlt(test_result_date,format="%m/%d/%Y %H:%M"),
@@ -241,7 +243,6 @@ LIMSDF <- suppressWarnings(mutate(LIMSDF,
     rename(
       Site = wwtp_name,
       FlowRate = average_flow_rate,
-      Cov1_below_lod = avg_sars_cov2_below_lod,
       cov2_conc = avg_sars_cov2_conc,
       BCoV = bcov_rec_rate,
       BCoVConc = bcov_spike_conc,
@@ -287,13 +288,156 @@ LIMSDF <- suppressWarnings(mutate(LIMSDF,
 
 LIMSDFParsedFN <- paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/LIMSWasteData_01-25-21_01-05-22.csv")
 
-#write.csv(LIMSDF,LIMSDFParsedFN,row.names=FALSE)
+write.csv(LIMSDF,LIMSDFParsedFN,row.names=FALSE)
 
 LIMSDF <- read.csv(LIMSDFParsedFN)%>%
   mutate(Date=as.Date(Date))
 
 LIMSDF <- ParseData(LIMSDFParsedFN)
+
 ```
+
+```{r qPCR Semi-Final Query 2.9.22}
+LIMSFN <- paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/qPCR Semi-Final Query 2.9.22.xlsx")
+
+NumericVars=c("average_flow_rate","avg_sars_cov2_conc","bcov_rec_rate",
+                "bcov_spike_conc","capacity_mgd","conductivity",
+                "equiv_sewage_amt","n1_lod","n1_loq","n1_num_no_target_control",
+                "n1_sars_cov2_conc","n1_sars_cov2_error","n1_sars_cov2_lod",
+                "n2_lod","n2_loq","n2_num_no_target_control","n2_sars_cov2_conc",
+                "n2_sars_cov2_error","ph","pmmov_conc","population_served",
+                "temperature","tss")
+  
+LIMSDF <- read_excel(LIMSFN,na  =  MissingCode,col_types = c(rep("text",58)))
+LIMSDF <- mutate(LIMSDF,
+      across(all_of(NumericVars),as.numeric),
+      test_result_date=as.POSIXlt(test_result_date,format="%m/%d/%Y %H:%M"))%>%
+    rename(
+      Site = wwtp_name,
+      FlowRate = average_flow_rate,
+      cov2_conc = avg_sars_cov2_conc,
+      BCoV = bcov_rec_rate,
+      BCoVConc = bcov_spike_conc,
+      county = county_names,
+      Date = sample_collect_date,
+      RepDate = test_result_date,
+      N1 = n1_sars_cov2_conc,
+      N1Error = n1_sars_cov2_error,
+      N2 = n2_sars_cov2_conc,
+      N2Error = n2_sars_cov2_error,
+      PMMoV = pmmov_conc,
+      Pop = population_served
+    )%>%
+  mutate(Date = as.Date(ifelse(is.na(as.numeric(Date)),
+                             as.Date(strptime(Date,format = "%m/%d/%Y")),
+                             as.Date(as.numeric(Date),origin = "1899-12-30")),
+                        origin = "1970-01-01"))%>%
+    mutate(#Standardizing the Site names names
+      Site=ifelse(Site=="Madison Metro","Madison",Site),
+      Site=ifelse(Site=="Covid Sewage UW DORM","UW-LakeShore",Site),
+      Site=ifelse(Site=="Covid Sewage UW Sell","UW-Sellery",Site),
+      Site=ifelse(Site=="Madison-P2-Central","MMSD-P2",Site),
+      Site=ifelse(Site=="Madison-P7-SE","MMSD-P7",Site),
+      Site=ifelse(Site=="Madison-P8-West","MMSD-P8",Site),
+      Site=ifelse(Site=="Madison-P11-SW","MMSD-P11",Site),
+      Site=ifelse(Site=="Madison-P18-NE","MMSD-P18",Site),
+      AVG = AVGGenFN(N1, N2),
+      wt = 2 - is.na(N1) - is.na(N2),
+      #Giving the different semesters unique names
+      isDorm = ifelse(Site %in% c("UW-LakeShore","UW-Sellery"),TRUE,FALSE),
+      Site = ifelse(isDorm&Date>=ymd("2021-01-11"),paste("Spring",Site),Site),
+      Site = ifelse(isDorm&Date<=ymd("2020-12-25"),paste("Fall",Site),Site),
+      Site = ifelse(isDorm&Date>ymd("2020-12-25")&
+                      Date<ymd("2021-01-11"),paste("Break",Site),Site)
+    )%>%
+    select(-isDorm)%>%
+    #converting -1 meaning missing data to NA
+    mutate(N1=ifelse(N1==-1,NA,N1),
+           N2=ifelse(N2==-1,NA,N2),
+           PMMoV=ifelse(PMMoV==-1,NA,PMMoV),
+           BCoV=ifelse(BCoV==-1,NA,BCoV))%>%
+    mutate(AVG = AVGGenFN(N1, N2),
+           wt = 2 - is.na(N1) - is.na(N2))%>%
+  select(Site,Date,everything())
+
+
+
+LIMSDFParsedFN <- paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/LIMSWasteData_02-09-22.csv")
+
+write.csv(LIMSDF,LIMSDFParsedFN,row.names=FALSE)
+
+LIMSDF2 <- read.csv(LIMSDFParsedFN)%>%
+  mutate(Date=as.Date(Date))
+
+LIMSDF <- ParseData(LIMSDFParsedFN)
+
+
+LIMSDF%>%
+  rename(Date = sample_collect_date)%>%
+  select(Date)%>%
+  mutate(Temp1 = ifelse(is.na(as.numeric(Date)),
+                        NA,
+                        as.Date(as.numeric(Date),origin = "1899-12-30")),
+         Temp2 = ifelse(is.na(as.numeric(Date)),
+                        as.Date(strptime(Date,format = "%m/%d/%Y")),
+                        NA))%>%
+  mutate(Date2 = as.Date(ifelse(is.na(as.numeric(Date)),
+                             Temp2,
+                             Temp1),origin = "1970-01-01"))
+
+
+
+LIMSDF%>%
+  rename(Date = sample_collect_date)%>%
+  select(Date)%>%
+  mutate(Date = as.Date(ifelse(is.na(as.numeric(Date)),
+                             as.Date(strptime(Date,format = "%m/%d/%Y")),
+                             as.Date(as.numeric(Date),origin = "1899-12-30")),
+                        origin = "1970-01-01"))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ```{r LIMS top level data exploration,fig.height=20,fig.width=20}
 head(LIMSDF)
