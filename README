@@ -1,3 +1,5 @@
 Code-Notebooks store all the data exploration and modeling
 
+Data Processing is in Code-Notebooks/DataExplanation/RawToProccessed.Rmd
+
 Functions are in lib
