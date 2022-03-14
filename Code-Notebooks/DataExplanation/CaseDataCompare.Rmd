@@ -19,9 +19,6 @@ knitr::opts_chunk$set(
 library(shiny)
 library(ggpubr)
 library(dplyr)
-library(shinydashboard)
-library(shinyjqui)
-library(shinycssloaders)
 
 #Data Files and prepwork
 source("../Scripts/GenPlotMaking.R")
@@ -82,4 +79,49 @@ inner_join(HFGCaseDF2,LatCaseDF2,by=c("Date","Site"))%>%
   #geom_point(aes(x=Date,y=ConfirmedCases,color=Diff>75))+
   geom_abline()
 
+```
+
+
+```{r}
+head(HFGCaseDF)
+#EpisodeCases: A metric that counts when people first have symptoms
+#CollectedCases: counts when people report they have Covid
+#ConfirmedCases: counts when test results come back saying they have Covid
+#ReportedCases: A day delayed Confirmed cases that match's what the government reports
+
+#-999 means that the number of cases was between 1 and 5
+MainHFGCaseDF <- HFGCaseDF%>%
+  mutate(EpisodeCases=ifelse(EpisodeCases==-999,2.5,EpisodeCases),
+         CollectedCases=ifelse(CollectedCases==-999,2.5,CollectedCases),
+         ConfirmedCases=ifelse(ConfirmedCases==-999,2.5,ConfirmedCases),
+         ReportedCases=ifelse(ReportedCases==-999,2.5,ReportedCases))
+
+MainHFGCaseDF%>%
+  ggplot()+
+  aes(x=Date)+
+  geom_smooth(aes(y=ReportedCases,color="ReportedCases"),span =.4,se=FALSE)+
+  geom_smooth(aes(y=EpisodeCases,color="EpisodeCases"),span =.4,se=FALSE)+
+  geom_smooth(aes(y=CollectedCases,color="CollectedCases"),span =.4,se=FALSE)+
+  geom_smooth(aes(y=ConfirmedCases,color="ConfirmedCases"),span =.4,se=FALSE)+
+  scale_x_date(limits=c(mdy("1/1/2021"),mdy("4/1/2021")))+
+  facet_wrap(~Site,scales="free")
+
+
+MainHFGCaseDF%>%
+  summarise(ReportedCases=mean(ReportedCases,na.rm=TRUE),
+            EpisodeCases=mean(EpisodeCases,na.rm=TRUE),
+            CollectedCases=mean(CollectedCases,na.rm=TRUE),
+            ConfirmedCases=mean(ConfirmedCases,na.rm=TRUE))
+
+
+full_join(MainHFGCaseDF,MainHFGWasteDF)%>%
+  filter(Site %in% c("Kenosha","Madison","Oshkosh","Sun Prairie","Wausau"),Filter=="1")%>%
+  ggplot()+
+  aes(x=Date)+
+  geom_smooth(aes(y=EpisodeCases,color="EpisodeCases"),span =.4,se=FALSE)+
+  geom_smooth(aes(y=CollectedCases,color="CollectedCases"),span =.4,se=FALSE)+
+  geom_smooth(aes(y=ConfirmedCases,color="ConfirmedCases"),span =.4,se=FALSE)+
+  geom_smooth(aes(y=N1/10000,color="N1"),span =.4,se=FALSE)+
+  scale_x_date(limits=c(mdy("1/20/2021"),mdy("3/1/2021")))+
+  facet_wrap(~Site)
 ```
