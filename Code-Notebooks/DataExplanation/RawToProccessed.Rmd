@@ -23,7 +23,10 @@ AVGGenFN <- function(N1, N2) {
 }
 ```
 
-
+Input: `HFG data for stats corrected 071421.xlsx`
+Source: Dagmara email Wed 7/14/2021 7:31 PM
+Output: HFGWasteData071421.csv
+Note: 
 ```{r HFG data for stats corrected 071421}
 #needs: readxl, tidyverse, lubridate
 library(readxl)
@@ -69,7 +72,10 @@ HFGWasteDF <- read.csv(paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processe
 
 `
 
-
+Input: `HFG_data_corrected_w_HF183&CrP_011422.xlsx`
+Source: Dagmara email Fri 2/25/2022 6:15 PM
+Output: HFGWasteData011422.csv
+Note: 
 ```{r HFG data for HFG_data_corrected_w_HF183&CrP_011422.xlsx}
 library(readxl)
 HFGCases2FN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/HFG_data_corrected_w_HF183&CrP_011422.xlsx")
@@ -111,44 +117,10 @@ HFGWasteDF <- read.csv(paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processe
 ```
 
 
-
-
-```{r top level data exploration}
-head(HFGWasteDF)
-
-MainHFGWasteDF <- HFGWasteDF%>%
-  select(Site,Date,Filter,Well,N1,N2,AVG,PMMOV,BCoV)
-
-MainHFGWasteDF%>%
-  ggplot()+
-  geom_point(aes(x=Date,y=N1,color=Filter))+
-  scale_y_log10()+
-  facet_wrap(~Site)
-
-
-MainHFGWasteDF%>%
-  ggplot()+
-  geom_point(aes(x=N1,y=BCoV))+
-  scale_x_log10()+
-  #scale_y_log10()+
-  facet_wrap(~Site)
-
-MainHFGWasteDF%>%
-  ggplot()+
-  geom_point(aes(x=N1,y=PMMOV))+
-  scale_x_log10()+
-  scale_y_log10()+
-  facet_wrap(~Site)
-
-MainHFGWasteDF%>%
-  ggplot()+
-  geom_point(aes(x=N1,y=N2))+
-  scale_x_log10()+
-  scale_y_log10()+
-  facet_wrap(~Site)
-```
-
-
+Input: `HighFreq_CaseData_2021-05-07.csv`
+Source: Steve Wed 5/26/2021 11:25 AM
+Output: HFGCaseData_2021-05-07.csv
+Note: Steve got the data from Nathan
 ```{r HighFreq_CaseData_2021-05-07}
 HFGCasesFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/HighFreq_CaseData_2021-05-07.csv")
 
@@ -175,52 +147,10 @@ HFGCaseDF <- read.csv(paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed
 
 
 
-
-
-```{r}
-head(HFGCaseDF)
-#EpisodeCases: A metric that counts when people first have symptoms
-#CollectedCases: counts when people report they have Covid
-#ConfirmedCases: counts when test results come back saying they have Covid
-#ReportedCases: A day delayed Confirmed cases that match's what the government reports
-
-#-999 means that the number of cases was between 1 and 5
-MainHFGCaseDF <- HFGCaseDF%>%
-  mutate(EpisodeCases=ifelse(EpisodeCases==-999,2.5,EpisodeCases),
-         CollectedCases=ifelse(CollectedCases==-999,2.5,CollectedCases),
-         ConfirmedCases=ifelse(ConfirmedCases==-999,2.5,ConfirmedCases),
-         ReportedCases=ifelse(ReportedCases==-999,2.5,ReportedCases))
-
-MainHFGCaseDF%>%
-  ggplot()+
-  aes(x=Date)+
-  geom_smooth(aes(y=ReportedCases,color="ReportedCases"),span =.4,se=FALSE)+
-  geom_smooth(aes(y=EpisodeCases,color="EpisodeCases"),span =.4,se=FALSE)+
-  geom_smooth(aes(y=CollectedCases,color="CollectedCases"),span =.4,se=FALSE)+
-  geom_smooth(aes(y=ConfirmedCases,color="ConfirmedCases"),span =.4,se=FALSE)+
-  scale_x_date(limits=c(mdy("1/1/2021"),mdy("4/1/2021")))+
-  facet_wrap(~Site,scales="free")
-
-
-MainHFGCaseDF%>%
-  summarise(ReportedCases=mean(ReportedCases,na.rm=TRUE),
-            EpisodeCases=mean(EpisodeCases,na.rm=TRUE),
-            CollectedCases=mean(CollectedCases,na.rm=TRUE),
-            ConfirmedCases=mean(ConfirmedCases,na.rm=TRUE))
-
-
-full_join(MainHFGCaseDF,MainHFGWasteDF)%>%
-  filter(Site %in% c("Kenosha","Madison","Oshkosh","Sun Prairie","Wausau"),Filter=="1")%>%
-  ggplot()+
-  aes(x=Date)+
-  geom_smooth(aes(y=EpisodeCases,color="EpisodeCases"),span =.4,se=FALSE)+
-  geom_smooth(aes(y=CollectedCases,color="CollectedCases"),span =.4,se=FALSE)+
-  geom_smooth(aes(y=ConfirmedCases,color="ConfirmedCases"),span =.4,se=FALSE)+
-  geom_smooth(aes(y=N1/10000,color="N1"),span =.4,se=FALSE)+
-  scale_x_date(limits=c(mdy("1/20/2021"),mdy("3/1/2021")))+
-  facet_wrap(~Site)
-```
-
+Input: `WATERMICRO_WW_COVID-2022-01-07_F_v1.1.xlsx`
+Source: Adelaide Mon 1/10/2022 1:27 PM
+Output: LIMSWasteData_01-25-21_01-05-22.csv
+Note: 
 ```{r WATERMICRO_WW_COVID-2022-01-07_F_v1.1}
 library(readxl)
 LIMSFN <- paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/WATERMICRO_WW_COVID-2022-01-07_F_v1.1.xlsx")
@@ -299,7 +229,10 @@ LIMSDF <- read.csv(LIMSDFParsedFN)%>%
 LIMSDF <- ParseData(LIMSDFParsedFN)
 
 ```
-
+Input: `qPCR Semi-Final Query 2.9.22.xlsx`
+Source: Dagmara Fri 3/4/2022 7:30 PM
+Output: LIMSWasteData_02-09-22.csv
+Note: 
 ```{r qPCR Semi-Final Query 2.9.22}
 LIMSFN <- paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/qPCR Semi-Final Query 2.9.22.xlsx")
 
@@ -416,64 +349,10 @@ LIMSDF <- ParseData(LIMSDFParsedFN)
 
 
 
-
-
-```{r LIMS top level data exploration,fig.height=20,fig.width=20}
-head(LIMSDF)
-
-MainLIMSDFWasteDF <- LIMSDF%>%
-  select(Site,Date,N1,N1Error,N2,AVG,PMMoV,BCoV)
-
-MainLIMSDFWasteDF%>%
-  ggplot()+
-  geom_point(aes(x=Date,y=N1))+
-  scale_y_log10()+
-  facet_wrap(~Site)
-
-
-MainLIMSDFWasteDF%>%
-  ggplot()+
-  geom_point(aes(x=N1,y=BCoV))+
-  scale_x_log10()+
-  #scale_y_log10()+
-  facet_wrap(~Site)
-
-MainLIMSDFWasteDF%>%
-  ggplot()+
-  geom_point(aes(x=N1,y=PMMoV))+
-  scale_x_log10()+
-  scale_y_log10()+
-  facet_wrap(~Site)
-
-MainLIMSDFWasteDF%>%
-  ggplot()+
-  geom_point(aes(x=N1,y=N2))+
-  scale_x_log10()+
-  scale_y_log10()+
-  facet_wrap(~Site)
-
-MainLIMSDFWasteDF%>%
-  ggplot()+
-  geom_point(aes(x=N1,y=N1Error))+
-  scale_x_log10()+
-  scale_y_log10()+
-  facet_wrap(~Site)
-
-MainLIMSDFWasteDF%>%
-  ggplot()+
-  geom_point(aes(x=PMMoV,y=N1Error))+
-  scale_x_log10()+
-  scale_y_log10()+
-  facet_wrap(~Site)
-
-MainLIMSDFWasteDF%>%
-  ggplot()+
-  geom_point(aes(x=BCoV,y=N1Error))+
-  scale_x_log10()+
-  scale_y_log10()+
-  facet_wrap(~Site)
-```
-
+Input: `qPCR Semi-Final Query 2.9.22.xlsx`
+Source: Not sure
+Output: MMSD_Cases_2022_01_12_processed.csv
+Note: 
 ```{r MSD_Cases_2022_01_12}
 LIMSCaseMMSDFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/MMSD_Cases_2022_01_12.csv")
 LIMSSpringDormFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/raw/SpringSemester_CasesByDorm.TSV")
@@ -523,13 +402,18 @@ MMSDdata  <-  read.csv(LIMSCaseMMSDFN)%>%
 MadisonCaseDF <- rbind(rbind(MMSDdata,SpringDorms,FallDorms))
 
 
-write.csv(MadisonCaseDF,paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/MMSD_Cases_2022_01_12_processed.csv"),row.names=FALSE)
+#write.csv(MadisonCaseDF,paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/MMSD_Cases_2022_01_12_processed.csv"),row.names=FALSE)
 
 MadisonCaseDF <- read.csv(paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/MMSD_Cases_processed.csv"))%>%
   mutate(Date=as.Date(Date))
 ```
 
 
+
+Input: `HFG_data_corrected_w_HF183&CrP_F.csv`
+Source: Dagmara Fri, 19 Nov 2021 01:16:29
+Output: UpdatedHFGFN.csv
+Note: 
 ```{r HFG Updated Data}
 
 MissingCode <-c("","NA","0","Undetected","Not Detected",
@@ -574,57 +458,18 @@ HFGWasteDF
 
 HFGDataDiff <- full_join(UpdatedHFGDF,HFGWasteDF)
 
-ggplotly(DiffPlot)
 ```
 
 
 
 
-```{r Madison Case Top level exploration}
 
-head(MadisonCaseDF)
-
-MadisonCaseDF%>%
-  ggplot()+
-  aes(x=Date)+
-  geom_point(aes(y=Tests,color="Tests"))+
-  geom_point(aes(y=Cases,color="Cases"))
-
-MadisonCaseDF%>%
-  ggplot()+
-  geom_point(aes(x=Cases,y=Tests))+
-  scale_y_log10()+
-  scale_x_log10()
-```
-
-```{r Case format comperison}
-ColsName <- c(colnames(MadisonCaseDF),
-#colnames(LIMSDF),
-#colnames(HFGWasteDF),
-colnames(HFGCaseDF))
-
-UniqueColsName <- unique(ColsName)
-
-length(ColsName)
-length(UniqueColsName)
-```
-
-```{r WasteWater format comperison}
-ColsName <- c(
-colnames(LIMSDF),
-colnames(HFGWasteDF))
-
-UniqueColsName <- unique(ColsName)
-
-length(ColsName)
-length(UniqueColsName)
-
-UniqueColsName
-```
-
-
-
+Input: `MSN_Interceptor_Cases.csv`
+Source: Nathan Fri 2/4/2022 4:32 PM
+Output: MMSD_Interceptor_Cases_2_7_22.csv
+Note: 
 ```{r MSN_Interceptor_Cases 2/7/22}
+BaseDir <- "Z:"
 MadisonCaseFN  <-  paste0(BaseDir, "COVID-19_WastewaterAnalysis/data/raw/MSN_Interceptor_Cases.csv")
 DF <- read.csv(MadisonCaseFN)%>%
   rename(Site = INFLUENT_F)%>%
@@ -650,8 +495,6 @@ ConDate <- DF%>%
   summarise(FirstConfirmed = n())%>%
   rename(Date = FirstConfirmedDt)
 
-
-
 CaseDF <- full_join(EDate,full_join(SpecDate,ConDate, by = c("Date","Site")), by = c("Date","Site"))
 
 MadDF <- CaseDF%>%
@@ -661,14 +504,6 @@ MadDF <- CaseDF%>%
             FirstConfirmed = sum(FirstConfirmed,is.na=TRUE))%>%
   mutate(Site="Madison")
 CaseDF <- rbind(CaseDF,MadDF)
-
-CaseDF%>%
-  ggplot()+
-  aes(x=Date)+
-  geom_point(aes(y=EpisodeCase,color="EpisodeCase"))+
-  geom_point(aes(y=SpecCollectedCase,color="SpecCollectedCase"))+
-  geom_point(aes(y=FirstConfirmed,color="FirstConfirmed"))+
-  facet_wrap(~Site)
 
 
 #write.csv(CaseDF,paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/MMSD_Interceptor_Cases_2_7_22.csv"),row.names=FALSE)
