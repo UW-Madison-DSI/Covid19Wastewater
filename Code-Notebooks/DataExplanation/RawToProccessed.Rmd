@@ -469,7 +469,6 @@ Source: Nathan Fri 2/4/2022 4:32 PM
 Output: MMSD_Interceptor_Cases_2_7_22.csv
 Note: 
 ```{r MSN_Interceptor_Cases 2/7/22}
-BaseDir <- "Z:"
 MadisonCaseFN  <-  paste0(BaseDir, "COVID-19_WastewaterAnalysis/data/raw/MSN_Interceptor_Cases.csv")
 DF <- read.csv(MadisonCaseFN)%>%
   rename(Site = INFLUENT_F)%>%
