@@ -83,7 +83,7 @@ LIMSFullDF <- ParseData(LIMSWastePath(BaseDir))%>%
   mutate(N1Pure = ifelse(is.na(N1),N1,N1),
          N1Pure = ifelse(is.na(N1),N1,N1),
          GeoMeanN12 = exp((log(N1Pure)+log(N1Pure))/2))%>%
-  select(Date, Site, N1, BCoV , N1 , PMMoV,
+  select(Date, Site, N1, BCoV , N2 , PMMoV,
          GeoMeanN12,FlowRate,temperature,equiv_sewage_amt)
 
 #joining the two data frames together
@@ -319,9 +319,8 @@ InterceptRatioPlot <- FullDFMassRatio.Inter%>%
   arrange(Ratio)%>%
   select(Ratio,nIntercepter, everything())%>%
   ggplot(aes(x=Date))+
-  geom_line(aes(y= Ratio,color = Site))
-
-ggplotly(InterceptRatioPlot)
+  geom_point(aes(y= Ratio,color = Site))
+#ggplotly(InterceptRatioPlot)
 
 
 FullDFMassRatio.Inter%>%
@@ -333,6 +332,92 @@ FullDFMassRatio.Inter%>%
   arrange(Ratio)%>%
   select(Ratio,nIntercepter, everything())#%>%
   #summarise(mean(Ratio))
+```
+
+```{r N1 Normalizer}
+SizeUsed=.5
+alphaUsed=.9
+
+IntercepterDF <- FullDF %>%
+  filter(Site != "Madison") #We are looking for agreement between the interceptors
+                            #after some normalization so Madison just distracts
+
+
+IntercepterOverLay <- IntercepterDF%>%
+  ggplot(aes(x=Date))+
+  geom_point(aes(y=N1,color = Site),size = SizeUsed, alpha= alphaUsed,shape=15)+
+  geom_point(aes(y=N2/10000,color = Site),size = SizeUsed, alpha= alphaUsed,shape=19)+
+  scale_y_log10()
+
+ggplotly(IntercepterOverLay)
+
+
+IntercepterOverLayFlow <- IntercepterDF%>%
+  ggplot(aes(x=Date))+
+  geom_point(aes(y=N1*FlowRate,color = Site),size = SizeUsed, alpha= alphaUsed,shape=15)+
+  geom_point(aes(y=N2*FlowRate/10000,color = Site),size = SizeUsed, alpha= alphaUsed,shape=19)+
+  scale_y_log10()
+
+ggplotly(IntercepterOverLayFlow)
+
+
+IntercepterOverLayPop <- IntercepterDF%>%
+  mutate(Pop = case_when(
+    Site=="MMSD-P2" ~ 111967,
+    Site=="MMSD-P7" ~ 81977,
+    Site=="MMSD-P8" ~ 127634,
+    Site=="MMSD-P11" ~ 130799,
+    Site=="MMSD-P18" ~ 151470,
+    Site=="Madison" ~ 603847,
+  ))%>%
+  ggplot(aes(x=Date))+
+  geom_point(aes(y=N1/Pop,color = Site),size = SizeUsed, alpha= alphaUsed,shape=15)+
+  geom_point(aes(y=N2/(FlowRate*1e8),color = Site),size = SizeUsed, alpha= alphaUsed,shape=19)+
+  scale_y_log10()
+
+ggplotly(IntercepterOverLayPop)
+
+
+
+InterceptRatioDF <- FullDF%>%
+  filter(Site!="Madison")%>%
+  group_by(Date)%>%
+  filter(!is.na(N1))%>%
+  summarise(SC2_InterSum_N1 = sum(N1*FlowRate,na.rm = TRUE),
+            SC2_InterSum_N2 = sum(N2*FlowRate,na.rm = TRUE),
+            nIntercepter = n())%>%
+  full_join(FullDF)%>%
+  filter(!is.na(N1))%>%
+  mutate(RatioN1 = (N1*FlowRate/SC2_InterSum_N1)*(nIntercepter/5),
+         RatioN2 = (N2*FlowRate/SC2_InterSum_N2)*(nIntercepter/5))%>%
+  select(RatioN1,RatioN2,nIntercepter, everything())
+
+InterceptRatioPlot <- InterceptRatioDF%>%
+  ggplot(aes(x=Date))+
+  geom_point(aes(y=RatioN1,color = Site),size = SizeUsed, alpha= alphaUsed,shape=15)+
+  geom_point(aes(y=RatioN2-5,color = Site),size = SizeUsed, alpha= alphaUsed,shape=19)
+ggplotly(InterceptRatioPlot)
+
+
+InterceptRatioPlotFlow <- InterceptRatioDF%>%
+  ggplot(aes(x=Date))+
+  geom_point(aes(y=RatioN1/FlowRate,color = Site),size = SizeUsed, alpha= alphaUsed,shape=15)+
+  geom_point(aes(y=RatioN2/FlowRate-.3,color = Site),size = SizeUsed, alpha= alphaUsed,shape=19)
+ggplotly(InterceptRatioPlot)
+
+InterceptRatioPlotPop <- InterceptRatioDF%>%
+  mutate(Pop = case_when(
+    Site=="MMSD-P2" ~ 111967,
+    Site=="MMSD-P7" ~ 81977,
+    Site=="MMSD-P8" ~ 127634,
+    Site=="MMSD-P11" ~ 130799,
+    Site=="MMSD-P18" ~ 151470,
+    Site=="Madison" ~ 603847,
+  ))%>%
+  ggplot(aes(x=Date))+
+  geom_point(aes(y=RatioN1/Pop,color = Site),size = SizeUsed, alpha= alphaUsed,shape=15)+
+  geom_point(aes(y=RatioN2/Pop-.3,color = Site),size = SizeUsed, alpha= alphaUsed,shape=19)
+ggplotly(InterceptRatioPlot)
 ```
 
 ```{r Cases,include = FALSE}
@@ -358,7 +443,7 @@ IntercepterOverLay <- FullDFMassRatio.Inter%>%
   complete(Date,Site)%>%
   full_join(FullDFMassRatio)%>%
   ggplot(aes(x=Date))+
-  geom_line(aes(y=N1,color = Site))+
+  geom_point(aes(y=N1,color = Site),alpha=.8)+
   scale_y_log10()
 ggplotly(IntercepterOverLay)
 
@@ -382,6 +467,9 @@ N1BalencePlot <- FullDFMassRatio.Inter%>%
   
 
 ggplotly(N1BalencePlot)
+
+
+
 
 
 
