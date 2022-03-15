@@ -39,6 +39,8 @@ library(ggpubr)
 source("../../lib/DataProccess.R")
 source("../../lib/NormFuncs.R")
 source("../../lib/OutlierDetectionFuncs.R")
+source("../../lib/DataPathName.R")
+BaseDir <- params$BaseDir#get the root of the directory where the data is stored
 ```
 
 ```{r helpful data manipulations, include = FALSE}
@@ -57,23 +59,26 @@ SecondAxisFormat <- list(#Second Axis components
 ```
 
 
+"Files Used: "
+
+`r LIMSCasePath(BaseDir)`
+
+`r LIMSWastePath(BaseDir)`
+
 
 ```{r DF Set Up, echo=FALSE}
-BaseDir <- params$BaseDir#get the root of the directory where the data is stored
-#All the Madison data is contained in these two files#MMSD_Cases_processed
-MadisonCaseFN  <-  paste0(BaseDir, "COVID-19_WastewaterAnalysis/data/processed/MMSD_Interceptor_Cases_2_7_22.csv")
-#LIMSFN <- paste0(BaseDir, "COVID-19_WastewaterAnalysis/data/processed/LIMSWasteData_01-25-21_01-05-22.csv")
-LIMSFN <- paste0(BaseDir, "COVID-19_WastewaterAnalysis/data/processed/LIMSWasteData_02-09-22.csv")
+
 
 #Importing the Madison case data
-LatCaseDF <- ParseData(MadisonCaseFN)%>% 
+LatCaseDF <- ParseData(LIMSCasePath(BaseDir))%>% 
   mutate(SevenDayMACases = rollapply(data = FirstConfirmed, width = 7, FUN = mean, 
                             na.rm = TRUE,fill=NA))%>%
   filter(Date>ymd("2020-9-10"))%>%
   select(Date, Site, FirstConfirmed,SevenDayMACases)
 SiteData <- unique(LatCaseDF$Site)
+
 #Importing the Madison waste water data
-LIMSFullDF <- ParseData(LIMSFN)%>%
+LIMSFullDF <- ParseData(LIMSWastePath(BaseDir))%>%
   filter(Site %in% SiteData)%>%
   mutate(N1Pure = ifelse(is.na(N1),N1,N1),
          N1Pure = ifelse(is.na(N1),N1,N1),
@@ -303,23 +308,6 @@ MassBalencePlot <- FullDFMassRatio.Inter%>%
 ggplotly(MassBalencePlot)
 
 
-N_One_Outliers <- c(ymd("2021-04-15"), ymd("2021-04-26"), ymd("2021-07-26"), ymd("2021-12-13"))
-N_TWO_Outliers <- c(ymd("2021-04-15"), ymd("2021-05-20"))
-
-
-
-FullDFMassRatio.Inter%>%
-  group_by(Date)%>%
-  summarise(SC2_InterSum = sum(SC2_mass,na.rm = TRUE),
-            nIntercepter = n())%>%
-  inner_join(FullDFMassRatio.Mad)%>%
-  mutate(Ratio = (SC2_InterSum/SC2_mass)*(5/nIntercepter))%>%
-  arrange(Ratio)%>%
-  select(Ratio,nIntercepter, everything())#%>%
-  #summarise(mean(Ratio))
-LowRatioN_One <- c("2021-04-15","2021-07-26","2021-12-13","2021-05-31","2021-03-22")
-
-LowRatioN_TWO <- c("2021-04-15","2021-07-26","2021-12-13","2021-10-04","2021-03-22")
 
 
 InterceptRatioPlot <- FullDFMassRatio.Inter%>%
@@ -334,6 +322,17 @@ InterceptRatioPlot <- FullDFMassRatio.Inter%>%
   geom_line(aes(y= Ratio,color = Site))
 
 ggplotly(InterceptRatioPlot)
+
+
+FullDFMassRatio.Inter%>%
+  group_by(Date)%>%
+  summarise(SC2_InterSum = sum(SC2_mass,na.rm = TRUE),
+            nIntercepter = n())%>%
+  inner_join(FullDFMassRatio.Mad)%>%
+  mutate(Ratio = (SC2_mass/SC2_InterSum)*(nIntercepter/5))%>%
+  arrange(Ratio)%>%
+  select(Ratio,nIntercepter, everything())#%>%
+  #summarise(mean(Ratio))
 ```
 
 ```{r Cases,include = FALSE}

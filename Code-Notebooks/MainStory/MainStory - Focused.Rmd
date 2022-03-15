@@ -41,7 +41,7 @@ knitr::opts_chunk$set(
 ```
 
 
-```{r Start enviroment, echo=FALSE, message=FALSE, warning=FALSE}
+```{r Start enviroment, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE}
 library(dplyr)
 library(ggplot2)
 library(lmtest)
@@ -57,7 +57,11 @@ library(formattable)
 source("../../lib/DataProccess.R")
 source("../../lib/NormFuncs.R")
 source("../../lib/OutlierDetectionFuncs.R")
+source("../../lib/DataPathName.R")
+BaseDir <- params$BaseDir#get the root of the directory where the data is stored
 ```
+
+
 
 ```{r helpful data manipulations, include = FALSE}
 SelectedIndVar <- params$IndVar#Var Used in Analysis
@@ -84,16 +88,19 @@ SecondAxisFormat <- list(#Second Axis components
 
 ```
 
+"Files Used: "
+
+`r LIMSCasePath(BaseDir)`
+
+`r LIMSWastePath(BaseDir)`
+
 
 ```{r DF Set Up, echo=FALSE}
-BaseDir <- params$BaseDir#get the root of the directory where the data is stored
-#All the Madison data is contained in these two files#MMSD_Cases_processed
-MadisonCaseFN  <-  paste0(BaseDir, "COVID-19_WastewaterAnalysis/data/processed/MMSD_Cases_2022_01_12_processed.csv")
-#LIMSFN <- paste0(BaseDir, "COVID-19_WastewaterAnalysis/data/processed/LIMSWasteData_01-25-21_01-05-22.csv")
-LIMSFN <- paste0(BaseDir, "COVID-19_WastewaterAnalysis/data/processed/LIMSWasteData_02-09-22.csv")
+
 
 #Importing the Madison case data
-LatCaseDF <- ParseData(MadisonCaseFN)%>% 
+LatCaseDF <- ParseData(LIMSCasePath(BaseDir))%>% 
+  rename(Cases = EpisodeCase)%>%
   filter(Site == "Madison")%>%
   mutate(SevenDayMACases = rollapply(data = Cases, width = 7, FUN = mean, 
                             na.rm = TRUE,fill=NA))%>%
@@ -101,7 +108,7 @@ LatCaseDF <- ParseData(MadisonCaseFN)%>%
   select(Date, Site, Cases,SevenDayMACases)
 
 #Importing the Madison waste water data
-LIMSFullDF <- ParseData(LIMSFN)%>%
+LIMSFullDF <- ParseData(LIMSWastePath(BaseDir))%>%
   filter(Site == "Madison")%>%
   mutate(N1Pure = ifelse(is.na(N1),N2,N1),
          N2Pure = ifelse(is.na(N2),N1,N2),

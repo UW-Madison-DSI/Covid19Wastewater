@@ -41,6 +41,8 @@ library(formattable)
 source("../../lib/DataProccess.R")
 source("../../lib/NormFuncs.R")
 source("../../lib/OutlierDetectionFuncs.R")
+source("../../lib/DataPathName.R")
+BaseDir <- params$BaseDir#get the root of the directory where the data is stored
 ```
 
 ```{r helpful data manipulations, include = FALSE}
@@ -70,23 +72,25 @@ SecondAxisFormat <- list(#Second Axis components
 ```
 
 
+"Files Used: "
+
+`r LIMSCasePath(BaseDir)`
+
+`r LIMSWastePath(BaseDir)`
 
 ```{r DF Set Up, echo=FALSE}
-BaseDir <- params$BaseDir#get the root of the directory where the data is stored
-#All the Madison data is contained in these two files#MMSD_Cases_processed
-MadisonCaseFN  <-  paste0(BaseDir, "COVID-19_WastewaterAnalysis/data/processed/MMSD_Interceptor_Cases_2_7_22.csv")
-LIMSFN <- paste0(BaseDir, "COVID-19_WastewaterAnalysis/data/processed/LIMSWasteData_01-25-21_01-05-22.csv")
-
 
 #Importing the Madison case data
-LatCaseDF <- ParseData(MadisonCaseFN)%>% 
+LatCaseDF <- ParseData(LIMSCasePath(BaseDir))%>% 
   mutate(SevenDayMACases = rollapply(data = !!sym(SelectedDepVar), width = 7, FUN = mean, 
                             na.rm = TRUE,fill=NA))%>%
-  filter(Date>ymd("2020-9-10"))%>%
+  #filter(Date>ymd("2020-9-10"))%>%
   select(Date, Site, SelectedDepVar,SevenDayMACases)
+
 SiteData <- unique(LatCaseDF$Site)
 #Importing the Madison waste water data
-LIMSFullDF <- ParseData(LIMSFN)%>%
+
+LIMSFullDF <- ParseData(LIMSWastePath(BaseDir))%>%
   filter(Site %in% SiteData)%>%
   mutate(N1Pure = ifelse(is.na(N1),N2,N1),
          N2Pure = ifelse(is.na(N2),N1,N2),

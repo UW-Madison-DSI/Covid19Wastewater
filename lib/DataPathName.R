@@ -9,11 +9,11 @@ HFGCasePath = function(BaseDir){
 }
 
 LIMSWastePath = function(BaseDir){
-  PathName = paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/LIMSWasteData_01-25-21_01-05-22.csv")
+  PathName = paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/LIMSWasteData_02-09-22.csv")
   return(PathName)
 }
 
 LIMSCasePath = function(BaseDir){
-  PathName = paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/MMSD_Cases_processed.csv")
+  PathName = paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/MMSD_Interceptor_Cases_2_7_22.csv")
   return(PathName)
 }

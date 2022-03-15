@@ -30,6 +30,9 @@ library(formattable)
 source("../../lib/DataProccess.R")
 source("../../lib/NormFuncs.R")
 source("../../lib/OutlierDetectionFuncs.R")
+
+source("../../lib/DataPathName.R")
+BaseDir <- params$BaseDir#get the root of the directory where the data is stored
 ```
 
 ```{r helpful data manipulations, include = FALSE}
@@ -53,30 +56,40 @@ NameingRule <- c("N1" = "N1",
 
 The two data sets used in this analysis are the Madison case data sourced from the Wisconsin DHS and wastewater  concentration data produced by the Wisconsin State Laboratory of Hygiene. This wastewater data has entries every couple of days from November 15 2020 to June 24 2021.
 
-```{r DF Set Up, echo=FALSE}
-BaseDir <- params$BaseDir#get the root of the directory where the data is stored
+"Files Used: "
 
-#All the Madison data is contained in these two files#MMSD_Cases_processed
-MadisonCaseFN  <-  paste0(BaseDir, "COVID-19_WastewaterAnalysis/data/processed/MMSD_Cases_2022_01_12_processed.csv")
-LIMSFN <- paste0(BaseDir, "COVID-19_WastewaterAnalysis/data/processed/LIMSWasteData_01-25-21_01-05-22.csv")
+`r LIMSCasePath(BaseDir)`
+
+`r LIMSWastePath(BaseDir)`
+
+
+```{r DF Set Up, echo=FALSE}
+#directy current
+#simbolic link. shortcut to most recent
+#might not work with reserch drive
+#Include Hash of git commit
+#Include some summary of the data. Sanity check
+#Dimintion if rectangular, number of unique values in each column
+#header 
 
 
 #Importing the Madison case data
-LatCaseDF <- ParseData(MadisonCaseFN)%>% 
-  filter(Site == "Madison")%>%
+LatCaseDF <- ParseData(LIMSCasePath(BaseDir))%>% 
+  rename(Cases = FirstConfirmed)%>%
+  #filter(Site == "Madison")%>%
   mutate(SevenDayMACases = rollapply(data = Cases, width = 7, FUN = mean, 
                             na.rm = TRUE,fill=NA))%>%
   filter(Date>ymd("2020-9-10"))%>%
-  select(Date, Site, Cases,SevenDayMACases)
+  select(Date, Site, Cases,SevenDayMACases,everything())
 
 #Importing the Madison waste water data
-LIMSFullDF <- ParseData(LIMSFN)%>%
-  filter(Site == "Madison")%>%
+LIMSFullDF <- ParseData(LIMSWastePath(BaseDir))%>%
+  #filter(Site == "Madison")%>%
   mutate(N1Pure = ifelse(is.na(N1),N2,N1),
          N2Pure = ifelse(is.na(N2),N1,N2),
          GeoMeanN12 = exp((log(N1Pure)+log(N2Pure))/2))%>%
   select(Date, Site, N1, BCoV , N2 , PMMoV,
-         GeoMeanN12,FlowRate,temperature,equiv_sewage_amt)
+         GeoMeanN12,FlowRate,temperature,equiv_sewage_amt,everything())
 
 #joining the two data frames together
 FullDF <- full_join(LatCaseDF,LIMSFullDF, by = c("Date","Site"))
@@ -254,5 +267,86 @@ t.test(PMMoV ~ DetectedOutlier, data = ErrorMarkedDF)
 
 #26203622#29931423
 #149752.0#461781.5
+```
+
+
+```{r Use smoothing to look for covariant trends}
+LoessFunc <- function(DF,SpanConstant = .01,Var="N1"){
+  MainDF <- DF
+  MainDF[[paste0("loess",Var)]] <- loessFit(y=(MainDF[[Var]]), 
+                      x=MainDF$Date, #create loess fit of the data
+                      span=SpanConstant, #span of .2 seems to give the best result, not rigorously chosen
+                      iterations=2)$fitted#2 iterations remove some bad patterns
+  return(MainDF)
+}
+LoessN1Messurement <- FullDF%>%
+  group_split(Site) %>%
+  purrr::map_dfr(LoessFunc)
+
+ErrorCompPlot <- function(ErrorVar="N1",CompVar="N2"){
+  ErrorPlotDF <- FullDF%>%
+    group_split(Site) %>%
+    purrr::map_dfr(LoessFunc,Var = ErrorVar)%>%
+    filter(!is.na(!!sym(paste0("loess",ErrorVar))))%>%
+    mutate(TrendError = abs(!!sym(ErrorVar)-!!sym(paste0("loess",ErrorVar))))
+  
+    NoLogPlot <- ErrorPlotDF%>%
+      ggplot(aes(y=TrendError,x=!!sym(CompVar),info=Date))+
+      geom_point()
+    
+    LogPlot <- ErrorPlotDF%>%
+      ggplot(aes(y=TrendError,x=!!sym(CompVar),info=Date))+
+      geom_point()+
+      scale_y_log10()+
+      scale_x_log10()
+    #print(ggplotly(NoLogPlot))
+    #print(ggplotly(LogPlot))
+    print((NoLogPlot))
+    print((LogPlot))
+    Formula <- as.formula(
+        paste("TrendError", 
+        paste(CompVar, collapse = " + "), 
+        sep = " ~ "))
+
+    fit <- lm(Formula, data = ErrorPlotDF)
+    print(summary(fit)$coefficients[,4]) 
+    print(summary(fit)$r.squared)
+  return()
+}
+PlotVarNames <- LoessN1Messurement%>%
+  select_if(function(col) length(unique(col))>1)%>%
+  names()
+
+#names(LoessN1Messurement)
+for (Name in PlotVarNames){
+  try(
+    print(ErrorCompPlot(CompVar = Name))
+  )
+}
+
+
+ModelDF <- FullDF%>%
+    group_split(Site) %>%
+    purrr::map_dfr(LoessFunc,Var = "N1")%>%
+    filter(!is.na(loessN1))%>%
+    mutate(TrendError = abs(N1-loessN1))
+
+
+#fmla <- as.formula(paste0("loessN1 ~ ", paste(PlotVarNames[c(3:56,66)], collapse= " + ")))
+#summary(lm(fmla,data = ModelDF))
+#names(LoessN1Messurement)
+
+library(caret)
+library(randomForest)
+library(varImp)
+
+#regressor <- randomForest(TrendError ~ . , data= ModelDF, 
+#                          importance=TRUE, na.action = na.pass) # fit the random forest with default parameter
+
+#varImp(regressor) # get variable importance, based on mean decrease in accuracy
+
+#varImp(regressor, conditional=TRUE) # conditional=True, adjusts for correlations between predictors
+
+#varimpAUC(regressor)
 ```
 
