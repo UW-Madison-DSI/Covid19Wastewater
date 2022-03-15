@@ -279,17 +279,11 @@ LoessFunc <- function(DF,SpanConstant = .01,Var="N1"){
                       iterations=2)$fitted#2 iterations remove some bad patterns
   return(MainDF)
 }
-LoessN1Messurement <- FullDF%>%
-  group_split(Site) %>%
-  purrr::map_dfr(LoessFunc)
+
+
 
 ErrorCompPlot <- function(ErrorVar="N1",CompVar="N2"){
-  ErrorPlotDF <- FullDF%>%
-    group_split(Site) %>%
-    purrr::map_dfr(LoessFunc,Var = ErrorVar)%>%
-    filter(!is.na(!!sym(paste0("loess",ErrorVar))))%>%
-    mutate(TrendError = abs(!!sym(ErrorVar)-!!sym(paste0("loess",ErrorVar))))
-  
+  ErrorPlotDF <- ModFullDF
     NoLogPlot <- ErrorPlotDF%>%
       ggplot(aes(y=TrendError,x=!!sym(CompVar),info=Date))+
       geom_point()
@@ -313,40 +307,28 @@ ErrorCompPlot <- function(ErrorVar="N1",CompVar="N2"){
     print(summary(fit)$r.squared)
   return()
 }
-PlotVarNames <- LoessN1Messurement%>%
-  select_if(function(col) length(unique(col))>1)%>%
-  names()
 
-#names(LoessN1Messurement)
-for (Name in PlotVarNames){
-  try(
-    print(ErrorCompPlot(CompVar = Name))
-  )
-}
-
-
-ModelDF <- FullDF%>%
+ModFullDF <- FullDF%>%
     group_split(Site) %>%
     purrr::map_dfr(LoessFunc,Var = "N1")%>%
-    filter(!is.na(loessN1))%>%
-    mutate(TrendError = abs(N1-loessN1))
+    filter(!is.na(!!sym(paste0("loess", "N1"))))%>%
+    mutate(TrendError = abs(N1-!!sym(paste0("loess","N1"))))%>%
+    group_by(Site)%>%
+    filter(mean(TrendError)!=0,
+           !is.na(TrendError))
 
-
-#fmla <- as.formula(paste0("loessN1 ~ ", paste(PlotVarNames[c(3:56,66)], collapse= " + ")))
-#summary(lm(fmla,data = ModelDF))
 #names(LoessN1Messurement)
+for (Name in names(ModFullDF)){
+  Entries = length(!is.na(unique(ModFullDF[[Name]])))
+  print(paste0("Number of entries: ", Entries))
+  if(Entries>5){
+    print(paste0("Explain Var: ", Name))
+    try(
+      
+    ErrorCompPlot(CompVar = Name)
+  )
+  }
+}
 
-library(caret)
-library(randomForest)
-library(varImp)
-
-#regressor <- randomForest(TrendError ~ . , data= ModelDF, 
-#                          importance=TRUE, na.action = na.pass) # fit the random forest with default parameter
-
-#varImp(regressor) # get variable importance, based on mean decrease in accuracy
-
-#varImp(regressor, conditional=TRUE) # conditional=True, adjusts for correlations between predictors
-
-#varimpAUC(regressor)
 ```
 
