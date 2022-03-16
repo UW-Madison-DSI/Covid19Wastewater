@@ -227,27 +227,29 @@ IntercepterDF%>%
 ```{r Per Change}
 IntercepterChangeDF <- IntercepterDF%>%
   filter(!is.na(N1))%>%
-  mutate(ChangeN1 = N1-lag(N1),
-         ChangeN2 = N2-lag(N2),
-         PerChangeN1 = 200*(N1-lag(N1))/(N1+lag(N1)),
-         PerChangeN2 = 200*(N2-lag(N2))/(N2+lag(N2)))
+  mutate(ChangeN1 = lead(N1) - N1,
+         ChangeN2 = lead(N2) - N2,
+         PerChangeN1 = 200*(lead(N1) - N1)/(N1+lead(N1)),
+         PerChangeN2 = 200*(lead(N2) - N2)/(N2+lead(N2)))
 
 
 IntercepterChangeOverLay <- IntercepterChangeDF%>%
   ggplot(aes(x=Date))+
-  geom_point(aes(y=abs(ChangeN1),color = Site),size = SizeUsed,
-             alpha= alphaUsed,shape=N1ShapeUnit)+
-  geom_point(aes(y=abs(ChangeN2),color = Site),size = SizeUsed,
-             alpha= alphaUsed,shape=N2ShapeUnit)+
+  geom_point(aes(y = ChangeN1, color = Site), size = SizeUsed,
+             alpha = alphaUsed, shape=N1ShapeUnit)+
+  geom_point(aes(y = ChangeN2,color = Site), size = SizeUsed,
+             alpha = alphaUsed, shape = N2ShapeUnit)+
   theme_light()#+
   #scale_y_log10()
 
 ggplotly(IntercepterChangeOverLay)
 
 IntercepterPerChangeOverLay <- IntercepterChangeDF%>%
-  ggplot(aes(x=Date))+
-  geom_point(aes(y=PerChangeN1,color = Site),size = SizeUsed, alpha= alphaUsed,shape=N1ShapeUnit)+
-  geom_point(aes(y=PerChangeN2,color = Site),size = SizeUsed, alpha= alphaUsed,shape=N2ShapeUnit)+
+  ggplot(aes(x = Date))+
+  geom_point(aes(y = PerChangeN1, color = Site), size = SizeUsed,
+             alpha = alphaUsed, shape = N1ShapeUnit)+
+  geom_point(aes(y = PerChangeN2, color = Site), size = SizeUsed,
+             alpha= alphaUsed,shape = N2ShapeUnit)+
   theme_light()#+
   #scale_y_log10()
 
@@ -256,10 +258,10 @@ ggplotly(IntercepterPerChangeOverLay)
 
 
 ```{r Loess smoothing plot}
-LoessPlotFunc <- function(SiteFilter,DF,SpanConstant = .163){
+LoessFunc <- function(SiteFilter,DF,SpanConstant = .163){
   MainDF <- DF%>%
     filter(Site==SiteFilter)
-  MainDF[[loessVar]] <- loessFit(y=(MainDF[[SelectedIndVar]]), 
+  MainDF[["loessN1"]] <- loessFit(y=(MainDF[["N1"]]), 
                       x=MainDF$Date, #create loess fit of the data
                       span=SpanConstant, #span of .2 seems to give the best result, not rigorously chosen
                       iterations=2)$fitted#2 iterations remove some bad patterns
@@ -267,7 +269,7 @@ return(MainDF)
 }
 
 SiteLoessDF <- lapply(c("MMSD-P11","MMSD-P18","MMSD-P2","MMSD-P7","MMSD-P8"),
-                      LoessPlotFunc,IntercepterDF,SpanConstant=.2)%>%
+                      LoessFunc,IntercepterDF,SpanConstant=.2)%>%
                 bind_rows()
 
 A <- SiteLoessDF%>%
@@ -279,8 +281,8 @@ A <- SiteLoessDF%>%
 ggplotly(A)
 ```
 
-```{r Loess smoothing plot}
-LoessPlotFunc <- function(SiteFilter,DF){
+```{r SLD smoothing plot}
+SevenDayMAFunc <- function(SiteFilter,DF){
   MainDF <- DF%>%
     filter(Site==SiteFilter)
   MainDF[["SLDCases"]] <- rollapply(data = MainDF$FirstConfirmed, width = 7, FUN = mean, 
@@ -289,7 +291,7 @@ return(MainDF)
 }
 
 SiteLoessDF <- lapply(c("MMSD-P11","MMSD-P18","MMSD-P2","MMSD-P7","MMSD-P8"),
-                      LoessPlotFunc,IntercepterDF)%>%
+                      SevenDayMAFunc,IntercepterDF)%>%
                 bind_rows()
 
 A <- SiteLoessDF%>%
