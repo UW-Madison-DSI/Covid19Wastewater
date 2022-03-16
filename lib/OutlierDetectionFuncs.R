@@ -29,15 +29,19 @@ RollingFunc <- function(Vector,Method,align,Gap=2,DaySmoothed=21){
 
 #method returns list of outlier best guess of data
 OutlierDetectRobustFunc <- function(Vector,method,Gap,align,n = 5,Bin = 21,Lines=FALSE){
-  methReturn <- RollingFunc(Vector,method,DaySmoothed=Bin,align=align)
-  BestVector <- Vector
-  for(i in 1:n){
-    methReturn <- RollingFunc(BestVector,method,DaySmoothed=Bin,Gap=Gap,align=align)
-    BestVector <- ifelse(BestVector>methReturn[[3]]|
-                           BestVector<methReturn[[2]],methReturn[[1]],BestVector)
+  SerLen <- length(Vector)
+  BestVector <- c(rev(Vector[1:(1*Bin)]),Vector,rev(Vector[-(1*Bin):0+(SerLen+1)]))
+  
+  for(i in 1:n){#robustly remove outliers and recalc smooth line
+    
+    methReturn <- RollingFunc(BestVector, Gap=Gap,
+                              method, DaySmoothed=Bin, align=align)
+    
+    BestVector <- ifelse(BestVector>methReturn[[3]] | BestVector<methReturn[[2]],
+                         methReturn[[1]],BestVector)
   }
-  BestVector <- ifelse(is.na(BestVector),methReturn[[1]],BestVector)
-  if(Lines){
+  BestVector <- ifelse(is.na(BestVector),methReturn[[1]],BestVector)[(1:SerLen)+(1*Bin)]
+  if(Lines){#If you want to graph the final threshold
     return(methReturn)
   }
   return(BestVector)
