@@ -136,15 +136,14 @@ SizeUsed = 1.5
 alphaUsed = .9
 N1ShapeUnit = 4
 N2ShapeUnit = 5
-
 IntercepterDF <- FullDF %>%
   mutate(Pop = case_when(
-    Site=="MMSD-P2" ~ 111967,
-    Site=="MMSD-P7" ~ 81977,
-    Site=="MMSD-P8" ~ 127634,
-    Site=="MMSD-P11" ~ 130799,
-    Site=="MMSD-P18" ~ 151470,
-    Site=="Madison" ~ 603847,
+    Site=="MMSD-P2" ~ 83127,#111967
+    Site=="MMSD-P7" ~ 42734, #81977
+    Site=="MMSD-P8" ~ 70024,#127634
+    Site=="MMSD-P11" ~ 156651,#130799
+    Site=="MMSD-P18" ~ 89139,#151470
+    #Site=="Madison" ~ 603847,
   ))%>%
   group_by(Site)%>%
   mutate(FudgeFactor = mean(N1))%>%#Mean of sites to see if it works as normalizer
@@ -187,40 +186,44 @@ ggplotly(IntercepterOverLayPop)
 ```
 
 ```{r Ranking}
+TieMethod <- "average"
+
 IntercepterDF%>%
   ggplot()+
   geom_histogram(aes(x=log(N1)))+
   facet_wrap(~Site)
 
-
-IntercepterDF%>%
+IntercepterCoreDF <- IntercepterDF%>%
+  filter(!is.na(N1))%>%
   group_by(Date)%>%
-  mutate(Ranking = rank(N1,ties.method = "random"))%>%
+  filter(n()==5)
+
+
+IntercepterCoreDF%>%
+  group_by(Date)%>%
+  mutate(Ranking = frank(N1,ties.method = TieMethod))%>%
   group_by(Site)%>%
   summarize(N1AverageRanking = mean(Ranking, na.rm = TRUE))
 
-IntercepterDF%>%
+IntercepterCoreDF%>%
   group_by(Date)%>%
-  mutate(Ranking = rank(N1*FlowRate,ties.method = "random"))%>%
+  mutate(Ranking = frank(N1*FlowRate, ties.method = TieMethod))%>%
   group_by(Site)%>%
   summarize(N1FlowAverageRanking = mean(Ranking, na.rm = TRUE))
 
-IntercepterDF%>%
+IntercepterCoreDF%>%
   group_by(Date)%>%
-  mutate(Ranking = rank(N1/Pop,ties.method = "random"))%>%
+  mutate(Ranking = frank(N1/Pop,ties.method = TieMethod))%>%
   group_by(Site)%>%
   summarize(N1PopAverageRanking = mean(Ranking, na.rm = TRUE))
 
-length(IntercepterDF$Date)
 
-
-IntercepterDF%>%
+IntercepterCoreDF%>%
   group_by(Date)%>%
-  mutate(Ranking = frank(N1,ties.method = "random"))%>%
+  mutate(Ranking = frank(N1, ties.method = TieMethod))%>%
   group_by(Site,Ranking)%>%
-  summarize(SiteNumber = n())%>%
-  ggplot(aes(x=Ranking))+
-  geom_point(aes(y=SiteNumber,color=Site))
+  ggplot()+
+  geom_histogram(aes(x=Ranking,fill=Site),position = "dodge")
 ```
 
 
