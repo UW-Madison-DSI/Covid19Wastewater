@@ -325,7 +325,8 @@ plot(weights,
 ```{r, fig.cap= 'Madison Case data for Madison. SLD Cases is a weighted mean of cases using the gamma distribution as the weight distribution.'}
 SLDSmoothedDF <- UpdatedDF%>%
   mutate(
-    SLDCases = c(rep(NA,SLDWidth-1),#elimination of starting values not relevant as we have a 50+ day buffer of case data
+    SLDCases = c(rep(NA,SLDWidth-1), #elimination of starting values not relevant
+                                     #as we have a 50+ day buffer of case data
                         rollapply(Cases,width=SLDWidth,FUN=weighted.mean,
                                   w=weights,
                                   na.rm = FALSE)

@@ -86,65 +86,72 @@ LIMSFullDF <- ParseData(LIMSWastePath(BaseDir))%>%
          GeoMeanN12,FlowRate,temperature,equiv_sewage_amt)
 
 #joining the two data frames together
-FullDF <- full_join(LatCaseDF,LIMSFullDF, by = c("Date","Site"))
-```
-
-
-```{r Outlier}
-
-MadDF <- filter(FullDF,Site=="Madison")%>%
-    mutate(FlagedOutliers = IdentifyOutliers(N1,Bin = 21, Action = "Flag"),
-           #Manual flagging that method misses due to boundary effect with binning
-           FlagedOutliers = ifelse(Date == mdy("01/26/2021") | Date == mdy("01/27/2021"),
-                                   TRUE, FlagedOutliers),
-           NoOutlierVar = ifelse(FlagedOutliers, NA, N1))
-
-KeyOulierPoints <- c(ymd("2021-06-08"),
-                     ymd("2021-10-17"),
-                     ymd("2021-05-02"),
-                     ymd("2021-01-26"))
-
-NonOuliersDF <- MadDF%>%
-  mutate(Outlier = ifelse(FlagedOutliers,N1,NA))%>%
-           mutate(N1 = NoOutlierVar)%>%
-            filter(!(is.na(N1)))
-
-OutLierPlotDF <- MadDF%>%
-  mutate(Outlier = ifelse(FlagedOutliers,N1,NA))%>%
-           mutate(N1 = NoOutlierVar)%>%
-  filter(!(is.na(N1)&is.na(Outlier)))%>%
-  ggplot(aes(x=Date))+#Data depends on time 
-  geom_point(aes(y=N1,
-                color="N1", 
-                info = N1),data=NonOuliersDF,size=.5)+#compares N1
-  geom_point(aes(y=Outlier,
-                 color="N1 Outlier",
-                 info = Outlier))+
-  theme_light() +
-  #scale_y_log10()+
-  scale_color_manual(values=c("#F8766D","#999999"))
-
-ggplotly(OutLierPlotDF)
-#"2021-06-08","2021-10-17","2021-05-02","2021-01-26"
-
-```
-
-
-
-```{r N1 Normalizer, dpi = 100}
-SizeUsed = 1.5
-alphaUsed = .9
-N1ShapeUnit = 4
-N2ShapeUnit = 5
-IntercepterDF <- FullDF %>%
+FullDF <- full_join(LatCaseDF,LIMSFullDF, by = c("Date","Site"))%>%
   mutate(Pop = case_when(
     Site=="MMSD-P2" ~ 83127,#111967
     Site=="MMSD-P7" ~ 42734, #81977
     Site=="MMSD-P8" ~ 70024,#127634
     Site=="MMSD-P11" ~ 156651,#130799
     Site=="MMSD-P18" ~ 89139,#151470
-    #Site=="Madison" ~ 603847,
-  ))%>%
+    Site=="Madison" ~ 441675,#603847
+  ))
+```
+
+
+```{r Outlier}
+SizeUsed = 1
+alphaUsed = .9
+N1ShapeUnit = 4
+N2ShapeUnit = 5
+
+MadDF <- filter(FullDF,Site=="Madison")%>%
+    mutate(FlagedOutliersN1 = IdentifyOutliers(N1,Bin = 21, Action = "Flag"),
+           FlagedOutliersN2 = IdentifyOutliers(N2,Bin = 21, Action = "Flag"),
+           NoOutlierVarN1 = ifelse(FlagedOutliersN1, NA, N1),
+           NoOutlierVarN2 = ifelse(FlagedOutliersN2, NA, N2),)
+
+
+NonOuliersDF <- MadDF%>%
+  mutate(Outlier = ifelse(FlagedOutliersN1,N1,NA))%>%
+           mutate(N1 = NoOutlierVarN1,
+                  N2 = NoOutlierVarN2)
+
+OutLierPlotDF <- MadDF%>%
+  mutate(OutlierN1 = ifelse(FlagedOutliersN1,N1,NA),
+         OutlierN2 = ifelse(FlagedOutliersN2,N2,NA))%>%
+           mutate(N1 = NoOutlierVarN1,
+                  N2 = NoOutlierVarN2)%>%
+  #filter(!(is.na(N1)&is.na(Outlier)))%>%
+  ggplot(aes(x=Date))+#Data depends on time 
+  geom_point(aes(y=N1,
+                color="N1", 
+                info = N1),data=NonOuliersDF,size=.5)+#compares N1
+  geom_point(aes(y=N2,
+                color="N2", 
+                info = N2),data=NonOuliersDF,size=.5)+#compares N1
+  geom_point(aes(y=OutlierN1,
+                 color="N1 Outlier",
+                 info = OutlierN1))+
+  geom_point(aes(y=OutlierN2,
+                 color="N2 Outlier",
+                 info = OutlierN2))+
+  theme_light()# +
+  #scale_y_log10()+
+  #scale_color_manual(values=c("#F8766D","#999999"))
+
+ggplotly(OutLierPlotDF)
+#"2021-06-08","2021-10-17","2021-05-02","2021-01-26"
+#make shape, not color change
+#jittering
+
+
+
+```
+
+
+
+```{r N1 Normalizer, dpi = 100}
+IntercepterDF <- FullDF %>%
   group_by(Site)%>%
   mutate(FudgeFactor = mean(N1))%>%#Mean of sites to see if it works as normalizer
   filter(Site != "Madison") #We are looking for agreement between the interceptors
@@ -182,7 +189,7 @@ IntercepterOverLayPop <- IntercepterDF%>%
 
 ggplotly(IntercepterOverLayPop)
 
-
+#Get P18 to pop out
 ```
 
 ```{r Ranking}
@@ -190,7 +197,7 @@ TieMethod <- "average"
 
 IntercepterDF%>%
   ggplot()+
-  geom_histogram(aes(x=log(N1)))+
+  geom_histogram(aes(x=log(N1)),bins=15)+
   facet_wrap(~Site)
 
 IntercepterCoreDF <- IntercepterDF%>%
@@ -224,6 +231,10 @@ IntercepterCoreDF%>%
   group_by(Site,Ranking)%>%
   ggplot()+
   geom_histogram(aes(x=Ranking,fill=Site),position = "dodge")
+
+
+#Redo without P18 || The problamatic months
+#Compare results between normalizations
 ```
 
 
@@ -232,8 +243,8 @@ IntercepterChangeDF <- IntercepterDF%>%
   filter(!is.na(N1))%>%
   mutate(ChangeN1 = lead(N1) - N1,
          ChangeN2 = lead(N2) - N2,
-         PerChangeN1 = 200*(lead(N1) - N1)/(N1+lead(N1)),
-         PerChangeN2 = 200*(lead(N2) - N2)/(N2+lead(N2)))
+         PerChangeN1 = log(lead(N1) - N1),
+         PerChangeN2 = log(lead(N2) - N2))
 
 
 IntercepterChangeOverLay <- IntercepterChangeDF%>%
@@ -267,7 +278,7 @@ LoessFunc <- function(SiteFilter,DF,SpanConstant = .163){
   MainDF[["loessN1"]] <- loessFit(y=(MainDF[["N1"]]), 
                       x=MainDF$Date, #create loess fit of the data
                       span=SpanConstant, #span of .2 seems to give the best result, not rigorously chosen
-                      iterations=2)$fitted#2 iterations remove some bad patterns
+                      iterations=5)$fitted#2 iterations remove some bad patterns
 return(MainDF)
 }
 
@@ -282,26 +293,53 @@ A <- SiteLoessDF%>%
   geom_line(aes(y=loessN1,color=Site))+
   scale_y_log10()
 ggplotly(A)
+
+#Facet by normalizations, log/non log, orderered
+#landscape 3 by 1
+#Thumbnails
+#Combine with N2?
+#For comparisions we dont need points
 ```
 
 ```{r SLD smoothing plot}
-SevenDayMAFunc <- function(SiteFilter,DF){
-  MainDF <- DF%>%
-    filter(Site==SiteFilter)
-  MainDF[["SLDCases"]] <- rollapply(data = MainDF$FirstConfirmed, width = 7, FUN = mean, 
-                            na.rm = TRUE,fill=NA)
-return(MainDF)
-}
+Mean <- 11.73
+StandardDeviation <- 7.68
+Scale = StandardDeviation^2/Mean
+Shape = Mean/Scale
+SLDWidth <- 21
+weights <- dgamma(1:SLDWidth, scale = Scale, shape = Shape)
 
-SiteLoessDF <- lapply(c("MMSD-P11","MMSD-P18","MMSD-P2","MMSD-P7","MMSD-P8"),
-                      SevenDayMAFunc,IntercepterDF)%>%
-                bind_rows()
+SiteLoessDF <- FullDF%>%
+  group_by(Site)%>%
+  arrange(Site,Date)%>%
+  filter(Site!="Madison")%>%
+  mutate(SevDayCases = rollmean(x = FirstConfirmed, 7, fill=0))%>%
+  arrange(Site,Date)%>%
+  group_by(Site)#%>%
+  #mutate(SLDCases = c(rep(NA, SLDWidth-1),
+  #                      rollapply(FirstConfirmed, width=SLDWidth, FUN=weighted.mean, 
+  #                               w=weights,
+  #                               na.rm = FALSE)))
 
 A <- SiteLoessDF%>%
-  filter(!is.na(SLDCases))%>%
+  filter(!is.na(SevDayCases),
+         SevDayCases != 0)%>%
   ggplot(aes(x=Date))+
-  geom_point(aes(y=FirstConfirmed,color=Site,shape=Site),data=IntercepterDF,size=.5,alpha=.5)+
-  geom_line(aes(y=SLDCases,color=Site))+
+  geom_point(aes(y = FirstConfirmed, color = Site, shape = Site), 
+             data = IntercepterDF, size = .5, alpha = .5)+
+  geom_line(aes(y = SevDayCases, color = Site))+
+  #geom_line(aes(y = SLDCases, color = Site))+
   scale_y_log10()
 ggplotly(A)
+
+B <- SiteLoessDF%>%
+  filter(!is.na(SevenDayMACases),
+         SevDayCases != 0)%>%
+  ggplot(aes(x=Date))+
+  geom_point(aes(y = FirstConfirmed / Pop, color = Site, shape = Site), 
+             data = IntercepterDF, size = .5, alpha = .5)+
+  geom_line(aes(y = SevDayCases / Pop, color = Site))+
+  #geom_line(aes(y = SLDCases / Pop, color = Site))+
+  scale_y_log10()
+ggplotly(B)
 ```
