@@ -24,16 +24,12 @@ knitr::opts_chunk$set(
 
 ```{r Start enviroment, echo=FALSE, message=FALSE, warning=FALSE}
 library(dplyr)
-library(ggplot2)
-library(lmtest)
 library(lubridate)
-library(limma)
-library(tidyr)
+library(zoo)
+library(ggplot2)
 library(plotly)
-library(gridExtra)
-library(data.table)
-library(formattable)
-library(ggpubr)
+library(limma)
+
 
 #Data Files and prep work
 source("../../lib/DataProccess.R")
@@ -66,14 +62,15 @@ SecondAxisFormat <- list(#Second Axis components
 
 
 ```{r DF Set Up, echo=FALSE}
-
-
 #Importing the Madison case data
 LatCaseDF <- ParseData(LIMSCasePath(BaseDir))%>% 
-  mutate(SevenDayMACases = rollapply(data = FirstConfirmed, width = 7, FUN = mean, 
-                            na.rm = TRUE,fill=NA))%>%
-  filter(Date>ymd("2020-9-10"))%>%
+  mutate(FirstConfirmed = ifelse(is.na(FirstConfirmed),0,FirstConfirmed))%>%
+  arrange(Site,Date)%>%
+  group_by(Site)%>%
+  mutate(SevenDayMACases = rollapply(FirstConfirmed, width = 7, FUN = mean, fill = NA ))%>%
+  filter(Date>ymd("2020-8-10"))%>%
   select(Date, Site, FirstConfirmed,SevenDayMACases)
+
 SiteData <- unique(LatCaseDF$Site)
 
 #Importing the Madison waste water data
@@ -103,10 +100,13 @@ SizeUsed = 1
 alphaUsed = .9
 N1ShapeUnit = 4
 N2ShapeUnit = 5
+HeightJit <- 0
+WidthJit <- 0
+
 
 MadDF <- filter(FullDF,Site=="Madison")%>%
     mutate(FlagedOutliersN1 = IdentifyOutliers(N1,Bin = 21, Action = "Flag"),
-           FlagedOutliersN2 = IdentifyOutliers(N2,Bin = 21, Action = "Flag"),
+           FlagedOutliersN2 = IdentifyOutliers(N2,Bin = 28, Action = "Flag"),
            NoOutlierVarN1 = ifelse(FlagedOutliersN1, NA, N1),
            NoOutlierVarN2 = ifelse(FlagedOutliersN2, NA, N2),)
 
@@ -123,29 +123,25 @@ OutLierPlotDF <- MadDF%>%
                   N2 = NoOutlierVarN2)%>%
   #filter(!(is.na(N1)&is.na(Outlier)))%>%
   ggplot(aes(x=Date))+#Data depends on time 
-  geom_point(aes(y=N1,
-                color="N1", 
-                info = N1),data=NonOuliersDF,size=.5)+#compares N1
-  geom_point(aes(y=N2,
-                color="N2", 
-                info = N2),data=NonOuliersDF,size=.5)+#compares N1
-  geom_point(aes(y=OutlierN1,
-                 color="N1 Outlier",
-                 info = OutlierN1))+
-  geom_point(aes(y=OutlierN2,
-                 color="N2 Outlier",
-                 info = OutlierN2))+
-  theme_light()# +
+  geom_jitter(aes(y=N1, color="inlier", info = N1), 
+             data=NonOuliersDF, size = .5, shape = N1ShapeUnit, stroke = .2,
+             width = WidthJit ,height = HeightJit )+
+  geom_jitter(aes(y=N2, color="inlier",  info = N2), 
+             data=NonOuliersDF, size = .5, shape = N2ShapeUnit, stroke = .2,
+             width = WidthJit ,height = HeightJit )+
+  geom_jitter(aes(y=OutlierN1, color="Outlier", info = OutlierN1),
+             shape=N1ShapeUnit, width = WidthJit ,height = HeightJit )+
+  geom_jitter(aes(y=OutlierN2, color="Outlier", info = OutlierN2),
+             shape=N2ShapeUnit, width = WidthJit ,height = HeightJit )+
+  theme_light() +
   #scale_y_log10()+
-  #scale_color_manual(values=c("#F8766D","#999999"))
+  scale_color_manual(values=c("#F8766D","#999999"))
 
-ggplotly(OutLierPlotDF)
+ggplotly(OutLierPlotDF, tooltip = c("x","y","colour"))%>%
+  config(modeBarButtonsToRemove = c("zoomIn2d", "zoomOut2d","lasso2d",
+                                    "select2d", "autoScale2d"))%>%
+  config(displaylogo = FALSE)
 #"2021-06-08","2021-10-17","2021-05-02","2021-01-26"
-#make shape, not color change
-#jittering
-
-
-
 ```
 
 
@@ -154,88 +150,30 @@ ggplotly(OutLierPlotDF)
 IntercepterDF <- FullDF %>%
   group_by(Site)%>%
   mutate(FudgeFactor = mean(N1))%>%#Mean of sites to see if it works as normalizer
-  filter(Site != "Madison") #We are looking for agreement between the interceptors
-                            #after some normalization so Madison just distracts
+  filter(Site != "Madison")
 
 
-
-
+RotSpacing <- seq(15, 375, length = 6)
+HueSpace <- hcl(h = RotSpacing, l = 65, c = 100)[1:5]
+HueSpace <- c(tail(HueSpace, -3), head(HueSpace, 3))
 IntercepterOverLay <- IntercepterDF%>%
+  filter(Date>mdy("1/1/2021"))%>%
   ggplot(aes(x=Date))+
   geom_point(aes(y=N1,color = Site),size = SizeUsed, alpha= alphaUsed,shape=N1ShapeUnit)+
   geom_point(aes(y=N2,color = Site),size = SizeUsed, alpha= alphaUsed,shape=N2ShapeUnit)+
-  theme_light() +
+  theme_light()+
+  scale_colour_manual(values = HueSpace)+
   scale_y_log10()
 
-ggplotly(IntercepterOverLay)
-
-
-IntercepterOverLayFlow <- IntercepterDF%>%
-  ggplot(aes(x=Date))+
-  geom_point(aes(y=N1*FlowRate,color = Site),size = SizeUsed, alpha= alphaUsed,shape=N1ShapeUnit)+
-  geom_point(aes(y=N2*FlowRate,color = Site),size = SizeUsed, alpha= alphaUsed,shape=N2ShapeUnit)+
-  theme_light() +
-  scale_y_log10()
-
-ggplotly(IntercepterOverLayFlow)
-
-
-IntercepterOverLayPop <- IntercepterDF%>%
-  ggplot(aes(x=Date))+
-  geom_point(aes(y=N1/Pop,color = Site),size = SizeUsed, alpha= alphaUsed,shape=N1ShapeUnit)+
-  geom_point(aes(y=N2/Pop, color = Site),size = SizeUsed, alpha= alphaUsed,shape=N2ShapeUnit)+
-  theme_light() +
-  scale_y_log10()
-
-ggplotly(IntercepterOverLayPop)
+ggplotly(IntercepterOverLay)%>%
+  config(modeBarButtonsToRemove = c("zoomIn2d", "zoomOut2d","lasso2d",
+                                    "select2d", "autoScale2d"))%>%
+  config(displaylogo = FALSE)
 
 #Get P18 to pop out
 ```
 
-```{r Ranking}
-TieMethod <- "average"
 
-IntercepterDF%>%
-  ggplot()+
-  geom_histogram(aes(x=log(N1)),bins=15)+
-  facet_wrap(~Site)
-
-IntercepterCoreDF <- IntercepterDF%>%
-  filter(!is.na(N1))%>%
-  group_by(Date)%>%
-  filter(n()==5)
-
-
-IntercepterCoreDF%>%
-  group_by(Date)%>%
-  mutate(Ranking = frank(N1,ties.method = TieMethod))%>%
-  group_by(Site)%>%
-  summarize(N1AverageRanking = mean(Ranking, na.rm = TRUE))
-
-IntercepterCoreDF%>%
-  group_by(Date)%>%
-  mutate(Ranking = frank(N1*FlowRate, ties.method = TieMethod))%>%
-  group_by(Site)%>%
-  summarize(N1FlowAverageRanking = mean(Ranking, na.rm = TRUE))
-
-IntercepterCoreDF%>%
-  group_by(Date)%>%
-  mutate(Ranking = frank(N1/Pop,ties.method = TieMethod))%>%
-  group_by(Site)%>%
-  summarize(N1PopAverageRanking = mean(Ranking, na.rm = TRUE))
-
-
-IntercepterCoreDF%>%
-  group_by(Date)%>%
-  mutate(Ranking = frank(N1, ties.method = TieMethod))%>%
-  group_by(Site,Ranking)%>%
-  ggplot()+
-  geom_histogram(aes(x=Ranking,fill=Site),position = "dodge")
-
-
-#Redo without P18 || The problamatic months
-#Compare results between normalizations
-```
 
 
 ```{r Per Change}
@@ -253,10 +191,14 @@ IntercepterChangeOverLay <- IntercepterChangeDF%>%
              alpha = alphaUsed, shape=N1ShapeUnit)+
   geom_point(aes(y = ChangeN2,color = Site), size = SizeUsed,
              alpha = alphaUsed, shape = N2ShapeUnit)+
+  scale_colour_manual(values = HueSpace)+
   theme_light()#+
   #scale_y_log10()
 
-ggplotly(IntercepterChangeOverLay)
+ggplotly(IntercepterChangeOverLay)%>%
+  config(modeBarButtonsToRemove = c("zoomIn2d", "zoomOut2d","lasso2d",
+                                    "select2d", "autoScale2d"))%>%
+  config(displaylogo = FALSE)
 
 IntercepterPerChangeOverLay <- IntercepterChangeDF%>%
   ggplot(aes(x = Date))+
@@ -267,7 +209,7 @@ IntercepterPerChangeOverLay <- IntercepterChangeDF%>%
   theme_light()#+
   #scale_y_log10()
 
-ggplotly(IntercepterPerChangeOverLay)
+#ggplotly(IntercepterPerChangeOverLay)
 ```
 
 
@@ -286,19 +228,37 @@ SiteLoessDF <- lapply(c("MMSD-P11","MMSD-P18","MMSD-P2","MMSD-P7","MMSD-P8"),
                       LoessFunc,IntercepterDF,SpanConstant=.2)%>%
                 bind_rows()
 
-A <- SiteLoessDF%>%
-  filter(!is.na(loessN1))%>%
-  ggplot(aes(x=Date))+
-  geom_point(aes(y=N1,color=Site),data=IntercepterDF,size=.5,alpha=.5)+
-  geom_line(aes(y=loessN1,color=Site))+
-  scale_y_log10()
-ggplotly(A)
+BaseColDF <- SiteLoessDF%>%
+  mutate(Norm = "None",
+         Val = loessN1,
+         islog = FALSE)
 
-#Facet by normalizations, log/non log, orderered
-#landscape 3 by 1
-#Thumbnails
-#Combine with N2?
-#For comparisions we dont need points
+FlowColDF <- SiteLoessDF%>%
+  mutate(Norm = "Flow",
+         Val = loessN1*FlowRate,
+         islog = FALSE)
+
+PopColDF <- SiteLoessDF%>%
+  mutate(Norm = "Pop",
+         Val = loessN1/Pop,
+         islog = FALSE)
+
+MergedToBeFacetedDF <- rbind(BaseColDF, FlowColDF, PopColDF)
+
+
+NonLogPlotlyPlot <- ggplotly( MergedToBeFacetedDF%>%
+            ggplot(aes(x=Date))+
+            geom_line(aes(y=Val, color = Site))+
+            facet_wrap(~Norm, scales = "free_y",nrow=3))
+
+LogPlotlyPlot <- ggplotly( MergedToBeFacetedDF%>%
+            ggplot(aes(x=Date))+
+            geom_line(aes(y=Val, color = Site))+
+            scale_y_log10()+
+            facet_wrap(~Norm, scales = "free_y",nrow=3))
+
+NonLogPlotlyPlot
+LogPlotlyPlot
 ```
 
 ```{r SLD smoothing plot}
@@ -310,36 +270,36 @@ SLDWidth <- 21
 weights <- dgamma(1:SLDWidth, scale = Scale, shape = Shape)
 
 SiteLoessDF <- FullDF%>%
-  group_by(Site)%>%
-  arrange(Site,Date)%>%
-  filter(Site!="Madison")%>%
-  mutate(SevDayCases = rollmean(x = FirstConfirmed, 7, fill=0))%>%
-  arrange(Site,Date)%>%
-  group_by(Site)#%>%
-  #mutate(SLDCases = c(rep(NA, SLDWidth-1),
-  #                      rollapply(FirstConfirmed, width=SLDWidth, FUN=weighted.mean, 
-  #                               w=weights,
-  #                               na.rm = FALSE)))
+  filter(Site!="Madison")
 
 A <- SiteLoessDF%>%
-  filter(!is.na(SevDayCases),
-         SevDayCases != 0)%>%
+  filter(!is.na(SevenDayMACases),
+         SevenDayMACases != 0)%>%
   ggplot(aes(x=Date))+
-  geom_point(aes(y = FirstConfirmed, color = Site, shape = Site), 
+  geom_point(aes(y = FirstConfirmed, color = Site), 
              data = IntercepterDF, size = .5, alpha = .5)+
-  geom_line(aes(y = SevDayCases, color = Site))+
+  geom_line(aes(y = SevenDayMACases, color = Site))+
+  scale_colour_manual(values = HueSpace)+
   #geom_line(aes(y = SLDCases, color = Site))+
   scale_y_log10()
-ggplotly(A)
+ggplotly(A)%>%
+  config(modeBarButtonsToRemove = c("zoomIn2d", "zoomOut2d","lasso2d",
+                                    "select2d", "autoScale2d"))%>%
+  config(displaylogo = FALSE)
 
 B <- SiteLoessDF%>%
   filter(!is.na(SevenDayMACases),
-         SevDayCases != 0)%>%
+         SevenDayMACases != 0)%>%
   ggplot(aes(x=Date))+
-  geom_point(aes(y = FirstConfirmed / Pop, color = Site, shape = Site), 
+  geom_point(aes(y = FirstConfirmed / Pop, color = Site), 
              data = IntercepterDF, size = .5, alpha = .5)+
-  geom_line(aes(y = SevDayCases / Pop, color = Site))+
+  geom_line(aes(y = SevenDayMACases / Pop, color = Site))+
+  scale_colour_manual(values = HueSpace)+
   #geom_line(aes(y = SLDCases / Pop, color = Site))+
   scale_y_log10()
-ggplotly(B)
+ggplotly(B)%>%
+  config(modeBarButtonsToRemove = c("zoomIn2d", "zoomOut2d","lasso2d",
+                                    "select2d", "autoScale2d"))%>%
+  config(displaylogo = FALSE)
+
 ```
