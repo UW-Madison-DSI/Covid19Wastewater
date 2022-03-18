@@ -88,7 +88,7 @@ SecondAxisFormat <- list(#Second Axis components
 
 ```
 
-"Files Used: "
+Files Used: 
 
 `r LIMSCasePath(BaseDir)`
 
@@ -101,6 +101,7 @@ SecondAxisFormat <- list(#Second Axis components
 #Importing the Madison case data
 LatCaseDF <- ParseData(LIMSCasePath(BaseDir))%>% 
   rename(Cases = EpisodeCase)%>%
+  mutate(Cases = ifelse(is.na(Cases),0,Cases))%>%
   filter(Site == "Madison")%>%
   mutate(SevenDayMACases = rollapply(data = Cases, width = 7, FUN = mean, 
                             na.rm = TRUE,fill=NA))%>%
@@ -191,9 +192,7 @@ Looking at the wastewater measurements we observe there were some points many ti
 ErrorMarkedDF <- FullDF%>%#
     mutate(FlagedOutliers = IdentifyOutliers(!!sym(SelectedIndVar), Action = "Flag"),
            #Manual flagging that method misses due to boundary effect with binning
-           FlagedOutliers = ifelse(Date == mdy("01/26/2021") | 
-                                   Date == mdy("01/27/2021") | 
-                                   Date == mdy("01/23/2022"),
+           FlagedOutliers = ifelse(Date == mdy("01/24/2022"),
                                    TRUE, FlagedOutliers),
            NoOutlierVar = ifelse(FlagedOutliers, NA, !!sym(SelectedIndVar)))
 
@@ -329,13 +328,13 @@ SLDSmoothedDF <- UpdatedDF%>%
                                      #as we have a 50+ day buffer of case data
                         rollapply(Cases,width=SLDWidth,FUN=weighted.mean,
                                   w=weights,
-                                  na.rm = FALSE)
+                                  na.rm = TRUE)
                  #,rep(NA,10)
                  ))#no missing data to remove
 
-#CasesMinMaxPrep = MinMaxNormalization(SLDSmoothedDF$SLDCases,Prep=TRUE)
+
 SLDPlot = SLDSmoothedDF%>%
-  NoNa("SLDCases")%>%#same plot as earlier but with the SLD smoothing
+  #NoNa("SLDCases")%>%#same plot as earlier but with the SLD smoothing
   ggplot(aes(x=Date))+
   geom_line(aes(y=Cases, 
                 color="Cases" , info = Cases),alpha=.2)+
@@ -352,7 +351,7 @@ ggplotly(SLDPlot,tooltip=c("info","Date"))%>%
 
 ```{r, include=FALSE}
 #.165
-SpanConstant = .163
+SpanConstant = .05
 #4.047397
 AVGLimsSample*length(LIMSFullDF[[SelectedIndVar]])*SpanConstant/14
 ```
@@ -366,7 +365,6 @@ To get a good smoothing of the `r SelectedIndVar ` measurement we employ loess s
 
 
 ```{r fig.cap= 'Loess smoothed N1 and SLD cases for Madison data. Using a Locally Weighted Scatterplot Smoothing process along with the previous figure SLD cases we get the most sophisticated relationship between the two signals discussed in this document.'}
-SpanConstant = .163
 
 #SLDSmoothedDF[["SLDCases"]] <- loessFit(y=(SLDSmoothedDF[["SevenDayMACases"]]), 
 #                      x=SLDSmoothedDF$Date, #create loess fit of the data

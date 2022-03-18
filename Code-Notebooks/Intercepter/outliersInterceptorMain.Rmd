@@ -53,13 +53,13 @@ Mean <- 11.73
 StandardDeviation <- 7.68
 Scale = StandardDeviation^2/Mean
 Shape = Mean/Scale
-SLDWidth <- 21
+SLDWidth <- 2mutate(FirstConfirmed = ifelse(is.na(FirstConfirmed),0,FirstConfirmed))%>%1
 weights <- dgamma(1:SLDWidth, scale = Scale, shape = Shape)
 
 
 #Importing the Madison case data
 LatCaseDF <- ParseData(LIMSCasePath(BaseDir))%>% 
-  mutate(FirstConfirmed = ifelse(is.na(FirstConfirmed),0,FirstConfirmed))%>%
+  
   arrange(Site,Date)%>%
   group_by(Site)%>%
   mutate(SevenDayMACases = rollapply(FirstConfirmed, width = 7, FUN = mean, 
@@ -224,6 +224,44 @@ IntercepterPerChangeOverLay <- IntercepterChangeDF%>%
   #scale_y_log10()
 
 #ggplotly(IntercepterPerChangeOverLay)
+```
+
+```{r Per Change Madison}
+MadisonChangeDF <- FullDF%>%
+  filter(Site=="Madison",!is.na(N1))%>%
+  mutate(ChangeN1 = lead(N1) - N1,
+         ChangeN2 = lead(N2) - N2,
+         PerChangeN1 = log(lead(N1) - N1),
+         PerChangeN2 = log(lead(N2) - N2))
+
+
+IntercepterChangeOverLay <- MadisonChangeDF%>%
+  ggplot(aes(x=Date))+
+  geom_point(aes(y = ChangeN1, color = Site), size = SizeUsed,
+             alpha = alphaUsed, shape=N1ShapeUnit)+
+  geom_point(aes(y = ChangeN2,color = Site), size = SizeUsed,
+             alpha = alphaUsed, shape = N2ShapeUnit)+
+  scale_colour_manual(values = HueSpace)+
+  theme_light()+
+  ylab("gene concentration change (GC/L)")
+
+ggplotly(IntercepterChangeOverLay)%>%
+  config(modeBarButtonsToRemove = c("zoomIn2d", "zoomOut2d","lasso2d",
+                                    "select2d", "autoScale2d"))%>%
+  config(displaylogo = FALSE)
+
+IntercepterPerChangeOverLay <- MadisonChangeDF%>%
+  ggplot(aes(x = Date))+
+  geom_point(aes(y = PerChangeN1, color = Site), size = SizeUsed,
+             alpha = alphaUsed, shape = N1ShapeUnit)+
+  geom_point(aes(y = PerChangeN2, color = Site), size = SizeUsed,
+             alpha= alphaUsed,shape = N2ShapeUnit)+
+  theme_light()#+
+  #scale_y_log10()
+
+#ggplotly(IntercepterPerChangeOverLay)
+
+#Flag outliers in graphic
 ```
 
 
