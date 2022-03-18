@@ -122,19 +122,20 @@ OutLierPlotDF <- MadDF%>%
                   N2 = NoOutlierVarN2)%>%
   #filter(!(is.na(N1)&is.na(Outlier)))%>%
   ggplot(aes(x=Date))+#Data depends on time 
-  geom_jitter(aes(y=N1, color="inlier", info = N1), 
-             data=NonOuliersDF, size = .5, shape = N1ShapeUnit, stroke = 1,
+  geom_jitter(aes(y=N1, color="inlier", info = N1, shape= "N1"), 
+             data=NonOuliersDF, size = .5, stroke = 1,
              width = WidthJit ,height = HeightJit , size = 1.5)+
-  geom_jitter(aes(y=N2, color="inlier",  info = N2 , size = 1.5), 
-             data=NonOuliersDF, size = .5, shape = N2ShapeUnit, stroke = 1,
+  geom_jitter(aes(y=N2, color="inlier",  info = N2 , size = 1.5, shape= "N2"), 
+             data=NonOuliersDF, size = .5, stroke = 1,
              width = WidthJit ,height = HeightJit )+
-  geom_jitter(aes(y=OutlierN1, color="Outlier", info = OutlierN1),
-             shape=N1ShapeUnit, width = WidthJit ,height = HeightJit, stroke = 1 )+
-  geom_jitter(aes(y=OutlierN2, color="Outlier", info = OutlierN2),
-             shape=N2ShapeUnit, width = WidthJit ,height = HeightJit, stroke = 1 )+
+  geom_jitter(aes(y=OutlierN1, color="Outlier", info = OutlierN1, shape= "N1"),
+             width = WidthJit ,height = HeightJit, stroke = 1 )+
+  geom_jitter(aes(y=OutlierN2, color="Outlier", info = OutlierN2, shape= "N2"),
+             width = WidthJit ,height = HeightJit, stroke = 1 )+
   theme_light() +
   #scale_y_log10()+
   scale_color_manual(values=c("#F8766D","#000000"))+
+  scale_shape_manual(values = c(N1ShapeUnit,N2ShapeUnit))+
   ylab("Covid partical conventration (GC/L)")
 
 OutLierPlotDF
@@ -164,11 +165,12 @@ HueSpace[2] <- "#000000" #Changing P18 to blac k
 IntercepterOverLay <- IntercepterDF%>%
   filter(Date>mdy("1/1/2021"))%>%
   ggplot(aes(x=Date))+
-  geom_jitter(aes(y=N1,color = Site),size = SizeUsed, alpha= alphaUsed,
-             shape=N1ShapeUnit, stroke = strokeSize, width = WidthJit ,height = HeightJit )+
-  geom_jitter(aes(y=N2,color = Site),size = SizeUsed, alpha= alphaUsed,
-             shape=N2ShapeUnit, stroke = strokeSize, width = WidthJit ,height = HeightJit )+
+  geom_jitter(aes(y=N1,color = Site, shape="N1"),size = SizeUsed, alpha= alphaUsed,
+             stroke = strokeSize, width = WidthJit ,height = HeightJit )+
+  geom_jitter(aes(y=N2,color = Site, shape="N2"),size = SizeUsed, 
+              alpha= alphaUsed, stroke = strokeSize, width = WidthJit ,height = HeightJit )+
   theme_light()+
+  scale_shape_manual(values = c(N1ShapeUnit,N2ShapeUnit))+
   scale_colour_manual(values = HueSpace)+
   scale_y_log10()+
   ylab("Covid partical conventration (GC/L)")
@@ -190,12 +192,13 @@ IntercepterChangeDF <- IntercepterDF%>%
 
 IntercepterChangeOverLay <- IntercepterChangeDF%>%
   ggplot(aes(x=Date))+
-  geom_jitter(aes(y = ChangeN1, color = Site), size = SizeUsed,
-             alpha = alphaUsed, shape=N1ShapeUnit, stroke = strokeSize,
+  geom_jitter(aes(y = ChangeN1, color = Site, shape = "N1"), size = SizeUsed,
+             alpha = alphaUsed, stroke = strokeSize,
              width = WidthJit ,height = HeightJit )+
-  geom_jitter(aes(y = ChangeN2,color = Site), size = SizeUsed,
-             alpha = alphaUsed, shape = N2ShapeUnit, stroke = strokeSize,
+  geom_jitter(aes(y = ChangeN2,color = Site, shape = "N2"), size = SizeUsed,
+             alpha = alphaUsed, stroke = strokeSize,
              width = WidthJit ,height = HeightJit )+
+  scale_shape_manual(values = c(N1ShapeUnit,N2ShapeUnit))+
   scale_colour_manual(values = HueSpace)+
   theme_light()+
   ylab("gene concentration change (GC/L)")
