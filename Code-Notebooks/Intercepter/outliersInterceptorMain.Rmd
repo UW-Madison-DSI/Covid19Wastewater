@@ -39,20 +39,6 @@ source("../../lib/DataPathName.R")
 BaseDir <- params$BaseDir#get the root of the directory where the data is stored
 ```
 
-```{r helpful data manipulations, include = FALSE}
-
-SecondAxisFormat <- list(#Second Axis components
-  tickfont = list(size=11.7),
-  titlefont=list(size=14.6),
-  overlaying = "y",
-  nticks = 4,
-  dtick = 5e5,
-  side = "right",
-  title = "N1 (GC/L)",
-  exponentformat = "e"
-)
-```
-
 
 "Files Used: "
 
@@ -62,14 +48,26 @@ SecondAxisFormat <- list(#Second Axis components
 
 
 ```{r DF Set Up, echo=FALSE}
+#SLD Info
+Mean <- 11.73
+StandardDeviation <- 7.68
+Scale = StandardDeviation^2/Mean
+Shape = Mean/Scale
+SLDWidth <- 21
+weights <- dgamma(1:SLDWidth, scale = Scale, shape = Shape)
+
+
 #Importing the Madison case data
 LatCaseDF <- ParseData(LIMSCasePath(BaseDir))%>% 
   mutate(FirstConfirmed = ifelse(is.na(FirstConfirmed),0,FirstConfirmed))%>%
   arrange(Site,Date)%>%
   group_by(Site)%>%
-  mutate(SevenDayMACases = rollapply(FirstConfirmed, width = 7, FUN = mean, fill = NA ))%>%
+  mutate(SevenDayMACases = rollapply(FirstConfirmed, width = 7, FUN = mean, 
+                                     fill = NA, na.rm = TRUE),
+         SLDCases = rollapply(FirstConfirmed, width=SLDWidth,FUN=weighted.mean,
+                                  w=weights, fill = NA, na.rm = TRUE))%>%
   filter(Date>ymd("2020-8-10"))%>%
-  select(Date, Site, FirstConfirmed,SevenDayMACases)
+  select(Date, Site, FirstConfirmed,SevenDayMACases, SLDCases)
 
 SiteData <- unique(LatCaseDF$Site)
 
@@ -141,6 +139,16 @@ ggplotly(OutLierPlotDF, tooltip = c("x","y","colour"))%>%
   config(modeBarButtonsToRemove = c("zoomIn2d", "zoomOut2d","lasso2d",
                                     "select2d", "autoScale2d"))%>%
   config(displaylogo = FALSE)
+
+
+ggplotly(OutLierPlotDF+
+           scale_y_continuous(limits = c(0, 5800000))
+         
+         
+         , tooltip = c("x","y","colour"))%>%
+  config(modeBarButtonsToRemove = c("zoomIn2d", "zoomOut2d","lasso2d",
+                                    "select2d", "autoScale2d"))%>%
+  config(displaylogo = FALSE)
 #"2021-06-08","2021-10-17","2021-05-02","2021-01-26"
 ```
 
@@ -153,9 +161,13 @@ IntercepterDF <- FullDF %>%
   filter(Site != "Madison")
 
 
-RotSpacing <- seq(15, 375, length = 6)
-HueSpace <- hcl(h = RotSpacing, l = 65, c = 100)[1:5]
-HueSpace <- c(tail(HueSpace, -3), head(HueSpace, 3))
+
+RotSpacing <- seq(15, 375, length = 6)#Getting equal spaced colors
+HueSpace <- hcl(h = RotSpacing, l = 65, c = 100)[1:5]#converting degrees to color
+HueSpace <- c(tail(HueSpace, -3), head(HueSpace, 3))#Rotating so P18 has best color
+HueSpace[2] <- "#000000" #Changing P18 to blac k
+
+
 IntercepterOverLay <- IntercepterDF%>%
   filter(Date>mdy("1/1/2021"))%>%
   ggplot(aes(x=Date))+
@@ -192,8 +204,7 @@ IntercepterChangeOverLay <- IntercepterChangeDF%>%
   geom_point(aes(y = ChangeN2,color = Site), size = SizeUsed,
              alpha = alphaUsed, shape = N2ShapeUnit)+
   scale_colour_manual(values = HueSpace)+
-  theme_light()#+
-  #scale_y_log10()
+  theme_light()
 
 ggplotly(IntercepterChangeOverLay)%>%
   config(modeBarButtonsToRemove = c("zoomIn2d", "zoomOut2d","lasso2d",
@@ -213,52 +224,119 @@ IntercepterPerChangeOverLay <- IntercepterChangeDF%>%
 ```
 
 
-```{r Loess smoothing plot}
-LoessFunc <- function(SiteFilter,DF,SpanConstant = .163){
+```{r Loess smoothing plot, fig.height = 10, fig.width = 9}
+LoessFunc <- function(SiteFilter,DF,SpanConstant = .163,Var){
   MainDF <- DF%>%
     filter(Site==SiteFilter)
-  MainDF[["loessN1"]] <- loessFit(y=(MainDF[["N1"]]), 
+  MainDF[[paste0("loess",Var)]] <- loessFit(y=(MainDF[[Var]]),
                       x=MainDF$Date, #create loess fit of the data
-                      span=SpanConstant, #span of .2 seems to give the best result, not rigorously chosen
+                      span=SpanConstant, #span of .2 seems to give the best result,
+                                          #not rigorously chosen
                       iterations=5)$fitted#2 iterations remove some bad patterns
+  #Same as above but for N2
+  N2Name <- gsub("1","2",Var)
+  MainDF[[paste0("loess", N2Name)]] <- loessFit(y=(MainDF[[N2Name]]),
+                      x=MainDF$Date,
+                      span=SpanConstant,
+                      iterations=5)$fitted#
 return(MainDF)
 }
+#Temp clone to test 7 MA
+# LoessFunc <- function(SiteFilter,DF,SpanConstant = .163,Var){
+#   N2Name <- gsub("1","2",Var)
+#   MainDF <- DF%>%
+#     filter(Site==SiteFilter)%>%
+#     mutate(!!paste0("loess",Var) := rollapply(!!sym(Var), width = 51,
+#                                              FUN = mean, fill = NA, na.rm = TRUE ),
+#            !!paste0("loess",N2Name) := rollapply(!!sym(N2Name), width = 51,
+#                                              FUN = mean, fill = NA, na.rm = TRUE ))
+#   return(MainDF)
+# }
 
-SiteLoessDF <- lapply(c("MMSD-P11","MMSD-P18","MMSD-P2","MMSD-P7","MMSD-P8"),
-                      LoessFunc,IntercepterDF,SpanConstant=.2)%>%
-                bind_rows()
+SiteLoessDF <- IntercepterDF%>%
+  mutate(FlowN1 = FlowRate*N1,
+         PopN1 = N1/Pop,
+         FlowN2 = FlowRate*N2,
+         PopN2 = N1/Pop)
+  
+  
+  
 
-BaseColDF <- SiteLoessDF%>%
-  mutate(Norm = "None",
-         Val = loessN1,
-         islog = FALSE)
+BaseColDFN1 <- lapply(c("MMSD-P11","MMSD-P18","MMSD-P2","MMSD-P7","MMSD-P8"),
+                      LoessFunc,SiteLoessDF,SpanConstant = .15,
+         Var = "N1")%>%
+          bind_rows()%>%
+        mutate(Norm = "None",
+         CovConcNorm = loessN1,
+         Messure = "N1")
 
-FlowColDF <- SiteLoessDF%>%
+FlowColDFN1 <- lapply(c("MMSD-P11","MMSD-P18","MMSD-P2","MMSD-P7","MMSD-P8"),
+                      LoessFunc,SiteLoessDF,SpanConstant = .15,
+         Var = "FlowN1")%>%
+                bind_rows()%>%
   mutate(Norm = "Flow",
-         Val = loessN1*FlowRate,
-         islog = FALSE)
+         CovConcNorm = loessFlowN1,
+         Messure = "N1")
 
-PopColDF <- SiteLoessDF%>%
+PopColDFN1 <- lapply(c("MMSD-P11","MMSD-P18","MMSD-P2","MMSD-P7","MMSD-P8"),
+                      LoessFunc,SiteLoessDF,SpanConstant = .15,
+         Var = "PopN1")%>%
+  bind_rows()%>%
   mutate(Norm = "Pop",
-         Val = loessN1/Pop,
-         islog = FALSE)
+         CovConcNorm = loessPopN1,
+         Messure = "N1")
 
-MergedToBeFacetedDF <- rbind(BaseColDF, FlowColDF, PopColDF)
+BaseColDFN2 <- BaseColDFN1%>%
+  mutate(Norm = "None",
+         CovConcNorm = loessN2,
+         Messure = "N2")
+
+FlowColDFN2 <- FlowColDFN1%>%
+  mutate(Norm = "Flow",
+         CovConcNorm = loessFlowN2,
+         Messure = "N2")
+
+PopColDFN2 <- PopColDFN1%>%
+  mutate(Norm = "Pop",
+         CovConcNorm = loessPopN2,
+         Messure = "N2")
 
 
-NonLogPlotlyPlot <- ggplotly( MergedToBeFacetedDF%>%
+MergedToBeFacetedDF <- rbind(BaseColDFN1, FlowColDFN1, PopColDFN1,
+                             BaseColDFN2, FlowColDFN2, PopColDFN2)%>%
+  mutate(Norm = factor(Norm,c("None","Flow","Pop")))%>%
+  select(Norm,CovConcNorm,Messure,Date)
+
+
+BaseGridPlot <- MergedToBeFacetedDF%>%
+            filter(!is.na(CovConcNorm))%>%                    
             ggplot(aes(x=Date))+
-            geom_line(aes(y=Val, color = Site))+
-            facet_wrap(~Norm, scales = "free_y",nrow=3))
+            geom_line(aes(y=CovConcNorm, color = Site))+
+            scale_colour_manual(values = HueSpace)+
+            theme_light() +
+            facet_grid(Norm~Messure, scales = "free_y") + 
+              theme(panel.spacing = unit(2, "lines"))+
+            ylab("Covid Conc With Norm")
 
-LogPlotlyPlot <- ggplotly( MergedToBeFacetedDF%>%
-            ggplot(aes(x=Date))+
-            geom_line(aes(y=Val, color = Site))+
-            scale_y_log10()+
-            facet_wrap(~Norm, scales = "free_y",nrow=3))
+
+NonLogPlotlyPlot <- ggplotly( BaseGridPlot
+  )%>%
+  config(modeBarButtonsToRemove = c("zoomIn2d", "zoomOut2d","lasso2d",
+                                    "select2d", "autoScale2d"),
+         displaylogo = FALSE)
+
+LogPlotlyPlot <- ggplotly( BaseGridPlot+
+                             scale_y_log10())%>%
+  config(modeBarButtonsToRemove = c("zoomIn2d", "zoomOut2d","lasso2d",
+                                    "select2d", "autoScale2d"),
+         displaylogo = FALSE)
 
 NonLogPlotlyPlot
 LogPlotlyPlot
+
+#BaseGridPlot
+#BaseGridPlot+
+#scale_y_log10()
 ```
 
 ```{r SLD smoothing plot}
@@ -278,9 +356,10 @@ A <- SiteLoessDF%>%
   ggplot(aes(x=Date))+
   geom_point(aes(y = FirstConfirmed, color = Site), 
              data = IntercepterDF, size = .5, alpha = .5)+
-  geom_line(aes(y = SevenDayMACases, color = Site))+
+  #geom_line(aes(y = SevenDayMACases, color = Site))+
+  theme_light() +
   scale_colour_manual(values = HueSpace)+
-  #geom_line(aes(y = SLDCases, color = Site))+
+  geom_line(aes(y = SLDCases, color = Site))+
   scale_y_log10()
 ggplotly(A)%>%
   config(modeBarButtonsToRemove = c("zoomIn2d", "zoomOut2d","lasso2d",
@@ -293,13 +372,14 @@ B <- SiteLoessDF%>%
   ggplot(aes(x=Date))+
   geom_point(aes(y = FirstConfirmed / Pop, color = Site), 
              data = IntercepterDF, size = .5, alpha = .5)+
-  geom_line(aes(y = SevenDayMACases / Pop, color = Site))+
+  #geom_line(aes(y = SevenDayMACases / Pop, color = Site))+
+  theme_light() +
   scale_colour_manual(values = HueSpace)+
-  #geom_line(aes(y = SLDCases / Pop, color = Site))+
+  geom_line(aes(y = SLDCases / Pop, color = Site))+
   scale_y_log10()
 ggplotly(B)%>%
   config(modeBarButtonsToRemove = c("zoomIn2d", "zoomOut2d","lasso2d",
-                                    "select2d", "autoScale2d"))%>%
-  config(displaylogo = FALSE)
+                                    "select2d", "autoScale2d"),
+         displaylogo = FALSE)
 
 ```
