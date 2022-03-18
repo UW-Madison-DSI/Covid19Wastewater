@@ -295,6 +295,22 @@ ggplotly(FlowPlot)%>%
 ```
 
 ```{r MassRatio}
+MassBalencePlot <- FullDFMassRatio.Inter%>%
+  full_join(MissingFlowData)%>%
+  mutate(MissingSite=ifelse(is.na(MissingSite),FALSE,MissingSite))%>%
+  #filter(!is.na(FlowRate))%>%
+  #filter(!MissingSite)%>%
+  ggplot()+
+  geom_col(aes(x=Date,y=SC2_mass,fill=Site,shape=MissingSite),position="stack", stat="identity", width = 3) + 
+  geom_col(aes(x=Date,y=-3e12),data=MissingFlowData,color="Purple",fill="Purple", width = 3)+
+  scale_fill_brewer(palette="Spectral") +
+  scale_color_manual(values=c("#d60000", "#ffa600", "#7ed05c", "#5c9c43", "#3a56d6")) +
+  theme_light() +
+  geom_point(data=FullDFMassRatio.Mad,aes(x=Date,y=SC2_mass),size=1)+
+  ylab("N1/N2 gene copies per day") +
+  
+  ggtitle("SARS-CoV-2, 24h Mass Loading (Madison)")
+  
 
 ggplotly(MassBalencePlot)
 
@@ -303,7 +319,8 @@ ggplotly(MassBalencePlot)
 
 InterceptRatioPlot <- FullDFMassRatio.Inter%>%
   group_by(Date)%>%
-  summarise(SC2_InterSum = sum(SC2_mass,na.rm = TRUE))%>%
+  summarise(SC2_InterSum = sum(SC2_mass,na.rm = TRUE),
+            nIntercepter = n())%>%
   inner_join(FullDFMassRatio)%>%
   mutate(Ratio = (SC2_mass/SC2_InterSum)*(nIntercepter/5))%>%
   arrange(Ratio)%>%
