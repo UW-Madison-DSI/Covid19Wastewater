@@ -23,17 +23,23 @@ knitr::opts_chunk$set(
 
 
 ```{r Start enviroment, echo=FALSE, message=FALSE, warning=FALSE}
+# library(dplyr)
+# library(ggplot2)
+# library(lmtest)
+# library(lubridate)
+# library(limma)
+# library(plotly)
+# library(gridExtra)
+# library(data.table)
+# library(formattable)
+# library(ggpubr)
 library(dplyr)
-library(ggplot2)
-library(lmtest)
 library(lubridate)
-library(limma)
+library(zoo)
+library(ggplot2)
 library(tidyr)
 library(plotly)
-library(gridExtra)
-library(data.table)
-library(formattable)
-library(ggpubr)
+library(limma)
 
 #Data Files and prep work
 source("../../lib/DataProccess.R")
@@ -333,50 +339,6 @@ FullDFMassRatio.Inter%>%
   select(Ratio,nIntercepter, everything())#%>%
   #summarise(mean(Ratio))
 ```
-```{r Ranking}
-TieMethod <- "average"
-
-IntercepterDF%>%
-  ggplot()+
-  geom_histogram(aes(x=log(N1)),bins=15)+
-  facet_wrap(~Site)
-
-IntercepterCoreDF <- IntercepterDF%>%
-  filter(!is.na(N1))%>%
-  group_by(Date)%>%
-  filter(n()==5)
-
-
-IntercepterCoreDF%>%
-  group_by(Date)%>%
-  mutate(Ranking = frank(N1,ties.method = TieMethod))%>%
-  group_by(Site)%>%
-  summarize(N1AverageRanking = mean(Ranking, na.rm = TRUE))
-
-IntercepterCoreDF%>%
-  group_by(Date)%>%
-  mutate(Ranking = frank(N1*FlowRate, ties.method = TieMethod))%>%
-  group_by(Site)%>%
-  summarize(N1FlowAverageRanking = mean(Ranking, na.rm = TRUE))
-
-IntercepterCoreDF%>%
-  group_by(Date)%>%
-  mutate(Ranking = frank(N1/Pop,ties.method = TieMethod))%>%
-  group_by(Site)%>%
-  summarize(N1PopAverageRanking = mean(Ranking, na.rm = TRUE))
-
-
-IntercepterCoreDF%>%
-  group_by(Date)%>%
-  mutate(Ranking = frank(N1, ties.method = TieMethod))%>%
-  group_by(Site,Ranking)%>%
-  ggplot()+
-  geom_histogram(aes(x=Ranking,fill=Site),position = "dodge")
-
-
-#Redo without P18 || The problamatic months
-#Compare results between normalizations
-```
 
 
 ```{r N1 Normalizer, dpi = 100}
@@ -436,13 +398,13 @@ IntercepterDF%>%
   group_by(Date)%>%
   mutate(Ranking = rank(N1*FlowRate))%>%
   group_by(Site)%>%
-  summarize(SiteMeaning = mean(Ranking, na.rm = TRUE))
+  summarize(SiteMeaningFlow = mean(Ranking, na.rm = TRUE))
 
 IntercepterDF%>%
   group_by(Date)%>%
   mutate(Ranking = rank(N1/Pop))%>%
   group_by(Site)%>%
-  summarize(SiteMeaning = mean(Ranking, na.rm = TRUE))
+  summarize(SiteMeaningPop = mean(Ranking, na.rm = TRUE))
 
 length(IntercepterDF$Date)
 
@@ -454,6 +416,8 @@ IntercepterDF%>%
 
 
 ```
+
+
 
 
 

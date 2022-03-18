@@ -99,7 +99,7 @@ alphaUsed = .9
 N1ShapeUnit = 4
 N2ShapeUnit = 5
 HeightJit <- 0
-WidthJit <- 0
+WidthJit <- 1
 
 
 MadDF <- filter(FullDF,Site=="Madison")%>%
