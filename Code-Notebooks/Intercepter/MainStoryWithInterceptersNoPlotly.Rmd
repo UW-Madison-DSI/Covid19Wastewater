@@ -133,7 +133,8 @@ OutLierPlotDF <- MadDF%>%
              shape=N2ShapeUnit, width = WidthJit ,height = HeightJit )+
   theme_light() +
   #scale_y_log10()+
-  scale_color_manual(values=c("#F8766D","#999999"))
+  scale_color_manual(values=c("#F8766D","#999999"))+
+  ylab("Covid partical conventration (GC/L)")
 
 OutLierPlotDF
 
@@ -166,7 +167,8 @@ IntercepterOverLay <- IntercepterDF%>%
   geom_point(aes(y=N2,color = Site),size = SizeUsed, alpha= alphaUsed,shape=N2ShapeUnit)+
   theme_light()+
   scale_colour_manual(values = HueSpace)+
-  scale_y_log10()
+  scale_y_log10()+
+  ylab("Covid partical conventration (GC/L)")
 
 IntercepterOverLay
 
@@ -190,7 +192,8 @@ IntercepterChangeOverLay <- IntercepterChangeDF%>%
   geom_point(aes(y = ChangeN2,color = Site), size = SizeUsed,
              alpha = alphaUsed, shape = N2ShapeUnit)+
   scale_colour_manual(values = HueSpace)+
-  theme_light()
+  theme_light()+
+  ylab("gene concentration change (GC/L)")
 
 IntercepterChangeOverLay
 ```
@@ -272,7 +275,8 @@ BaseGridPlot <- MergedToBeFacetedDF%>%
             scale_colour_manual(values = HueSpace)+
             theme_light() +
             facet_wrap(~Norm, scales = "free_y",nrow=3) + 
-              theme(panel.spacing = unit(2, "lines"))
+              theme(panel.spacing = unit(2, "lines"))+
+  ylab("gene concentration with Normalization (GC/L)")
             
 
 
@@ -319,12 +323,13 @@ B <- SiteLoessDF%>%
   filter(!is.na(SevenDayMACases),
          SevenDayMACases != 0)%>%
   ggplot(aes(x=Date))+
-  geom_point(aes(y = FirstConfirmed / Pop, color = Site), 
+  geom_point(aes(y = 10000*FirstConfirmed / Pop, color = Site), 
              data = IntercepterDF, size = .5, alpha = .5)+
   #geom_line(aes(y = SevenDayMACases / Pop, color = Site))+
   theme_light() +
   scale_colour_manual(values = HueSpace)+
-  geom_line(aes(y = SLDCases / Pop, color = Site))+
+  geom_line(aes(y = 10000*SLDCases / Pop, color = Site))+
+  ylab("Cases per 10,000 people")+
   scale_y_log10()
 B
 

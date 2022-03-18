@@ -133,7 +133,8 @@ OutLierPlotDF <- MadDF%>%
              shape=N2ShapeUnit, width = WidthJit ,height = HeightJit )+
   theme_light() +
   #scale_y_log10()+
-  scale_color_manual(values=c("#F8766D","#999999"))
+  scale_color_manual(values=c("#F8766D","#999999"))+
+  ylab("Covid partical conventration (GC/L)")
 
 ggplotly(OutLierPlotDF, tooltip = c("x","y","colour"))%>%
   config(modeBarButtonsToRemove = c("zoomIn2d", "zoomOut2d","lasso2d",
@@ -175,7 +176,8 @@ IntercepterOverLay <- IntercepterDF%>%
   geom_point(aes(y=N2,color = Site),size = SizeUsed, alpha= alphaUsed,shape=N2ShapeUnit)+
   theme_light()+
   scale_colour_manual(values = HueSpace)+
-  scale_y_log10()
+  scale_y_log10()+
+  ylab("Covid partical conventration (GC/L)")
 
 ggplotly(IntercepterOverLay)%>%
   config(modeBarButtonsToRemove = c("zoomIn2d", "zoomOut2d","lasso2d",
@@ -204,7 +206,8 @@ IntercepterChangeOverLay <- IntercepterChangeDF%>%
   geom_point(aes(y = ChangeN2,color = Site), size = SizeUsed,
              alpha = alphaUsed, shape = N2ShapeUnit)+
   scale_colour_manual(values = HueSpace)+
-  theme_light()
+  theme_light()+
+  ylab("gene concentration change (GC/L)")
 
 ggplotly(IntercepterChangeOverLay)%>%
   config(modeBarButtonsToRemove = c("zoomIn2d", "zoomOut2d","lasso2d",
@@ -316,7 +319,7 @@ BaseGridPlot <- MergedToBeFacetedDF%>%
             theme_light() +
             facet_grid(Norm~Messure, scales = "free_y") + 
               theme(panel.spacing = unit(2, "lines"))+
-            ylab("Covid Conc With Norm")
+  ylab("gene concentration with Normalization (GC/L)")
 
 
 NonLogPlotlyPlot <- ggplotly( BaseGridPlot
@@ -370,13 +373,14 @@ B <- SiteLoessDF%>%
   filter(!is.na(SevenDayMACases),
          SevenDayMACases != 0)%>%
   ggplot(aes(x=Date))+
-  geom_point(aes(y = FirstConfirmed / Pop, color = Site), 
+  geom_point(aes(y = 10000 * FirstConfirmed / Pop, color = Site), 
              data = IntercepterDF, size = .5, alpha = .5)+
+  geom_line(aes(y = 10000 * SLDCases / Pop, color = Site))+
   #geom_line(aes(y = SevenDayMACases / Pop, color = Site))+
   theme_light() +
   scale_colour_manual(values = HueSpace)+
-  geom_line(aes(y = SLDCases / Pop, color = Site))+
-  scale_y_log10()
+  scale_y_log10()+
+  ylab("Cases per 10,000 people")
 ggplotly(B)%>%
   config(modeBarButtonsToRemove = c("zoomIn2d", "zoomOut2d","lasso2d",
                                     "select2d", "autoScale2d"),
