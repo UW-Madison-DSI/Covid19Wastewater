@@ -288,7 +288,10 @@ IntercepterChangeDF <- IntercepterDF%>%
 IntercepterChangeOverLay <- IntercepterChangeDF%>%
   pointPlotSite("ChangeN1","ChangeN2", "Site")+
   ylab("")+
-  ggtitle("First Diffrence intercepters and Madison")
+  ggtitle("First Diffrence intercepters and Madison") +
+  theme(axis.text.x = element_blank(), 
+        axis.title.x = element_blank(),
+        legend.position="none")
 #IntercepterChangeOverLay
 ```
 
@@ -305,11 +308,13 @@ MadChangeOverLay <- MadChangeDF%>%
   mutate(Flagged = FlagedOutliersN2|FlagedOutliersN1)%>%
   pointPlotSite("ChangeN1","ChangeN2", "Flagged")
 
-ggarrange(IntercepterChangeOverLay, MadChangeOverLay, nrow = 2, align = "v")
+ggarrange(IntercepterChangeOverLay, MadChangeOverLay, 
+          nrow = 2, align = "v", common.legend = TRUE, legend = "right")
 Lim <- 1e6
 ZoomSettings <- scale_y_continuous(limits = c(-Lim,Lim))
 ggarrange(IntercepterChangeOverLay+ZoomSettings, 
-          MadChangeOverLay+ZoomSettings, nrow = 2, align = "v")
+          MadChangeOverLay+ZoomSettings, common.legend = TRUE,
+          nrow = 2, align = "v", legend = "right")
 
 
 ```
