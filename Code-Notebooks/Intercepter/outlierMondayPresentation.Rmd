@@ -98,44 +98,25 @@ alphaUsed = 1
 strokeSize = 1
 N1ShapeUnit = 4
 N2ShapeUnit = 5
-HeightJit <- 0
-WidthJit <- 1
+
 
 
 MadDF <- filter(FullDF,Site=="Madison")%>%
     mutate(FlagedOutliersN1 = IdentifyOutliers(N1,Bin = 21, Action = "Flag"),
-           FlagedOutliersN2 = IdentifyOutliers(N2,Bin = 28, Action = "Flag"),
-           NoOutlierVarN1 = ifelse(FlagedOutliersN1, NA, N1),
-           NoOutlierVarN2 = ifelse(FlagedOutliersN2, NA, N2),)
+           FlagedOutliersN2 = IdentifyOutliers(N2,Bin = 28, Action = "Flag"))
 
 
-NonOuliersDF <- MadDF%>%
-  mutate(Outlier = ifelse(FlagedOutliersN1,N1,NA))%>%
-           mutate(N1 = NoOutlierVarN1,
-                  N2 = NoOutlierVarN2)
+
+
+#"2021-06-08","2021-10-17","2021-05-02","2021-01-26"
+
+
+source("IntercepterPlots.R")
+source("IntercepterDFCreater.R")
 
 OutLierPlotDF <- MadDF%>%
-  mutate(OutlierN1 = ifelse(FlagedOutliersN1,N1,NA),
-         OutlierN2 = ifelse(FlagedOutliersN2,N2,NA))%>%
-           mutate(N1 = NoOutlierVarN1,
-                  N2 = NoOutlierVarN2)%>%
-  #filter(!(is.na(N1)&is.na(Outlier)))%>%
-  ggplot(aes(x=Date))+#Data depends on time 
-  geom_jitter(aes(y=N1, color="inlier", info = N1, shape= "N1"), 
-             data=NonOuliersDF, size = .5, stroke = 1,
-             width = WidthJit ,height = HeightJit , size = 1.5)+
-  geom_jitter(aes(y=N2, color="inlier",  info = N2 , size = 1.5, shape= "N2"), 
-             data=NonOuliersDF, size = .5, stroke = 1,
-             width = WidthJit ,height = HeightJit )+
-  geom_jitter(aes(y=OutlierN1, color="Outlier", info = OutlierN1, shape= "N1"),
-             width = WidthJit ,height = HeightJit, stroke = 1 )+
-  geom_jitter(aes(y=OutlierN2, color="Outlier", info = OutlierN2, shape= "N2"),
-             width = WidthJit ,height = HeightJit, stroke = 1 )+
-  theme_light() +
-  #scale_y_log10()+
-  scale_color_manual(values=c("#F8766D","#000000"))+
-  scale_shape_manual(values = c(N1ShapeUnit,N2ShapeUnit))+
-  ylab("Covid partical conventration (GC/L)")
+  OutLier_pointPlot_Prep("FlagedOutliersN1", "FlagedOutliersN2", "N1", "N2")%>%
+  OutLier_pointPlot("N1","N2")
 
 OutLierPlotDF+
   ggtitle("Covid partical conventration (GC/L) With Outlier")
@@ -144,10 +125,6 @@ OutLierPlotDF+
 OutLierPlotDF+
   ggtitle("Previous graph zoomed in")+
            scale_y_continuous(limits = c(0, 5800000))
-#"2021-06-08","2021-10-17","2021-05-02","2021-01-26"
-
-
-#Viral Conc
 ```
 
 ```{r Intercepter OverView}
@@ -156,27 +133,18 @@ IntercepterDFPure <- FullDF %>%
   filter(Site != "Madison",
          !is.na(N1)|!is.na(N2))
 
-
-MassBalencePlot <- IntercepterDFPure%>%
-  ggplot()+
-  geom_col(aes(x=Date,y=SC2_mass, fill=Site), position="stack", stat="identity", width = 3) + 
-  scale_fill_brewer(palette="Spectral") +
-  scale_color_manual(values=c("#d60000", "#ffa600", "#7ed05c", "#5c9c43", "#3a56d6")) +
-  theme_light() +
-  geom_point(data = MadDF, aes(x=Date,y=SC2_mass),size=1)+
-  ylab("N1/N2 gene copies per day") +
+ MassBalencePlot <- MassBalence_BarPlot_Prep(FullDF,"Site", "Madison", "SC2_mass")%>%
+  MassBalence_BarPlot("SC2_mass","Site", "SelectedSite")+
   ggtitle("SARS-CoV-2, 24h Mass Loading (Madison)")
+
 
 OutlierDF <- MadDF%>%
   filter(FlagedOutliersN2|FlagedOutliersN1)
 
-StartRange <- mdy("1-20-2021")
-EndRange <- mdy("1-30-2022")
-
 OutlierDatesIntercepters <- unique(inner_join(IntercepterDFPure,OutlierDF["Date"],by=c("Date"))$Date)
 
 a <- OutLierPlotDF+
-  scale_x_date(limits = c(StartRange,EndRange)) +
+  #scale_x_date(limits = c(StartRange,EndRange)) +
   geom_vline(xintercept = OutlierDatesIntercepters,color="Red") +
   theme(title = element_blank(),
         axis.text.x = element_blank(), 
@@ -185,7 +153,7 @@ a <- OutLierPlotDF+
   scale_y_continuous(limits = c(0,7.5e6))
 
 b <- MassBalencePlot+
-  scale_x_date(limits = c(StartRange,EndRange)) +
+  #scale_x_date(limits = c(StartRange,EndRange)) +
   geom_vline(xintercept = (OutlierDatesIntercepters),color="Red") +
   theme(title = element_blank(),
     axis.text.x = element_blank(), 
@@ -199,6 +167,9 @@ OutlierComp <- ggarrange(a,b,nrow=2,align ="v",legend.grob=get_legend(MassBalenc
 
 annotate_figure(OutlierComp, top = text_grob("Composite outliers compared to Interceptors", 
                color = "black", size = 12))
+
+#Add lables
+##Viral load?
 ```
 
 
@@ -209,24 +180,10 @@ IntercepterDF <- FullDF %>%
   group_by(Site)%>%
   filter(Site != "Madison")
 
-RotSpacing <- seq(15, 375, length = 6)#Getting equal spaced colors
-HueSpace <- hcl(h = RotSpacing, l = 65, c = 100)[1:5]#converting degrees to color
-HueSpace <- c(tail(HueSpace, -3), head(HueSpace, 3))#Rotating so P18 has best color
-HueSpace[2] <- "#000000" #Changing P18 to blac k
-
-
 IntercepterOverLay <- IntercepterDF%>%
   filter(Date>mdy("1/1/2021"), !is.na(N1))%>%
-  ggplot(aes(x=Date))+
-  geom_jitter(aes(y=N1,color = Site, shape="N1"),size = SizeUsed, alpha= alphaUsed,
-             stroke = strokeSize, width = WidthJit ,height = HeightJit )+
-  geom_jitter(aes(y=N2,color = Site, shape="N2"),size = SizeUsed, 
-              alpha= alphaUsed, stroke = strokeSize, width = WidthJit ,height = HeightJit )+
-  theme_light()+
-  scale_shape_manual(values = c(N1ShapeUnit,N2ShapeUnit))+
-  scale_colour_manual(values = HueSpace)+
+  pointPlotSite("N1","N2", "Site")+
   scale_y_log10()+
-  ylab("Covid partical conventration (GC/L)")+
   ggtitle("Intercepters Covid Concentration")
 
 IntercepterOverLay
@@ -241,6 +198,7 @@ IntercepterOverLay
 
 
 ```{r Loess smoothing plot, fig.height = 5, fig.width = 9}
+
 LoessFunc <- function(SiteFilter,DF,SpanConstant = .163,Var){
   MainDF <- DF%>%
     filter(Site==SiteFilter)
@@ -285,17 +243,9 @@ BaseColDF <- lapply(c("MMSD-P11","MMSD-P18","MMSD-P2","MMSD-P7","MMSD-P8"),
          Var = "N1")%>%
           bind_rows()
 
-
-
-
 BaseGridPlot <- BaseColDF%>%
-            filter(!is.na(loessN1))%>%                    
-            ggplot(aes(x=Date))+
-            geom_line(aes(y=loessN1, color = Site, linetype  = "N1"))+
-            geom_line(aes(y=loessN2, color = Site, linetype  = "N2"))+
-            scale_colour_manual(values = HueSpace)+
-            theme_light() +
-  ylab("gene concentration with Normalization (GC/L)")
+            filter(!is.na(loessN1))%>%  
+            LinePlotSite("loessN1","loessN2", "Site")
             
 
 
@@ -313,10 +263,20 @@ LoessPlot <- ggarrange(NonLogPlotlyPlot,LogPlotlyPlot, common.legend = TRUE)
 annotate_figure(LoessPlot, top = text_grob("Smoothed interceptors", 
                color = "black", size = 12))
 
+
+
+```
+
+
+```{r Motivated For next section}
+
 IntercepterOverLay+
   geom_line(aes(y=N1, color = Site, linetype  = "N1"))+
   geom_line(aes(y=N2, color = Site, linetype  = "N2"))+
   ggtitle("Connected Intercepters Covid Concentration")
+
+#Move legend to right
+
 
 ```
 
@@ -328,16 +288,7 @@ IntercepterChangeDF <- IntercepterDF%>%
 
 
 IntercepterChangeOverLay <- IntercepterChangeDF%>%
-  ggplot(aes(x=Date))+
-  geom_jitter(aes(y = ChangeN1, color = Site, shape = "N1"), size = SizeUsed,
-             alpha = alphaUsed, stroke = strokeSize,
-             width = WidthJit ,height = HeightJit )+
-  geom_jitter(aes(y = ChangeN2,color = Site, shape = "N2"), size = SizeUsed,
-             alpha = alphaUsed, stroke = strokeSize,
-             width = WidthJit ,height = HeightJit )+
-  scale_shape_manual(values = c(N1ShapeUnit,N2ShapeUnit))+
-  scale_colour_manual(values = HueSpace)+
-  theme_light()+
+  pointPlotSite("ChangeN1","ChangeN2", "Site")+
   ylab("")+
   ggtitle("First Diffrence intercepters and Madison")
 #IntercepterChangeOverLay
@@ -353,18 +304,8 @@ MadChangeDF <- MadDF%>%
 
 
 MadChangeOverLay <- MadChangeDF%>%
-  ggplot(aes(x=Date))+
-  geom_jitter(aes(y = ChangeN1, color = FlagedOutliersN1, shape = "N1"), size = SizeUsed,
-             alpha = alphaUsed, stroke = strokeSize,
-             width = WidthJit ,height = HeightJit )+
-  geom_jitter(aes(y = ChangeN2,color = FlagedOutliersN2, shape = "N2"), size = SizeUsed,
-             alpha = alphaUsed, stroke = strokeSize,
-             width = WidthJit ,height = HeightJit )+
-  scale_shape_manual(values = c(N1ShapeUnit,N2ShapeUnit))+
-  scale_colour_manual(values = HueSpace)+
-  ylab("gene concentration change (GC/L)")+
-  theme_light()
-#MadChangeOverLay
+  mutate(Flagged = FlagedOutliersN2|FlagedOutliersN1)%>%
+  pointPlotSite("ChangeN1","ChangeN2", "Flagged")
 
 ggarrange(IntercepterChangeOverLay, MadChangeOverLay, nrow = 2, align = "v")
 Lim <- 1e6
