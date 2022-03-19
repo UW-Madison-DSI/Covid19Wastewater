@@ -26,7 +26,8 @@ YLabN1_N2 <- function(){#Lab when ploting both N1 and N2 data
 
 
 #Monday Presentation Plots
-OutLier_pointPlot <- function(DF, MainComp,SubComp, OutlierMain=NA, OutlierSub=NA){
+OutLier_pointPlot <- function(DF, MainComp,SubComp, OutlierMain=NA, 
+                              OutlierSub=NA, SizeUsed = .1){
   if(is.na(OutlierMain)){
     OutlierMain <- paste0("Outlier",MainComp)
   }
@@ -38,13 +39,13 @@ OutLier_pointPlot <- function(DF, MainComp,SubComp, OutlierMain=NA, OutlierSub=N
   ReturnPlots <- DF%>%
     ggplot(aes(x=Date))+#Data depends on time 
     geom_point(aes(y=!!sym(MainComp), color="inlier", info = !!sym(MainComp), shape= MainComp), 
-               stroke = 1, size = .5)+
+               size = SizeUsed)+
     geom_point(aes(y=!!sym(SubComp), color="inlier",  info = !!sym(SubComp), shape= SubComp), 
-               stroke = 1, size = .5)+
+               size = SizeUsed )+
     geom_point(aes(y=!!sym(OutlierMain), color="Outlier", info = !!sym(OutlierMain), shape=MainComp),
-                stroke = 1 )+
+                size = 2*SizeUsed )+
     geom_point(aes(y=!!sym(OutlierSub), color="Outlier", info = !!sym(OutlierSub), shape= SubComp),
-               stroke = 1 )+
+               size = 2*SizeUsed)+
     scale_shape_manual(values = c(N1ShapeUnit,N2ShapeUnit))+
     DefaultPlotSettings()+
     OutlierColorScheme()+
@@ -53,7 +54,7 @@ OutLier_pointPlot <- function(DF, MainComp,SubComp, OutlierMain=NA, OutlierSub=N
 }
 
 
-MassBalence_BarPlot <- function(DF, MainComp, Break, SubComp=NA){
+MassBalence_BarPlot <- function(DF, MainComp, Break, SubComp=NA, SizeUsed = .5){
   if(is.na(SubComp)){
     SubComp = paste0("Selected",MainComp)
   }
@@ -61,7 +62,7 @@ MassBalence_BarPlot <- function(DF, MainComp, Break, SubComp=NA){
     ggplot()+
     geom_col(aes(x = Date,y = !!sym(MainComp), fill = !!sym(Break)), 
              position="stack",width = 3) + 
-    geom_point(aes(x = Date,y = !!sym(SubComp)), size=1, color = "Black")+
+    geom_point(aes(x = Date,y = !!sym(SubComp)), size=SizeUsed, color = "Black")+
     SiteColorScheme() +
     DefaultPlotSettings() +
     YLabN1_N2()
@@ -69,13 +70,13 @@ MassBalence_BarPlot <- function(DF, MainComp, Break, SubComp=NA){
 }
 
 
-pointPlotSite <- function(DF, MainComp,SubComp,Break){
+pointPlotSite <- function(DF, MainComp,SubComp,Break, SizeUsed = .5){
   ReturnPlots <- DF%>%
     ggplot(aes(x=Date))+#Data depends on time 
     geom_point(aes(y=!!sym(MainComp), color= !!sym(Break), info = !!sym(MainComp), shape= MainComp), 
-               stroke = 1, size = 1.5)+
+               size = SizeUsed)+
     geom_point(aes(y=!!sym(SubComp), color= !!sym(Break),  info = !!sym(SubComp), shape= SubComp), 
-               stroke = 1, size = 1.5)+
+               size = SizeUsed)+
     scale_shape_manual(values = c(N1ShapeUnit,N2ShapeUnit))+
     DefaultPlotSettings() + 
     SiteColorScheme(ExtremeP18 = TRUE) +

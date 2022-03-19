@@ -2,10 +2,13 @@
 title: "Main Finding of outliers through Interceptor Non Interactive plots"
 author: "Marlin"
 date: "3/15/2022"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
 params:
-  BaseDir: "Z:/"
-output: pdf_document
-editor_options: 
+  BaseDir: Z:/
+editor_options:
   chunk_output_type: inline
 ---
 
@@ -40,9 +43,9 @@ BaseDir <- params$BaseDir#get the root of the directory where the data is stored
 
 "Files Used: "
 
-`r LIMSCasePath(BaseDir)`
+`r LIMSCasePath("")`
 
-`r LIMSWastePath(BaseDir)`
+`r LIMSWastePath("")`
 
 
 ```{r DF Set Up, echo=FALSE}
@@ -93,15 +96,8 @@ FullDF <- full_join(LatCaseDF,LIMSFullDF, by = c("Date","Site"))%>%
 
 
 ```{r Outlier}
-SizeUsed = 1
-alphaUsed = 1
-strokeSize = 1
-N1ShapeUnit = 4
-N2ShapeUnit = 5
-
-
-
 MadDF <- filter(FullDF,Site=="Madison")%>%
+  filter(Date>mdy("1/1/2021"))%>%
     mutate(FlagedOutliersN1 = IdentifyOutliers(N1,Bin = 21, Action = "Flag"),
            FlagedOutliersN2 = IdentifyOutliers(N2,Bin = 28, Action = "Flag"))
 
@@ -116,22 +112,27 @@ source("IntercepterDFCreater.R")
 
 OutLierPlotDF <- MadDF%>%
   OutLier_pointPlot_Prep("FlagedOutliersN1", "FlagedOutliersN2", "N1", "N2")%>%
-  OutLier_pointPlot("N1","N2")
+  OutLier_pointPlot("N1","N2", SizeUsed = .1)
 
-OutLierPlotDF+
-  ggtitle("Covid partical conventration (GC/L) With Outlier")
+BaseOutlierPlot <- OutLierPlotDF+
+  ggtitle("Covid partical conventration (GC/L) With Outlier")+
+  ylab("")+
+  theme(title = element_blank(),
+    axis.text.x = element_blank(), 
+        axis.title.x = element_blank())
 
 
-OutLierPlotDF+
-  ggtitle("Previous graph zoomed in")+
+ZoomedOutlierPlot <- OutLierPlotDF+
            scale_y_continuous(limits = c(0, 5800000))
+
+ggarrange(BaseOutlierPlot, ZoomedOutlierPlot, nrow = 2, align ="v", legend.grob=get_legend(BaseOutlierPlot), legend="right")
 ```
 
 ```{r Intercepter OverView}
-IntercepterDFPure <- FullDF %>%
+IntercepterDF <- FullDF %>%
   group_by(Site)%>%
   filter(Site != "Madison",
-         !is.na(N1)|!is.na(N2))
+         !is.na(N1))
 
  MassBalencePlot <- MassBalence_BarPlot_Prep(FullDF,"Site", "Madison", "SC2_mass")%>%
   MassBalence_BarPlot("SC2_mass","Site", "SelectedSite")+
@@ -141,7 +142,7 @@ IntercepterDFPure <- FullDF %>%
 OutlierDF <- MadDF%>%
   filter(FlagedOutliersN2|FlagedOutliersN1)
 
-OutlierDatesIntercepters <- unique(inner_join(IntercepterDFPure,OutlierDF["Date"],by=c("Date"))$Date)
+OutlierDatesIntercepters <- unique(inner_join(IntercepterDF,OutlierDF["Date"],by=c("Date"))$Date)
 
 a <- OutLierPlotDF+
   #scale_x_date(limits = c(StartRange,EndRange)) +
@@ -150,14 +151,13 @@ a <- OutLierPlotDF+
         axis.text.x = element_blank(), 
         axis.title.x = element_blank(),
         legend.position="none")+
-  scale_y_continuous(limits = c(0,7.5e6))
+  scale_y_continuous(limits = c(0,7.5e6))+
+  scale_x_date(limits = c(min(IntercepterDF$Date),max(IntercepterDF$Date)))
 
 b <- MassBalencePlot+
   #scale_x_date(limits = c(StartRange,EndRange)) +
   geom_vline(xintercept = (OutlierDatesIntercepters),color="Red") +
   theme(title = element_blank(),
-    axis.text.x = element_blank(), 
-        axis.title.x = element_blank(),
     legend.position="none")+
   scale_y_continuous(limits = c(0,7.4e14))
 
@@ -176,9 +176,6 @@ annotate_figure(OutlierComp, top = text_grob("Composite outliers compared to Int
 
 ```{r N1 Normalizer, dpi = 100}
 
-IntercepterDF <- FullDF %>%
-  group_by(Site)%>%
-  filter(Site != "Madison")
 
 IntercepterOverLay <- IntercepterDF%>%
   filter(Date>mdy("1/1/2021"), !is.na(N1))%>%
@@ -258,7 +255,8 @@ LogPlotlyPlot <- BaseGridPlot+
   theme(axis.title.y=element_blank())
 
 
-LoessPlot <- ggarrange(NonLogPlotlyPlot,LogPlotlyPlot, common.legend = TRUE)
+LoessPlot <- ggarrange(NonLogPlotlyPlot,LogPlotlyPlot, common.legend = TRUE,
+                       legend = "right")
 
 annotate_figure(LoessPlot, top = text_grob("Smoothed interceptors", 
                color = "black", size = 12))
