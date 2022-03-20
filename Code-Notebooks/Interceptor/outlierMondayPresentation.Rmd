@@ -3,11 +3,11 @@ title: "Main Finding of outliers through Interceptor Non Interactive plots"
 author: "Marlin"
 date: "3/15/2022"
 output:
-  pdf_document: default
+  #pdf_document: default
   html_document:
     df_print: paged
 params:
-  BaseDir: Z:/
+  BaseDir: ~/Box/DSI/Projects/wastewater/RD/
 editor_options:
   chunk_output_type: inline
 ---
@@ -98,8 +98,8 @@ FullDF <- full_join(LatCaseDF,LIMSFullDF, by = c("Date","Site"))%>%
 ```{r Outlier}
 MadDF <- filter(FullDF,Site=="Madison")%>%
   filter(Date>mdy("1/1/2021"))%>%
-    mutate(FlagedOutliersN1 = IdentifyOutliers(N1,Bin = 21, Action = "Flag"),
-           FlagedOutliersN2 = IdentifyOutliers(N2,Bin = 28, Action = "Flag"))
+    mutate(FlaggedOutliersN1 = IdentifyOutliers(N1,Bin = 21, Action = "Flag"),
+           FlaggedOutliersN2 = IdentifyOutliers(N2,Bin = 28, Action = "Flag"))
 
 
 
@@ -107,15 +107,15 @@ MadDF <- filter(FullDF,Site=="Madison")%>%
 #"2021-06-08","2021-10-17","2021-05-02","2021-01-26"
 
 
-source("IntercepterPlots.R")
-source("IntercepterDFCreater.R")
+source("InterceptorPlots.R")
+source("InterceptorDFCreater.R")
 
 OutLierPlotDF <- MadDF%>%
-  OutLier_pointPlot_Prep("FlagedOutliersN1", "FlagedOutliersN2", "N1", "N2")%>%
+  OutLier_pointPlot_Prep("FlaggedOutliersN1", "FlaggedOutliersN2", "N1", "N2")%>%
   OutLier_pointPlot("N1","N2", SizeUsed = .1)
 
 BaseOutlierPlot <- OutLierPlotDF+
-  ggtitle("Covid partical conventration (GC/L) With Outlier")+
+  ggtitle("Viral concentration (GC/L) With Outlier")+
   ylab("")+
   theme(title = element_blank(),
     axis.text.x = element_blank(), 
@@ -140,7 +140,7 @@ IntercepterDF <- FullDF %>%
 
 
 OutlierDF <- MadDF%>%
-  filter(FlagedOutliersN2|FlagedOutliersN1)
+  filter(FlaggedOutliersN2|FlaggedOutliersN1)
 
 OutlierDatesIntercepters <- unique(inner_join(IntercepterDF,OutlierDF["Date"],by=c("Date"))$Date)
 
@@ -181,7 +181,7 @@ IntercepterOverLay <- IntercepterDF%>%
   filter(Date>mdy("1/1/2021"), !is.na(N1))%>%
   pointPlotSite("N1","N2", "Site")+
   scale_y_log10()+
-  ggtitle("Intercepters Covid Concentration")
+  ggtitle("Interceptors Concentration")
 
 IntercepterOverLay
 
@@ -271,7 +271,7 @@ annotate_figure(LoessPlot, top = text_grob("Smoothed interceptors",
 IntercepterOverLay+
   geom_line(aes(y=N1, color = Site, linetype  = "N1"))+
   geom_line(aes(y=N2, color = Site, linetype  = "N2"))+
-  ggtitle("Connected Intercepters Covid Concentration")
+  ggtitle("Interceptors Concentration")
 
 #Move legend to right
 
@@ -288,7 +288,7 @@ IntercepterChangeDF <- IntercepterDF%>%
 IntercepterChangeOverLay <- IntercepterChangeDF%>%
   pointPlotSite("ChangeN1","ChangeN2", "Site")+
   ylab("")+
-  ggtitle("First Diffrence intercepters and Madison") +
+  ggtitle("Increment between consecutive measurements") +
   theme(axis.text.x = element_blank(), 
         axis.title.x = element_blank(),
         legend.position="none")
@@ -305,7 +305,7 @@ MadChangeDF <- MadDF%>%
 
 
 MadChangeOverLay <- MadChangeDF%>%
-  mutate(Flagged = FlagedOutliersN2|FlagedOutliersN1)%>%
+  mutate(Flagged = FlaggedOutliersN2|FlaggedOutliersN1)%>%
   pointPlotSite("ChangeN1","ChangeN2", "Flagged")
 
 ggarrange(IntercepterChangeOverLay, MadChangeOverLay, 

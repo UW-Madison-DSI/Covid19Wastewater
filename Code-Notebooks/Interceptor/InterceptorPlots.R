@@ -21,7 +21,7 @@ SiteColorScheme <- function(ExtremeP18 = FALSE){#Color scheme for a intercepter 
 }
 
 YLabN1_N2 <- function(){#Lab when ploting both N1 and N2 data
-  return(ylab("Covid viral concentration (GC/L)"))
+  return(ylab("GC/L"))
 }
 
 
