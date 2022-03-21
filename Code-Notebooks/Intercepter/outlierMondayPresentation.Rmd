@@ -27,10 +27,9 @@ library(dplyr)
 library(lubridate)
 library(zoo)
 library(ggplot2)
-library(plotly)
 library(limma)
 library(ggpubr)
-
+library(grid)
 
 #Data Files and prep work
 source("../../lib/DataProccess.R")
@@ -38,6 +37,9 @@ source("../../lib/NormFuncs.R")
 source("../../lib/OutlierDetectionFuncs.R")
 source("../../lib/DataPathName.R")
 BaseDir <- params$BaseDir#get the root of the directory where the data is stored
+
+
+N1_N2ArrangeLab <- text_grob("Covid viral concentration (GC/L)", size = 12, rot = 90, vjust = .5)
 ```
 
 
@@ -98,10 +100,10 @@ FullDF <- full_join(LatCaseDF,LIMSFullDF, by = c("Date","Site"))%>%
 ```{r Outlier}
 MadDF <- filter(FullDF,Site=="Madison")%>%
   filter(Date>mdy("1/1/2021"))%>%
-    mutate(FlagedOutliersN1 = IdentifyOutliers(N1,Bin = 21, Action = "Flag"),
-           FlagedOutliersN2 = IdentifyOutliers(N2,Bin = 28, Action = "Flag"))
+    mutate(FlaggedOutliersN1 = IdentifyOutliers(N1,Bin = 21, Action = "Flag"),
+           FlaggedOutliersN2 = IdentifyOutliers(N2,Bin = 28, Action = "Flag"))
 
-
+YMaxZoomIn <- 3e6
 
 
 #"2021-06-08","2021-10-17","2021-05-02","2021-01-26"
@@ -111,11 +113,12 @@ source("IntercepterPlots.R")
 source("IntercepterDFCreater.R")
 
 OutLierPlotDF <- MadDF%>%
-  OutLier_pointPlot_Prep("FlagedOutliersN1", "FlagedOutliersN2", "N1", "N2")%>%
-  OutLier_pointPlot("N1","N2", SizeUsed = .1)
+  OutLier_pointPlot_Prep("FlaggedOutliersN1", "FlaggedOutliersN2", "N1", "N2")%>%
+  OutLier_pointPlot("N1","N2", SizeUsed = .1)+
+  ylab("")
 
 BaseOutlierPlot <- OutLierPlotDF+
-  ggtitle("Covid partical conventration (GC/L) With Outlier")+
+  ggtitle("Covid particle concentration (G/L) With Outlier")+
   ylab("")+
   theme(title = element_blank(),
     axis.text.x = element_blank(), 
@@ -123,24 +126,33 @@ BaseOutlierPlot <- OutLierPlotDF+
 
 
 ZoomedOutlierPlot <- OutLierPlotDF+
-           scale_y_continuous(limits = c(0, 5800000))
+           scale_y_continuous(limits = c(0, YMaxZoomIn))+
+  labs(shape = "gene targets", color = "Flagged")
 
-ggarrange(BaseOutlierPlot, ZoomedOutlierPlot, nrow = 2, align ="v", legend.grob=get_legend(BaseOutlierPlot), legend="right")
+FirstPlot <- ggarrange(BaseOutlierPlot, ZoomedOutlierPlot, nrow = 2, align ="v", legend.grob=get_legend(ZoomedOutlierPlot), legend="right")
+
+
+annotate_figure(FirstPlot, left = N1_N2ArrangeLab)
 ```
 
 ```{r Intercepter OverView}
+
+#
 IntercepterDF <- FullDF %>%
   group_by(Site)%>%
   filter(Site != "Madison",
          !is.na(N1))
 
- MassBalencePlot <- MassBalence_BarPlot_Prep(FullDF,"Site", "Madison", "SC2_mass")%>%
-  MassBalence_BarPlot("SC2_mass","Site", "SelectedSite")+
-  ggtitle("SARS-CoV-2, 24h Mass Loading (Madison)")
+FullDF2 <- FullDF%>%
+  group_by(Date)%>%
+  mutate(SC2_mass = 2*SC2_mass/(3.785*1e6*sum(FlowRate,na.rm = TRUE)))
+
+ MassBalencePlot <- MassBalence_BarPlot_Prep(FullDF2,"Site", "Madison", "SC2_mass")%>%
+  MassBalence_BarPlot("SC2_mass","Site", "SelectedSite")
 
 
 OutlierDF <- MadDF%>%
-  filter(FlagedOutliersN2|FlagedOutliersN1)
+  filter(FlaggedOutliersN2|FlaggedOutliersN1)
 
 OutlierDatesIntercepters <- unique(inner_join(IntercepterDF,OutlierDF["Date"],by=c("Date"))$Date)
 
@@ -151,22 +163,23 @@ a <- OutLierPlotDF+
         axis.text.x = element_blank(), 
         axis.title.x = element_blank(),
         legend.position="none")+
-  scale_y_continuous(limits = c(0,7.5e6))+
+  scale_y_continuous(limits = c(0,YMaxZoomIn))+
   scale_x_date(limits = c(min(IntercepterDF$Date),max(IntercepterDF$Date)))
 
 b <- MassBalencePlot+
   #scale_x_date(limits = c(StartRange,EndRange)) +
   geom_vline(xintercept = (OutlierDatesIntercepters),color="Red") +
-  theme(title = element_blank(),
-    legend.position="none")+
-  scale_y_continuous(limits = c(0,7.4e14))
+  theme(legend.position="none")+
+  ylab("")+
+  scale_y_continuous(limits = c(0,YMaxZoomIn))
 
 
 OutlierComp <- ggarrange(a,b,nrow=2,align ="v",legend.grob=get_legend(MassBalencePlot),legend="right")
 
 
-annotate_figure(OutlierComp, top = text_grob("Composite outliers compared to Interceptors", 
-               color = "black", size = 12))
+annotate_figure(OutlierComp, 
+    top = text_grob("Composite outliers compared to Interceptors", color = "black", size = 12),
+    left  = text_grob("Covid viral concentration (GC/L)", size = 12, rot = 90, vjust = .5))
 
 #Add lables
 ##Viral load?
@@ -181,7 +194,8 @@ IntercepterOverLay <- IntercepterDF%>%
   filter(Date>mdy("1/1/2021"), !is.na(N1))%>%
   pointPlotSite("N1","N2", "Site")+
   scale_y_log10()+
-  ggtitle("Intercepters Covid Concentration")
+  ggtitle("Interceptors Covid Concentration")+ 
+  labs(shape = "gene targets")
 
 IntercepterOverLay
 
@@ -247,11 +261,12 @@ BaseGridPlot <- BaseColDF%>%
 
 
 NonLogPlotlyPlot <- BaseGridPlot+
-            labs(title = "Linear scale", ylab = "Covid Conc With Norm")
+            labs(title = "Linear scale", 
+                 ylab = "Covid Conc With Norm", linetype = "gene targets")
 
 LogPlotlyPlot <- BaseGridPlot+
             scale_y_log10()+
-            labs(title = "Log scale")+
+            labs(title = "Log scale",linetype = "gene targets")+
   theme(axis.title.y=element_blank())
 
 
@@ -271,7 +286,8 @@ annotate_figure(LoessPlot, top = text_grob("Smoothed interceptors",
 IntercepterOverLay+
   geom_line(aes(y=N1, color = Site, linetype  = "N1"))+
   geom_line(aes(y=N2, color = Site, linetype  = "N2"))+
-  ggtitle("Connected Intercepters Covid Concentration")
+  ggtitle("Interceptors Covid Concentration")+
+  labs(linetype = "gene targets")
 
 #Move legend to right
 
@@ -288,10 +304,10 @@ IntercepterChangeDF <- IntercepterDF%>%
 IntercepterChangeOverLay <- IntercepterChangeDF%>%
   pointPlotSite("ChangeN1","ChangeN2", "Site")+
   ylab("")+
-  ggtitle("First Diffrence intercepters and Madison") +
+  ggtitle("First Difference interceptors and Madison") +
   theme(axis.text.x = element_blank(), 
-        axis.title.x = element_blank(),
-        legend.position="none")
+        axis.title.x = element_blank()) + 
+  scale_shape_manual(values = c(N1ShapeUnit,N2ShapeUnit), guide = 'none')
 #IntercepterChangeOverLay
 ```
 
@@ -305,16 +321,22 @@ MadChangeDF <- MadDF%>%
 
 
 MadChangeOverLay <- MadChangeDF%>%
-  mutate(Flagged = FlagedOutliersN2|FlagedOutliersN1)%>%
-  pointPlotSite("ChangeN1","ChangeN2", "Flagged")
+  mutate(Flagged = FlaggedOutliersN2|FlaggedOutliersN1)%>%
+  pointPlotSite("ChangeN1","ChangeN2", "Flagged")+
+  OutlierColorScheme()+
+  ylab("")+
+  labs(shape = "gene targets")
 
-ggarrange(IntercepterChangeOverLay, MadChangeOverLay, 
-          nrow = 2, align = "v", common.legend = TRUE, legend = "right")
+FullViewDF <- ggarrange(IntercepterChangeOverLay, MadChangeOverLay, nrow = 2, align = "v")
 Lim <- 1e6
 ZoomSettings <- scale_y_continuous(limits = c(-Lim,Lim))
-ggarrange(IntercepterChangeOverLay+ZoomSettings, 
-          MadChangeOverLay+ZoomSettings, common.legend = TRUE,
-          nrow = 2, align = "v", legend = "right")
+PartialViewDF <- ggarrange(IntercepterChangeOverLay+ZoomSettings, 
+          MadChangeOverLay+ZoomSettings,
+          nrow = 2, align = "v")
 
+
+annotate_figure(FullViewDF, left = N1_N2ArrangeLab)
+
+annotate_figure(PartialViewDF, left = N1_N2ArrangeLab)
 
 ```

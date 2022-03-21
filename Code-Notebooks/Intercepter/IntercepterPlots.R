@@ -89,7 +89,6 @@ LinePlotSite <- function(DF, MainComp,SubComp,Break){
     ggplot(aes(x=Date))+#Data depends on time 
     geom_line(aes(y=!!sym(MainComp), color = !!sym(Break), linetype  = MainComp))+
     geom_line(aes(y=!!sym(SubComp), color = !!sym(Break), linetype  = SubComp))+
-    scale_shape_manual(values = c(N1ShapeUnit,N2ShapeUnit))+
     DefaultPlotSettings() + 
     SiteColorScheme(ExtremeP18 = TRUE) +
     YLabN1_N2()

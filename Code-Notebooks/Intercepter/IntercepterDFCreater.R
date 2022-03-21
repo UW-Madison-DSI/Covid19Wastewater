@@ -16,7 +16,7 @@ MassBalence_BarPlot_Prep <- function(DF, Break, SepBreak, MainComp){
            !is.na(!!sym(MainComp)))
   
   SubDF <- DF %>%
-      filter(Site %in% SepBreak,
+      filter(!!sym(Break) %in% SepBreak,
              !is.na(!!sym(MainComp)),
              Date %in% MainDF[["Date"]])%>%
       mutate(!!paste0("Selected",Break) := !!sym(MainComp),
