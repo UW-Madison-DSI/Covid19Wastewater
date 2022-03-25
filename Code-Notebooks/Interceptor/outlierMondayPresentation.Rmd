@@ -1,0 +1,359 @@
+---
+title: "Recent progress on analyzing SARs-CoV-2 in Madison wastewater"
+author: "Marlin"
+date:  "`r format(Sys.time(), '%d %B, %Y, %H:%M')`"
+output:
+  #pdf_document: default
+  html_document:
+    df_print: paged
+params:
+  BaseDir: Z:/
+  #~/Box/DSI/Projects/wastewater/RD/
+knit: (
+  function(inputFile, encoding) { 
+    FileComp = strsplit(inputFile,"/")[[1]];
+    File = FileComp[length(FileComp)];
+    File = substr(File,1,nchar(File)-4);
+    pSubTitle <- paste0('RmdOutput/',Sys.Date(),"_",File);
+    rmarkdown::render( 
+      input       = inputFile, 
+      encoding    = encoding, 
+      output_file = pSubTitle) })
+  
+         
+editor_options:
+  chunk_output_type: inline
+---
+
+
+```{r set up markdown settings, echo=FALSE}
+knitr::opts_chunk$set(
+	message = FALSE,
+	warning = FALSE,
+	echo = FALSE
+)
+```
+
+
+```{r Start enviroment, echo=FALSE, message=FALSE, warning=FALSE}
+library(dplyr)
+library(lubridate)
+library(zoo)
+library(ggplot2)
+library(limma)
+library(ggpubr)
+library(grid)
+
+#Data Files and prep work
+source("../../lib/DataProccess.R")
+source("../../lib/NormFuncs.R")
+source("../../lib/OutlierDetectionFuncs.R")
+source("../../lib/DataPathName.R")
+BaseDir <- params$BaseDir#get the root of the directory where the data is stored
+
+
+N1_N2ArrangeLab <- text_grob("Covid viral concentration (GC/L)", size = 12, rot = 90, vjust = .5)
+```
+
+
+"Files Used: "
+
+`r LIMSCasePath("")`
+
+`r LIMSWastePath("")`
+
+
+```{r DF Set Up, echo=FALSE}
+#SLD Info
+Mean <- 11.73
+StandardDeviation <- 7.68
+Scale = StandardDeviation^2/Mean
+Shape = Mean/Scale
+SLDWidth <- 21
+weights <- dgamma(1:SLDWidth, scale = Scale, shape = Shape)
+
+
+#Importing the Madison case data
+LatCaseDF <- ParseData(LIMSCasePath(BaseDir))%>% 
+  mutate(FirstConfirmed = ifelse(is.na(FirstConfirmed),0,FirstConfirmed))%>%
+  arrange(Site,Date)%>%
+  group_by(Site)%>%
+  mutate(SevenDayMACases = rollapply(FirstConfirmed, width = 7, FUN = mean, 
+                                     fill = NA, na.rm = TRUE),
+         SLDCases = rollapply(FirstConfirmed, width=SLDWidth,FUN=weighted.mean,
+                                  w=weights, fill = NA, na.rm = TRUE))%>%
+  filter(Date>ymd("2020-8-10"))%>%
+  select(Date, Site, FirstConfirmed,SevenDayMACases, SLDCases)
+
+SiteData <- unique(LatCaseDF$Site)
+
+#Importing the Madison waste water data
+LIMSFullDF <- ParseData(LIMSWastePath(BaseDir))%>%
+  filter(Site %in% SiteData)%>%
+  mutate(N1Pure = ifelse(is.na(N1),N1,N1),
+         N1Pure = ifelse(is.na(N1),N1,N1),
+         GeoMeanN12 = exp((log(N1Pure)+log(N1Pure))/2))%>%
+  mutate(SC2_mass = (3.785*1e6)*FlowRate*N1)%>%
+  select(Date, Site, N1, BCoV , N2 , SC2_mass, PMMoV,
+         GeoMeanN12,FlowRate,temperature,equiv_sewage_amt)
+
+#joining the two data frames together
+FullDF <- full_join(LatCaseDF,LIMSFullDF, by = c("Date","Site"))%>%
+  mutate(Pop = case_when(
+    Site=="MMSD-P2" ~ 83127,#111967
+    Site=="MMSD-P7" ~ 42734, #81977
+    Site=="MMSD-P8" ~ 70024,#127634
+    Site=="MMSD-P11" ~ 156651,#130799
+    Site=="MMSD-P18" ~ 89139,#151470
+    Site=="Madison" ~ 441675,#603847
+  ))
+```
+
+
+```{r Outlier}
+MadDF <- filter(FullDF,Site=="Madison")%>%
+  filter(Date>mdy("1/1/2021"))%>%
+    mutate(FlaggedOutliersN1 = IdentifyOutliers(N1,Bin = 21, Action = "Flag"),
+           FlaggedOutliersN2 = IdentifyOutliers(N2,Bin = 28, Action = "Flag"))
+
+
+YMaxZoomIn <- 3e6
+
+
+#"2021-06-08","2021-10-17","2021-05-02","2021-01-26"
+
+
+source("InterceptorPlots.R")
+source("InterceptorDFCreater.R")
+
+OutLierPlotDF <- MadDF%>%
+  OutLier_pointPlot_Prep("FlaggedOutliersN1", "FlaggedOutliersN2", "N1", "N2")%>%
+  OutLier_pointPlot("N1","N2", SizeUsed = .1)+
+  ylab("")
+
+
+BaseOutlierPlot <- OutLierPlotDF+
+  ggtitle("Viral concentration (GC/L) With Outlier")+
+  ylab("")+
+  theme(title = element_blank(),
+    axis.text.x = element_blank(), 
+        axis.title.x = element_blank())
+
+
+ZoomedOutlierPlot <- OutLierPlotDF+
+           scale_y_continuous(limits = c(0, YMaxZoomIn))+
+  labs(shape = "gene targets", color = "Flagged")
+
+FirstPlot <- ggarrange(BaseOutlierPlot, ZoomedOutlierPlot, nrow = 2, align ="v", legend.grob=get_legend(ZoomedOutlierPlot), legend="right")
+
+
+annotate_figure(FirstPlot, left = N1_N2ArrangeLab)
+```
+
+```{r Intercepter OverView}
+
+#
+IntercepterDF <- FullDF %>%
+  group_by(Site)%>%
+  filter(Site != "Madison",
+         !is.na(N1))
+
+FullDF2 <- FullDF%>%
+  group_by(Date)%>%
+  mutate(SC2_mass = 2*SC2_mass/(3.785*1e6*sum(FlowRate,na.rm = TRUE)))
+
+ MassBalencePlot <- MassBalence_BarPlot_Prep(FullDF2,"Site", "Madison", "SC2_mass")%>%
+  MassBalence_BarPlot("SC2_mass","Site", "SelectedSite")
+
+
+OutlierDF <- MadDF%>%
+  filter(FlaggedOutliersN2|FlaggedOutliersN1)
+
+OutlierDatesIntercepters <- unique(inner_join(IntercepterDF,OutlierDF["Date"],by=c("Date"))$Date)
+
+a <- OutLierPlotDF+
+  #scale_x_date(limits = c(StartRange,EndRange)) +
+  geom_vline(xintercept = OutlierDatesIntercepters,color="Red") +
+  theme(title = element_blank(),
+        axis.text.x = element_blank(), 
+        axis.title.x = element_blank(),
+        legend.position="none")+
+  scale_y_continuous(limits = c(0,YMaxZoomIn))+
+  scale_x_date(limits = c(min(IntercepterDF$Date),max(IntercepterDF$Date)))
+
+b <- MassBalencePlot+
+  #scale_x_date(limits = c(StartRange,EndRange)) +
+  geom_vline(xintercept = (OutlierDatesIntercepters),color="Red") +
+  theme(legend.position="none")+
+  ylab("")+
+  scale_y_continuous(limits = c(0,YMaxZoomIn))
+
+
+OutlierComp <- ggarrange(a,b,nrow=2,align ="v",legend.grob=get_legend(MassBalencePlot),legend="right")
+
+
+annotate_figure(OutlierComp, 
+    top = text_grob("Composite outliers compared to Interceptors", color = "black", size = 12),
+    left  = text_grob("Covid viral concentration (GC/L)", size = 12, rot = 90, vjust = .5))
+
+#Add lables
+##Viral load?
+```
+
+
+
+```{r N1 Normalizer, dpi = 100}
+
+
+IntercepterOverLay <- IntercepterDF%>%
+  filter(Date>mdy("1/1/2021"), !is.na(N1))%>%
+  pointPlotSite("N1","N2", "Site")+
+  scale_y_log10()+
+  ggtitle("Interceptors Covid Concentration")+ 
+  labs(shape = "gene targets")
+
+
+IntercepterOverLay
+
+#Get P18 to pop out
+```
+
+
+
+
+
+
+
+```{r Loess smoothing plot, fig.height = 5, fig.width = 9}
+
+LoessFunc <- function(SiteFilter,DF,SpanConstant = .163,Var){
+  MainDF <- DF%>%
+    filter(Site==SiteFilter)
+  MainDF[[paste0("loess",Var)]] <- loessFit(y=(MainDF[[Var]]),
+                      x=MainDF$Date, #create loess fit of the data
+                      span=SpanConstant, #span of .2 seems to give the best result,
+                                          #not rigorously chosen
+                      iterations=5)$fitted#2 iterations remove some bad patterns
+  #Same as above but for N2
+  N2Name <- gsub("1","2",Var)
+  MainDF[[paste0("loess", N2Name)]] <- loessFit(y=(MainDF[[N2Name]]),
+                      x=MainDF$Date,
+                      span=SpanConstant,
+                      iterations=5)$fitted#
+return(MainDF)
+}
+#Temp clone to test 7 MA
+# LoessFunc <- function(SiteFilter,DF,SpanConstant = .163,Var){
+#   N2Name <- gsub("1","2",Var)
+#   MainDF <- DF%>%
+#     filter(Site==SiteFilter)%>%
+#     mutate(!!paste0("loess",Var) := rollapply(!!sym(Var), width = 51,
+#                                              FUN = mean, fill = NA, na.rm = TRUE ),
+#            !!paste0("loess",N2Name) := rollapply(!!sym(N2Name), width = 51,
+#                                              FUN = mean, fill = NA, na.rm = TRUE ))
+#   return(MainDF)
+# }
+
+SiteLoessDF <- IntercepterDF%>%
+  mutate(FlowN1 = FlowRate*N1,
+         PopN1 = N1/Pop,
+         FlowN2 = FlowRate*N2,
+         PopN2 = N1/Pop,
+         PopFlowN1 = N1*FlowRate/Pop,
+         PopFlowN2 = N2*FlowRate/Pop)
+  
+  
+  
+
+BaseColDF <- lapply(c("MMSD-P11","MMSD-P18","MMSD-P2","MMSD-P7","MMSD-P8"),
+                      LoessFunc,SiteLoessDF,SpanConstant = .15,
+         Var = "N1")%>%
+          bind_rows()
+
+BaseGridPlot <- BaseColDF%>%
+            filter(!is.na(loessN1))%>%  
+            LinePlotSite("loessN1","loessN2", "Site")
+            
+
+
+NonLogPlotlyPlot <- BaseGridPlot+
+            labs(title = "Linear scale", 
+                 ylab = "Covid Conc With Norm", linetype = "gene targets")
+
+LogPlotlyPlot <- BaseGridPlot+
+            scale_y_log10()+
+            labs(title = "Log scale",linetype = "gene targets")+
+  theme(axis.title.y=element_blank())
+
+
+LoessPlot <- ggarrange(NonLogPlotlyPlot,LogPlotlyPlot, common.legend = TRUE,
+                       legend = "right")
+
+annotate_figure(LoessPlot, top = text_grob("Smoothed interceptors", 
+               color = "black", size = 12))
+
+
+
+```
+
+
+```{r Motivated For next section}
+
+IntercepterOverLay+
+  geom_line(aes(y=N1, color = Site, linetype  = "N1"))+
+  geom_line(aes(y=N2, color = Site, linetype  = "N2"))+
+  ggtitle("Interceptors Covid Concentration")+
+  labs(linetype = "gene targets")
+
+#Move legend to right
+
+
+```
+
+```{r Per Change}
+IntercepterChangeDF <- IntercepterDF%>%
+  filter(!is.na(N1))%>%
+  mutate(ChangeN1 = lead(N1) - N1,
+         ChangeN2 = lead(N2) - N2)
+
+
+IntercepterChangeOverLay <- IntercepterChangeDF%>%
+  pointPlotSite("ChangeN1","ChangeN2", "Site")+
+  ylab("")+
+  ggtitle("Increment between consecutive measurements") +
+  theme(axis.text.x = element_blank(), 
+        axis.title.x = element_blank()) + 
+  scale_shape_manual(values = c(N1ShapeUnit,N2ShapeUnit), guide = 'none')
+#IntercepterChangeOverLay
+```
+
+
+```{r pop Madison}
+
+MadChangeDF <- MadDF%>%
+  filter(!is.na(N1))%>%
+  mutate(ChangeN1 = lead(N1) - N1,
+         ChangeN2 = lead(N2) - N2)
+
+
+MadChangeOverLay <- MadChangeDF%>%
+  mutate(Flagged = FlaggedOutliersN2|FlaggedOutliersN1)%>%
+  pointPlotSite("ChangeN1","ChangeN2", "Flagged")+
+  OutlierColorScheme()+
+  ylab("")+
+  labs(shape = "gene targets")
+
+
+FullViewDF <- ggarrange(IntercepterChangeOverLay, MadChangeOverLay, nrow = 2, align = "v")
+Lim <- 1e6
+ZoomSettings <- scale_y_continuous(limits = c(-Lim,Lim))
+PartialViewDF <- ggarrange(IntercepterChangeOverLay+ZoomSettings, 
+          MadChangeOverLay+ZoomSettings,
+          nrow = 2, align = "v")
+
+
+annotate_figure(FullViewDF, left = N1_N2ArrangeLab)
+
+annotate_figure(PartialViewDF, left = N1_N2ArrangeLab)
+
+```

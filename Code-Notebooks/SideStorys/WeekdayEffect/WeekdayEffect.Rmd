@@ -6,6 +6,16 @@ title: "Weekday Effect"
 author: "Marlin"
 date: "11/1/2021"
 output: html_document
+knit: (
+  function(inputFile, encoding) { 
+    FileComp = strsplit(inputFile,"/")[[1]];
+    File = FileComp[length(FileComp)];
+    File = substr(File,1,nchar(File)-4);
+    pSubTitle <- paste0('RmdOutput/',Sys.Date(),"_",File);
+    rmarkdown::render( 
+      input       = inputFile, 
+      encoding    = encoding, 
+      output_file = pSubTitle) })
 ---
 
 ```{r setup, include=FALSE}
@@ -27,29 +37,34 @@ source("../../../lib/GenPlotMaking.R")
 source("../../../lib/DataProccess.R")
 source("../../../lib/HelperFunctions.R")
 source("../../../lib/NoTSCorrelationFunctions.R")
+source("../../../lib/DataPathName.R")
 ```
+
 
 ```{r DF Set Up, include=FALSE}
 BaseDir <- params$BaseDir
-MadisonCaseFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/MMSD_Cases_2022_01_12_processed.csv")
-LIMSFN <- paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/LIMSWasteData_01-25-21_01-05-22.csv")
 
-LatCaseDF <- ParseData(MadisonCaseFN)%>% 
+LatCaseDF <- ParseData(LIMSCasePath(BaseDir))%>% 
+  rename(Cases = FirstConfirmed)%>%
   filter(!is.na(Site)) %>%
-  select(Date,Site,Cases,Tests,Per_pos)
+  select(Date,Site,Cases)%>%
+  group_by(Site)%>%
+  mutate(SevenDayMACases = rollapply(data = Cases, width = 7, FUN = mean, 
+                            na.rm = TRUE,fill=NA))
 
-LatCaseDFRoll <- RollPerPos(LatCaseDF,"Cases","Tests",Facet="Site",n = 14)
-
-FullLatCaseDFRoll <- full_join(LatCaseDF,LatCaseDFRoll,by=c("Date","Site"),suffix=c("",".Rolled"))%>%
-  filter(Site=="Madison",
-         Per_pos.Rolled!=-500,
-         Date>=ymd("2020-08-15"))
   
 
-LIMSFullDF <- ParseData(LIMSFN)%>%
+LIMSFullDF <- ParseData(LIMSWastePath(BaseDir))%>%
   select(Date,Site, N1,N1Error)%>%
   filter(Site=="Madison")
 ```
+"Files Used: "
+
+`r LIMSCasePath(BaseDir)`
+
+`r LIMSWastePath(BaseDir)`
+
+
 
 There are two kind issues day of the week can create in data analysis.
 
@@ -81,16 +96,16 @@ The case data is heavily dependent on the day of the week with Thursday having n
 ```{r smoothed analyis}
 WeekdayCaseDF <- LatCaseDF%>%
   mutate(weekday=weekdays(Date))%>%
-  filter(Cases>0,Per_pos>0)
+  filter(Cases>0)
 WeekdayDF$weekday <- factor(WeekdayDF$weekday,
                         levels= c("Monday", "Tuesday", "Wednesday", "Thursday","Friday","Saturday","Sunday"))
 
 WeekdayCaseDF%>%
   group_by(weekday)%>%
-  summarize(CasesM=mean(Cases),Per_posM=mean(Per_pos),n())
+  summarize(CasesM=mean(Cases),n())
 #t.test(filter(WeekdayDF,weekday=="Monday")$N1,filter(WeekdayDF,weekday=="Thursday")$N1)
 
-summary(aov(Per_pos~weekday+Site,data=WeekdayCaseDF))
+summary(aov(Cases~weekday,data=WeekdayCaseDF))
 ```
 
 
