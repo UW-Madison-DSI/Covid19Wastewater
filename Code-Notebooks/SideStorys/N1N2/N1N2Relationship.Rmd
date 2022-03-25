@@ -6,6 +6,16 @@ title: "N1N2 Relationship"
 author: "Marlin"
 date: "11/2/2021"
 output: html_document
+knit: (
+  function(inputFile, encoding) { 
+    FileComp = strsplit(inputFile,"/")[[1]];
+    File = FileComp[length(FileComp)];
+    File = substr(File,1,nchar(File)-4);
+    pSubTitle <- paste0('RmdOutput/',Sys.Date(),"_",File);
+    rmarkdown::render( 
+      input       = inputFile, 
+      encoding    = encoding, 
+      output_file = pSubTitle) })
 ---
 
 ```{r set up markdown settings, echo=FALSE}
@@ -35,32 +45,34 @@ source("../../../lib/HelperFunctions.R")
 
 
 source("../../../lib/NoTSCorrelationFunctions.R")
+source("../../../lib/DataPathName.R")
 ```
 
 ```{r DF Set Up, echo=FALSE}
 BaseDir <- params$BaseDir
 
-MadisonCaseFN  <-  paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/MMSD_Cases_2022_01_12_processed.csv")
-LIMSFN <- paste0(BaseDir,"COVID-19_WastewaterAnalysis/data/processed/LIMSWasteData_01-25-21_01-05-22.csv")
-
-LatCaseDF <- ParseData(MadisonCaseFN)%>% 
+LatCaseDF <- ParseData(LIMSCasePath(BaseDir))%>% 
+  rename(Cases = FirstConfirmed)%>%
   filter(!is.na(Site)) %>%
-  select(Date,Site,Cases,Tests,Per_pos)
-
-LatCaseDFRoll <- RollPerPos(LatCaseDF,"Cases","Tests",Facet="Site",n = 14)
-
-FullLatCaseDFRoll <- full_join(LatCaseDF,LatCaseDFRoll,by=c("Date","Site"),suffix=c("",".Rolled"))%>%
-  filter(Site=="Madison",
-         Per_pos.Rolled!=-500,
-         Date>=ymd("2020-08-15"))
+  select(Date,Site,Cases)%>%
+  filter(Site=="Madison")
   
 
-LIMSFullDF <- ParseData(LIMSFN)%>%
+LIMSFullDF <- ParseData(LIMSWastePath(BaseDir))%>%
   select(Date,Site, N1,N1Error,N2,N2Error)%>%
   filter(Site=="Madison")
 
 
 ```
+
+"Files Used: "
+
+`r LIMSCasePath(BaseDir)`
+
+`r LIMSWastePath(BaseDir)`
+
+
+
 
 Strong trend between N1 and N2 with a correlation of .93
 
