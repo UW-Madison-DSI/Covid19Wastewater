@@ -1,0 +1,137 @@
+---
+title: "DiffExplore"
+author: "Marlin"
+date:  "`r format(Sys.time(), '%d %B, %Y, %H:%M')`"
+output:
+  #pdf_document: default
+  html_document:
+    df_print: paged
+params:
+  BaseDir: Z:/
+  #~/Box/DSI/Projects/wastewater/RD/
+knit: (
+  function(inputFile, encoding) { 
+    FileComp = strsplit(inputFile,"/")[[1]];
+    File = FileComp[length(FileComp)];
+    File = substr(File,1,nchar(File)-4);
+    pSubTitle <- paste0('RmdOutput/',Sys.Date(),"_",File);
+    rmarkdown::render( 
+      input       = inputFile, 
+      encoding    = encoding, 
+      output_file = pSubTitle) })
+  
+         
+editor_options:
+  chunk_output_type: inline
+---
+
+
+
+```{r}
+library(dplyr)
+library(lubridate)
+library(zoo)
+library(ggplot2)
+library(limma)
+library(ggpubr)
+library(grid)
+library(plotly)
+
+#Data Files and prep work
+source("../../lib/DataProccess.R")
+source("../../lib/NormFuncs.R")
+source("../../lib/OutlierDetectionFuncs.R")
+source("../../lib/DataPathName.R")
+BaseDir <- params$BaseDir#get the root of the directory where the data is stored
+```
+
+```{r}
+SiteNames <- c("Madison","MMSD-P11","MMSD-P18","MMSD-P2","MMSD-P7","MMSD-P8")
+
+#Importing the Madison waste water data
+LIMSFullDF <- ParseData(LIMSWastePath(BaseDir))%>%
+  filter(Site %in% SiteNames)%>%
+  mutate(N1Pure = ifelse(is.na(N1),N1,N1),
+         N1Pure = ifelse(is.na(N1),N1,N1),
+         GeoMeanN12 = exp((log(N1Pure)+log(N1Pure))/2))%>%
+  mutate(SC2_mass = (3.785*1e6)*FlowRate*N1)%>%
+  select(Date, Site, N1, BCoV , N2 , SC2_mass, PMMoV,
+         GeoMeanN12,FlowRate,temperature,equiv_sewage_amt, everything())
+
+
+DifDF <- LIMSFullDF%>%
+  filter(!is.na(N1))%>%
+  group_by(Site)%>%
+  arrange(Date)%>%
+  mutate(LeadN1 = lead(N1) - N1,
+         LagN1 = lag(N1) - N1,
+         RankHighN1 = rank(LeadN1),
+         RankLowN1 = rank(LagN1),
+         LeadN2 = lead(N2) - N2,
+         LagN2 = lag(N2) - N2,
+         RankHighN2 = rank(LeadN2),
+         RankLowN2 = rank(LagN2))%>%
+  select(Site,Date,LeadN1,LagN1,RankHighN1,RankLowN1,RankHighN2,RankLowN2,everything())%>%
+  arrange(Site,desc(RankHighN1))
+
+DifRatDF <- LIMSFullDF%>%
+  filter(!is.na(N1))%>%
+  group_by(Site)%>%
+  arrange(Date)%>%
+  mutate(LeadN1 = lead(N1)/N1,
+         LagN1 = lag(N1)/N1,
+         RankHighN1 = rank(LeadN1),
+         RankLowN1 = rank(LagN1),
+         LeadN2 = lead(N2)/N2,
+         LagN2 = lag(N2)/N2,
+         RankHighN2 = rank(LeadN2),
+         RankLowN2 = rank(LagN2))%>%
+  select(Site,Date,LeadN1,LagN1,RankHighN1,RankLowN1,RankHighN2,RankLowN2,everything())%>%
+  arrange(Site,desc(RankHighN1))
+
+```
+
+"Files Used: "
+
+`r LIMSWastePath("")`
+
+```{r}
+#DifRatDF
+#DifDF
+hist(log(DifDF$LagN1))
+hist(log(DifRatDF$LagN1))
+
+DiffPlot <- DifDF%>%
+  ggplot()+
+  geom_point(aes(x = Date,y = LagN1, color = LagN2))
+ggplotly(DiffPlot)
+
+DiffPlot <- DifRatDF%>%
+  ggplot()+
+  geom_point(aes(x = Date,y = LagN1, color = LagN2))
+ggplotly(DiffPlot)
+
+
+DifDF%>%
+  ggplot()+
+  geom_point(aes(x = log(PMMoV), y = LagN1,color = Site))+
+  facet_wrap(~Site, scales = "free")
+  
+  DifDF%>%
+  ggplot()+
+  geom_point(aes(x = equiv_sewage_amt, y = LagN1,color = Site))#+
+  #facet_wrap(~Site, scales = "free")
+#PMMoV, FlowRate, equiv_sewage_amt
+#
+
+
+DifDF%>%
+  #filter(Site != "Madison")%>%
+  ggplot()+
+  geom_point(aes(x = N1Error,y = RankLowN1))+
+  facet_wrap(~Site, scales = "free")
+
+#Come up with list top 10, 20, 50
+```
+
+```
