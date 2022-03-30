@@ -233,7 +233,7 @@ DiffGen <- LIMSFullDF%>%
           ChangeLagN1 = abs(lag(N1) - N1),
           ChangeMinN1 = pmin(ChangeLeadN1,ChangeLagN1)
           )%>%
-  select(Date,Site,N1,MaxRank,ChangeLeadN1,DiffLeadN1,RatLeadN1, ChangeMinN1)%>%
+  select(Date,Site,N1,N2,MaxRank,ChangeLeadN1,DiffLeadN1,RatLeadN1, ChangeMinN1)%>%
   arrange(Site, Date)
 
 
@@ -248,6 +248,7 @@ PlotlyView(DiffGen, "N1", "ChangeMinN1", QuintileBound, Threshold = BreakUsed)
 PlotlyView(DiffGen, "N1", "MaxRank", QuintileBound, Threshold = BreakUsed)
 
 RankingDF <- LIMSFullDF%>%
+  filter(Date<mdy("10/31/2021"))%>%
   group_by(Site)%>%
   arrange(Date)%>%
   mutate(N1RankLeft = rank(desc(N1- lag(N1))),
@@ -266,5 +267,25 @@ RankingDF%>%
 P
 BreakUsed <- c(0)
 PlotlyView(DiffGen, "N1", "N1", QuintileBound, Threshold = BreakUsed)
+PlotlyView(DiffGen, "N2", "N2", QuintileBound, Threshold = BreakUsed)
 #Norm Sqrt?,
+
+
+RankingDF%>%
+  mutate(DiffN1 = pmax(N1RankLeft,N1RankRight,N2RankLeft,N2RankRight))%>%
+  arrange(DiffN1)
+
+DiffPlot <- LIMSFullDF%>%
+  ggplot(aes(x = Date, y = N1 - lag(N1)))+
+  geom_point()+
+  facet_wrap(~Site)
+
+ggplotly(DiffPlot)
+```
+
+
+```{r ViewOutlier}
+
+
+
 ```
