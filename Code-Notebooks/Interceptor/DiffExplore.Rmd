@@ -96,10 +96,21 @@ DifRatDF <- LIMSFullDF%>%
 `r LIMSWastePath("")`
 
 ```{r}
+hist((DifDF$LagN1))
+hist(log(DifDF$LagN1))
+
+
+hist((DifRatDF$LagN1))
+hist(log(DifRatDF$LagN1))
+
+```
+
+
+```{r}
 #DifRatDF
 #DifDF
-hist(log(DifDF$LagN1))
-hist(log(DifRatDF$LagN1))
+hist((DifDF$LagN1))
+hist((DifRatDF$LagN1))
 
 DiffPlot <- DifDF%>%
   ggplot()+
@@ -108,7 +119,7 @@ ggplotly(DiffPlot)
 
 DiffPlot <- DifRatDF%>%
   ggplot()+
-  geom_point(aes(x = Date,y = LagN1, color = LagN2))
+  geom_point(aes(x = Date,y = log(LagN1), color = LagN2))
 ggplotly(DiffPlot)
 
 
@@ -124,7 +135,6 @@ DifDF%>%
 #PMMoV, FlowRate, equiv_sewage_amt
 #
 
-
 DifDF%>%
   #filter(Site != "Madison")%>%
   ggplot()+
@@ -133,5 +143,100 @@ DifDF%>%
 
 #Come up with list top 10, 20, 50
 ```
+
+
+```{r Interactive highlighting}
+#Create GGPlotly object with consistent scale for alpha, size, color
+GGPlotlyWithScaling <- function(GGPlotObject, FactorSize){
+  AlphaScalling <- scale_alpha_manual(values = seq(.5,1, length.out = FactorSize))
+  SizeScalling <- scale_size_manual(values = seq(1,2, length.out = FactorSize))
+  ColorScalling <- scale_color_manual(values = 
+                                  c("#fee391", "#fec44f", "#fe9929",
+                                  "#d95f0e", "#993404", "#6f2f04")[1:FactorSize])
+  PlotlyObject <- GGPlotObject+
+    AlphaScalling+
+    SizeScalling+
+    ColorScalling
+  return(ggplotly(PlotlyObject))
+}
+
+#Helper Function To create bins
+SumQuint <- function(Vec,Thresh){
+  return(sum(Vec>Thresh))
+}
+
+#Break Data into bins based on ranking and given threshold
+QuintileBound <- function(DF,VecName,Threshold,Name){
+  ReturnedDF <- DF%>%
+    group_by(Site)%>%
+    mutate(TempRanking = rank(!!sym(VecName))/n(),
+           !!Name := factor(sapply(TempRanking, SumQuint, Thresh = Threshold)))
+  ReturnedDF <- ReturnedDF%>%
+    select(-TempRanking)%>%
+    select(Date,Site,!!Name,everything())
+  return(ReturnedDF)
+}
+
+#Generate two plotly objects to view the Method 
+#and a data table communicating classes
+PlotlyView <- function(DF, DefaultVar,ChangeVar, FlagMethod,...){
+  #Creates the bin from given function
+  MainDF <- FlagMethod(DF, VecName = ChangeVar, Name = "FlagScheme", ...)
+  
+  #Create shared GGplot object that both use
+  CorePlot <- MainDF%>%
+    ggplot(aes(x = Date))
+  
+  #Create plot where The scheme is plotted
+  DiffPlot <- CorePlot+
+    geom_point(aes(y = !!sym(ChangeVar), color = FlagScheme,
+                   alpha = FlagScheme, size = FlagScheme))+
+    facet_wrap(~Site)
+  
+  #Needed for correct manual scaling in GGPlotlyWithScaling
+  FactorSize <- length(unique(MainDF[["FlagScheme"]]))
+  
+  #Create plot where The CoreVector is plotted
+  DiffPlotNorm <- CorePlot+
+    geom_point(aes(y = !!sym(DefaultVar), color = FlagScheme,
+                   alpha = FlagScheme, size = FlagScheme))+
+    facet_wrap(~Site)
+  
+  #Return The Two plots
+  print(GGPlotlyWithScaling(DiffPlot, FactorSize))
+  print(GGPlotlyWithScaling(DiffPlotNorm, FactorSize))
+  
+  #Create DataFrame showing The bounds for the binning
+  DFRange <- MainDF%>%
+    group_by(FlagScheme, Site)%>%
+    summarise(MinBound = min(!!sym(ChangeVar), na.rm = TRUE),
+              MaxBound = max(!!sym(ChangeVar), na.rm = TRUE),
+              NumInBin = n())
+  return(DFRange)
+}
+
+
+
+DiffGen <- LIMSFullDF%>%
+  filter(!is.na(N1), Site != "Madison")%>%
+  group_by(Site)%>%
+  arrange(Date)%>%
+  mutate(
+          DiffLeadN1 = lead(N1) - N1,
+          RatLeadN1 = lead(N1)/N1,
+          ChangeLeadN1 = abs(lead(N1) - N1),
+          ChangeLagN1 = abs(lag(N1) - N1),
+          ChangeMinN1 = pmin(ChangeLeadN1,ChangeLagN1)
+          )%>%
+  select(Date,Site,N1,ChangeLeadN1,DiffLeadN1,RatLeadN1, ChangeMinN1)%>%
+  arrange(Site, Date)
+
+BreakUsed <- c(.2,.4,.6,.8,.9)
+
+PlotlyView(DiffGen, "N1", "DiffLeadN1", QuintileBound, Threshold = BreakUsed)
+PlotlyView(DiffGen, "N1", "RatLeadN1", QuintileBound, Threshold = BreakUsed)
+PlotlyView(DiffGen, "N1", "ChangeLeadN1", QuintileBound, Threshold = BreakUsed)
+PlotlyView(DiffGen, "N1", "ChangeMinN1", QuintileBound, Threshold = BreakUsed)
+
 
 ```
