@@ -152,7 +152,7 @@ GGPlotlyWithScaling <- function(GGPlotObject, FactorSize){
   SizeScalling <- scale_size_manual(values = seq(1,2, length.out = FactorSize))
   ColorScalling <- scale_color_manual(values = 
                                   c("#fee391", "#fec44f", "#fe9929",
-                                  "#d95f0e", "#993404", "#6f2f04")[1:FactorSize])
+                                  "#d95f0e", "#993404", "#6f2f04")[(7-FactorSize):6])
   PlotlyObject <- GGPlotObject+
     AlphaScalling+
     SizeScalling+
@@ -226,14 +226,14 @@ DiffGen <- LIMSFullDF%>%
          N2RankLeft = rank(N2- lag(N2)),
          N2RankRight = rank(N2 - lead(N2)))%>%
   mutate(
+          MaxRank = pmax(N1RankLeft,N1RankRight,N2RankLeft,N2RankRight),
           DiffLeadN1 = lead(N1) - N1,
           RatLeadN1 = lead(N1)/N1,
           ChangeLeadN1 = abs(lead(N1) - N1),
           ChangeLagN1 = abs(lag(N1) - N1),
-          ChangeMinN1 = pmin(ChangeLeadN1,ChangeLagN1),
-          SumOfRanks = ,
+          ChangeMinN1 = pmin(ChangeLeadN1,ChangeLagN1)
           )%>%
-  select(Date,Site,N1,ChangeLeadN1,DiffLeadN1,RatLeadN1, ChangeMinN1)%>%
+  select(Date,Site,N1,MaxRank,ChangeLeadN1,DiffLeadN1,RatLeadN1, ChangeMinN1)%>%
   arrange(Site, Date)
 
 
@@ -242,19 +242,29 @@ PlotlyView(DiffGen, "N1", "DiffLeadN1", QuintileBound, Threshold = BreakUsed)
 PlotlyView(DiffGen, "N1", "ChangeLeadN1", QuintileBound, Threshold = BreakUsed)
 
 
-BreakUsed <- c(.2,.4,.6,.8,.9)
+BreakUsed <- c(.8,.9)
 PlotlyView(DiffGen, "N1", "ChangeMinN1", QuintileBound, Threshold = BreakUsed)
-#
-
+#MaxRank
+PlotlyView(DiffGen, "N1", "MaxRank", QuintileBound, Threshold = BreakUsed)
 
 RankingDF <- LIMSFullDF%>%
   group_by(Site)%>%
   arrange(Date)%>%
-  mutate(N1RankLeft = rank(N1- lag(N1)),
-         N1RankRight = rank(lead(N1) - N1),
-         N2RankLeft = rank(N2- lag(N2)),
-         N2RankRight = rank(lead(N2)-N2))%>%
-  select(Date,Site,N1RankLeft,N1RankRight,N2RankLeft,N2RankRight)
+  mutate(N1RankLeft = rank(desc(N1- lag(N1))),
+         N1RankRight = rank(desc(lead(N1) - N1)),
+         N2RankLeft = rank(desc(N2- lag(N2))),
+         N2RankRight = rank(desc(lead(N2)-N2)))%>%
+  select(Date,Site,N1RankLeft,N1RankRight,N2RankLeft,N2RankRight)%>%
+  arrange(N1RankLeft)
 RankingDF
 write.csv(RankingDF,"RmdOutput/RankingDF.csv",quote = FALSE)
+
+RankingDF%>%
+  mutate(DiffN1 = N1RankLeft - N1RankRight)%>%
+  arrange(DiffN1)
+#
+P
+BreakUsed <- c(0)
+PlotlyView(DiffGen, "N1", "N1", QuintileBound, Threshold = BreakUsed)
+#Norm Sqrt?,
 ```
