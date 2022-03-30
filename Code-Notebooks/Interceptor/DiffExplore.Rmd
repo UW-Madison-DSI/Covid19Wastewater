@@ -226,17 +226,31 @@ DiffGen <- LIMSFullDF%>%
           RatLeadN1 = lead(N1)/N1,
           ChangeLeadN1 = abs(lead(N1) - N1),
           ChangeLagN1 = abs(lag(N1) - N1),
-          ChangeMinN1 = pmin(ChangeLeadN1,ChangeLagN1)
+          ChangeMinN1 = pmin(ChangeLeadN1,ChangeLagN1),
+          SumOfRanks = ,
           )%>%
   select(Date,Site,N1,ChangeLeadN1,DiffLeadN1,RatLeadN1, ChangeMinN1)%>%
   arrange(Site, Date)
 
-BreakUsed <- c(.2,.4,.6,.8,.9)
 
 PlotlyView(DiffGen, "N1", "DiffLeadN1", QuintileBound, Threshold = BreakUsed)
-PlotlyView(DiffGen, "N1", "RatLeadN1", QuintileBound, Threshold = BreakUsed)
+#PlotlyView(DiffGen, "N1", "RatLeadN1", QuintileBound, Threshold = BreakUsed)
 PlotlyView(DiffGen, "N1", "ChangeLeadN1", QuintileBound, Threshold = BreakUsed)
+
+
+BreakUsed <- c(.2,.4,.6,.8,.9)
 PlotlyView(DiffGen, "N1", "ChangeMinN1", QuintileBound, Threshold = BreakUsed)
+#
 
 
+RankingDF <- LIMSFullDF%>%
+  group_by(Site)%>%
+  arrange(Date)%>%
+  mutate(N1RankLeft = rank(N1- lag(N1)),
+         N1RankRight = rank(N1 - lead(N1)),
+         N2RankLeft = rank(N2- lag(N2)),
+         N2RankRight = rank(N2 - lead(N2)))%>%
+  select(Date,Site,N1RankLeft,N1RankRight,N2RankLeft,N2RankRight)
+
+write.csv(RankingDF, "RmdOutput/RankingDF.csv")
 ```
