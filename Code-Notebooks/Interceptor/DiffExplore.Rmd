@@ -46,7 +46,7 @@ BaseDir <- params$BaseDir#get the root of the directory where the data is stored
 ```
 
 ```{r}
-SiteNames <- c("Madison","MMSD-P11","MMSD-P18","MMSD-P2","MMSD-P7","MMSD-P8")
+SiteNames <- c("MMSD-P11","MMSD-P18","MMSD-P2","MMSD-P7","MMSD-P8")
 
 #Importing the Madison waste water data
 LIMSFullDF <- ParseData(LIMSWastePath(BaseDir))%>%
@@ -168,7 +168,7 @@ SumQuint <- function(Vec,Thresh){
 #Break Data into bins based on ranking and given threshold
 QuintileBound <- function(DF,VecName,Threshold,Name){
   ReturnedDF <- DF%>%
-    group_by(Site)%>%
+    #group_by(Site)%>%
     mutate(TempRanking = rank(!!sym(VecName))/n(),
            !!Name := factor(sapply(TempRanking, SumQuint, Thresh = Threshold)))
   ReturnedDF <- ReturnedDF%>%
@@ -176,10 +176,13 @@ QuintileBound <- function(DF,VecName,Threshold,Name){
     select(Date,Site,!!Name,everything())
   return(ReturnedDF)
 }
+```
 
+
+```{r PlotlyView}
 #Generate two plotly objects to view the Method 
 #and a data table communicating classes
-PlotlyView <- function(DF, DefaultVar,ChangeVar, FlagMethod,...){
+PlotlyView <- function(DF,ChangeVar, FlagMethod,...){
   #Creates the bin from given function
   MainDF <- FlagMethod(DF, VecName = ChangeVar, Name = "FlagScheme", ...)
   
@@ -197,95 +200,67 @@ PlotlyView <- function(DF, DefaultVar,ChangeVar, FlagMethod,...){
   FactorSize <- length(unique(MainDF[["FlagScheme"]]))
   
   #Create plot where The CoreVector is plotted
-  DiffPlotNorm <- CorePlot+
-    geom_point(aes(y = !!sym(DefaultVar), color = FlagScheme,
+  DiffPlotNormN1 <- CorePlot+
+    geom_point(aes(y = N1, color = FlagScheme,
+                   alpha = FlagScheme, size = FlagScheme))+
+    facet_wrap(~Site)
+  #Create plot where The CoreVector is plotted
+  DiffPlotNormN2 <- CorePlot+
+    geom_point(aes(y = N2, color = FlagScheme,
                    alpha = FlagScheme, size = FlagScheme))+
     facet_wrap(~Site)
   
   #Return The Two plots
+  print(GGPlotlyWithScaling(DiffPlotNormN1, FactorSize))
+  print(GGPlotlyWithScaling(DiffPlotNormN2, FactorSize))
   print(GGPlotlyWithScaling(DiffPlot, FactorSize))
-  print(GGPlotlyWithScaling(DiffPlotNorm, FactorSize))
   
   #Create DataFrame showing The bounds for the binning
-  DFRange <- MainDF%>%
+  DiffDFRange <- MainDF%>%
     group_by(FlagScheme, Site)%>%
     summarise(MinBound = min(!!sym(ChangeVar), na.rm = TRUE),
               MaxBound = max(!!sym(ChangeVar), na.rm = TRUE),
               NumInBin = n())
-  return(DFRange)
+  print(DiffDFRange)
+  RetDF <- MainDF%>%
+    filter(FlagScheme!=0)%>%
+    select(-Flag)
+    
+  return(RetDF)
 }
 
 
-
-DiffGen <- LIMSFullDF%>%
-  filter(!is.na(N1), Site != "Madison")%>%
-  group_by(Site)%>%
-  arrange(Date)%>%
-  mutate(N1RankLeft = rank(N1- lag(N1)),
-         N1RankRight = rank(N1 - lead(N1)),
-         N2RankLeft = rank(N2- lag(N2)),
-         N2RankRight = rank(N2 - lead(N2)))%>%
-  mutate(
-          MaxRank = pmax(N1RankLeft,N1RankRight,N2RankLeft,N2RankRight),
-          DiffLeadN1 = lead(N1) - N1,
-          RatLeadN1 = lead(N1)/N1,
-          ChangeLeadN1 = abs(lead(N1) - N1),
-          ChangeLagN1 = abs(lag(N1) - N1),
-          ChangeMinN1 = pmin(ChangeLeadN1,ChangeLagN1)
-          )%>%
-  select(Date,Site,N1,N2,MaxRank,ChangeLeadN1,DiffLeadN1,RatLeadN1, ChangeMinN1)%>%
-  arrange(Site, Date)
-
-
-PlotlyView(DiffGen, "N1", "DiffLeadN1", QuintileBound, Threshold = BreakUsed)
-#PlotlyView(DiffGen, "N1", "RatLeadN1", QuintileBound, Threshold = BreakUsed)
-PlotlyView(DiffGen, "N1", "ChangeLeadN1", QuintileBound, Threshold = BreakUsed)
-
-
-BreakUsed <- c(.8,.9)
-PlotlyView(DiffGen, "N1", "ChangeMinN1", QuintileBound, Threshold = BreakUsed)
-#MaxRank
-PlotlyView(DiffGen, "N1", "MaxRank", QuintileBound, Threshold = BreakUsed)
-
 RankingDF <- LIMSFullDF%>%
-  filter(Date<mdy("10/31/2021"))%>%
+  #filter(Date<mdy("10/31/2021"))%>%
   group_by(Site)%>%
   arrange(Date)%>%
-  mutate(N1RankLeft = rank(desc(N1- lag(N1))),
-         N1RankRight = rank(desc(lead(N1) - N1)),
-         N2RankLeft = rank(desc(N2- lag(N2))),
-         N2RankRight = rank(desc(lead(N2)-N2)))%>%
-  select(Date,Site,N1RankLeft,N1RankRight,N2RankLeft,N2RankRight)%>%
-  arrange(N1RankLeft)
-RankingDF
-write.csv(RankingDF,"RmdOutput/RankingDF.csv",quote = FALSE)
-
-RankingDF%>%
-  mutate(DiffN1 = N1RankLeft - N1RankRight)%>%
-  arrange(DiffN1)
-#
-P
-BreakUsed <- c(0)
-PlotlyView(DiffGen, "N1", "N1", QuintileBound, Threshold = BreakUsed)
-PlotlyView(DiffGen, "N2", "N2", QuintileBound, Threshold = BreakUsed)
-#Norm Sqrt?,
+  mutate(N1 = ifelse(!is.na(N1),N1,0))%>%
+  mutate(N2 = ifelse(!is.na(N2),N2,0))%>%
+  mutate(N1RankLeft = rank(desc(N1/lag(N1))),
+         N1RankRight = rank(desc(N1/lead(N1))),
+         N2RankLeft = rank(desc(N2/lag(N2))),
+         N2RankRight = rank(desc(N2/lead(N2))))%>%
+  select(Date,Site,N1RankLeft,N1RankRight,N2RankLeft,N2RankRight,N1,N2)%>%
+  mutate(MaxN1Rank = -pmax(N1RankLeft,N1RankRight,N2RankLeft,N2RankRight),
+         Flag = ifelse(MaxN1Rank < 25,"Flagged", "NotFlagged"))
 
 
-RankingDF%>%
-  mutate(DiffN1 = pmax(N1RankLeft,N1RankRight,N2RankLeft,N2RankRight))%>%
-  arrange(DiffN1)
+BreakUsed <- c(.95,.98)
+FinDF <- PlotlyView(RankingDF, "MaxN1Rank", QuintileBound, Threshold = BreakUsed)
 
-DiffPlot <- LIMSFullDF%>%
-  ggplot(aes(x = Date, y = N1 - lag(N1)))+
-  geom_point()+
-  facet_wrap(~Site)
-
-ggplotly(DiffPlot)
 ```
 
 
 ```{r ViewOutlier}
 
-
+FinDF%>%
+  arrange(FlagScheme)%>%
+  select(Date,Site,FlagScheme,MaxN1Rank)%>%
+  rename(ErrorLevel = FlagScheme, Rank = `MaxN1Rank`)%>%
+  ungroup()%>%
+  mutate(Rank = 31 - rank(Rank, ties.method = "first"),
+         ErrorLevel = 4 - as.integer(ErrorLevel))%>%
+  arrange(ErrorLevel, Rank)#%>%
+  #write.csv("RmdOutput/PossibleOutliers.csv")
 
 ```
