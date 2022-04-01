@@ -250,7 +250,7 @@ RankingDF <- LIMSFullDF%>%
          N2RankRight = rank(desc(N2 - lead(N2))))%>%
   select(Date,Site,N1RankLeft,N1RankRight,N2RankLeft,N2RankRight,N1,N2)%>%
   mutate(MaxN1Rank = -pmax(N1RankLeft,N1RankRight,N2RankLeft,N2RankRight),
-         Flag = ifelse(MaxN1Rank < 25,"Flagged", "NotFlagged"))
+         Flag = ifelse(MaxN1Rank > -25,"Flagged", "NotFlagged"))
 
 
 BreakUsed <- c(.90,.95)
@@ -266,10 +266,9 @@ Vec[[3]]%>%
   arrange(FlagScheme)%>%
   #select(-)%>%
   rename(ErrorLevel = FlagScheme, Rank = `MaxN1Rank`)%>%
-  mutate(Rank = rank(desc(Rank), ties.method = "first"))%>%
-  arrange(ErrorLevel, Rank)
+  mutate(Rank = -Rank)%>%
+  arrange(ErrorLevel, Rank)#%>%
+  #write.csv("RmdOutput/PossibleOutliers.csv")
 
-RankingDF%>%
-  write.csv("RmdOutput/RankingDF.csv")
 
 ```
