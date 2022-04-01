@@ -264,12 +264,12 @@ Vec[[2]]
 
 Vec[[3]]%>%
   arrange(FlagScheme)%>%
-  select(Date,Site,FlagScheme,MaxN1Rank)%>%
+  #select(-)%>%
   rename(ErrorLevel = FlagScheme, Rank = `MaxN1Rank`)%>%
-  ungroup()%>%
-  mutate(Rank = 31 - rank(Rank, ties.method = "first"),
-         ErrorLevel = as.integer(ErrorLevel)-1)%>%
-  arrange(ErrorLevel, Rank)#%>%
-  #write.csv("RmdOutput/PossibleOutliers.csv")
+  mutate(Rank = rank(desc(Rank), ties.method = "first"))%>%
+  arrange(ErrorLevel, Rank)
+
+RankingDF%>%
+  write.csv("RmdOutput/RankingDF.csv")
 
 ```
