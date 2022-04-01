@@ -2,9 +2,9 @@
 title: "DiffExplore"
 author: "Marlin"
 date:  "`r format(Sys.time(), '%d %B, %Y, %H:%M')`"
-output:
-  #pdf_document: default
-  html_document:
+output: 
+  bookdown::html_document2: 
+    code_folding: hide
     df_print: paged
 params:
   BaseDir: Z:/
@@ -19,12 +19,16 @@ knit: (
       input       = inputFile, 
       encoding    = encoding, 
       output_file = pSubTitle) })
-  
-         
-editor_options:
-  chunk_output_type: inline
+ 
 ---
 
+
+```{r set up markdown settings, echo=FALSE}
+knitr::opts_chunk$set(
+	message = FALSE,
+	warning = FALSE
+)
+```
 
 
 ```{r}
@@ -45,7 +49,7 @@ source("../../lib/DataPathName.R")
 BaseDir <- params$BaseDir#get the root of the directory where the data is stored
 ```
 
-```{r}
+```{r, echo=FALSE}
 SiteNames <- c("MMSD-P11","MMSD-P18","MMSD-P2","MMSD-P7","MMSD-P8")
 
 #Importing the Madison waste water data
@@ -95,7 +99,7 @@ DifRatDF <- LIMSFullDF%>%
 
 `r LIMSWastePath("")`
 
-```{r}
+```{r, include=FALSE, echo=FALSE}
 hist((DifDF$LagN1))
 hist(log(DifDF$LagN1))
 
@@ -106,7 +110,7 @@ hist(log(DifRatDF$LagN1))
 ```
 
 
-```{r}
+```{r, include=FALSE, echo=FALSE}
 #DifRatDF
 #DifDF
 hist((DifDF$LagN1))
@@ -145,7 +149,7 @@ DifDF%>%
 ```
 
 
-```{r Interactive highlighting}
+```{r Interactive highlighting, include=FALSE, echo=FALSE}
 #Create GGPlotly object with consistent scale for alpha, size, color
 GGPlotlyWithScaling <- function(GGPlotObject, FactorSize){
   AlphaScalling <- scale_alpha_manual(values = seq(.5,1, length.out = FactorSize))
@@ -179,7 +183,7 @@ QuintileBound <- function(DF,VecName,Threshold,Name){
 ```
 
 
-```{r PlotlyView}
+```{r PlotlyView function, include=FALSE, echo=FALSE}
 #Generate two plotly objects to view the Method 
 #and a data table communicating classes
 PlotlyView <- function(DF,ChangeVar, FlagMethod,...){
@@ -188,13 +192,14 @@ PlotlyView <- function(DF,ChangeVar, FlagMethod,...){
   
   #Create shared GGplot object that both use
   CorePlot <- MainDF%>%
-    ggplot(aes(x = Date))
+    ggplot(aes(x = Date))+
+    theme(panel.spacing.y = unit(2, "lines"))
   
   #Create plot where The scheme is plotted
-  DiffPlot <- CorePlot+
-    geom_point(aes(y = !!sym(ChangeVar), color = FlagScheme,
-                   alpha = FlagScheme, size = FlagScheme))+
-    facet_wrap(~Site)
+  #DiffPlot <- CorePlot+
+  #  geom_point(aes(y = !!sym(ChangeVar), color = FlagScheme,
+  #                 alpha = FlagScheme, size = FlagScheme))+
+  #  facet_wrap(~Site)
   
   #Needed for correct manual scaling in GGPlotlyWithScaling
   FactorSize <- length(unique(MainDF[["FlagScheme"]]))
@@ -211,9 +216,9 @@ PlotlyView <- function(DF,ChangeVar, FlagMethod,...){
     facet_wrap(~Site)
   
   #Return The Two plots
-  print(GGPlotlyWithScaling(DiffPlotNormN1, FactorSize))
-  print(GGPlotlyWithScaling(DiffPlotNormN2, FactorSize))
-  print(GGPlotlyWithScaling(DiffPlot, FactorSize))
+  #print(GGPlotlyWithScaling(DiffPlotNormN1, FactorSize))
+  #print(GGPlotlyWithScaling(DiffPlotNormN2, FactorSize))
+  #print(GGPlotlyWithScaling(DiffPlot, FactorSize))
   
   #Create DataFrame showing The bounds for the binning
   DiffDFRange <- MainDF%>%
@@ -221,14 +226,17 @@ PlotlyView <- function(DF,ChangeVar, FlagMethod,...){
     summarise(MinBound = min(!!sym(ChangeVar), na.rm = TRUE),
               MaxBound = max(!!sym(ChangeVar), na.rm = TRUE),
               NumInBin = n())
-  print(DiffDFRange)
+  #print(DiffDFRange)
   RetDF <- MainDF%>%
     filter(FlagScheme!=0)%>%
     select(-Flag)
     
-  return(RetDF)
+  return(list(GGPlotlyWithScaling(DiffPlotNormN1, FactorSize),GGPlotlyWithScaling(DiffPlotNormN2, FactorSize),RetDF))
 }
+```
 
+
+```{r PlotlyView}
 
 RankingDF <- LIMSFullDF%>%
   #filter(Date<mdy("10/31/2021"))%>%
@@ -236,30 +244,31 @@ RankingDF <- LIMSFullDF%>%
   arrange(Date)%>%
   mutate(N1 = ifelse(!is.na(N1),N1,0))%>%
   mutate(N2 = ifelse(!is.na(N2),N2,0))%>%
-  mutate(N1RankLeft = rank(desc(N1/lag(N1))),
-         N1RankRight = rank(desc(N1/lead(N1))),
-         N2RankLeft = rank(desc(N2/lag(N2))),
-         N2RankRight = rank(desc(N2/lead(N2))))%>%
+  mutate(N1RankLeft = rank(desc(N1 - lag(N1))),
+         N1RankRight = rank(desc(N1 - lead(N1))),
+         N2RankLeft = rank(desc(N2 - lag(N2))),
+         N2RankRight = rank(desc(N2 - lead(N2))))%>%
   select(Date,Site,N1RankLeft,N1RankRight,N2RankLeft,N2RankRight,N1,N2)%>%
   mutate(MaxN1Rank = -pmax(N1RankLeft,N1RankRight,N2RankLeft,N2RankRight),
          Flag = ifelse(MaxN1Rank < 25,"Flagged", "NotFlagged"))
 
 
-BreakUsed <- c(.95,.98)
-FinDF <- PlotlyView(RankingDF, "MaxN1Rank", QuintileBound, Threshold = BreakUsed)
-
+BreakUsed <- c(.90,.95)
+Vec <- PlotlyView(RankingDF, "MaxN1Rank", QuintileBound, Threshold = BreakUsed)
+Vec[[1]]
+Vec[[2]]
 ```
 
 
 ```{r ViewOutlier}
 
-FinDF%>%
+Vec[[3]]%>%
   arrange(FlagScheme)%>%
   select(Date,Site,FlagScheme,MaxN1Rank)%>%
   rename(ErrorLevel = FlagScheme, Rank = `MaxN1Rank`)%>%
   ungroup()%>%
   mutate(Rank = 31 - rank(Rank, ties.method = "first"),
-         ErrorLevel = 4 - as.integer(ErrorLevel))%>%
+         ErrorLevel = as.integer(ErrorLevel)-1)%>%
   arrange(ErrorLevel, Rank)#%>%
   #write.csv("RmdOutput/PossibleOutliers.csv")
 
