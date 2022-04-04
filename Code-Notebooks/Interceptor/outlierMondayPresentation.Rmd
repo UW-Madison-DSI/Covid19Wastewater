@@ -136,6 +136,7 @@ OutLierPlotDF <- MadDF%>%
 BaseOutlierPlot <- OutLierPlotDF+
   ggtitle("Viral concentration (GC/L) With Outlier")+
   ylab("")+
+  scale_y_sqrt()+
   theme(title = element_blank(),
     axis.text.x = element_blank(), 
         axis.title.x = element_blank())
