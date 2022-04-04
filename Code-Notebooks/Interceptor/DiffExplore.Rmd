@@ -283,6 +283,20 @@ Vec[[3]]%>%
   #write.csv("RmdOutput/PossibleOutliers.csv")
 
 
+LIMSFullDF%>%
+  #filter(Date<mdy("10/31/2021"))%>%
+  group_by(Site)%>%
+  arrange(Date)%>%
+  mutate(N1 = ifelse(!is.na(N1),N1,0))%>%
+  mutate(N2 = ifelse(!is.na(N2),N2,0))%>%
+  mutate(N1RankLeft = rank(desc(N1 - lag(N1))),
+         N1RankRight = rank(desc(N1 - lead(N1))),
+         N2RankLeft = rank(desc(N2 - lag(N2))),
+         N2RankRight = rank(desc(N2 - lead(N2))))%>%
+  select(Date,Site,N1RankLeft,N1RankRight,N2RankLeft,N2RankRight,N1,N2)%>%
+  mutate(MaxN1Rank = -pmax(N1RankLeft,N1RankRight,N2RankLeft,N2RankRight))%>%
+  write.csv("RmdOutput/PossibleOutliersFullUnGrouped.csv")
+
 ```
 
 
