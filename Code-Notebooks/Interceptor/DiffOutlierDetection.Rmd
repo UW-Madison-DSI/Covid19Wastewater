@@ -219,23 +219,25 @@ MergedDF <- JoinDFFromList(
 
 
 ```{r Clear outliers}
+Method = "EarlySite"
+#"EarlyFull", "EarlySite", "AllFull", "AllSite"
 
 Thresh <- c(4)
-UsedDF <- ThresholdGenDF(MergedDF, "EarlySite", Thresh)
+UsedDF <- ThresholdGenDF(MergedDF, Method, Thresh)
 
 PlotedGraphic <- ThresholdingPloting(UsedDF, SysUsed = "EarlySite")+
   #SiteColorScheme()+
   YLabN1_N2()
 
 GGPlotlyWithScaling(PlotedGraphic, length(Thresh)+1)
-
+GGPlotlyWithScaling(PlotedGraphic+scale_y_log10(), length(Thresh)+1)
 ```
 
 
 ```{r FullOutliers, fig.height=10, fig.width=9}
-#"EarlyFull", "EarlySite", "AllFull", "AllSite"
+
 Thresh <- c(4, 11)
-UsedDF <- ThresholdGenDF(MergedDF, "EarlySite", Thresh)
+UsedDF <- ThresholdGenDF(MergedDF, Method, Thresh)
 UsedDF%>%
   dplyr::filter(as.integer(ThresholdOutlier)-1>0)
 
@@ -243,4 +245,5 @@ PlotedGraphic <- ThresholdingPloting(UsedDF, SysUsed = "EarlySite", isFacet =TRU
   YLabN1_N2()
 
 GGPlotlyWithScaling(PlotedGraphic, length(Thresh)+1)
+GGPlotlyWithScaling(PlotedGraphic+scale_y_log10(), length(Thresh)+1)
 ```

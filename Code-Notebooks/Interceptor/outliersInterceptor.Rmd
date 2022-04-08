@@ -666,12 +666,18 @@ IntercepterDF <- FullDF %>%
     Site=="MMSD-P18" ~ 151470,
     Site=="Madison" ~ 603847,
   ))
+FlaggedDays <- UsedDF%>%
+  dplyr::filter(as.integer(ThresholdOutlier)-1>0)%>%
+  select(Date,Site,ThresholdOutlier)
+IntercepterDF <- full_join(IntercepterDF,FlaggedDays)%>%
+  filter(is.na(ThresholdOutlier))
+
+
 
 BasePlot <- IntercepterDF%>%
   filter(!is.na(N1))%>%
   ggplot(aes(x=Date, color = Site))+
   scale_y_log10()
-
 
 
 BaseGraphic <- BasePlot+
