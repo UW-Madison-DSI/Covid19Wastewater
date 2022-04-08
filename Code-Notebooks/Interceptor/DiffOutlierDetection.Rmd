@@ -1,5 +1,5 @@
 ---
-title: "DiffOutlierDetection"
+title: "Candidates for Outliers"
 author: "Marlin"
 date:  "`r format(Sys.time(), '%d %B, %Y, %H:%M')`"
 output: 
@@ -93,11 +93,14 @@ DifRatDF <- LIMSFullDF%>%
   select(Site,Date,LeadN1,LagN1,RankHighN1,RankLowN1,RankHighN2,RankLowN2,everything())%>%
   arrange(Site,desc(RankHighN1))
 
+
 ```
 
-"Files Used: "
+"Data Files Used: "
 
-`r LIMSWastePath("")`
+raw: qPCR Semi-Final Query 2.9.22.xlsx
+
+processed:`r LIMSWastePath("")`
 
 
 ```{r Ploting}
@@ -232,6 +235,10 @@ PlotedGraphic <- ThresholdingPloting(UsedDF, SysUsed = "EarlySite",ThreshLevel =
   YLabN1_N2()
 
 GGPlotlyWithScaling(PlotedGraphic, length(Thresh)+1)
+
+#Explain N1,N2 diff in plot
+#more discriptive title
+#Text blacks to explain 
 ```
 
 
