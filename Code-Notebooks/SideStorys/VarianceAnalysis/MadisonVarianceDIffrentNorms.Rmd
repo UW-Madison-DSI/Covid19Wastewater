@@ -56,10 +56,12 @@ RollingMadDF%>%
   ggplot(aes(x = Date))+
   geom_point(aes(y = N1, color = "N1"))+
   geom_line(aes(y = RollN1, color = "MA of N1"))
+
 RollingMadDF%>%
   ggplot(aes(x = Date))+
   geom_point(aes(y = log(N1), color = "log N1"))+
   geom_line(aes(y = RollLogN1, color = "MA of log N1"))
+
 RollingMadDF%>%
   ggplot(aes(x = Date))+
   geom_point(aes(y = sqrt(N1), color = "Root of N1"))+

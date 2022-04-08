@@ -654,3 +654,41 @@ FullDF%>%
 ```
 
 
+```{r Mad diff norm}
+library(purrr)
+IntercepterDF <- FullDF %>%
+  filter(Site != "Madison")%>%
+  mutate(Pop = case_when(
+    Site=="MMSD-P2" ~ 111967,
+    Site=="MMSD-P7" ~ 81977,
+    Site=="MMSD-P8" ~ 127634,
+    Site=="MMSD-P11" ~ 130799,
+    Site=="MMSD-P18" ~ 151470,
+    Site=="Madison" ~ 603847,
+  ))
+
+BasePlot <- IntercepterDF%>%
+  filter(!is.na(N1))%>%
+  ggplot(aes(x=Date, color = Site))+
+  scale_y_log10()
+
+
+
+BaseGraphic <- BasePlot+
+  geom_point(aes(y=N1),size=.5,alpha=.5)+
+  geom_smooth(aes(y=N1),span  = .2, se = FALSE, method = "loess")
+
+FlowUnNormed <- BasePlot+
+  geom_point(aes(y=N1*FlowRate),size=.5,alpha=.5)+
+  geom_smooth(aes(y=N1*FlowRate),span  = .2, se = FALSE, method = "loess")
+
+FlowPopTrans <- BasePlot+
+  geom_point(aes(y=N1*FlowRate/Pop),size=.5,alpha=.5)+
+  geom_smooth(aes(y=N1*FlowRate/Pop),span  = .2, se = FALSE, method = "loess")
+ggplotly(BaseGraphic)
+ggplotly(FlowUnNormed)
+ggplotly(FlowPopTrans)
+#Pop
+```
+
+

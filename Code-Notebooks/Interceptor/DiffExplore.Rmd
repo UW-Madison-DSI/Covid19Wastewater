@@ -28,10 +28,12 @@ knitr::opts_chunk$set(
 	message = FALSE,
 	warning = FALSE
 )
+
 ```
 
 
 ```{r}
+library(tidyr)
 library(dplyr)
 library(lubridate)
 library(zoo)
@@ -238,8 +240,8 @@ PlotlyView <- function(DF,ChangeVar, FlagMethod,...){
 ```{r PlotlyView}
 
 RankingDF <- LIMSFullDF%>%
-  #filter(Date<mdy("10/31/2021"))%>%
-  #group_by(Site)%>%
+  filter(Date<mdy("10/31/2021"))%>%
+  group_by(Site)%>%
   arrange(Date)%>%
   mutate(N1 = ifelse(!is.na(N1),N1,0))%>%
   mutate(N2 = ifelse(!is.na(N2),N2,0))%>%
@@ -285,7 +287,7 @@ Vec[[3]]%>%
 
 LIMSFullDF%>%
   #filter(Date<mdy("10/31/2021"))%>%
-  group_by(Site)%>%
+  #group_by(Site)%>%
   arrange(Date)%>%
   mutate(N1 = ifelse(!is.na(N1),N1,0))%>%
   mutate(N2 = ifelse(!is.na(N2),N2,0))%>%
@@ -295,7 +297,7 @@ LIMSFullDF%>%
          N2RankRight = rank(desc(N2 - lead(N2))))%>%
   select(Date,Site,N1RankLeft,N1RankRight,N2RankLeft,N2RankRight,N1,N2)%>%
   mutate(MaxN1Rank = -pmax(N1RankLeft,N1RankRight,N2RankLeft,N2RankRight))%>%
-  write.csv("RmdOutput/PossibleOutliersFullUnGrouped.csv")
+  write.csv("RmdOutput/PossibleOutliersFullGrouped.csv")
 
 ```
 
@@ -303,7 +305,7 @@ LIMSFullDF%>%
 ```{r OvertOutliers}
 
 ThresholdFlagDF <- RankingDF%>%
-  mutate(ThresholdOutlier= -MaxN1Rank<=12)%>%
+  mutate(ThresholdOutlier= -MaxN1Rank<=4)%>%
   arrange(Date,Site)%>%
     ggplot(aes(x = Date))+
     theme(panel.spacing.y = unit(2, "lines"))+
@@ -315,6 +317,7 @@ ThresholdFlagDF <- RankingDF%>%
 ```
 
 ```{r SubtleOutliers, fig.height=20, fig.width=9}
+
 ThresholdFlagDF <- RankingDF%>%
   mutate(MaxN1Rank = -MaxN1Rank, ThresholdOutlier = ifelse(MaxN1Rank<=47,"BFlagged","ANotFlagged"),
          ThresholdOutlier= ifelse(MaxN1Rank<=12, "CFlaggedRestrictive", ThresholdOutlier))%>%
@@ -326,8 +329,180 @@ ThresholdFlagDF <- RankingDF%>%
   geom_point(aes(y = N2, color = ThresholdOutlier, shape = "N2",
                    alpha = ThresholdOutlier, size = ThresholdOutlier, info = MaxN1Rank))+
   facet_wrap(~Site, ncol = 1, scales = "free")
-
+#
   GGPlotlyWithScaling(ThresholdFlagDF,3, Display = c("N1","N2", "Date", "info"))
+```
+
+
+```{r }
+DoRanking <- function(DF,IsGrouped,isFiltered){
+  UsedDF <- DF%>%
+    filter(!is.na(N1),!is.na(N2))
+  if(IsGrouped){
+    UsedDF <- UsedDF%>%
+      group_by(Site)
+  }
+  if(isFiltered){
+    UsedDF <- UsedDF%>%
+      filter(Date<mdy("10/31/2021"))
+  }
+  RetDF <- UsedDF%>%
+    arrange(Date)%>%
+    mutate(N1 = ifelse(!is.na(N1),N1,0))%>%
+    mutate(N2 = ifelse(!is.na(N2),N2,0))%>%
+    mutate(N1RankLeft = rank(desc(N1 - lag(N1))),
+         N1RankRight = rank(desc(N1 - lead(N1))),
+         N2RankLeft = rank(desc(N2 - lag(N2))),
+         N2RankRight = rank(desc(N2 - lead(N2))))%>%
+    select(Date,Site,N1RankLeft,N1RankRight,N2RankLeft,N2RankRight,N1,N2)%>%
+    mutate(MaxN1Rank = pmax(N1RankLeft,N1RankRight,N2RankLeft,N2RankRight))%>%
+    select(Date,Site,MaxN1Rank,N1,N2)
+  return(RetDF)
+}
+
+RankingDFUngroupedEarlyDay <- DoRanking(LIMSFullDF,FALSE,TRUE)
+RankingDFgroupedEarlyDay <- DoRanking(LIMSFullDF,TRUE,TRUE)
+RankingDFUngrouped <- DoRanking(LIMSFullDF,FALSE,FALSE)
+RankingDFgrouped <- DoRanking(LIMSFullDF,TRUE,FALSE)
+
+JoinDFFromList <- function(DFList, ByOptions, Names,CombVec){
+  FullDF <- full_join(DFList[[1]],DFList[[2]], by = ByOptions)
+  for (i in 3:length(DFList)){
+    FullDF <- full_join(FullDF,DFList[[i]], by = ByOptions)
+  }
+  for(i in 1:length(DFList)){
+    if(i %% 2 == 1){
+      Prep = paste(CombVec, paste(rep(".x",(i+1)%/%2), collapse = ""), sep = "")
+    }else{
+      Prep = paste(CombVec, paste(rep(".y",(i+1)%/%2), collapse = ""), sep = "")
+    }
+    FullDF <- FullDF%>%
+      rename(!!Names[[i]] := !!sym(Prep))
+  }
+  return(FullDF)
+}
+
+ToMergeDFs <- list(RankingDFUngroupedEarlyDay, RankingDFgroupedEarlyDay, RankingDFUngrouped, RankingDFgrouped)
+RenameLists <- list("EarlyFull", "EarlySite", "AllFull", "AllSite")
+
+MergedDF <- JoinDFFromList(
+  ToMergeDFs, ByOptions = c("Date","Site","N1","N2"), Names = RenameLists, CombVec = "MaxN1Rank")
+
+
+
+```
+
+
+
+```{r}
+MergedDF
+
+
+GPlotly <- MergedDF%>%
+  ggplot()+
+    geom_point(aes(x = EarlySite, shape = Site, y = EarlyFull,color = "Filtered"))+
+    geom_point(aes(x = AllSite, shape = Site, y = AllFull,color = "Full"))#+
+  #geom_abline()
+ggplotly(GPlotly)
+
+
+
+
+A <- RankingDFUngroupedEarlyDay%>%
+  filter(MaxN1Rank<=12)%>%
+  arrange((MaxN1Rank))
+
+
+B <- RankingDFgroupedEarlyDay%>%
+  filter(MaxN1Rank<=2)%>%
+  arrange((MaxN1Rank))
+
+C <- full_join(A,B, by=c("Date","Site","N1","N2"))%>%
+  #select(-N1,-N2)%>%
+  arrange(Site)
+
+
+G <- C%>%
+  mutate(Catagory = ifelse(is.na(MaxN1Rank.x),"Grouped",ifelse(is.na(MaxN1Rank.y),"UnGrouped","Both")))%>%
+  full_join(LIMSFullDF)%>%
+  mutate(Catagory = ifelse(is.na(Catagory),"NotFlagged",Catagory))%>%
+  ggplot()+
+  geom_point(aes(x=Date,y=N1,color = Catagory), size = .75)+
+  facet_wrap(~Site)
+ggplotly(G)
+```
+
+
+```{r}
+
+
+
+ThresholdingLabel <- function(X,ThresholdC){
+  A = 0
+  for (i in 1:length(ThresholdC)){
+    A = A + (X<=ThresholdC[i])
+
+  }
+  return(factor(A))
+}
+
+ThresholdGenDF <- function(DF, SysUsed ,Thresholds){
+  ThresholdFlagDF <- DF%>%
+    filter(!is.na(!!sym(SysUsed)))%>%
+    mutate(ThresholdOutlier= ThresholdingLabel(!!sym(SysUsed),Thresholds))%>%
+    arrange(Date,Site)
+  
+  return(ThresholdFlagDF)
+}
+
+ThresholdingPloting <- function(DF, SysUsed="" , isFacet = FALSE){
+  if(isFacet){
+    ColorScheme = "ThresholdOutlier"
+  }else{
+    ColorScheme = "Site"
+  }
+  GPlot <- DF%>%
+    filter(!is.na(ThresholdOutlier))%>%
+    ggplot(aes(x = Date))+
+    theme(panel.spacing.y = unit(2, "lines"))+
+    geom_point(aes(y = N1, color = !!sym(ColorScheme), shape = "N1", info = !!sym(SysUsed),
+                   alpha = ThresholdOutlier, size = ThresholdOutlier))+
+    geom_point(aes(y = N2, color = !!sym(ColorScheme), shape = "N2", info = !!sym(SysUsed),
+                   alpha = ThresholdOutlier, size = ThresholdOutlier))
+  if(isFacet){
+    GPlot = GPlot+
+      facet_wrap(~Site, ncol = 1, scales = "free")
+  }
+  return(GPlot)
+}
+
+```
+
+
+```{r Clear outliers}
+#MergedDF
+Thresh <- c(4)
+UsedDF <- ThresholdGenDF(MergedDF, "EarlySite", Thresh)
+
+UsedDF%>%
+  dplyr::filter(as.integer(ThresholdOutlier)>0)
+
+PlotedGraphic <- ThresholdingPloting(UsedDF, SysUsed = "EarlySite")
+
+GGPlotlyWithScaling(PlotedGraphic, length(Thresh)+1)
+
+```
+
+```{r FullOutliers, fig.height=10, fig.width=9}
+#"EarlyFull", "EarlySite", "AllFull", "AllSite"
+Thresh <- c(4, 11)
+UsedDF <- ThresholdGenDF(MergedDF, "EarlySite", Thresh)
+UsedDF%>%
+  dplyr::filter(as.integer(ThresholdOutlier)>0)
+
+PlotedGraphic <- ThresholdingPloting(UsedDF, SysUsed = "EarlySite", isFacet =TRUE)
+
+GGPlotlyWithScaling(PlotedGraphic, length(Thresh)+1)
 ```
 
   
