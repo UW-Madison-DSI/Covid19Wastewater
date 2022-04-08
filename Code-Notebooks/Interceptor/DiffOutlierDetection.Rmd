@@ -77,7 +77,7 @@ DifDF <- LIMSFullDF%>%
          RankLowN2 = rank(LagN2))%>%
   select(Site,Date,LeadN1,LagN1,RankHighN1,RankLowN1,RankHighN2,RankLowN2,everything())%>%
   arrange(Site,desc(RankHighN1))
-
+#ShapeFix
 DifRatDF <- LIMSFullDF%>%
   filter(!is.na(N1))%>%
   group_by(Site)%>%
@@ -104,10 +104,11 @@ DifRatDF <- LIMSFullDF%>%
 GGPlotlyWithScaling <- function(GGPlotObject, FactorSize, Display = c("Date","N1","N2")){
   AlphaScalling <- scale_alpha_manual(values = seq(.3,1, length.out = FactorSize))
   SizeScalling <- scale_size_manual(values = seq(.7,2, length.out = FactorSize))
-
+  #ShapeSCalling <- scale_shape_discrete(values = c(21,23))
   PlotlyObject <- GGPlotObject+
     AlphaScalling+
-    SizeScalling
+    SizeScalling#+
+    #ShapeSCalling
   return(ggplotly(PlotlyObject, tooltip = Display))
 }
 
@@ -130,21 +131,21 @@ ThresholdGenDF <- function(DF, SysUsed ,Thresholds){
   return(ThresholdFlagDF)
 }
 
-ThresholdingPloting <- function(DF, SysUsed="" , isFacet = FALSE){
+ThresholdingPloting <- function(DF, SysUsed="", ThreshLevel = "" , isFacet = FALSE){
   if(isFacet){
-    ColorScheme = "ThresholdOutlier"
+    ColorScheme = ThreshLevel
   }else{
     ColorScheme = "Site"
-  }
+  }#strafy
   GPlot <- DF%>%
-    filter(!is.na(ThresholdOutlier))%>%
+    filter(!is.na(!!sym(ThreshLevel)))%>%
     ggplot(aes(x = Date))+
     theme(panel.spacing.y = unit(2, "lines"))+
     geom_point(aes(y = N1, fill = !!sym(ColorScheme), shape = "N1", info = !!sym(SysUsed),
-                   alpha = ThresholdOutlier, size = ThresholdOutlier),
+                   alpha = !!sym(ThreshLevel), size = !!sym(ThreshLevel)),
                color = "Black",pch=21, stroke = .15)+
     geom_point(aes(y = N2, fill = !!sym(ColorScheme), shape = "N2", info = !!sym(SysUsed),
-                   alpha = ThresholdOutlier, size = ThresholdOutlier),
+                   alpha = !!sym(ThreshLevel), size = !!sym(ThreshLevel)),
                color = "Black",pch=21, stroke = .15)
   if(isFacet){
     GPlot = GPlot+
@@ -223,27 +224,33 @@ Method = "EarlySite"
 #"EarlyFull", "EarlySite", "AllFull", "AllSite"
 
 Thresh <- c(4)
-UsedDF <- ThresholdGenDF(MergedDF, Method, Thresh)
+UsedDF <- ThresholdGenDF(MergedDF, Method, Thresh)%>%
+  rename(Threshold = ThresholdOutlier)%>%
+  mutate(Threshold = ifelse((Threshold)==1,"Permissive",
+                                   ifelse((Threshold==2),"Strict","Inliers")))
 
-PlotedGraphic <- ThresholdingPloting(UsedDF, SysUsed = "EarlySite")+
+PlotedGraphic <- ThresholdingPloting(UsedDF, SysUsed = "EarlySite",ThreshLevel = "Threshold")+
   #SiteColorScheme()+
   YLabN1_N2()
 
 GGPlotlyWithScaling(PlotedGraphic, length(Thresh)+1)
-GGPlotlyWithScaling(PlotedGraphic+scale_y_log10(), length(Thresh)+1)
 ```
 
 
 ```{r FullOutliers, fig.height=10, fig.width=9}
 
 Thresh <- c(4, 11)
-UsedDF <- ThresholdGenDF(MergedDF, Method, Thresh)
+UsedDF <- ThresholdGenDF(MergedDF, Method, Thresh)%>%
+  rename(Threshold = ThresholdOutlier)%>%
+  mutate(Threshold = ifelse((Threshold)==1,"Permissive",
+                                   ifelse((Threshold==2),"Strict","Inliers")))
 UsedDF%>%
-  dplyr::filter(as.integer(ThresholdOutlier)-1>0)
+  dplyr::filter(Threshold!="Inliers")%>%
+  select(Date,Site, N1, N2, Threshold)#%>%
+  #write.csv("RmdOutput/SendOutliersShortList.csv")
 
-PlotedGraphic <- ThresholdingPloting(UsedDF, SysUsed = "EarlySite", isFacet =TRUE)+
+PlotedGraphic <- ThresholdingPloting(UsedDF, SysUsed = "EarlySite",ThreshLevel = "Threshold", isFacet =TRUE)+
   YLabN1_N2()
 
 GGPlotlyWithScaling(PlotedGraphic, length(Thresh)+1)
-GGPlotlyWithScaling(PlotedGraphic+scale_y_log10(), length(Thresh)+1)
 ```
