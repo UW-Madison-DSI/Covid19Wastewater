@@ -107,8 +107,7 @@ GGPlotlyWithScaling <- function(GGPlotObject, FactorSize, Display = c("Date","N1
   #ShapeSCalling <- scale_shape_discrete(values = c(21,23))
   PlotlyObject <- GGPlotObject+
     AlphaScalling+
-    SizeScalling#+
-    #ShapeSCalling
+    SizeScalling
   return(ggplotly(PlotlyObject, tooltip = Display))
 }
 
@@ -146,7 +145,7 @@ ThresholdingPloting <- function(DF, SysUsed="", ThreshLevel = "" , isFacet = FAL
                color = "Black",pch=21, stroke = .15)+
     geom_point(aes(y = N2, fill = !!sym(ColorScheme), shape = "N2", info = !!sym(SysUsed),
                    alpha = !!sym(ThreshLevel), size = !!sym(ThreshLevel)),
-               color = "Black",pch=21, stroke = .15)
+               color = "Black",pch=24, stroke = .15)
   if(isFacet){
     GPlot = GPlot+
       facet_wrap(~Site, ncol = 1, scales = "free")
@@ -219,15 +218,14 @@ MergedDF <- JoinDFFromList(
 ```
 
 
-```{r Clear outliers}
+```{r Clear outliers, fig.width=9}
 Method = "EarlySite"
 #"EarlyFull", "EarlySite", "AllFull", "AllSite"
 
 Thresh <- c(4)
 UsedDF <- ThresholdGenDF(MergedDF, Method, Thresh)%>%
   rename(Threshold = ThresholdOutlier)%>%
-  mutate(Threshold = ifelse((Threshold)==1,"Permissive",
-                                   ifelse((Threshold==2),"Strict","Inliers")))
+  mutate(Threshold = ifelse((Threshold==1),"Strict","Inliers"))
 
 PlotedGraphic <- ThresholdingPloting(UsedDF, SysUsed = "EarlySite",ThreshLevel = "Threshold")+
   #SiteColorScheme()+
