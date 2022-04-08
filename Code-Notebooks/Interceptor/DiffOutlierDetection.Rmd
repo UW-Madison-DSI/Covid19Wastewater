@@ -63,37 +63,6 @@ LIMSFullDF <- ParseData(LIMSWastePath(BaseDir))%>%
          GeoMeanN12,FlowRate,temperature,equiv_sewage_amt, everything())
 
 
-DifDF <- LIMSFullDF%>%
-  filter(!is.na(N1))%>%
-  group_by(Site)%>%
-  arrange(Date)%>%
-  mutate(LeadN1 = lead(N1) - N1,
-         LagN1 = lag(N1) - N1,
-         RankHighN1 = rank(LeadN1),
-         RankLowN1 = rank(LagN1),
-         LeadN2 = lead(N2) - N2,
-         LagN2 = lag(N2) - N2,
-         RankHighN2 = rank(LeadN2),
-         RankLowN2 = rank(LagN2))%>%
-  select(Site,Date,LeadN1,LagN1,RankHighN1,RankLowN1,RankHighN2,RankLowN2,everything())%>%
-  arrange(Site,desc(RankHighN1))
-#ShapeFix
-DifRatDF <- LIMSFullDF%>%
-  filter(!is.na(N1))%>%
-  group_by(Site)%>%
-  arrange(Date)%>%
-  mutate(LeadN1 = lead(N1)/N1,
-         LagN1 = lag(N1)/N1,
-         RankHighN1 = rank(LeadN1),
-         RankLowN1 = rank(LagN1),
-         LeadN2 = lead(N2)/N2,
-         LagN2 = lag(N2)/N2,
-         RankHighN2 = rank(LeadN2),
-         RankLowN2 = rank(LagN2))%>%
-  select(Site,Date,LeadN1,LagN1,RankHighN1,RankLowN1,RankHighN2,RankLowN2,everything())%>%
-  arrange(Site,desc(RankHighN1))
-
-
 ```
 
 "Data Files Used: "
@@ -138,7 +107,7 @@ ThresholdingPloting <- function(DF, SysUsed="", ThreshLevel = "" , isFacet = FAL
     ColorScheme = ThreshLevel
   }else{
     ColorScheme = "Site"
-  }#strafy
+  }
   GPlot <- DF%>%
     filter(!is.na(!!sym(ThreshLevel)))%>%
     ggplot(aes(x = Date))+
@@ -215,8 +184,6 @@ RenameLists <- list("EarlyFull", "EarlySite", "AllFull", "AllSite")
 
 MergedDF <- JoinDFFromList(
   ToMergeDFs, ByOptions = c("Date","Site","N1","N2"), Names = RenameLists, CombVec = "MaxN1Rank")
-
-
 
 ```
 
