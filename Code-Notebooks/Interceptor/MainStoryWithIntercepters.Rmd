@@ -36,6 +36,9 @@ knitr::opts_chunk$set(
 
 
 ```{r Start enviroment, echo=FALSE, message=FALSE, warning=FALSE}
+
+library(vars)
+library(astsa)
 library(dplyr)
 library(ggplot2)
 library(lmtest)
@@ -168,6 +171,22 @@ FirstImpresionFunc(filter(FullDF,Site=="MMSD-P11"))
 FirstImpresionFunc(filter(FullDF,Site=="MMSD-P18"))
 
 ```
+
+```{r ccfSubPlot}
+
+CCFFunc<- function(DF){
+  FirstImpressionDF <- DF%>%
+    NoNa(SelectedIndVar,SelectedDepVar)#Removing NA
+  ccf(FirstImpressionDF$N1,FirstImpressionDF$FirstConfirmed)
+}
+CCFFunc(filter(FullDF,Site=="Madison"))
+CCFFunc(filter(FullDF,Site=="MMSD-P2"))
+CCFFunc(filter(FullDF,Site=="MMSD-P7"))
+CCFFunc(filter(FullDF,Site=="MMSD-P8"))
+CCFFunc(filter(FullDF,Site=="MMSD-P11"))
+CCFFunc(filter(FullDF,Site=="MMSD-P18"))
+```
+
   
 
 # Removing potential outliers
@@ -365,6 +384,56 @@ LoessPlotFunc(P11DF)
 LoessPlotFunc(P18DF)
 #MMSD-P18/P7
 #2021-04-15
+```
+
+```{r }
+CCFFunc<- function(DF){
+  FirstImpressionDF <- DF%>%
+    NoNa(SelectedIndVar,SelectedDepVar)#Removing NA
+  ccf(FirstImpressionDF$N1,FirstImpressionDF$FirstConfirmed)
+}
+CCFFunc(filter(FullDF,Site=="Madison"))
+CCFFunc(filter(FullDF,Site=="MMSD-P2"))
+CCFFunc(filter(FullDF,Site=="MMSD-P7"))
+CCFFunc(filter(FullDF,Site=="MMSD-P8"))
+CCFFunc(filter(FullDF,Site=="MMSD-P11"))
+CCFFunc(filter(FullDF,Site=="MMSD-P18"))
+```
+
+
+```{r relationship, eval=FALSE}
+par(mfrow = c(6,6), mar=c(1,1,1,1))
+MadisonDF <- FullDF%>%
+  filter(Site %in% c("Madison","MMSD-P2","MMSD-P7","MMSD-P8","MMSD-P11","MMSD-P18"))
+for (Site1 in unique(FullDF$Site)){
+  for (Site2 in unique(FullDF$Site)){
+  ccf(filter(filter(MadisonDF,Site==Site1),!is.na(N1))$N1,
+      filter(filter(MadisonDF,Site==Site2),!is.na(N1))$N1)
+  }
+}
+```
+
+```{r}
+
+WideDF <- FullDF%>%
+  dplyr::select(Date,Site,FirstConfirmed,N1)%>%
+  pivot_wider(names_from = Site, values_from = c(N1,FirstConfirmed))%>%
+  dplyr::select(-`FirstConfirmed_MMSD-P11`,-`FirstConfirmed_MMSD-P18`,
+                -`FirstConfirmed_MMSD-P2`, -`FirstConfirmed_MMSD-P7`,
+                -`FirstConfirmed_MMSD-P8`)%>%
+  filter_all(all_vars(!is.na(.)))%>%
+  dplyr::select(-Date)%>%
+  dplyr::select(FirstConfirmed_Madison , everything())%>%
+  mutate_all(log)
+  
+x = WideDF
+plot.ts(x , main = "", xlab = "")
+fitvar1 = VAR(x, p=1, type="both")
+summary(fitvar1) 
+
+acf(residuals(fitvar1)[,1])
+
+plot.ts(residuals(fitvar1)[,1])
 ```
 
 

@@ -61,9 +61,8 @@ LIMSFullDF <- ParseData(LIMSWastePath(BaseDir))%>%
   mutate(SC2_mass = (3.785*1e6)*FlowRate*N1)%>%
   select(Date, Site, N1, BCoV , N2 , SC2_mass, PMMoV,
          GeoMeanN12,FlowRate,temperature,equiv_sewage_amt, everything())
-
-
 ```
+
 
 "Data Files Used: "
 

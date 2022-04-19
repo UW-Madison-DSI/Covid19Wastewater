@@ -254,7 +254,7 @@ NonOuliersDF <- MadDF%>%
            mutate(N1 = NoOutlierVar)%>%
             filter(!(is.na(N1)))
 
-OutLierPlotDF <- MadDF%>%
+OutLierPlotDF <- MadDF%>%r
   mutate(Outlier = ifelse(FlagedOutliers,N1,NA))%>%
            mutate(N1 = NoOutlierVar)%>%
   filter(!(is.na(N1)&is.na(Outlier)))%>%
@@ -667,10 +667,11 @@ IntercepterDF <- FullDF %>%
     Site=="Madison" ~ 603847,
   ))
 FlaggedDays <- UsedDF%>%
-  dplyr::filter(as.integer(ThresholdOutlier)-1>0)%>%
-  select(Date,Site,ThresholdOutlier)
+  dplyr::filter(Threshold!="Inliers")%>%
+  select(Date,Site,Threshold)
+
 IntercepterDF <- full_join(IntercepterDF,FlaggedDays)%>%
-  filter(is.na(ThresholdOutlier))
+  filter(is.na(Threshold))
 
 
 
@@ -682,19 +683,20 @@ BasePlot <- IntercepterDF%>%
 
 BaseGraphic <- BasePlot+
   geom_point(aes(y=N1),size=.5,alpha=.5)+
-  geom_smooth(aes(y=N1),span  = .2, se = FALSE, method = "loess")
+  geom_smooth(aes(y=N1),span  = .01, se = FALSE, method = "loess")
 
 FlowUnNormed <- BasePlot+
   geom_point(aes(y=N1*FlowRate),size=.5,alpha=.5)+
-  geom_smooth(aes(y=N1*FlowRate),span  = .2, se = FALSE, method = "loess")
+  geom_smooth(aes(y=N1*FlowRate),span  = .01, se = FALSE, method = "loess")
 
 FlowPopTrans <- BasePlot+
   geom_point(aes(y=N1*FlowRate/Pop),size=.5,alpha=.5)+
-  geom_smooth(aes(y=N1*FlowRate/Pop),span  = .2, se = FALSE, method = "loess")
+  geom_smooth(aes(y=N1*FlowRate/Pop),span  = .01, se = FALSE, method = "loess")
 ggplotly(BaseGraphic)
 ggplotly(FlowUnNormed)
 ggplotly(FlowPopTrans)
 #Pop
+#hypothasis everyone has the same covid/person
 ```
 
 

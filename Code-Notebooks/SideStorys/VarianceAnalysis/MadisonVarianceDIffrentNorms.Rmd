@@ -79,11 +79,6 @@ RollingMadDF%>%
   ggplot(aes(x = Date))+
   geom_line(aes(y = RollVar, color = "Var log N1"))
 
-RollingMadDF%>%
-  mutate(RollVar = rollapply(N1**(1/2),width=30,FUN = var, na.rm = TRUE, fill = NA))%>%
-  ggplot(aes(x = Date))+
-  geom_line(aes(y = RollVar, color = "Var Root N1"))
-
 ```
 
 ```{r detrended ploting}
@@ -102,6 +97,9 @@ RollingDetrendedMadDF%>%
   ggplot(aes(x = Date))+
   geom_line(aes(y = DiffRootN1, color = "Detrended root N1"))
 
+
+#
+#
 ```
 
 
