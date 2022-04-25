@@ -72,7 +72,7 @@ processed:`r LIMSWastePath("")`
 
 
 ```{r Ploting}
-GGPlotlyWithScaling <- function(GGPlotObject, FactorSize, Display = c("Date","N1","N2")){
+GGPlotlyWithScaling <- function(GGPlotObject, FactorSize, Display = c("Date","N1","N2","Site")){
   AlphaScalling <- scale_alpha_manual(values = seq(.3,1, length.out = FactorSize))
   SizeScalling <- scale_size_manual(values = seq(.7,2, length.out = FactorSize))
   #ShapeSCalling <- scale_shape_discrete(values = c(21,23))
@@ -111,7 +111,8 @@ ThresholdingPloting <- function(DF, SysUsed="", ThreshLevel = "" , isFacet = FAL
     filter(!is.na(!!sym(ThreshLevel)))%>%
     ggplot(aes(x = Date))+
     theme(panel.spacing.y = unit(2, "lines"))+
-    geom_point(aes(y = N1, fill = !!sym(ColorScheme), shape = "N1", info = !!sym(SysUsed),
+    geom_point(aes(y = N1, fill = !!sym(ColorScheme), shape = "N1",
+                   info = !!sym(SysUsed),
                    alpha = !!sym(ThreshLevel), size = !!sym(ThreshLevel)),
                color = "Black",pch=21, stroke = .15)+
     geom_point(aes(y = N2, fill = !!sym(ColorScheme), shape = "N2", info = !!sym(SysUsed),
