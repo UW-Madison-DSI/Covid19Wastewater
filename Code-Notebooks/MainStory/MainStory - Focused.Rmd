@@ -14,6 +14,16 @@ output:
 bibliography: references.bib  
 editor_options: 
   chunk_output_type: inline
+knit: (
+  function(inputFile, encoding) { 
+    FileComp = strsplit(inputFile,"/")[[1]];
+    File = FileComp[length(FileComp)];
+    File = substr(File,1,nchar(File)-4);
+    pSubTitle <- paste0('RmdOutput/',Sys.Date(),"_",File);
+    rmarkdown::render( 
+      input       = inputFile, 
+      encoding    = encoding, 
+      output_file = pSubTitle) })
 ---
 
 **This report looks is an update to the analysis shown on 1/14/2022. Most steps are the same with tweaking due to different data and outlier procedure**
@@ -352,7 +362,7 @@ ggplotly(SLDPlot,tooltip=c("info","Date"))%>%
 
 ```{r, include=FALSE}
 #.165
-SpanConstant = .163
+SpanConstant = .06
 #4.047397
 AVGLimsSample*length(LIMSFullDF[[SelectedIndVar]])*SpanConstant/14
 ```
@@ -366,7 +376,7 @@ To get a good smoothing of the `r SelectedIndVar ` measurement we employ loess s
 
 
 ```{r fig.cap= 'Loess smoothed N1 and SLD cases for Madison data. Using a Locally Weighted Scatterplot Smoothing process along with the previous figure SLD cases we get the most sophisticated relationship between the two signals discussed in this document.'}
-SpanConstant = .163
+SpanConstant = .06
 
 #SLDSmoothedDF[["SLDCases"]] <- loessFit(y=(SLDSmoothedDF[["SevenDayMACases"]]), 
 #                      x=SLDSmoothedDF$Date, #create loess fit of the data

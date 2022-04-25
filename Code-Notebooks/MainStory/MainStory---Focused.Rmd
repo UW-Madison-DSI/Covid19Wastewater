@@ -14,6 +14,16 @@ output:
 bibliography: references.bib  
 editor_options: 
   chunk_output_type: inline
+knit: (
+  function(inputFile, encoding) { 
+    FileComp = strsplit(inputFile,"/")[[1]];
+    File = FileComp[length(FileComp)];
+    File = substr(File,1,nchar(File)-4);
+    pSubTitle <- paste0('RmdOutput/',Sys.Date(),"_",File);
+    rmarkdown::render( 
+      input       = inputFile, 
+      encoding    = encoding, 
+      output_file = pSubTitle) })
 ---
 
 **This report looks is an update to the analysis shown on 1/14/2022. Most steps are the same with tweaking due to different data and outlier procedure**
