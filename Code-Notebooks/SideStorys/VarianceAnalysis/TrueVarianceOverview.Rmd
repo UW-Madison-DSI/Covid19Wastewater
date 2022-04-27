@@ -281,7 +281,7 @@ RemoveLowDF%>%
   geom_point()+
   geom_abline(slope = 1.635322,intercept = 2.009892)
   #geom_abline(slope = 1.842089,intercept = -0.534551)
-  
+
 #1.862581,   -0.523034
 summary(lm(GamVar~log(N1),data=RemoveLowDF))
 summary(lm(log(VarN1)~log(N1),data=RemoveLowDF))
