@@ -1,5 +1,9 @@
 Code-Notebooks store all the data exploration and modeling
 
+Files of interest:
+MainStory -- \Code-Notebooks\MainStory\MainStory---Focused.Rmd
+Interceptor -- \Code-Notebooks/Interceptor/RmdOutput/outliersInterceptorMain.Rmd
+
 Data Processing is in Code-Notebooks/DataExplanation/RawToProccessed.Rmd
 
 Functions are in lib
