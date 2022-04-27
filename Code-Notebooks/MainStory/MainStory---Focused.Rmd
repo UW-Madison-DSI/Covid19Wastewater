@@ -20,7 +20,7 @@ knit: (
     FileComp = strsplit(inputFile,"/")[[1]];
     File = FileComp[length(FileComp)];
     File = substr(File,1,nchar(File)-4);
-    pSubTitle <- paste0('RmdOutput/',Sys.Date(),"_",File,"_Madison");
+    pSubTitle <- paste0('RmdOutput/',Sys.Date(),"_",File,"_Green_Bay");
     rmarkdown::render( 
       input       = inputFile, 
       encoding    = encoding, 
