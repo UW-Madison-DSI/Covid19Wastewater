@@ -23,6 +23,54 @@ AVGGenFN <- function(N1, N2) {
 }
 ```
 
+Input: `Shareable_Data_cases.csv`
+Source: DHS People
+Output: DHSCaseData4_21_2022.csv
+Note: 
+```{r }
+library(tidyverse)
+library(lubridate)
+BaseDir <- "./../../"
+DHSCaseDF <- read.csv("./../../data/source/WastewaterDataWisconsin/Shareable_Data_cases.csv")%>%
+  group_by(FirstConfirmedDt, DISPLAY_NA)%>%
+  summarize(FirstConfirmed = n())%>%
+  rename(Date = FirstConfirmedDt, Site = DISPLAY_NA)%>%
+  mutate(Date = mdy(Date))
+
+write.csv(DHSCaseDF,paste0(BaseDir,"data/processed/DHSCaseData-4_21_2022.csv"),row.names=FALSE)
+
+DHSCaseDF <- read.csv(paste0(BaseDir,"data/processed/DHSCaseData-4_21_2022.csv"))%>%
+  mutate(Date=as.Date(Date))
+
+```
+
+Input: `Shareable_Data_wastewater.csv`
+Source: DHS People
+Output: DHSCaseData4_21_2022.csv
+Note: 
+```{r }
+library(tidyverse)
+library(lubridate)
+BaseDir <- "./../../"
+DHSWasteDF <- read.csv("./../../data/source/WastewaterDataWisconsin/Shareable_Data_wastewater.csv")%>%
+    rename(repName="pcr_type",
+           Site="wwtp_name",
+           Pop = "population_served",
+           Date="sample_collect_date",
+           N1="n1_sars_cov2_conc",
+           N1LOD="n1_sars_cov2_lod",
+           N2="n2_sars_cov2_conc",
+           N2LOD="n2_sars_cov2_lod",
+           PMMoV = "ppmov_conc")%>%
+  mutate(Date = mdy(Date))
+
+write.csv(DHSWasteDF,paste0(BaseDir,"data/processed/DHSWasteData-4_21_2022.csv"),row.names=FALSE)
+
+DHSCaseDF <- read.csv(paste0(BaseDir,"data/processed/DHSWasteData-4_21_2022.csv"))%>%
+  mutate(Date=as.Date(Date))
+```
+
+
 Input: `HFG data for stats corrected 071421.xlsx`
 Source: Dagmara email Wed 7/14/2021 7:31 PM
 Output: HFGWasteData071421.csv
