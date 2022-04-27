@@ -1,6 +1,6 @@
 ---
 params:
-  BaseDir: "Z:/"
+  BaseDir: "./../../"
   IndVar: "N1"
   ##BaseDir: "/Volumes/byandell/"
 title: "Heuristic exploration of the relationship between cases and viral load"

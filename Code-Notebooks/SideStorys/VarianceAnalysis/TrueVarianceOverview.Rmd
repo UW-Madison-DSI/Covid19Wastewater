@@ -1,6 +1,6 @@
 ---
 params:
-  BaseDir: "Z:/"
+  BaseDir: ./../../../
 title: "TrueVariance analysis"
 author: "Marlin"
 date: "4/19/2022"
@@ -27,7 +27,7 @@ knit: (
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
-```{r Load needed code}
+```{r Load needed code, message=FALSE}
 library(dplyr)
 library(ggplot2)
 library(lmtest)
@@ -63,7 +63,6 @@ LIMSFullDF <- ParseData(LIMSWastePath(BaseDir))%>%
   filter(Site == "Madison")%>%
   select(Date, Site, N1, BCoV , N2 , PMMoV,
          FlowRate,temperature,equiv_sewage_amt)
-
 ```
 
 
@@ -226,6 +225,7 @@ ShapeDF%>%
   geom_vline(xintercept = log(5e4))+
   geom_vline(xintercept = log(1e6))+
   facet_wrap(~Site)
+
 ```
 
 ```{r all data}
@@ -262,7 +262,7 @@ FullDetrendedData$GamVar <- mgcv::gam(
 
 FullDetrendedData%>%
     NoNa("VarN1")%>%
-    ggplot(aes(x = log(N1)))+
+    ggplot(aes(x = log(loessN1)))+
     geom_point(aes(y=log(VarN1),
                 color="VarN1"),
              size = 2,alpha=.1)+
@@ -270,6 +270,12 @@ FullDetrendedData%>%
   geom_vline(xintercept = log(5e4))+
   geom_vline(xintercept = log(1e6))+
   geom_line(aes(y=GamVar))
+
+
+#FullDetrendedData%>%
+#  ggplot(aes(x=log(N1),y=log(loessN1)))+
+#  geom_point(size = 2,alpha=.1,color="Red")+
+#  geom_abline()
 ```
 
 ```{r trend fit centerN1}
