@@ -35,7 +35,8 @@ DHSCaseDF <- read.csv("./../../data/source/WastewaterDataWisconsin/Shareable_Dat
   group_by(FirstConfirmedDt, DISPLAY_NA)%>%
   summarize(FirstConfirmed = n())%>%
   rename(Date = FirstConfirmedDt, Site = DISPLAY_NA)%>%
-  mutate(Date = mdy(Date))
+  mutate(Date = mdy(Date),
+         Site=ifelse(Site=="Madison MSD WWTF","Madison",Site))
 
 write.csv(DHSCaseDF,paste0(BaseDir,"data/processed/DHSCaseData-4_21_2022.csv"),row.names=FALSE)
 
@@ -61,12 +62,23 @@ DHSWasteDF <- read.csv("./../../data/source/WastewaterDataWisconsin/Shareable_Da
            N1LOD="n1_sars_cov2_lod",
            N2="n2_sars_cov2_conc",
            N2LOD="n2_sars_cov2_lod",
-           PMMoV = "ppmov_conc")%>%
-  mutate(Date = mdy(Date))
+           PMMoV = "ppmov_conc",
+           FlowRate = "average_flow_rate")%>%
+  mutate(Date = mdy(Date),
+         #Standardizing the Site names names
+      Site=ifelse(Site=="Madison MSD WWTF","Madison",Site),
+      Site=ifelse(Site=="Madison-P2-Central","MMSD-P2",Site),
+      Site=ifelse(Site=="Madison-P7-SE","MMSD-P7",Site),
+      Site=ifelse(Site=="Madison-P8-West","MMSD-P8",Site),
+      Site=ifelse(Site=="Madison-P11-SW","MMSD-P11",Site),
+      Site=ifelse(Site=="Madison-P18-NE","MMSD-P18",Site),
+      across(all_of(c("N1","N2","PMMoV","Pop","FlowRate")),as.numeric)
+         )
+  
 
 write.csv(DHSWasteDF,paste0(BaseDir,"data/processed/DHSWasteData-4_21_2022.csv"),row.names=FALSE)
 
-DHSCaseDF <- read.csv(paste0(BaseDir,"data/processed/DHSWasteData-4_21_2022.csv"))%>%
+DHSWasteDF <- read.csv(paste0(BaseDir,"data/processed/DHSWasteData-4_21_2022.csv"))%>%
   mutate(Date=as.Date(Date))
 ```
 

@@ -2,6 +2,7 @@
 params:
   BaseDir: "./../../"
   IndVar: "N1"
+  Site: "Madison"
   ##BaseDir: "/Volumes/byandell/"
 title: "Heuristic exploration of the relationship between cases and viral load"
 author: "Marlin Lee"
@@ -19,7 +20,7 @@ knit: (
     FileComp = strsplit(inputFile,"/")[[1]];
     File = FileComp[length(FileComp)];
     File = substr(File,1,nchar(File)-4);
-    pSubTitle <- paste0('RmdOutput/',Sys.Date(),"_",File);
+    pSubTitle <- paste0('RmdOutput/',Sys.Date(),"_",File,"_Madison");
     rmarkdown::render( 
       input       = inputFile, 
       encoding    = encoding, 
@@ -47,7 +48,7 @@ There are four components to this analysis.
 knitr::opts_chunk$set(
 	message = FALSE,
 	warning = FALSE
-)
+)#,"_",Site,"_",IndVar
 ```
 
 
@@ -110,28 +111,38 @@ Files Used:
 
 #Importing the Madison case data
 LatCaseDF <- ParseData(LIMSCasePath(BaseDir))%>% 
-  rename(Cases = EpisodeCase)%>%
+  rename(Cases = FirstConfirmed)%>%
   mutate(Cases = ifelse(is.na(Cases),0,Cases))%>%
-  filter(Site == "Madison")%>%
+  filter(Site == params$Site)%>%
+  arrange(Date)%>%
   mutate(SevenDayMACases = rollapply(data = Cases, width = 7, FUN = mean, 
-                            na.rm = TRUE,fill=NA))%>%
-  filter(Date>ymd("2020-9-10"))%>%
+                            fill=0))%>%
+  #filter(Date>ymd("2020-9-10"))%>%
   select(Date, Site, Cases,SevenDayMACases)
 
 #Importing the Madison waste water data
 LIMSFullDF <- ParseData(LIMSWastePath(BaseDir))%>%
-  filter(Site == "Madison")%>%
+  filter(Site == params$Site)%>%
   mutate(N1Pure = ifelse(is.na(N1),N2,N1),
          N2Pure = ifelse(is.na(N2),N1,N2),
          GeoMeanN12 = exp((log(N1Pure)+log(N2Pure))/2))%>%
-  select(Date, Site, N1, BCoV , N2 , PMMoV,
-         GeoMeanN12,FlowRate,temperature,equiv_sewage_amt)
+  select(Date, Site, N1 , N2 , PMMoV,
+         GeoMeanN12,FlowRate,temperature)
 
 #joining the two data frames together
 FullDF <- full_join(LatCaseDF,LIMSFullDF, by = c("Date","Site"))
 #library("readxl")
-#ABA <- read_excel("C:/Users/marli/Downloads/WATERMICRO_WW_COVID-2022-01-07_F_v1.1.xlsx")
-#ABA
+
+#x <- unique(LIMSFullDF$Site)
+#y <- unique(LatCaseDF$Site)
+#length(x)
+#length(y)
+#z <- intersect(x,y)
+#length(z)
+#x[!(x %in% y)]
+#x[grepl("Milwaukee",x)]
+#"South Milwaukee WWTF", "Milwaukee MSD Jones Island", "Milwaukee MSD South Shore" 
+#y[y=="Milwaukee MSD South Shore"]
 ```
 
 # Data: The first look
@@ -333,6 +344,7 @@ plot(weights,
 
 ```{r, fig.cap= 'Madison Case data for Madison. SLD Cases is a weighted mean of cases using the gamma distribution as the weight distribution.'}
 SLDSmoothedDF <- UpdatedDF%>%
+  arrange(Date)%>%
   mutate(
     SLDCases = c(rep(NA,SLDWidth-1), #elimination of starting values not relevant
                                      #as we have a 50+ day buffer of case data
@@ -358,6 +370,7 @@ ggplotly(SLDPlot,tooltip=c("info","Date"))%>%
   layout(legend=list(title=list(text=''),x = 1.15, y = 0.9),
          margin = list(l = 50, r = 75, b = 50, t = 50, pad = 4))
 ```
+
 
 ```{r, include=FALSE}
 #.165
@@ -390,7 +403,7 @@ SLDLoessGraphic <- SLDSmoothedDF%>%
   NoNa(loessVar,"SLDCases")%>%
   ggplot(aes(x=Date))+
   geom_line(aes(y=Cases, color="Cases" , info = Cases),alpha=.1)+
-  geom_line(aes(y=MinMaxFixing(!!sym(SelectedIndVar),Cases),
+  geom_line(aes(y=MinMaxFixing(!!sym(SelectedIndVar),SLDCases),
                 color=SelectedIndVar,
                 info = !!sym(SelectedIndVar)),
             alpha=.2)+
@@ -398,7 +411,7 @@ SLDLoessGraphic <- SLDSmoothedDF%>%
                 color="Seven Day MA Cases" , 
                 info = SevenDayMACases),
             alpha=.3)+
-  geom_line(aes(y=MinMaxFixing(!!sym(loessVar),Cases,!!sym(SelectedIndVar)), 
+  geom_line(aes(y=MinMaxFixing(!!sym(loessVar),SLDCases,!!sym(SelectedIndVar)), 
                 color=loessVar ,
                 info = !!sym(loessVar)))+
   geom_line(aes(y=SLDCases,
@@ -416,66 +429,6 @@ ggplotly(SLDLoessGraphic,tooltip=c("info","Date"))%>%
            margin = list(l = 50, r = 75, b = 50, t = 50, pad = 4))
 ```
 
-```{r varma models, eval = FALSE, include=FALSE}
-library(MTS)
-library(VAR.etp)
-A <- SLDSmoothedDF%>%
-  select("Cases","N1","N2")%>%
-  NoNa("Cases","N1","N2")
-
-B <- VAR.Boot(A, p=2, nb = 50, type = "const")
-B
-
-mod <- VARMA(data.matrix(A),details=TRUE)
-mod
-summary(lm(Cases~lag(N1,62), data =A))
-
-
-plot(resid(lm(Cases~lag(N1,3), data =A)))
-ErrorLM <- data.frame(Zero = resid(lm(Cases~lag(N1,0), data =A)))
-ErrorLM$Five = c(resid(lm(Cases~lag(N1,5), data =A)),rep(NA,5))
-ErrorLM$Ten = c(resid(lm(Cases~lag(N1,10), data =A)),rep(NA,10))
-ErrorLM$NegFive = c(rep(NA,5),resid(lm(Cases~lead(N1,5), data =A)))
-ErrorLM$NegTen = c(rep(NA,10),resid(lm(Cases~lead(N1,10), data =A)))
-ErrorLM$Date <- 1:271
-Ploter <- ErrorLM%>%
-  ggplot(aes(x=Date))+
-  geom_line(aes(y=Zero,color="Zero"))+
-  geom_line(aes(y=Five,color="Five"))+
-  geom_line(aes(y=Ten,color="Ten"))+
-  geom_line(aes(y=NegFive,color="NegFive"))+
-  geom_line(aes(y=NegTen,color="NegTen"))
-
-ggplotly(Ploter)
-```
-
-
-```{r,eval=FALSE}
-RelationShipDF <- SLDSmoothedDF%>%
-  select(Date, Cases, SevenDayMACases, SLDCases, N1, N2, BCoV, PMMoV, loessN1, FlowRate, DetectedOutlier, temperature, equiv_sewage_amt)
-
-RelationShipDF%>%
-  filter(!is.na(DetectedOutlier))
-
-
-DiffDF <- RelationShipDF%>%
-  mutate(DiffLoessN1 = c(NA,diff(loessN1)),
-         DiffSLDCases = c(NA,diff(SLDCases)))%>%
-  select(Date,DiffLoessN1,DiffSLDCases)
-
-DiffDF%>%
-  NoNa("DiffLoessN1")%>%
-  ggplot()+
-  aes(x=Date)+
-  geom_line(aes(y=DiffSLDCases,color="DiffSLDCases"))+
-  geom_line(aes(y=MinMaxFixing(DiffLoessN1,DiffSLDCases),color="DiffLoessN1"))
-
-x <- ccf(RelationShipDF$loessN1,RelationShipDF$SLDCases,na.action=na.pass)
-max(x$acf)
-
-
-
-```
 
 # Towards a formal analysis
 
@@ -484,6 +437,7 @@ Cross correlation and Granger Causality are key components to formalize this ana
 
 
 ```{r}
+
 CCFChar <- function(ccfObject){
   LargestC = max(ccfObject$acf)
   Lag = which.max(ccfObject$acf)-21
@@ -500,8 +454,8 @@ ModelTesting <- function(DF,Var1,Var2){
 
   CCFReport <- CCFChar(ccf(Vec1,Vec2,na.action=na.pass,plot = FALSE))
 
-  VarPredCase <- grangertest(Vec1, Vec2, order = 1)$"Pr(>F)"[2]
-  CasePredVar <- grangertest(Vec2,Vec1, order = 1)$"Pr(>F)"[2]
+  VarPredCase <- grangertest(shift(Vec1,max(0,CCFReport[[1]])), Vec2, order = 1)$"Pr(>F)"[2]
+  CasePredVar <- grangertest(Vec2, shift(Vec1,min(0,CCFReport[[1]])), order = 1)$"Pr(>F)"[2]
   return(round(c(CCFReport,CasePredVar,VarPredCase),4))
 }
 
@@ -532,7 +486,8 @@ rownames(OutputRightPosition) <- c(paste("Section 1: Cases vs" , SelectedIndVar)
                                    paste("Section 4.3: SLD Cases vs Loess smoothing of ",SelectedIndVar))
 
 formattable(OutputRightPosition)
-
-
+ccf(FullDF$N1,SLDSmoothedDF$Cases,na.action = na.pass)
+ccf(SLDSmoothedDF$loessN1,SLDSmoothedDF$SevenDayMACases,na.action = na.pass)
+ccf(SLDSmoothedDF$loessN1,SLDSmoothedDF$SLDCases,na.action = na.pass)
 ```
 
