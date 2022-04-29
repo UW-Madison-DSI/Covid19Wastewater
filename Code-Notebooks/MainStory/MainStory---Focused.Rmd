@@ -69,6 +69,7 @@ source("../../lib/DataProccess.R")
 source("../../lib/NormFuncs.R")
 source("../../lib/OutlierDetectionFuncs.R")
 source("../../lib/DataPathName.R")
+source("MainStory.R")
 BaseDir <- params$BaseDir#get the root of the directory where the data is stored
 ```
 
@@ -110,39 +111,19 @@ Files Used:
 
 
 #Importing the Madison case data
-LatCaseDF <- ParseData(LIMSCasePath(BaseDir))%>% 
-  rename(Cases = FirstConfirmed)%>%
-  mutate(Cases = ifelse(is.na(Cases),0,Cases))%>%
-  filter(Site == params$Site)%>%
-  arrange(Date)%>%
-  mutate(SevenDayMACases = rollapply(data = Cases, width = 7, FUN = mean, 
-                            fill=0))%>%
-  #filter(Date>ymd("2020-9-10"))%>%
-  select(Date, Site, Cases,SevenDayMACases)
+LatCaseDF <- MainCaseDataPrep(BaseDir,params$Site)
 
 #Importing the Madison waste water data
-LIMSFullDF <- ParseData(LIMSWastePath(BaseDir))%>%
-  filter(Site == params$Site)%>%
-  mutate(N1Pure = ifelse(is.na(N1),N2,N1),
-         N2Pure = ifelse(is.na(N2),N1,N2),
-         GeoMeanN12 = exp((log(N1Pure)+log(N2Pure))/2))%>%
-  select(Date, Site, N1 , N2 , PMMoV,
-         GeoMeanN12,FlowRate,temperature)
+LIMSFullDF <- MainCaseWastePrep(BaseDir,params$Site)
 
 #joining the two data frames together
 FullDF <- full_join(LatCaseDF,LIMSFullDF, by = c("Date","Site"))
 #library("readxl")
 
-#x <- unique(LIMSFullDF$Site)
-#y <- unique(LatCaseDF$Site)
-#length(x)
-#length(y)
-#z <- intersect(x,y)
-#length(z)
-#x[!(x %in% y)]
-#x[grepl("Milwaukee",x)]
-#"South Milwaukee WWTF", "Milwaukee MSD Jones Island", "Milwaukee MSD South Shore" 
-#y[y=="Milwaukee MSD South Shore"]
+LIMSFullDF%>%
+  group_by(Site)%>%
+  summarise(n = n())%>%
+  arrange(n)
 ```
 
 # Data: The first look
@@ -243,6 +224,7 @@ ggplotly(OutLierPlotObject,tooltip=c("info","Date"))%>%
 UpdatedDF <- ErrorMarkedDF%>%
   select(-sym(SelectedIndVar))%>%
   rename(!!sym(SelectedIndVar) := NoOutlierVar)
+
 ```
 
 
@@ -343,16 +325,7 @@ plot(weights,
 ```
 
 ```{r, fig.cap= 'Madison Case data for Madison. SLD Cases is a weighted mean of cases using the gamma distribution as the weight distribution.'}
-SLDSmoothedDF <- UpdatedDF%>%
-  arrange(Date)%>%
-  mutate(
-    SLDCases = c(rep(NA,SLDWidth-1), #elimination of starting values not relevant
-                                     #as we have a 50+ day buffer of case data
-                        rollapply(Cases,width=SLDWidth,FUN=weighted.mean,
-                                  w=weights,
-                                  na.rm = TRUE)
-                 #,rep(NA,10)
-                 ))#no missing data to remove
+SLDSmoothedDF <- SLDSmoothMod(UpdatedDF,SLDWidth)
 
 
 SLDPlot = SLDSmoothedDF%>%
@@ -393,10 +366,7 @@ To get a good smoothing of the `r SelectedIndVar ` measurement we employ loess s
 #                      x=SLDSmoothedDF$Date, #create loess fit of the data
 #                      span=.05, #span of .2 seems to give the best result, not rigorously chosen
 #                      iterations=2)$fitted#2 iterations remove some bad patterns
-SLDSmoothedDF[[loessVar]] <- loessFit(y=(SLDSmoothedDF[[SelectedIndVar]]), 
-                      x=SLDSmoothedDF$Date, #create loess fit of the data
-                      span=SpanConstant, #span of .2 seems to give the best result, not rigorously chosen
-                      iterations=2)$fitted#2 iterations remove some bad patterns
+SLDSmoothedDF <- LoessSmoothMod(SLDSmoothedDF,SelectedIndVar, loessVar, SpanConstant)
 
 
 SLDLoessGraphic <- SLDSmoothedDF%>%
