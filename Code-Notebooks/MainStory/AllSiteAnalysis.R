@@ -25,7 +25,7 @@ LIMSFullDF <- MainCaseWastePrep(BaseDir,"")
 
 #joining the two data frames together
 FullDF <- full_join(LatCaseDF,LIMSFullDF, by = c("Date","Site"))%>%
-  filter(Pop > 50000,
+  filter(#Pop > 50000,
          !is.na(Cases))
 
 FactorOrder <- (FullDF%>%
@@ -42,19 +42,25 @@ FactorOrder <- (DataMod%>%
                   arrange(desc(Pop)))$Site
 
 DataMod <- DataMod%>%
-  mutate(Site = factor(Site,FactorOrder))
-
+  mutate(Site = factor(Site,FactorOrder))%>%
+  group_by(Site)%>%
+  mutate(LoessSmoothNorm = ((loVar-min(loVar,na.rm=TRUE))/(max(loVar,na.rm=TRUE)-min(loVar,na.rm=TRUE)))*
+           (max(SevenDayMACases,na.rm=TRUE)-min(SevenDayMACases,na.rm=TRUE))+
+           min(SevenDayMACases,na.rm=TRUE))
 
 Gplt <- DataMod%>%
   ggplot(aes(x=Date))+
-  geom_line(aes(y=Cases, color="Cases" ),alpha=.1)+
-  geom_line(aes(y=MinMaxFixing(N1FlowPop,SevenDayMACases),
-                color="N1FlowPop"),
-            alpha=.2)+
+  #geom_line(aes(y=Cases, color="Cases" ),alpha=.1)+
+  #geom_line(aes(y=MinMaxFixing(N1FlowPop,SevenDayMACases),
+  #              color="N1FlowPop"),
+  #          alpha=.2)+
   geom_line(aes(y=SevenDayMACases,
                 color="Seven Day MA Cases"))+
-  geom_line(aes(y=MinMaxFixing(loVar,SevenDayMACases,N1FlowPop), 
-                color="loVar"))+
-  facet_wrap(~Site,scales="free")
+  geom_line(aes(y=LoessSmoothNorm, 
+                color="LoessSmooth"),data=filter(DataMod,!is.na(LoessSmoothNorm)))+
+  facet_wrap(~Site,scales="free",ncol=4)
+
+ggsave("AllPlotOutput.PDF",plot=Gplt,path="RmdOutput",
+       width = 32,height=100,units="cm")
 
 ggplotly(Gplt)

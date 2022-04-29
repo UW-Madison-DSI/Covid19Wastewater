@@ -55,11 +55,13 @@ SLDSmoothMod <- function(DF, Width){
 }
 
 LoessSmoothMod <- function(DF,InVar, OutVar, span){
-  DF[[OutVar]] <- loessFit(y=(DF[[InVar]]), 
-                                        x=DF$Date, #create loess fit of the data
+  DF2 <- DF%>%
+    arrange(Date)
+  DF2[[OutVar]] <- loessFit(y=(DF2[[InVar]]), 
+                                        x=DF2$Date, #create loess fit of the data
                                         span=span, 
                                         iterations=2)$fitted#2 iterations remove some bad patterns
-  return(DF)
+  return(DF2)
 }
 
 DataProcess <- function(DF, Width,InVar, span, OutVar="loVar"){
@@ -77,4 +79,13 @@ DataProcess <- function(DF, Width,InVar, span, OutVar="loVar"){
   }
   LoessDF <- LoessSmoothMod(SLDDF,InVar, "loVar", span)
   return(LoessDF)
+}
+
+
+MinMaxSiteFixing <- function(Vec, Bar, Site){
+  
+  NormVec = MinMaxNormalization(Vec,MinMaxCollector(SubVec))
+  BarRange = MinMaxCollector(Bar)
+  RefitVec = NormVec*(BarRange[2]-BarRange[1])+BarRange[1]
+  return(RefitVec)
 }
