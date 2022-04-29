@@ -7,7 +7,6 @@ library(tidyr)
 library(plotly)
 library(gridExtra)
 library(data.table)
-library(formattable)
 
 #Data Files and prep work
 source("../../lib/DataProccess.R")
@@ -25,8 +24,8 @@ LIMSFullDF <- MainCaseWastePrep(BaseDir,"")
 
 #joining the two data frames together
 FullDF <- full_join(LatCaseDF,LIMSFullDF, by = c("Date","Site"))%>%
-  filter(#Pop > 50000,
-         !is.na(Cases))
+  #filter(#Pop > 50000,
+  #       !is.na(Cases))
 
 FactorOrder <- (FullDF%>%
   group_by(Site)%>%
@@ -60,7 +59,7 @@ Gplt <- DataMod%>%
                 color="LoessSmooth"),data=filter(DataMod,!is.na(LoessSmoothNorm)))+
   facet_wrap(~Site,scales="free",ncol=4)
 
-ggsave("AllPlotOutput.PDF",plot=Gplt,path="RmdOutput",
+ggsave("AllPlotOutputN1.PDF",plot=Gplt,path="RmdOutput",
        width = 32,height=100,units="cm")
 
 ggplotly(Gplt)
