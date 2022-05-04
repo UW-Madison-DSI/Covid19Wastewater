@@ -25,7 +25,7 @@ AVGGenFN <- function(N1, N2) {
 
 Input: `Shareable_Data_cases.csv`
 Source: DHS People
-Output: DHSCaseData4_21_2022.csv
+Output: DHSCaseData-4_21_2022.csv
 Note: 
 ```{r }
 library(tidyverse)
@@ -38,7 +38,7 @@ DHSCaseDF <- read.csv("./../../data/source/WastewaterDataWisconsin/Shareable_Dat
   mutate(Date = mdy(Date),
          Site=ifelse(Site=="Madison MSD WWTF","Madison",Site))
 
-write.csv(DHSCaseDF,paste0(BaseDir,"data/processed/DHSCaseData-4_21_2022.csv"),row.names=FALSE)
+#write.csv(DHSCaseDF,paste0(BaseDir,"data/processed/DHSCaseData-4_21_2022.csv"),row.names=FALSE)
 
 DHSCaseDF <- read.csv(paste0(BaseDir,"data/processed/DHSCaseData-4_21_2022.csv"))%>%
   mutate(Date=as.Date(Date))
@@ -47,7 +47,7 @@ DHSCaseDF <- read.csv(paste0(BaseDir,"data/processed/DHSCaseData-4_21_2022.csv")
 
 Input: `Shareable_Data_wastewater.csv`
 Source: DHS People
-Output: DHSCaseData4_21_2022.csv
+Output: DHSWasteData4_21_2022.csv
 Note: 
 ```{r }
 library(tidyverse)
@@ -72,14 +72,16 @@ DHSWasteDF <- read.csv("./../../data/source/WastewaterDataWisconsin/Shareable_Da
       Site=ifelse(Site=="Madison-P8-West","MMSD-P8",Site),
       Site=ifelse(Site=="Madison-P11-SW","MMSD-P11",Site),
       Site=ifelse(Site=="Madison-P18-NE","MMSD-P18",Site),
-      across(all_of(c("N1","N2","PMMoV","Pop","FlowRate")),as.numeric)
-         )
+      across(all_of(c("N1","N2","PMMoV","Pop","FlowRate")),as.numeric),
+      across(all_of(c("N1LOD","N2LOD")),~tolower(str_trim(.x))),
+      across(all_of(c("N1LOD","N2LOD")),~ifelse(.x=="yes",TRUE,ifelse(.x=="no",FALSE,NA))))
   
 
-write.csv(DHSWasteDF,paste0(BaseDir,"data/processed/DHSWasteData-4_21_2022.csv"),row.names=FALSE)
+#write.csv(DHSWasteDF,paste0(BaseDir,"data/processed/DHSWasteData-4_21_2022.csv"),row.names=FALSE)
 
 DHSWasteDF <- read.csv(paste0(BaseDir,"data/processed/DHSWasteData-4_21_2022.csv"))%>%
   mutate(Date=as.Date(Date))
+
 ```
 
 

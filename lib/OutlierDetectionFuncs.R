@@ -1,3 +1,7 @@
+
+
+
+
 IQRFunc <- function(Vector,Gap=1.5,na.rm=TRUE,Ret=1){
   BaseQuimt <- quantile(Vector,c(.25,.75),na.rm=na.rm)
   IQRVal <- IQR(Vector,na.rm=na.rm)
@@ -16,6 +20,8 @@ MeanSDFunc <- function(Vector,Gap=2.5,na.rm=TRUE,Ret=1){
   ReturnVals <- list(MeanVal,MeanVal+Gap*SD,MeanVal-Gap*SD)
   return(ReturnVals[[Ret]])
 }
+
+
 RollingFunc <- function(Vector,Method,align,Gap=2,DaySmoothed=21){
   ReturnThresh <- rollapply(data = Vector, width = DaySmoothed, FUN = Method, 
                             Ret=1,fill=NA,Gap=Gap,align=align)
@@ -51,20 +57,20 @@ IdentifyOutliers <- function(Vector, method="SD", align="center",
                              n = 5,Bin = 21, Action = "Flag", Gap=2.5){
   MethodOptions <- c("SD","IQR","Median")
   if(method %in% MethodOptions){
+    OutputVec <- OutlierDetectRobustFunc(Vector, MeanSDFunc, Gap=Gap,
+                                         align = align,n = n, Bin = Bin)
     if(method == "SD"){#Req default for Gap is 2.5
-      OutputVec <- OutlierDetectRobustFunc(Vector, MeanSDFunc, Gap=Gap,
-                                           align = align,n = n, Bin = Bin)
+      method <- MeanSDFunc
     }else if(method == "IQR"){#Req default for Gap is 1.5
-      OutputVec <- OutlierDetectRobustFunc(Vector, IQRFunc, Gap=Gap,
-                                           align = align,n = n, Bin = Bin)
+      method <- IQRFunc
     }else if(method == "Median"){#Req default for Gap is 4
-      OutputVec <- OutlierDetectRobustFunc(Vector, MedianFunc, Gap=Gap,
-                                           align = align,n = n, Bin = Bin)
+      method <- MedianFunc
     }
-  }else{
-    OutputVec <- OutlierDetectRobustFunc(Vector, method,
-                                         align = align, n = n, Bin = Bin)
+    OutputVec <- OutlierDetectRobustFunc(Vector, MedianFunc, Gap=Gap,
+                                         align = align,n = n, Bin = Bin)
   }
+  OutputVec <- OutlierDetectRobustFunc(Vector, method, Gap=Gap,
+                                        align = align,n = n, Bin = Bin)
   if(Action == "Replace"){
     return(OutputVec)
   }else if(Action == "Flag"){

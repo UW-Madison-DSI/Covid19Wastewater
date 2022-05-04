@@ -114,7 +114,7 @@ Files Used:
 LatCaseDF <- MainCaseDataPrep(BaseDir,params$Site)
 
 #Importing the Madison waste water data
-LIMSFullDF <- MainCaseWastePrep(BaseDir,params$Site)
+LIMSFullDF <- MainWastePrep(BaseDir,params$Site)
 
 #joining the two data frames together
 FullDF <- full_join(LatCaseDF,LIMSFullDF, by = c("Date","Site"))

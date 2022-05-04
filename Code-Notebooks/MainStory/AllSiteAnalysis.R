@@ -1,65 +1,66 @@
-library(dplyr)
-library(ggplot2)
-library(lmtest)
-library(lubridate)
-library(limma)
-library(tidyr)
-library(plotly)
-library(gridExtra)
-library(data.table)
-
-#Data Files and prep work
-source("../../lib/DataProccess.R")
-source("../../lib/NormFuncs.R")
-source("../../lib/OutlierDetectionFuncs.R")
-source("../../lib/DataPathName.R")
-source("MainStory.R")
-
   
-#Importing the Madison case data
-LatCaseDF <- MainCaseDataPrep(BaseDir,"")
-
-#Importing the Madison waste water data
-LIMSFullDF <- MainCaseWastePrep(BaseDir,"")
-
-#joining the two data frames together
-FullDF <- full_join(LatCaseDF,LIMSFullDF, by = c("Date","Site"))%>%
-  #filter(#Pop > 50000,
-  #       !is.na(Cases))
-
-FactorOrder <- (FullDF%>%
-  group_by(Site)%>%
-  summarise(Pop=mean(Pop,na.rm=TRUE))%>%
-  arrange(desc(Pop)))$Site
-
-SiteDFList <- split(FullDF, FullDF$Site)#N1FlowPop
-DataMod <- bind_rows(lapply(SiteDFList, DataProcess, 21,"N1FlowPop", "guess"))
-
-FactorOrder <- (DataMod%>%
-                  group_by(Site)%>%
-                  summarise(Pop=mean(Pop,na.rm=TRUE))%>%
-                  arrange(desc(Pop)))$Site
-
-DataMod <- DataMod%>%
-  mutate(Site = factor(Site,FactorOrder))%>%
-  group_by(Site)%>%
-  mutate(LoessSmoothNorm = ((loVar-min(loVar,na.rm=TRUE))/(max(loVar,na.rm=TRUE)-min(loVar,na.rm=TRUE)))*
-           (max(SevenDayMACases,na.rm=TRUE)-min(SevenDayMACases,na.rm=TRUE))+
-           min(SevenDayMACases,na.rm=TRUE))
-
-Gplt <- DataMod%>%
-  ggplot(aes(x=Date))+
-  #geom_line(aes(y=Cases, color="Cases" ),alpha=.1)+
-  #geom_line(aes(y=MinMaxFixing(N1FlowPop,SevenDayMACases),
-  #              color="N1FlowPop"),
-  #          alpha=.2)+
-  geom_line(aes(y=SevenDayMACases,
-                color="Seven Day MA Cases"))+
-  geom_line(aes(y=LoessSmoothNorm, 
-                color="LoessSmooth"),data=filter(DataMod,!is.na(LoessSmoothNorm)))+
-  facet_wrap(~Site,scales="free",ncol=4)
-
-ggsave("AllPlotOutputN1.PDF",plot=Gplt,path="RmdOutput",
-       width = 32,height=100,units="cm")
-
-ggplotly(Gplt)
+  #?add parm script functionality
+  BaseDir <- "./../../"
+  #Var1 <- ""
+  
+  library(dplyr)
+  library(ggplot2)
+  library(lmtest)
+  library(lubridate)
+  library(limma)
+  library(tidyr)
+  library(plotly)
+  library(gridExtra)
+  library(data.table)
+  
+  #Data Files and prep work
+  source("../../lib/DataPathName.R")#merged?
+  source("../../lib/DataProccess.R")
+  #source("../../lib/NormFuncs.R") #might not be needed
+  #source("../../lib/OutlierDetectionFuncs.R")
+  source("MainStory.R")
+  
+  BaseDir <- "./../../"
+  #Importing the case data
+  LatCaseDF <- MainCaseDataPrep(BaseDir,"")
+  
+  #Importing the waste water data
+  LIMSFullDF <- MainWastePrep(BaseDir,"")
+  
+  #joining the two data frames together
+  FullDF <- full_join(LatCaseDF,LIMSFullDF, by = c("Date","Site"))%>%
+    filter(!is.na(Cases))
+  
+  SiteDFList <- split(FullDF, FullDF$Site)
+  SiteDFList.ad <- lapply(SiteDFList, DataProcess, 21,"N1FlowPop", "guess")
+  SiteDFList.ad <- lapply(SiteDFList.ad,NormThird,"N1FlowPop","SevenDayMACases","loVar","N1FlowPop")
+  DataMod <- bind_rows(lapply(SiteDFList.ad,NormQuint,"loVar","SevenDayMACases","loVar"))
+  
+  
+  FactorOrder <- (DataMod%>%
+                    group_by(Site)%>%
+                    summarise(Pop=mean(Pop,na.rm=TRUE))%>%
+                    arrange(desc(Pop)))$Site
+  
+  
+  
+  #write DF with date if new?
+  #read old DF, if rows are same merge, otherwise make new one?
+  #append col if new var used?
+  
+  DataMod <- DataMod%>%
+    mutate(Site = factor(Site,FactorOrder))
+  
+  Gplt <- DataMod%>%
+    ggplot(aes(x=Date))+
+    geom_line(aes(y=SevenDayMACases,
+                  color="Seven Day MA Cases"))+
+    geom_line(aes(y=loVar, 
+                  color="LoessSmooth"),data=filter(DataMod,!is.na(loVar)))+
+    geom_point(aes(y=N1FlowPop,color="BLOD"),size=.5,data=filter(DataMod,N1LOD))+
+    geom_point(aes(y=N1FlowPop,color="Flagged Outliers"),size=.5,data=filter(DataMod,FlaggedOutlier))+
+    #scale_y_log10()+
+    facet_wrap(~Site,scales="free",ncol=4)#should be more systematic
+  
+  ggsave("AllPlotOutputN1.PDF",plot=Gplt,path="RmdOutput",
+         width = 32,height=100,units="cm")
