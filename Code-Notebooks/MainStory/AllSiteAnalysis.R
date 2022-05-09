@@ -16,8 +16,6 @@
   #Data Files and prep work
   source("../../lib/DataPathName.R")#merged?
   source("../../lib/DataProccess.R")
-  #source("../../lib/NormFuncs.R") #might not be needed
-  #source("../../lib/OutlierDetectionFuncs.R")
   source("MainStory.R")
   
   BaseDir <- "./../../"
@@ -38,9 +36,10 @@
   
   
   FactorOrder <- (DataMod%>%
+                    filter(!is.na(N1FlowPop))%>%
                     group_by(Site)%>%
-                    summarise(Pop=mean(Pop,na.rm=TRUE))%>%
-                    arrange(desc(Pop)))$Site
+                    summarise(Pop=mean(Pop,na.rm=TRUE),n=n())%>%
+                    arrange(desc(n)))$Site
   
   
   
@@ -59,8 +58,8 @@
                   color="LoessSmooth"),data=filter(DataMod,!is.na(loVar)))+
     geom_point(aes(y=N1FlowPop,color="BLOD"),size=.5,data=filter(DataMod,N1LOD))+
     geom_point(aes(y=N1FlowPop,color="Flagged Outliers"),size=.5,data=filter(DataMod,FlaggedOutlier))+
-    #scale_y_log10()+
+    scale_y_log10()+
     facet_wrap(~Site,scales="free",ncol=4)#should be more systematic
   
-  ggsave("AllPlotOutputN1.PDF",plot=Gplt,path="RmdOutput",
+  ggsave("AllPlotOutputN1Log.PDF",plot=Gplt,path="RmdOutput",
          width = 32,height=100,units="cm")

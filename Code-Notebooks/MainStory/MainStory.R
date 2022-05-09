@@ -55,7 +55,18 @@ SLDSmoothMod <- function(DF, Width){
   return(ModDF)
 }
 
+spanGuess <- function(DF,InVar){
+  temp <- DF%>%
+    filter(!is.na(!!sym(InVar)))%>%
+    summarise(n=n())
+  span <- min(c(.05*178/temp$n,.4))#More can be done here
+  return(span)
+}
+
 LoessSmoothMod <- function(DF,InVar, OutVar, span){
+  if(span=="guess"){
+    span <- spanGuess(DF,InVar)
+  }
   DF2 <- DF%>%
     arrange(Date)
   DF2[[OutVar]] <- loessFit(y=(DF2[[InVar]]), 
@@ -67,14 +78,10 @@ LoessSmoothMod <- function(DF,InVar, OutVar, span){
 
 DataProcess <- function(DF, Width,InVar, span){
   if(span=="guess"){
-    temp <- DF%>%
-      filter(!is.na(!!sym(InVar)))%>%
-      summarise(n=n())
-    span <- min(c(.05*178/temp$n,.4))#More can be done here
-    if(span==.4){print("LowDense")}
+    span <- spanGuess(DF,InVar)
   }
   #DF,VecName,SDDeg,span,DaySmoothed,n = 5
-  DetectedOutliers <- LoessOutlierDetec(DF,InVar,2.5,2*span,24,n=5)
+  DetectedOutliers <- LoessOutlierDetec(DF,InVar,2.5,2*span,36,n=5)
   print(sum(DetectedOutliers)/length(DF[[InVar]])*100)
   ErrorRemovedDF <- DF[!(DetectedOutliers),]%>%
     mutate(FlaggedOutlier=FALSE)
@@ -171,7 +178,7 @@ LoessOutlierDetec <- function(DF,VecName,SDDeg,span,DaySmoothed,n = 5){
   }
   
   
-  booleanReturn <- abs(exp(BestVectorDF$VecName)-DF[[VecName]])>10000
+  booleanReturn <- abs(exp(BestVectorDF$VecName)-DF[[VecName]])>10
   booleanReturn[is.na(booleanReturn)] <- FALSE
   return(booleanReturn)
 }
