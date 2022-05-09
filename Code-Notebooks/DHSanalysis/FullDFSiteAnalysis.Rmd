@@ -1,0 +1,111 @@
+---
+title: "FullDFSiteAnalysis"
+author: "Marlin"
+date: "5/5/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r Prep Data}
+
+#?add parm script functionality
+BaseDir <- "./../../"
+#Var1 <- ""
+
+library(dplyr)
+library(ggplot2)
+library(limma)
+library(tidyr)
+
+#Data Files and prep work
+source("../../lib/DataPathName.R")#merged?
+source("../../lib/DataProccess.R")
+source("DHSAlgo.R")
+  source("../MainStory/MainStory.R")
+  library(zoo)
+#Importing the waste water data
+LIMSFullDF <- ParseData(LIMSWastePath(BaseDir))%>%
+  mutate(N1Pure = ifelse(is.na(N1),N2,N1),
+         N2Pure = ifelse(is.na(N2),N1,N2),
+         logGeoNorm =  (FlowRate/Pop)*((log(N1Pure,10)+log(N2Pure,10))/2))%>%
+  #group_by(Site)%>%
+  filter(Pop>19680	)%>%#fudge Pop
+  filter(!is.infinite(logGeoNorm),!is.na(logGeoNorm))%>%
+  select(Date, Site, logGeoNorm,Pop)%>%
+  rename(WWTP = Site, date = Date, sars_cov2_adj_load_log10 = logGeoNorm)
+
+
+  SiteDFList <- LIMSFullDF%>%
+    rename(Date=date)%>%
+    split(LIMSFullDF$WWTP)
+  DataMod <- bind_rows(lapply(SiteDFList, LoessSmoothMod, "sars_cov2_adj_load_log10","Loess", "guess"))%>%
+    rename(date=Date)
+```
+
+```{r AllSite Loop}
+#Loess
+reg_estimates = as.data.frame(matrix(ncol=8, nrow=0))
+
+colnames(reg_estimates) = c("WWTP", "date", "days_elapsed", "lmreg_n" , "lmreg_slope", "lmreg_sig", "modeled_percentchange","Data")
+
+
+
+distinct_wwtps = DataMod %>%
+  distinct(WWTP)
+
+for (i in 1:nrow(distinct_wwtps)){
+  
+  
+  
+  print(paste(distinct_wwtps[i,1]))
+  
+  ww.x = DataMod %>%
+    
+    filter(WWTP==paste(distinct_wwtps[i,1]))
+  
+  for (k in 1:(nrow(ww.x) - 4)){
+    try({
+    ww.x.tobind.Base <- InnerFunc(ww.x,k,4,as.formula("sars_cov2_adj_load_log10 ~ date"))%>%
+      mutate(Data = "Raw")
+    # Join with full set of reg estimates
+    ww.x.tobind.Loess <- InnerFunc(ww.x,k,4,as.formula("Loess ~ date"))%>%
+      mutate(Data = "Loess")
+    # Join with full set of reg estimates
+    ww.x.tobind = rbind(ww.x.tobind.Base,ww.x.tobind.Loess)
+    
+    reg_estimates = rbind(reg_estimates, ww.x.tobind)
+    },silent=TRUE)
+  }
+}
+
+```
+
+```{r }
+  FactorOrder <- (LIMSFullDF%>%
+                    filter(!is.na(sars_cov2_adj_load_log10))%>%
+                    group_by(WWTP)%>%
+                    summarise(Pop=mean(Pop,na.rm=TRUE),n=n())%>%
+                    arrange(desc(n)))$WWTP
+
+  reg_estimates <- reg_estimates%>%
+    mutate(WWTP = factor(WWTP,FactorOrder))
+```
+
+```{r}
+BaseMod <- reg_estimates%>%
+  filter(Data=="Raw")
+HeatMapPlot(BaseMod,"RecPattern.pdf")
+
+LoessMod <- reg_estimates%>%
+  filter(Data=="Loess")
+HeatMapPlot(LoessMod,"RecPatternLoess.pdf")
+```
+
+```{r}
+
+
+```
+
