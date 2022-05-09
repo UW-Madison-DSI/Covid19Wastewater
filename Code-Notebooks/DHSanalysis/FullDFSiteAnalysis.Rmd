@@ -104,8 +104,3 @@ LoessMod <- reg_estimates%>%
 HeatMapPlot(LoessMod,"RecPatternLoess.pdf")
 ```
 
-```{r}
-
-
-```
-

@@ -36,7 +36,7 @@ HeatMapPlot <- function(DF,Path){
     ggplot()+
     geom_rect(aes(xmin=date-2,xmax=date+2,
                   ymin=0,
-                  ymax = 10,fill = cut(lmreg_slope,quantile(lmreg_slope),labels=FALSE)))+
+                  ymax = 10,fill = as.numeric(cut(lmreg_slope,quantile(lmreg_slope),labels=FALSE))-2))+
     facet_wrap(~WWTP, scales = "free",ncol=4)
   
   ggsave(Path,plot=Gplt,
