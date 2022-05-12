@@ -88,11 +88,22 @@ for (i in 1:nrow(distinct_wwtps)){
 ```{r }
 Catagorylabel = c("major decrease","moderate decrease","fluctuating ","moderate increase","major increase")
 
-  reg_estimates <- FactorVecByNumPoints(reg_estimates,"WWTP","modeled_percentchange")%>%
+reg_estimates <- FactorVecByNumPoints(reg_estimates,"WWTP","modeled_percentchange")%>%
     mutate(Catagory = cut(modeled_percentchange,c(-Inf,-80,-10,10,100,Inf),
-                          labels = Catagorylabel,include.lowest=TRUE,
-                          ordered_result=TRUE))
+                          include.lowest=TRUE,
+                          ordered_result=TRUE,
+                          labels = Catagorylabel))
+           #Catagory = ifelse(lmreg_sig>.3,"no change",Catagory),
+           # Catagory = factor(Catagory, c(1,2,3,4,5,"no change"), 
+           #                   labels = c( Catagorylabel, "no change"), exclude = NULL))
+CatagoryColors <- c("#0571b0", "#92c5de", "#979797","#f4a582","#ca0020","Black")
 
+reg_estimates%>%
+  ggplot(aes(x=date,y=lmreg_sig,color = Catagory))+
+  scale_color_manual(values = CatagoryColors)+
+  geom_point()
+
+unique(reg_estimates$Catagory)
 ```
 
 ```{r}
@@ -123,7 +134,8 @@ BarGridLoessRaw <- reg_estimates%>%
     facet_grid (Data~WWTP, scales = "free")+
   theme(axis.title.x=element_blank(),
         axis.text.x=element_blank(),
-        axis.ticks.x=element_blank())
+        axis.ticks.x=element_blank())+
+  scale_fill_manual(values = CatagoryColors)
 
   
   ggsave("Temp.PDF",plot=BarGridLoessRaw,
@@ -145,7 +157,7 @@ Gplt <- FactorVecByNumPoints(DataMod,"WWTP","Loess")%>%
 
 SavePlot <- BarGridLoessRaw/Gplt + plot_layout(heights = c(2, 1))
 
-ggsave("Temp.PDF",plot=SavePlot,
-         width = 16*Dim,height = 15,units="cm",limitsize =FALSE)
+ggsave("ClassCompare.PDF",plot=SavePlot,
+         width = 32*Dim,height = 15,units="cm",limitsize =FALSE)
 
 ```
