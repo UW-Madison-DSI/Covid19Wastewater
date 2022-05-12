@@ -19,7 +19,7 @@ library(dplyr)
 library(ggplot2)
 library(limma)
 library(tidyr)
-
+library(patchwork)
 #Data Files and prep work
 source("../../lib/DataPathName.R")#merged?
 source("../../lib/DataProccess.R")
@@ -30,7 +30,7 @@ source("DHSAlgo.R")
 LIMSFullDF <- ParseData(LIMSWastePath(BaseDir))%>%
   mutate(N1Pure = ifelse(is.na(N1),N2,N1),
          N2Pure = ifelse(is.na(N2),N1,N2),
-         logGeoNorm =  (FlowRate/Pop)*((log(N1Pure,10)+log(N2Pure,10))/2))%>%
+         logGeoNorm =  log((FlowRate/Pop),10)+(log(N1Pure,10)+log(N2Pure,10))/2)%>%
   #group_by(Site)%>%
   filter(Pop>19680	)%>%#fudge Pop
   filter(!is.infinite(logGeoNorm),!is.na(logGeoNorm))%>%
@@ -41,11 +41,13 @@ LIMSFullDF <- ParseData(LIMSWastePath(BaseDir))%>%
   SiteDFList <- LIMSFullDF%>%
     rename(Date=date)%>%
     split(LIMSFullDF$WWTP)
+  
   DataMod <- bind_rows(lapply(SiteDFList, LoessSmoothMod, "sars_cov2_adj_load_log10","Loess", "guess"))%>%
     rename(date=Date)
+
 ```
 
-```{r AllSite Loop}
+```{r AllSite Loop, Warning = FALSE}
 #Loess
 reg_estimates = as.data.frame(matrix(ncol=8, nrow=0))
 
@@ -54,6 +56,8 @@ colnames(reg_estimates) = c("WWTP", "date", "days_elapsed", "lmreg_n" , "lmreg_s
 
 
 distinct_wwtps = DataMod %>%
+  group_by(WWTP)%>%
+  filter(n()>5)%>%
   distinct(WWTP)
 
 for (i in 1:nrow(distinct_wwtps)){
@@ -67,7 +71,6 @@ for (i in 1:nrow(distinct_wwtps)){
     filter(WWTP==paste(distinct_wwtps[i,1]))
   
   for (k in 1:(nrow(ww.x) - 4)){
-    try({
     ww.x.tobind.Base <- InnerFunc(ww.x,k,4,as.formula("sars_cov2_adj_load_log10 ~ date"))%>%
       mutate(Data = "Raw")
     # Join with full set of reg estimates
@@ -76,31 +79,73 @@ for (i in 1:nrow(distinct_wwtps)){
     # Join with full set of reg estimates
     ww.x.tobind = rbind(ww.x.tobind.Base,ww.x.tobind.Loess)
     
-    reg_estimates = rbind(reg_estimates, ww.x.tobind)
-    },silent=TRUE)
+    reg_estimates = rbind(ww.x.tobind, reg_estimates)
   }
 }
 
 ```
 
 ```{r }
-  FactorOrder <- (LIMSFullDF%>%
-                    filter(!is.na(sars_cov2_adj_load_log10))%>%
-                    group_by(WWTP)%>%
-                    summarise(Pop=mean(Pop,na.rm=TRUE),n=n())%>%
-                    arrange(desc(n)))$WWTP
+Catagorylabel = c("major decrease","moderate decrease","fluctuating ","moderate increase","major increase")
 
-  reg_estimates <- reg_estimates%>%
-    mutate(WWTP = factor(WWTP,FactorOrder))
+  reg_estimates <- FactorVecByNumPoints(reg_estimates,"WWTP","modeled_percentchange")%>%
+    mutate(Catagory = cut(modeled_percentchange,c(-Inf,-80,-10,10,100,Inf),
+                          labels = Catagorylabel,include.lowest=TRUE,
+                          ordered_result=TRUE))
+
 ```
 
 ```{r}
+
 BaseMod <- reg_estimates%>%
   filter(Data=="Raw")
-HeatMapPlot(BaseMod,"RecPattern.pdf")
+
+HeatMapPlotSave(BaseMod,"Catagory", "RecPatternRaw.pdf")
+
 
 LoessMod <- reg_estimates%>%
   filter(Data=="Loess")
-HeatMapPlot(LoessMod,"RecPatternLoess.pdf")
+
+
+HeatMapPlotSave(LoessMod,"Catagory", "RecPatternLoess.pdf")
+
 ```
 
+```{r MergePlot}
+
+Dim = ceiling(length(unique(reg_estimates$WWTP))/4)
+
+BarGridLoessRaw <- reg_estimates%>%
+    ggplot()+
+    geom_rect(aes(xmin=date-2,xmax=date+2,
+                  ymin=0,
+                  ymax = 10,fill = Catagory))+
+    facet_grid (Data~WWTP, scales = "free")+
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+
+  
+  ggsave("Temp.PDF",plot=BarGridLoessRaw,
+         width = 16*Dim,height = 10,units="cm",limitsize =FALSE)
+```
+  
+```{r}  
+Gplt <- FactorVecByNumPoints(DataMod,"WWTP","Loess")%>%
+  filter(WWTP %in% unique(reg_estimates$WWTP))%>%
+  mutate(Data = "Data")%>%
+  ggplot(aes(x=date))+
+  geom_point(aes(y = sars_cov2_adj_load_log10), size = .5)+
+  geom_line(aes(y = Loess),color = "RED")+
+  facet_grid(Data~WWTP)+
+  theme(
+  strip.background = element_blank(),
+  strip.text.x = element_blank()
+)
+
+SavePlot <- BarGridLoessRaw/Gplt + plot_layout(heights = c(2, 1))
+
+ggsave("Temp.PDF",plot=SavePlot,
+         width = 16*Dim,height = 15,units="cm",limitsize =FALSE)
+
+```

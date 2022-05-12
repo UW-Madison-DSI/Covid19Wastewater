@@ -59,7 +59,7 @@ spanGuess <- function(DF,InVar){
   temp <- DF%>%
     filter(!is.na(!!sym(InVar)))%>%
     summarise(n=n())
-  span <- min(c(.05*178/temp$n,.4))#More can be done here
+  span <- min(c(.1*178/temp$n,.6))#More can be done here
   return(span)
 }
 
@@ -181,4 +181,19 @@ LoessOutlierDetec <- function(DF,VecName,SDDeg,span,DaySmoothed,n = 5){
   booleanReturn <- abs(exp(BestVectorDF$VecName)-DF[[VecName]])>10
   booleanReturn[is.na(booleanReturn)] <- FALSE
   return(booleanReturn)
+}
+
+
+FactorVecByNumPoints <- function(DF,FacVar, FiltVar){
+  FactorOrder <- (DF%>%
+                    filter(!is.na(!!sym(FiltVar)))%>%
+                    group_by(!!sym(FacVar))%>%
+                    summarise(n=n())%>%
+                    arrange(desc(n)))[[FacVar]]
+  
+  
+  FacedDF <- DF%>%
+    mutate(!!FacVar := factor(!!sym(FacVar),FactorOrder))
+  
+  return(FacedDF)
 }

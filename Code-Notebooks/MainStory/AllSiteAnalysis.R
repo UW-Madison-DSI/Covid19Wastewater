@@ -35,20 +35,12 @@
   DataMod <- bind_rows(lapply(SiteDFList.ad,NormQuint,"loVar","SevenDayMACases","loVar"))
   
   
-  FactorOrder <- (DataMod%>%
-                    filter(!is.na(N1FlowPop))%>%
-                    group_by(Site)%>%
-                    summarise(Pop=mean(Pop,na.rm=TRUE),n=n())%>%
-                    arrange(desc(n)))$Site
-  
-  
   
   #write DF with date if new?
   #read old DF, if rows are same merge, otherwise make new one?
   #append col if new var used?
   
-  DataMod <- DataMod%>%
-    mutate(Site = factor(Site,FactorOrder))
+  DataMod <- FactorVecByNumPoints(DataMod, "Site", "N1FlowPop")
   
   Gplt <- DataMod%>%
     ggplot(aes(x=Date))+
