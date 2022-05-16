@@ -32,7 +32,7 @@ LIMSFullDF <- ParseData(LIMSWastePath(BaseDir))%>%
          N2Pure = ifelse(is.na(N2),N1,N2),
          logGeoNorm =  log((FlowRate/Pop),10)+(log(N1Pure,10)+log(N2Pure,10))/2)%>%
   #group_by(Site)%>%
-  filter(Pop>19680	)%>%#fudge Pop
+  #filter(Pop>19680	)%>%#fudge Pop
   filter(!is.infinite(logGeoNorm),!is.na(logGeoNorm))%>%
   select(Date, Site, logGeoNorm,Pop)%>%
   rename(WWTP = Site, date = Date, sars_cov2_adj_load_log10 = logGeoNorm)
@@ -79,6 +79,45 @@ for (i in 1:nrow(distinct_wwtps)){
     reg_estimates = rbind(ww.x.tobind, reg_estimates)
   }
 }
+
+reg_estimates
+```
+
+```{r}
+library(lubridate)
+Marlin_Ver <- reg_estimates%>%
+  filter(Data == "Raw")%>%
+  select(-Data)
+Steve_Ver <- read.csv("../../../tempa/regressionTable.csv")%>%
+  mutate(date=ymd(date))
+```
+
+```{r}
+length((Steve_Ver$WWTP))
+length((Marlin_Ver$WWTP))
+
+ColMerged <- full_join(Steve_Ver,Marlin_Ver,by=c("WWTP","date"))
+
+
+
+ColMerged%>%
+  mutate(days_elapsed = days_elapsed.x-days_elapsed.y,
+         lmreg_n = lmreg_n.x-lmreg_n.y,
+         lmreg_slope = lmreg_slope.x-lmreg_slope.y,
+         lmreg_sig = lmreg_sig.x - lmreg_sig.y,
+         modeled_percentchange = modeled_percentchange.x - modeled_percentchange.y)%>%
+  select(-days_elapsed.x, -days_elapsed.y,
+         -lmreg_n.x, -lmreg_n.y,
+         -lmreg_slope.x, -lmreg_slope.y,
+         -lmreg_sig.x, -lmreg_sig.y,
+         -modeled_percentchange.x, -modeled_percentchange.y)%>%
+  summarise(mean(days_elapsed,na.rm = TRUE),
+            mean(lmreg_n,na.rm = TRUE),
+            mean(lmreg_slope,na.rm = TRUE),
+            mean(lmreg_sig,na.rm = TRUE), 
+            mean(modeled_percentchange,na.rm = TRUE))
+
+
 
 ```
 

@@ -76,13 +76,15 @@ LoessSmoothMod <- function(DF,InVar, OutVar, span){
   return(DF2)
 }
 
-DataProcess <- function(DF, Width,InVar, span){
+DataProcess <- function(DF, Width,InVar, span, verbose = FALSE){
   if(span=="guess"){
     span <- spanGuess(DF,InVar)
   }
   #DF,VecName,SDDeg,span,DaySmoothed,n = 5
   DetectedOutliers <- LoessOutlierDetec(DF,InVar,2.5,2*span,36,n=5)
-  print(sum(DetectedOutliers)/length(DF[[InVar]])*100)
+  if(verbose){
+    print(sum(DetectedOutliers)/length(DF[[InVar]])*100)
+  }
   ErrorRemovedDF <- DF[!(DetectedOutliers),]%>%
     mutate(FlaggedOutlier=FALSE)
   OutlierDF <- DF[(DetectedOutliers),]%>%
