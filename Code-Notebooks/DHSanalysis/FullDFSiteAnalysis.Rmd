@@ -36,9 +36,10 @@ LIMSFullDF <- ParseData(LIMSWastePath(BaseDir))%>%
   filter(!is.infinite(logGeoNorm),!is.na(logGeoNorm))%>%
   select(Date, Site, logGeoNorm,Pop)%>%
   rename(WWTP = Site, date = Date, sars_cov2_adj_load_log10 = logGeoNorm)
+  
 
 
-  SiteDFList <- LIMSFullDF%>%
+SiteDFList <- LIMSFullDF%>%
     rename(Date=date)%>%
     split(LIMSFullDF$WWTP)
   
@@ -48,12 +49,10 @@ LIMSFullDF <- ParseData(LIMSWastePath(BaseDir))%>%
 ```
 
 ```{r AllSite Loop, Warning = FALSE}
-#Loess
+
 reg_estimates = as.data.frame(matrix(ncol=8, nrow=0))
 
 colnames(reg_estimates) = c("WWTP", "date", "days_elapsed", "lmreg_n" , "lmreg_slope", "lmreg_sig", "modeled_percentchange","Data")
-
-
 
 distinct_wwtps = DataMod %>%
   group_by(WWTP)%>%
@@ -61,8 +60,6 @@ distinct_wwtps = DataMod %>%
   distinct(WWTP)
 
 for (i in 1:nrow(distinct_wwtps)){
-  
-  
   
   print(paste(distinct_wwtps[i,1]))
   
@@ -86,41 +83,34 @@ for (i in 1:nrow(distinct_wwtps)){
 ```
 
 ```{r }
+
+#Order WTTP by number of points
+reg_estimates <- FactorVecByNumPoints(reg_estimates,"WWTP","modeled_percentchange")
+
+
+
+#Bring into own function
 Catagorylabel = c("major decrease","moderate decrease","fluctuating ","moderate increase","major increase")
 
-reg_estimates <- FactorVecByNumPoints(reg_estimates,"WWTP","modeled_percentchange")%>%
+reg_estimates <- reg_estimates%>%
     mutate(Catagory = cut(modeled_percentchange,c(-Inf,-80,-10,10,100,Inf),
                           include.lowest=TRUE,
-                          ordered_result=TRUE,
-                          labels = Catagorylabel))
-           #Catagory = ifelse(lmreg_sig>.3,"no change",Catagory),
-           # Catagory = factor(Catagory, c(1,2,3,4,5,"no change"), 
-           #                   labels = c( Catagorylabel, "no change"), exclude = NULL))
+                          ordered_result=TRUE),
+           Catagory = ifelse(lmreg_sig>.3,"no change",Catagory),
+            Catagory = factor(Catagory, c(1,2,3,4,5,"no change"), 
+                              labels = c( Catagorylabel, "no change"), exclude = NULL))
+
+#
 CatagoryColors <- c("#0571b0", "#92c5de", "#979797","#f4a582","#ca0020","Black")
 
 reg_estimates%>%
-  ggplot(aes(x=date,y=lmreg_sig,color = Catagory))+
+  ggplot(aes(x=date,y=modeled_percentchange,color = Catagory))+
   scale_color_manual(values = CatagoryColors)+
   geom_point()
 
 unique(reg_estimates$Catagory)
 ```
 
-```{r}
-
-BaseMod <- reg_estimates%>%
-  filter(Data=="Raw")
-
-HeatMapPlotSave(BaseMod,"Catagory", "RecPatternRaw.pdf")
-
-
-LoessMod <- reg_estimates%>%
-  filter(Data=="Loess")
-
-
-HeatMapPlotSave(LoessMod,"Catagory", "RecPatternLoess.pdf")
-
-```
 
 ```{r MergePlot}
 
