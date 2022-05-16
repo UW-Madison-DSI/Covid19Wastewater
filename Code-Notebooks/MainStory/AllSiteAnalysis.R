@@ -1,13 +1,13 @@
   ## Setup ---------------
-  library(dplyr)
-  library(ggplot2)
-  library(lmtest)
-  library(lubridate)
-  library(limma)
-  library(tidyr)
-  library(plotly)
-  library(gridExtra)
-  library(data.table)
+  library(dplyr, warn.conflicts=FALSE)
+  library(ggplot2, warn.conflicts=FALSE)
+  library(lmtest, warn.conflicts=FALSE)
+  library(lubridate, warn.conflicts=FALSE)
+  library(limma, warn.conflicts=FALSE)
+  library(tidyr, warn.conflicts=FALSE)
+  library(plotly, warn.conflicts=FALSE)
+  library(gridExtra, warn.conflicts=FALSE)
+  library(data.table, warn.conflicts=FALSE)
   
   #Data Files and prep work
   source("../../lib/DataPathName.R")#merged?
@@ -18,6 +18,7 @@
     BaseDir = "../../",
     WasteVar = "N1FlowPop",
     OutFile = "AllPlotOutputN1Log.PDF",
+    log = TRUE,
     verbose = FALSE
   )
   
@@ -61,10 +62,14 @@
                   color="LoessSmooth"),data=filter(DataMod,!is.na(loVar)))+
     geom_point(aes(y=N1FlowPop,color="BLOD"),size=.5,data=filter(DataMod,N1LOD))+
     geom_point(aes(y=N1FlowPop,color="Flagged Outliers"),size=.5,data=filter(DataMod,FlaggedOutlier))+
-    scale_y_log10()+
     facet_wrap(~Site,scales="free",ncol=4)#should be more systematic
   
-  ggsave(args$OutFile, plot=Gplt,path="RmdOutput",
-         width = 32,height=100,units="cm")
+  if(as.logical(args$log)){
+    Gplt <- Gplt + 
+      scale_y_log10()
+  }
+  
+  ggsave(args$OutFile, plot=Gplt, path="RmdOutput",
+         width = 32, height=100, units="cm")
 
   
