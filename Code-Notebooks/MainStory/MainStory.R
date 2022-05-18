@@ -32,7 +32,7 @@ MainWastePrep <- function(Dir,SiteC){
            N1FlowPop = Pop*N1/FlowRate)%>%
     select(Date, Site, N1 , N2 , GeoMeanN12, N1FlowPop,Pop,N1LOD)
   return(DF2)
-}#mutate(N1FlowPop = ifelse(is.na(N1FlowPop),N1*mean(FlowRate,na.rm=TRUE)/Pop,N1FlowPop))
+}
 
 
 SLDSmoothMod <- function(DF, Width){
@@ -55,35 +55,19 @@ SLDSmoothMod <- function(DF, Width){
   return(ModDF)
 }
 
-spanGuess <- function(DF,InVar){
-  temp <- DF%>%
-    filter(!is.na(!!sym(InVar)))%>%
-    summarise(n=n())
-  span <- min(c(.1*178/temp$n,.6))#More can be done here
-  return(span)
-}
 
-LoessSmoothMod <- function(DF,InVar, OutVar, span){
-  if(span=="guess"){
-    span <- spanGuess(DF,InVar)
-  }
-  DF2 <- DF%>%
-    arrange(Date)
-  DF2[[OutVar]] <- loessFit(y=(DF2[[InVar]]), 
-                                        x=DF2$Date, #create loess fit of the data
-                                        span=span, 
-                                        iterations=2)$fitted#2 iterations remove some bad patterns
-  return(DF2)
-}
 
+
+
+#sort by % outlier to get view
 DataProcess <- function(DF, Width,InVar, span, verbose = FALSE){
   if(span=="guess"){
     span <- spanGuess(DF,InVar)
   }
   #DF,VecName,SDDeg,span,DaySmoothed,n = 5
-  DetectedOutliers <- LoessOutlierDetec(DF,InVar,2.5,2*span,36,n=5)
+  DetectedOutliers <- TrendSDOutlierDetec(DF, InVar, 2.5, 2*span, 36, n=5)
   if(verbose){
-    print(sum(DetectedOutliers)/length(DF[[InVar]])*100)
+    print(paste(DF$Site[1], sum(DetectedOutliers)/length(DF[[InVar]])*100))
   }
   ErrorRemovedDF <- DF[!(DetectedOutliers),]%>%
     mutate(FlaggedOutlier=FALSE)
@@ -162,7 +146,7 @@ NormThird <- function(DF,Vec1Name,Vec2Name, Vec3Name,RetName){
 
 
 
-LoessOutlierDetec <- function(DF,VecName,SDDeg,span,DaySmoothed,n = 5){
+TrendSDOutlierDetec <- function(DF,VecName,SDDeg,span,DaySmoothed,n = 5, TrendFunc = ExpSmoothMod){#LoessSmoothMod){
 
   FullDateRange <- data.frame(Date=seq(min(DF$Date),max(DF$Date),by ="day"))
   
@@ -171,7 +155,7 @@ LoessOutlierDetec <- function(DF,VecName,SDDeg,span,DaySmoothed,n = 5){
   
   for(i in 1:n){#robustly remove outliers and recalc smooth line
     #DF,InVar, OutVar, span
-    BestVectorDF <- LoessSmoothMod(BestVectorDF,"VecName","Temp",span)%>%
+    BestVectorDF <- TrendFunc(BestVectorDF,"VecName","Temp")%>%
       full_join(FullDateRange,by="Date")%>%
       mutate(SD = rollapply(VecName-Temp,DaySmoothed,sd,na.rm=TRUE,partial=TRUE),
         VecName = ifelse(VecName>Temp+SDDeg*SD,Temp,VecName),
@@ -184,6 +168,8 @@ LoessOutlierDetec <- function(DF,VecName,SDDeg,span,DaySmoothed,n = 5){
   booleanReturn[is.na(booleanReturn)] <- FALSE
   return(booleanReturn)
 }
+
+
 
 
 FactorVecByNumPoints <- function(DF,FacVar, FiltVar){

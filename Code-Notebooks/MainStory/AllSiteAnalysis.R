@@ -1,4 +1,5 @@
   ## Setup ---------------
+  library(robets, warn.conflicts=FALSE)
   library(dplyr, warn.conflicts=FALSE)
   library(ggplot2, warn.conflicts=FALSE)
   library(lmtest, warn.conflicts=FALSE)
@@ -12,6 +13,7 @@
   #Data Files and prep work
   source("../../lib/DataPathName.R")#merged?
   source("../../lib/DataProccess.R")
+  source("../../lib/TSTrendGen.R")
   source("MainStory.R")
   
   defaultArgs <- list (
@@ -37,16 +39,18 @@
   
   #joining the two data frames together
   FullDF <- full_join(LatCaseDF,LIMSFullDF, by = c("Date","Site"))%>%
-    filter(!is.na(Cases))
+    filter(!is.na(Cases))%>%
+    group_by(Site)%>%
+    filter(n>100)
   
   #Break code into sites for date based transformations
   SiteDFList <- split(FullDF, FullDF$Site)
   #Add Loess WasteSmoothing smoothing and SLD case smoothing
-  SiteDFList.ad <- lapply(SiteDFList, DataProcess, 21,  args$WasteVar, "guess",args$verbose)
+  DataMod <- lapply(SiteDFList, DataProcess, 21,  args$WasteVar, "guess",args$verbose)%>%
   #add quintile ranking param the code into 
-  SiteDFList.ad <- lapply(SiteDFList.ad,NormThird,  args$WasteVar,"SevenDayMACases","loVar",  args$WasteVar)
-  
-  DataMod <- bind_rows(lapply(SiteDFList.ad,NormQuint,"loVar","SevenDayMACases","loVar"))
+          lapply(NormThird,  args$WasteVar,"SevenDayMACases","loVar",  args$WasteVar)%>%
+          lapply(NormQuint,"loVar","SevenDayMACases","loVar")%>%
+            bind_rows()
   
   
   
