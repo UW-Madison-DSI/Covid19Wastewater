@@ -3,6 +3,8 @@ title: "FullDFSiteAnalysis"
 author: "Marlin"
 date: "5/5/2022"
 output: html_document
+editor_options: 
+  chunk_output_type: inline
 ---
 
 ```{r setup, include=FALSE}
@@ -15,6 +17,7 @@ knitr::opts_chunk$set(echo = TRUE)
 BaseDir <- "./../../"
 #Var1 <- ""
 
+library(robets)
 library(dplyr)
 library(ggplot2)
 library(limma)
@@ -23,168 +26,122 @@ library(patchwork)
 #Data Files and prep work
 source("../../lib/DataPathName.R")#merged?
 source("../../lib/DataProccess.R")
+source("../../lib/TSTrendGen.R")
 source("DHSAlgo.R")
-  source("../MainStory/MainStory.R")
-  library(zoo)
+library(zoo)
+
 #Importing the waste water data
-LIMSFullDF <- ParseData(LIMSWastePath(BaseDir))%>%
-  mutate(N1Pure = ifelse(is.na(N1),N2,N1),
-         N2Pure = ifelse(is.na(N2),N1,N2),
-         logGeoNorm =  log((FlowRate/Pop),10)+(log(N1Pure,10)+log(N2Pure,10))/2)%>%
-  #group_by(Site)%>%
-  #filter(Pop>19680	)%>%#fudge Pop
-  filter(!is.infinite(logGeoNorm),!is.na(logGeoNorm))%>%
-  select(Date, Site, logGeoNorm,Pop)%>%
-  rename(WWTP = Site, date = Date, sars_cov2_adj_load_log10 = logGeoNorm)
-  
+LIMSFullDF <- read.csv("../../../tempa/workset4.csv")%>%
+  mutate(date = as.Date(date))
 
 
 SiteDFList <- LIMSFullDF%>%
     rename(Date=date)%>%
     split(LIMSFullDF$WWTP)
-  
-  DataMod <- bind_rows(lapply(SiteDFList, LoessSmoothMod, "sars_cov2_adj_load_log10","Loess", "guess"))%>%
-    rename(date=Date)
 
+
+DataMod <- SiteDFList%>%
+  lapply(LoessSmoothMod, "sars_cov2_adj_load_log10", "Loess", "guess")%>%
+  lapply(ExpSmoothMod, "sars_cov2_adj_load_log10", "EXP")%>%
+  bind_rows()%>%
+    rename(date=Date)
 ```
+
 
 ```{r AllSite Loop, Warning = FALSE}
+reg_estimates1 = OuterLoop(DataMod,c(
+                  as.formula("sars_cov2_adj_load_log10 ~ date"),
+                                    as.formula("Loess ~ date"),
+                                    as.formula("EXP ~ date")))
 
-reg_estimates = as.data.frame(matrix(ncol=8, nrow=0))
+reg_estimates2 = OuterLoop(DataMod,c(as.formula("sars_cov2_adj_load_log10 ~ date")), robust = TRUE)
 
-colnames(reg_estimates) = c("WWTP", "date", "days_elapsed", "lmreg_n" , "lmreg_slope", "lmreg_sig", "modeled_percentchange","Data")
 
-distinct_wwtps = DataMod %>%
+reg_estimates = rbind(reg_estimates1,reg_estimates2)%>%
+  mutate(Method = ifelse(LMmethod, "robust_cov2", Method))%>%
+  select(-LMmethod)
+```
+
+
+
+```{r Edge Include}
+tempfunc <- function(n){
+  reg_estimates%>%
   group_by(WWTP)%>%
-  filter(n()>5)%>%
-  distinct(WWTP)
-
-for (i in 1:nrow(distinct_wwtps)){
-  
-  print(paste(distinct_wwtps[i,1]))
-  
-  ww.x = DataMod %>%
-    
-    filter(WWTP==paste(distinct_wwtps[i,1]))
-  
-  for (k in 1:(nrow(ww.x) - 4)){
-    ww.x.tobind.Base <- InnerFunc(ww.x,k,4,as.formula("sars_cov2_adj_load_log10 ~ date"))%>%
-      mutate(Data = "Raw")
-    # Join with full set of reg estimates
-    ww.x.tobind.Loess <- InnerFunc(ww.x,k,4,as.formula("Loess ~ date"))%>%
-      mutate(Data = "Loess")
-    # Join with full set of reg estimates
-    ww.x.tobind = rbind(ww.x.tobind.Base,ww.x.tobind.Loess)
-    
-    reg_estimates = rbind(ww.x.tobind, reg_estimates)
-  }
+  filter(n()>n)%>%
+  ungroup()%>%
+  mutate(WWTP = as.character(WWTP))%>%
+  filter(WWTP != "Portage WWTF"  & WWTP != "Cedarburg WWTF")%>%
+  mutate(Catagory = as.numeric(Catagory),
+    Catagory = ifelse(Catagory == 6,3,Catagory))%>%
+  select(WWTP,date,Method,Catagory)%>%
+  mutate(Catagory = as.numeric(Catagory))%>%
+  pivot_wider(names_from = Method, values_from = Catagory)%>%
+  mutate(EXPLoss = abs(EXP-Loess),
+         BaseLoss = abs(sars_cov2_adj_load_log10 - Loess),
+         RobustLoss = abs(robust_cov2-Loess))%>%
+  summarise(EXPError = mean(EXPLoss),
+            BaseError = mean(BaseLoss),
+            robustError = mean(RobustLoss,na.rm=TRUE))%>%
+    mutate(n = n)
 }
 
-reg_estimates
-```
-
-```{r}
-library(lubridate)
-Marlin_Ver <- reg_estimates%>%
-  filter(Data == "Raw")%>%
-  select(-Data)
-Steve_Ver <- read.csv("../../../tempa/regressionTable.csv")%>%
-  mutate(date=ymd(date))
-```
-
-```{r}
-length((Steve_Ver$WWTP))
-length((Marlin_Ver$WWTP))
-
-ColMerged <- full_join(Steve_Ver,Marlin_Ver,by=c("WWTP","date"))
+bind_rows(lapply((0:60)*10,tempfunc))%>%
+  ggplot(aes(x = n))+
+  geom_line(aes(y = EXPError, color = "EXPError"))+
+  geom_line(aes(y = BaseError, color = "BaseError"))+
+  geom_line(aes(y = robustError, color = "robustError"))
 
 
+ConfMatrix <- function(DF,Cat,x,y){
+  DF%>%
+    filter(Method %in% c(x,y))%>%
+    select(WWTP,date,Method,Catagory)%>%
+    filter(WWTP != "Portage WWTF"  & WWTP != "Cedarburg WWTF")%>%
+    pivot_wider(id_cols=c(WWTP,date),names_from = Method, values_from = !!sym(Cat))%>%
+    group_by(!!sym(x),!!sym(y))%>%
+    summarise(n = n())%>%
+  filter(!is.na(!!sym(y)))%>%
+  ggplot(aes(x=!!sym(x),y=!!sym(y)))+
+  geom_tile(aes(fill = n))+
+  scale_fill_gradient(low="blue", high="red")
+}
+ConfMatrix(reg_estimates,"Catagory","Loess","robust_cov2")
+ConfMatrix(reg_estimates,"Catagory","Loess","sars_cov2_adj_load_log10")
+ConfMatrix(reg_estimates,"Catagory","Loess","EXP")
 
-ColMerged%>%
-  mutate(days_elapsed = days_elapsed.x-days_elapsed.y,
-         lmreg_n = lmreg_n.x-lmreg_n.y,
-         lmreg_slope = lmreg_slope.x-lmreg_slope.y,
-         lmreg_sig = lmreg_sig.x - lmreg_sig.y,
-         modeled_percentchange = modeled_percentchange.x - modeled_percentchange.y)%>%
-  select(-days_elapsed.x, -days_elapsed.y,
-         -lmreg_n.x, -lmreg_n.y,
-         -lmreg_slope.x, -lmreg_slope.y,
-         -lmreg_sig.x, -lmreg_sig.y,
-         -modeled_percentchange.x, -modeled_percentchange.y)%>%
-  summarise(mean(days_elapsed,na.rm = TRUE),
-            mean(lmreg_n,na.rm = TRUE),
-            mean(lmreg_slope,na.rm = TRUE),
-            mean(lmreg_sig,na.rm = TRUE), 
-            mean(modeled_percentchange,na.rm = TRUE))
-
-
-
-```
-
-```{r }
-
-#Order WTTP by number of points
-reg_estimates <- FactorVecByNumPoints(reg_estimates,"WWTP","modeled_percentchange")
-
-
-
-#Bring into own function
-Catagorylabel = c("major decrease","moderate decrease","fluctuating ","moderate increase","major increase")
-
-reg_estimates <- reg_estimates%>%
-    mutate(Catagory = cut(modeled_percentchange,c(-Inf,-80,-10,10,100,Inf),
-                          include.lowest=TRUE,
-                          ordered_result=TRUE),
-           Catagory = ifelse(lmreg_sig>.3,"no change",Catagory),
-            Catagory = factor(Catagory, c(1,2,3,4,5,"no change"), 
-                              labels = c( Catagorylabel, "no change"), exclude = NULL))
-
-#
-CatagoryColors <- c("#0571b0", "#92c5de", "#979797","#f4a582","#ca0020","Black")
 
 reg_estimates%>%
-  ggplot(aes(x=date,y=modeled_percentchange,color = Catagory))+
-  scale_color_manual(values = CatagoryColors)+
-  geom_point()
+  group_by(Method,Catagory)%>%
+  summarise(n = n())%>%
+  ggplot(aes(x=Catagory,y=n))+
+           geom_col(aes(fill=Method),position = "dodge")+ 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
-unique(reg_estimates$Catagory)
 ```
-
 
 ```{r MergePlot}
 
 Dim = ceiling(length(unique(reg_estimates$WWTP))/4)
 
-BarGridLoessRaw <- reg_estimates%>%
-    ggplot()+
-    geom_rect(aes(xmin=date-2,xmax=date+2,
-                  ymin=0,
-                  ymax = 10,fill = Catagory))+
-    facet_grid (Data~WWTP, scales = "free")+
-  theme(axis.title.x=element_blank(),
-        axis.text.x=element_blank(),
-        axis.ticks.x=element_blank())+
-  scale_fill_manual(values = CatagoryColors)
-
-  
-  ggsave("Temp.PDF",plot=BarGridLoessRaw,
-         width = 16*Dim,height = 10,units="cm",limitsize =FALSE)
-```
-  
-```{r}  
-Gplt <- FactorVecByNumPoints(DataMod,"WWTP","Loess")%>%
+BarGridSmoothRaw <- CreateHeatMaps(reg_estimates, ToMerge=TRUE)
+ 
+Gplt <- FactorVecByNumPoints(DataMod,"WWTP","EXP")%>%
   filter(WWTP %in% unique(reg_estimates$WWTP))%>%
   mutate(Data = "Data")%>%
   ggplot(aes(x=date))+
   geom_point(aes(y = sars_cov2_adj_load_log10), size = .5)+
-  geom_line(aes(y = Loess),color = "RED")+
+  geom_line(aes(y = EXP),color = "RED")+
+  geom_line(aes(y = Loess),color = "BLUE")+
   facet_grid(Data~WWTP)+
   theme(
   strip.background = element_blank(),
   strip.text.x = element_blank()
 )
 
-SavePlot <- BarGridLoessRaw/Gplt + plot_layout(heights = c(2, 1))
+SavePlot <- BarGridSmoothRaw/Gplt + plot_layout(heights = c(2, 1))
+
+
 
 ggsave("ClassCompare.PDF",plot=SavePlot,
          width = 32*Dim,height = 15,units="cm",limitsize =FALSE)
