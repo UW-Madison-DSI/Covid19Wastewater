@@ -1,12 +1,3 @@
-#Works on all processed data
-ParseData <- function(FileName){
-  DF <- read.csv(FileName)%>%
-    mutate(Date=as.Date(Date,origin="1970-01-01 UTC"))
-  return(DF)
-}
-
-
-
 #Needs
 #tidyverse
 #lubridate

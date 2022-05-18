@@ -1,3 +1,11 @@
+#Works on all processed data
+ParseData <- function(FileName){
+  DF <- read.csv(FileName)%>%
+    mutate(Date=as.Date(Date,origin="1970-01-01 UTC"))
+  return(DF)
+}
+
+
 HFGWastePath = function(BaseDir){
   PathName = paste0(BaseDir,"data/processed/HFGWasteData011422.csv")
   return(PathName)
@@ -9,8 +17,8 @@ HFGCasePath = function(BaseDir){
 }
 
 LIMSWastePath = function(BaseDir){
-  PathName = paste0(BaseDir,"data/processed/DHSWasteData-4_21_2022.csv")
-  return(PathName)
+  PathName = paste0(BaseDir,"data/processed/workset4.csv")
+  return(PathName)#DHSWasteData-4_21_2022.csv
 }#LIMSWasteData_02-09-22.csv  
 
 LIMSCasePath = function(BaseDir){
