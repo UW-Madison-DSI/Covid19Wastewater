@@ -111,7 +111,7 @@ OuterLoop <- function(DF,Formulas,n = 4, PSigTest = TRUE,robust=FALSE, verbose =
   Catagorylabel = c("major decrease","moderate decrease","fluctuating ","moderate increase","major increase")
   
   reg_estimates <- reg_estimates%>%
-    mutate(Catagory = cut(modeled_percentchange, c(-Inf,-50,-10,10,100,Inf),
+    mutate(Catagory = cut(modeled_percentchange, c(-Inf,-100,-10,10,100,Inf),
                           include.lowest=TRUE,
                           ordered_result=TRUE))
            
@@ -128,8 +128,8 @@ OuterLoop <- function(DF,Formulas,n = 4, PSigTest = TRUE,robust=FALSE, verbose =
   return(reg_estimates)
 }
 
-CreateHeatMaps <- function(DF, ToMerge = FALSE){
-  CatagoryColors <- c("#0571b0", "#92c5de", "#979797","#f4a582","#ca0020","Black")
+CreateHeatMaps <- function(DF, ToMerge = FALSE){#"#0571b0", 
+  CatagoryColors <- c("#92c5de", "#979797","#f4a582","#ca0020","WHITE")
   BarGridSmoothRaw <- DF%>%
     ggplot()+
     geom_rect(aes(xmin=date-days_elapsed/2,xmax=date+days_elapsed/2,

@@ -17,8 +17,8 @@ HFGCasePath = function(BaseDir){
 }
 
 LIMSWastePath = function(BaseDir){
-  PathName = paste0(BaseDir,"data/processed/workset4.csv")
-  return(PathName)#DHSWasteData-4_21_2022.csv
+  PathName = paste0(BaseDir,"data/processed/DHSWasteData-4_21_2022.csv")
+  return(PathName)#workset4.csv
 }#LIMSWasteData_02-09-22.csv  
 
 LIMSCasePath = function(BaseDir){

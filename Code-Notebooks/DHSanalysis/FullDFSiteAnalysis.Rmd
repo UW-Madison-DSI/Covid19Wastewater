@@ -2,8 +2,10 @@
 title: "FullDFSiteAnalysis"
 author: "Marlin"
 date: "5/5/2022"
-output: html_document
-editor_options: 
+output:
+  html_document: default
+  pdf_document: default
+editor_options:
   chunk_output_type: inline
 ---
 
@@ -17,7 +19,6 @@ knitr::opts_chunk$set(echo = TRUE)
 BaseDir <- "./../../"
 #Var1 <- ""
 
-library(robets)
 library(dplyr)
 library(ggplot2)
 library(limma)
@@ -37,35 +38,76 @@ LIMSFullDF <- read.csv("../../../tempa/workset4.csv")%>%
 
 SiteDFList <- LIMSFullDF%>%
     rename(Date=date)%>%
-    split(LIMSFullDF$WWTP)
+    group_by(WWTP)%>%
+    filter(n()>135)%>%
+    group_split()
 
 
 DataMod <- SiteDFList%>%
   lapply(LoessSmoothMod, "sars_cov2_adj_load_log10", "Loess", "guess")%>%
   lapply(ExpSmoothMod, "sars_cov2_adj_load_log10", "EXP")%>%
+  lapply(sgolaySmoothMod, "sars_cov2_adj_load_log10", "sgolay")%>%
   bind_rows()%>%
     rename(date=Date)
+
+
+
+LIMSFullDF%>%
+  group_by(WWTP)%>%
+  summarise(n = n())%>%
+  arrange(n)
 ```
 
 
 ```{r AllSite Loop, Warning = FALSE}
-reg_estimates1 = OuterLoop(DataMod,c(
-                  as.formula("sars_cov2_adj_load_log10 ~ date"),
-                                    as.formula("Loess ~ date"),
-                                    as.formula("EXP ~ date")))
+LMfited <- c(as.formula("sars_cov2_adj_load_log10 ~ date"),
+                                    as.formula("Loess ~ date"))#,
+                                   # as.formula("EXP ~ date"),
+                                   # as.formula("sgolay ~ date")
 
-reg_estimates2 = OuterLoop(DataMod,c(as.formula("sars_cov2_adj_load_log10 ~ date")), robust = TRUE)
+reg_estimates = DataMod%>%
+                  OuterLoop(LMfited)
+
+#reg_estimates2 = DataMod%>%
+#                  OuterLoop(c(
+#                    as.formula("sars_cov2_adj_load_log10 ~ date")),
+#                    robust = TRUE)
 
 
-reg_estimates = rbind(reg_estimates1,reg_estimates2)%>%
-  mutate(Method = ifelse(LMmethod, "robust_cov2", Method))%>%
-  select(-LMmethod)
+# reg_estimates = rbind(reg_estimates1,reg_estimates2)%>%
+#   mutate(Method = ifelse(LMmethod, "robust_cov2", Method))%>%
+#   select(-LMmethod)%>%
+#   mutate(Method = factor(Method,c("Loess","sgolay","EXP","robust_cov2","sars_cov2_adj_load_log10")))
+StevesTable <- read.csv("../../../tempa/regressionTable.csv")
+
+MarlinTable <- reg_estimates%>%
+  filter(Method == "sars_cov2_adj_load_log10")%>%
+  select(-LMmethod,-Catagory, -Method)%>%
+  arrange(WWTP, date)
+
+StevesTable <- read.csv("../../../tempa/regressionTable.csv")%>%
+  filter(WWTP %in% unique(MarlinTable$WWTP))%>%
+  arrange(WWTP, date)%>%
+  mutate(date = as.Date(date))
+
+identical(MarlinTable,StevesTable)
+CompDF <- full_join(MarlinTable, StevesTable, by=c("date","WWTP"))
+
+
+
+CompDF%>%
+  mutate(DIF = abs(modeled_percentchange.x - modeled_percentchange.y))%>%
+  summarise(SumDif = sum(DIF))
+
+#modeled_percentchange: 2.523447e-09
+#lmreg_slope: 6.105628e-13	
+#lmreg_sig:  1.040768e-11	
 ```
 
 
 
-```{r Edge Include}
-tempfunc <- function(n){
+```{r Edge Include, include = FALSE}
+ModProFiltN <- function(n){
   reg_estimates%>%
   group_by(WWTP)%>%
   filter(n()>n)%>%
@@ -75,22 +117,25 @@ tempfunc <- function(n){
   mutate(Catagory = as.numeric(Catagory),
     Catagory = ifelse(Catagory == 6,3,Catagory))%>%
   select(WWTP,date,Method,Catagory)%>%
-  mutate(Catagory = as.numeric(Catagory))%>%
   pivot_wider(names_from = Method, values_from = Catagory)%>%
   mutate(EXPLoss = abs(EXP-Loess),
+         sgolayLoss = abs(sgolay-Loess),
          BaseLoss = abs(sars_cov2_adj_load_log10 - Loess),
          RobustLoss = abs(robust_cov2-Loess))%>%
   summarise(EXPError = mean(EXPLoss),
+            sgolayLoss = mean(sgolayLoss),
             BaseError = mean(BaseLoss),
             robustError = mean(RobustLoss,na.rm=TRUE))%>%
     mutate(n = n)
 }
 
-bind_rows(lapply((0:60)*10,tempfunc))%>%
+lapply((0:60)*10, ModProFiltN)%>%
+  bind_rows()%>%
   ggplot(aes(x = n))+
   geom_line(aes(y = EXPError, color = "EXPError"))+
   geom_line(aes(y = BaseError, color = "BaseError"))+
-  geom_line(aes(y = robustError, color = "robustError"))
+  geom_line(aes(y = robustError, color = "robustError"))+
+  geom_line(aes(y = robustError, color = "sgolayLoss"))
 
 
 ConfMatrix <- function(DF,Cat,x,y){
@@ -106,10 +151,14 @@ ConfMatrix <- function(DF,Cat,x,y){
   geom_tile(aes(fill = n))+
   scale_fill_gradient(low="blue", high="red")
 }
-ConfMatrix(reg_estimates,"Catagory","Loess","robust_cov2")
-ConfMatrix(reg_estimates,"Catagory","Loess","sars_cov2_adj_load_log10")
-ConfMatrix(reg_estimates,"Catagory","Loess","EXP")
-
+ConfMatrix(reg_estimates,"Catagory","Loess","robust_cov2")+ 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+ConfMatrix(reg_estimates,"Catagory","Loess","sars_cov2_adj_load_log10")+ 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+ConfMatrix(reg_estimates,"Catagory","Loess","EXP")+ 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+ConfMatrix(reg_estimates,"Catagory","Loess","sgolay")+ 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
 reg_estimates%>%
   group_by(Method,Catagory)%>%
@@ -131,9 +180,11 @@ Gplt <- FactorVecByNumPoints(DataMod,"WWTP","EXP")%>%
   mutate(Data = "Data")%>%
   ggplot(aes(x=date))+
   geom_point(aes(y = sars_cov2_adj_load_log10), size = .5)+
-  geom_line(aes(y = EXP),color = "RED")+
-  geom_line(aes(y = Loess),color = "BLUE")+
+  #geom_line(aes(y = EXP, color = "EXP"))+
+  geom_line(aes(y = Loess, color = "Loess"))+
+  #geom_line(aes(y = sgolay, color = "sgolay"))+
   facet_grid(Data~WWTP)+
+  scale_x_date(date_labels = "%b %y") +
   theme(
   strip.background = element_blank(),
   strip.text.x = element_blank()
@@ -143,7 +194,7 @@ SavePlot <- BarGridSmoothRaw/Gplt + plot_layout(heights = c(2, 1))
 
 
 
-ggsave("ClassCompare.PDF",plot=SavePlot,
+ggsave("ClassCompare2.PDF",plot=SavePlot,
          width = 32*Dim,height = 15,units="cm",limitsize =FALSE)
 
 ```

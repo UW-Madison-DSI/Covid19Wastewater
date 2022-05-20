@@ -20,18 +20,17 @@ MainCaseDataPrep <- function(Dir,SiteC){
 MainWastePrep <- function(Dir,SiteC){
   DF <- ParseData(LIMSWastePath(Dir))
   if(SiteC!=""){
-    DF2 <- DF%>%
+    DF <- DF%>%
       filter(Site %in% SiteC)
-  }else{
-    DF2 <- DF
   }
-  DF2 <- DF2%>%
+  
+  DF <- DF%>%
     mutate(N1Pure = ifelse(is.na(N1),N2,N1),
            N2Pure = ifelse(is.na(N2),N1,N2),
            GeoMeanN12 = exp((log(N1Pure)+log(N2Pure))/2),
            N1FlowPop = Pop*N1/FlowRate)%>%
     select(Date, Site, N1 , N2 , GeoMeanN12, N1FlowPop,Pop,N1LOD)
-  return(DF2)
+  return(DF)
 }
 
 
@@ -54,38 +53,6 @@ SLDSmoothMod <- function(DF, Width){
       ))#no missing data to remove
   return(ModDF)
 }
-
-
-
-
-
-#sort by % outlier to get view
-DataProcess <- function(DF, Width,InVar, span, verbose = FALSE){
-  if(span=="guess"){
-    span <- spanGuess(DF,InVar)
-  }
-  #DF,VecName,SDDeg,span,DaySmoothed,n = 5
-  DetectedOutliers <- TrendSDOutlierDetec(DF, InVar, 2.5, 2*span, 36, n=5)
-  if(verbose){
-    print(paste(DF$Site[1], sum(DetectedOutliers)/length(DF[[InVar]])*100))
-  }
-  ErrorRemovedDF <- DF[!(DetectedOutliers),]%>%
-    mutate(FlaggedOutlier=FALSE)
-  OutlierDF <- DF[(DetectedOutliers),]%>%
-    mutate(loVar=NA,SLDCases=NA,FlaggedOutlier=TRUE)
-  if(length(ErrorRemovedDF$N1)<Width+1){
-    RetDF <- ErrorRemovedDF%>%
-      mutate(loVar=NA,SLDCases=NA)%>%
-      filter(!is.na(loVar))
-    return(RetDF)
-  }
-  SLDDF <- SLDSmoothMod(ErrorRemovedDF,Width)
-  LoessDF <- LoessSmoothMod(SLDDF,InVar, "loVar", span)
-  RetDF <- OutlierDF%>%
-    bind_rows(LoessDF)
-  return(RetDF)
-}
-
 
 MinMaxSiteFixing <- function(Vec, Bar){
   
@@ -146,25 +113,48 @@ NormThird <- function(DF,Vec1Name,Vec2Name, Vec3Name,RetName){
 
 
 
-TrendSDOutlierDetec <- function(DF,VecName,SDDeg,span,DaySmoothed,n = 5, TrendFunc = ExpSmoothMod){#LoessSmoothMod){
-
-  FullDateRange <- data.frame(Date=seq(min(DF$Date),max(DF$Date),by ="day"))
+TrendSDOutlierFilter <- function(DF,VecName,SDDeg,DaySmoothed,n = 5, TrendFunc = sgolaySmoothMod, verbose=FALSE){
+  ArangeDF <- DF%>%
+    arrange(Date)
   
-  BestVectorDF <- DF%>%
-    mutate(VecName = log(!!sym(VecName)))
+  DetectedOutliers <- TrendSDOutlierDetec(DF = ArangeDF, 
+                                          VecName = VecName, 
+                                          SDDeg = SDDeg, 
+                                          DaySmoothed = DaySmoothed, 
+                                          n = n, 
+                                          TrendFunc = TrendFunc)
   
-  for(i in 1:n){#robustly remove outliers and recalc smooth line
-    #DF,InVar, OutVar, span
-    BestVectorDF <- TrendFunc(BestVectorDF,"VecName","Temp")%>%
-      full_join(FullDateRange,by="Date")%>%
-      mutate(SD = rollapply(VecName-Temp,DaySmoothed,sd,na.rm=TRUE,partial=TRUE),
-        VecName = ifelse(VecName>Temp+SDDeg*SD,Temp,VecName),
-        VecName = ifelse(VecName<Temp-2*SDDeg*SD,Temp,VecName))%>%
-      filter(Date %in% DF$Date)
+  if(verbose){
+    print(paste( round( mean(DetectedOutliers)*100, digits  = 2),
+                 ArangeDF$Site[1]))
   }
   
+  ArangeDF$FlaggedOutlier <- DetectedOutliers
+    
+  return(ArangeDF)
+}
+
+TrendSDOutlierDetec <- function(DF,VecName,SDDeg,DaySmoothed=36,n = 5, TrendFunc = sgolaySmoothMod){#LoessSmoothMod){
   
-  booleanReturn <- abs(exp(BestVectorDF$VecName)-DF[[VecName]])>10
+  FullDateRange <- data.frame(Date=seq(min(DF$Date, na.rm = TRUE),max(DF$Date, na.rm = TRUE),by ="day"))
+  
+  BestVectorDF <- DF%>%
+    full_join(FullDateRange, by="Date")%>%
+    mutate(UsedVar = log1p(!!sym(VecName)))
+
+  for(i in 1:n){#robustly remove outliers and recalc smooth line
+    #DF,InVar, OutVar, span
+    BestVectorDF <- BestVectorDF%>%
+      TrendFunc("UsedVar", "Temp")%>%
+      mutate(SD = rollapply(UsedVar - Temp, DaySmoothed, sd, na.rm=TRUE, partial=TRUE),
+        UsedVar = ifelse(UsedVar > Temp + SDDeg * SD, Temp, UsedVar),
+        UsedVar = ifelse(UsedVar < Temp - 2 * SDDeg * SD, Temp, UsedVar))
+  }
+  
+  BestVectorDF <- BestVectorDF%>%
+    filter(Date %in% DF$Date)
+  
+  booleanReturn <- abs(BestVectorDF$UsedVar-log1p(DF[[VecName]]))>2
   booleanReturn[is.na(booleanReturn)] <- FALSE
   return(booleanReturn)
 }
