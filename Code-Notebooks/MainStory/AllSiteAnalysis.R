@@ -24,8 +24,9 @@ args <- R.utils::commandArgs(trailingOnly = TRUE,
   
   
   #Data Files and prep work
-  source("../../lib/DataPathName.R")#merged?
+  source("../../lib/DataPathName.R")
   source("../../lib/TSTrendGen.R")
+  source("../../lib/OutlierDetectionFuncs.R")
   source("MainStory.R")
   
   

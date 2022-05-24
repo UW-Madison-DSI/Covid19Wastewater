@@ -25,30 +25,35 @@ library(limma)
 library(tidyr)
 library(patchwork)
 #Data Files and prep work
-source("../../lib/DataPathName.R")#merged?
-source("../../lib/DataProccess.R")
+#source("../../lib/DataPathName.R")
+source("../../lib/OutlierDetectionFuncs.R")
 source("../../lib/TSTrendGen.R")
 source("DHSAlgo.R")
 library(zoo)
 
 #Importing the waste water data
-LIMSFullDF <- read.csv("../../../tempa/workset4.csv")%>%
+LIMSFullDF <- read.csv("../../data/processed/workset4.csv")%>%
   mutate(date = as.Date(date))
 
 
 SiteDFList <- LIMSFullDF%>%
-    rename(Date=date)%>%
-    group_by(WWTP)%>%
-    filter(n()>135)%>%
+    rename(Date=date, Site = WWTP)%>%
+    group_by(Site)%>%
+    #filter(n()>135)%>%
+    mutate(sars_cov2_adj_load = 10^sars_cov2_adj_load_log10)%>%
     group_split()
 
+VecModOn <- "sars_cov2_adj_load_log10"
 
 DataMod <- SiteDFList%>%
-  lapply(LoessSmoothMod, "sars_cov2_adj_load_log10", "Loess", "guess")%>%
-  lapply(ExpSmoothMod, "sars_cov2_adj_load_log10", "EXP")%>%
-  lapply(sgolaySmoothMod, "sars_cov2_adj_load_log10", "sgolay")%>%
+  lapply(TrendSDOutlierFilter, "sars_cov2_adj_load", 1.25, 14, n = 5, 
+           TrendFunc = LoessSmoothMod, verbose = TRUE)%>%
+  lapply(LoessSmoothMod, VecModOn, "Loess", "guess")%>%
+  lapply(ExpSmoothMod, VecModOn, "EXP")%>%
+  lapply(sgolaySmoothMod, VecModOn, "sgolay")%>%
   bind_rows()%>%
-    rename(date=Date)
+    rename(date=Date, WWTP = Site)%>%
+    mutate(RemovedOutlierCol = ifelse(FlaggedOutlier,NA,!!sym(VecModOn)))
 
 
 
@@ -61,7 +66,8 @@ LIMSFullDF%>%
 
 ```{r AllSite Loop, Warning = FALSE}
 LMfited <- c(as.formula("sars_cov2_adj_load_log10 ~ date"),
-                                    as.formula("Loess ~ date"))#,
+                                    as.formula("Loess ~ date"),
+                                    as.formula("RemovedOutlierCol ~ date"))
                                    # as.formula("EXP ~ date"),
                                    # as.formula("sgolay ~ date")
 
@@ -78,35 +84,13 @@ reg_estimates = DataMod%>%
 #   mutate(Method = ifelse(LMmethod, "robust_cov2", Method))%>%
 #   select(-LMmethod)%>%
 #   mutate(Method = factor(Method,c("Loess","sgolay","EXP","robust_cov2","sars_cov2_adj_load_log10")))
-StevesTable <- read.csv("../../../tempa/regressionTable.csv")
 
-MarlinTable <- reg_estimates%>%
-  filter(Method == "sars_cov2_adj_load_log10")%>%
-  select(-LMmethod,-Catagory, -Method)%>%
-  arrange(WWTP, date)
-
-StevesTable <- read.csv("../../../tempa/regressionTable.csv")%>%
-  filter(WWTP %in% unique(MarlinTable$WWTP))%>%
-  arrange(WWTP, date)%>%
-  mutate(date = as.Date(date))
-
-identical(MarlinTable,StevesTable)
-CompDF <- full_join(MarlinTable, StevesTable, by=c("date","WWTP"))
-
-
-
-CompDF%>%
-  mutate(DIF = abs(modeled_percentchange.x - modeled_percentchange.y))%>%
-  summarise(SumDif = sum(DIF))
-
-#modeled_percentchange: 2.523447e-09
-#lmreg_slope: 6.105628e-13	
-#lmreg_sig:  1.040768e-11	
 ```
 
 
 
-```{r Edge Include, include = FALSE}
+```{r Edge Include, include = TRUE}
+
 ModProFiltN <- function(n){
   reg_estimates%>%
   group_by(WWTP)%>%
@@ -118,24 +102,26 @@ ModProFiltN <- function(n){
     Catagory = ifelse(Catagory == 6,3,Catagory))%>%
   select(WWTP,date,Method,Catagory)%>%
   pivot_wider(names_from = Method, values_from = Catagory)%>%
-  mutate(EXPLoss = abs(EXP-Loess),
-         sgolayLoss = abs(sgolay-Loess),
+  mutate(#EXPLoss = abs(EXP-Loess),
+         #sgolayLoss = abs(sgolay-Loess),
+         OutlierLoss = abs(RemovedOutlierCol - Loess),
          BaseLoss = abs(sars_cov2_adj_load_log10 - Loess),
-         RobustLoss = abs(robust_cov2-Loess))%>%
-  summarise(EXPError = mean(EXPLoss),
-            sgolayLoss = mean(sgolayLoss),
+         #RobustLoss = abs(robust_cov2-Loess)
+         )%>%
+  summarise(#EXPError = mean(EXPLoss),
+            #sgolayError = mean(sgolayLoss),
+            OutlierError = mean(OutlierLoss),
             BaseError = mean(BaseLoss),
-            robustError = mean(RobustLoss,na.rm=TRUE))%>%
+            #robustError = mean(RobustLoss,na.rm=TRUE)
+            )%>%
     mutate(n = n)
 }
 
 lapply((0:60)*10, ModProFiltN)%>%
   bind_rows()%>%
   ggplot(aes(x = n))+
-  geom_line(aes(y = EXPError, color = "EXPError"))+
   geom_line(aes(y = BaseError, color = "BaseError"))+
-  geom_line(aes(y = robustError, color = "robustError"))+
-  geom_line(aes(y = robustError, color = "sgolayLoss"))
+  geom_line(aes(y = OutlierError, color = "OutlierError"))
 
 
 ConfMatrix <- function(DF,Cat,x,y){
@@ -151,14 +137,17 @@ ConfMatrix <- function(DF,Cat,x,y){
   geom_tile(aes(fill = n))+
   scale_fill_gradient(low="blue", high="red")
 }
-ConfMatrix(reg_estimates,"Catagory","Loess","robust_cov2")+ 
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+#ConfMatrix(reg_estimates,"Catagory","Loess","robust_cov2")+ 
+#  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 ConfMatrix(reg_estimates,"Catagory","Loess","sars_cov2_adj_load_log10")+ 
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
-ConfMatrix(reg_estimates,"Catagory","Loess","EXP")+ 
+ConfMatrix(reg_estimates,"Catagory","Loess","RemovedOutlierCol")+ 
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
-ConfMatrix(reg_estimates,"Catagory","Loess","sgolay")+ 
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+# ConfMatrix(reg_estimates,"Catagory","Loess","EXP")+ 
+#   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+# ConfMatrix(reg_estimates,"Catagory","Loess","sgolay")+ 
+#   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
 reg_estimates%>%
   group_by(Method,Catagory)%>%
@@ -170,16 +159,20 @@ reg_estimates%>%
 ```
 
 ```{r MergePlot}
-
+source("../MainStory/MainStory.R")
 Dim = ceiling(length(unique(reg_estimates$WWTP))/4)
 
-BarGridSmoothRaw <- CreateHeatMaps(reg_estimates, ToMerge=TRUE)
+BarGridSmoothRaw <- reg_estimates%>%
+  FactorVecByNumPoints("WWTP","Catagory")%>%
+  CreateHeatMaps(ToMerge=TRUE)
  
-Gplt <- FactorVecByNumPoints(DataMod,"WWTP","EXP")%>%
+Gplt <- DataMod%>%
+  FactorVecByNumPoints("WWTP","sars_cov2_adj_load_log10")%>%
   filter(WWTP %in% unique(reg_estimates$WWTP))%>%
   mutate(Data = "Data")%>%
   ggplot(aes(x=date))+
   geom_point(aes(y = sars_cov2_adj_load_log10), size = .5)+
+  geom_point(aes(y = RemovedOutlierCol, color = "OutlierError"), size = .5)+
   #geom_line(aes(y = EXP, color = "EXP"))+
   geom_line(aes(y = Loess, color = "Loess"))+
   #geom_line(aes(y = sgolay, color = "sgolay"))+
