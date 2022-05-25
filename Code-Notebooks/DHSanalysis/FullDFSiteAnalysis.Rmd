@@ -65,40 +65,31 @@ LIMSFullDF%>%
 
 
 ```{r AllSite Loop, Warning = FALSE}
-source("DHSAlgo.R")
-LMfited <- c(as.formula("sars_cov2_adj_load_log10 ~ date"),
-                                  as.formula("Loess ~ date"))#,
-                                  #as.formula("RemovedOutlierCol ~ date"))
-                                   # as.formula("EXP ~ date"),
-                                   # as.formula("sgolay ~ date")
+
+LMfited <- c(
+              as.formula("sars_cov2_adj_load_log10 ~ date"),
+              as.formula("Loess ~ date"),
+              as.formula("RemovedOutlierCol ~ date"))
+              # as.formula("EXP ~ date"),
+              # as.formula("sgolay ~ date")
 
 
 
 reg_estimates = DataMod%>%
           group_by(WWTP)%>%
           group_split()%>%
-          lapply(OuterLoop, LMfited, PSigTest=TRUE, verbose = FALSE)%>%
+          lapply(OuterLoop, LMfited, verbose = FALSE)%>%
           bind_rows()
+
+
+reg_estimates <- reg_estimates%>%
+          DHSClassificationFunc(PSigTest=TRUE)
+
 
 ```
 
 
-
 ```{r Edge Include, include = TRUE}
-
-ConfMatrix <- function(DF,Cat,x,y){
-  DF%>%
-    filter(Method %in% c(x,y))%>%
-    select(WWTP,date,Method,Catagory)%>%
-    filter(WWTP != "Portage WWTF"  & WWTP != "Cedarburg WWTF")%>%
-    pivot_wider(id_cols=c(WWTP,date),names_from = Method, values_from = !!sym(Cat))%>%
-    group_by(!!sym(x),!!sym(y))%>%
-    summarise(n = n())%>%
-  filter(!is.na(!!sym(y)))%>%
-  ggplot(aes(x=!!sym(x),y=!!sym(y)))+
-  geom_tile(aes(fill = n))+
-  scale_fill_gradient(low="blue", high="red")
-}
 
 ConfMatrix(reg_estimates,"Catagory","Loess","sars_cov2_adj_load_log10")+ 
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))

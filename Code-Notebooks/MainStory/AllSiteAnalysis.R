@@ -34,13 +34,11 @@ args <- R.utils::commandArgs(trailingOnly = TRUE,
   
   #Importing the waste water data
   LIMSFullDF <- read.csv(LIMSWastePath(args$BaseDir))%>%
-  #filter(lab_submitter=="SLH")%>%
-    #rename(Date = date, Site = WWTP)%>%
+    #filter(lab_submitter=="SLH")%>%
     mutate(Date = as.Date(Date),
            sars_cov2_adj_load = sqrt(N1*N2)*FlowRate/Pop)%>%
     filter(!is.na(Date), !is.na(!!sym(args$WasteVar)))%>%
   group_by(Site)%>%
-  #filter(n()>120)%>%
   group_split()%>%
     lapply(TrendSDOutlierFilter, args$WasteVar, 1.5, 13, n = 5, 
            TrendFunc = LoessSmoothMod, verbose=args$verbose)%>%
@@ -68,7 +66,6 @@ LIMSFullDF <- LIMSFullDF%>%
     lapply(NormThird,  args$WasteVar,"SevenDayMACases", "loVar",  args$WasteVar)%>%
     lapply(NormQuint, "loVar", "SevenDayMACases", "loVar")%>%
     bind_rows()%>%
-    #filter(Date>mdy("7/15/2021"))%>%
     filter(!is.na(Site))%>%
     FactorVecByNumPoints("Site",  args$WasteVar)
   
