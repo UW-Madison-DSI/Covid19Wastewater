@@ -125,3 +125,23 @@ FactorVecByNumPoints <- function(DF,FacVar, FiltVar){
   
   return(FacedDF)
 }
+
+
+
+Find_Max_CCF<- function(a,b)
+{
+  d <- ccf(a, b, plot = FALSE, na.action = na.pass)
+  cor = d$acf[,,1]
+  lag = d$lag[,,1]
+  res = data.frame(cor,lag)
+  res_max = res[which.max(res$cor),]
+  return(res_max)
+}
+
+MaxCFDFGen <- function(DF, arg1, arg2)
+{
+  retDF <- Find_Max_CCF(DF[[arg1]], DF[[arg2]])%>%
+    mutate(Site = unique(DF$Site)[1], 
+           yPos = (max(DF[[args$WasteVar]],na.rm=TRUE) - min(DF[[args$WasteVar]],na.rm=TRUE)))
+  return(retDF)
+}

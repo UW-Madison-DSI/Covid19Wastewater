@@ -9,7 +9,7 @@ spanGuess <- function(DF,InVar){
 
 LoessSmoothMod <- function(DF,InVar, OutVar, span="guess", Filter = NULL){
   if(span=="guess"){
-    span <- 2*spanGuess(DF,InVar)
+    span <- spanGuess(DF,InVar)
   }
   if(!is.null(Filter)){
     OutDF <- DF%>%

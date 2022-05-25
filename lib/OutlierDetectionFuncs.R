@@ -12,7 +12,7 @@
 #'
 #' @return DF With col saying whether the method was flagged
 TrendSDOutlierFilter <- function(DF,VecName,SDDeg,DaySmoothed, outCol = "FlaggedOutlier",
-                                 n = 5, TrendFunc = sgolaySmoothMod, verbose=FALSE){
+                                 n = 5, TrendFunc = LoessSmoothMod, verbose=FALSE){
   ArangeDF <- DF%>%
     arrange(Date)
   
@@ -50,17 +50,20 @@ TrendSDOutlierFilter <- function(DF,VecName,SDDeg,DaySmoothed, outCol = "Flagged
 #'
 #' @return Boolean of each row being an outlier
 TrendSDOutlierDetec <- function(DF,VecName,SDDeg,DaySmoothed=36,n = 5,
-                                TrendFunc = sgolaySmoothMod){
-  
-  FullDateRange <- data.frame(Date=seq(min(DF$Date, na.rm = TRUE),max(DF$Date, na.rm = TRUE),by ="day"))
+                                TrendFunc = LoessSmoothMod){
+  FullDateRange <- data.frame(Date=seq(min(DF$Date, na.rm = TRUE),
+                                       max(DF$Date, na.rm = TRUE),by ="day"))
   
   BestVectorDF <- DF%>%
     #full_join(FullDateRange, by="Date")%>%
     mutate(UsedVar = log1p(!!sym(VecName)))
   
+  
+  
   for(i in 1:n){#robustly remove outliers and recalc smooth line
+    span = 2*spanGuess(DF, VecName)
     BestVectorDF <- BestVectorDF%>%
-      TrendFunc("UsedVar", "Temp")%>%
+      TrendFunc("UsedVar", "Temp", span = span)%>%
       mutate(SD = rollapply(UsedVar - Temp, DaySmoothed, sd, na.rm=TRUE, partial=TRUE),
              UsedVar = ifelse(UsedVar > Temp + SDDeg * SD, Temp, UsedVar),
              UsedVar = ifelse(UsedVar < Temp - 2 * SDDeg * SD, Temp, UsedVar))%>%
@@ -68,8 +71,8 @@ TrendSDOutlierDetec <- function(DF,VecName,SDDeg,DaySmoothed=36,n = 5,
       select(-Temp)#Remove col to prevent contamination
   }
   
-  BestVectorDF <- BestVectorDF%>%
-    filter(Date %in% DF$Date)
+  BestVectorDF <- BestVectorDF#%>%
+    #filter(Date %in% DF$Date)
   
   booleanReturn <- abs(BestVectorDF$UsedVar-log1p(DF[[VecName]])) > 2
   booleanReturn[is.na(booleanReturn)] <- FALSE
