@@ -27,28 +27,18 @@ LMSelectBestList <- function(LMList, Verbose = FALSE){
 }
 
 
-InnerFunc <- function(Formula, DF, k, n, robust = FALSE){
-  ww.x.subset = DF[c(k:(k+n)),]
+InnerFunc <- function(Formula, DF, k, n, LMMethod = lm){
   
-  if(robust){
-    
-    lm.subset = FCVLM(Formula, data = ww.x.subset)
-    
-  }else{
-    
-    lm.subset = lm(Formula, # date included works same as days_since_last_sample
-                   
-                   data = ww.x.subset)
-    
-  }
+  lm.subset <- LMMethod(Formula, data = DF)
+  
   # Extract row to bind with workset
-  ww.x.tobind = ww.x.subset %>%
+  ww.x.tobind <- DF %>%
     
     filter(date == max(date)) %>%
       select(WWTP, date) %>%
-      mutate(days_elapsed = as.numeric(max(ww.x.subset$date) - min(ww.x.subset$date)),
+      mutate(days_elapsed = as.numeric(max(DF$date) - min(DF$date)),
              
-             lmreg_n = nrow(ww.x.subset),
+             lmreg_n = nrow(DF),
              
              lmreg_slope = summary(lm.subset)$coefficients[2,1],
              
@@ -56,53 +46,40 @@ InnerFunc <- function(Formula, DF, k, n, robust = FALSE){
              
              modeled_percentchange = ((10^(lmreg_slope*days_elapsed))-1)*100,
              
-             Method = as.character(terms(lm.subset)[[2]]),
-             
-             LMmethod = robust)
-
-  
+             Method = as.character(terms(lm.subset)[[2]]))
 
   return(ww.x.tobind)
 }
 
-OuterLoop <- function(DF,Formulas,n = 4, PSigTest = TRUE,robust=FALSE, verbose = FALSE){
+OuterLoop <- function(DF,Formulas,n = 4, PSigTest = TRUE, LMMethod=lm, verbose = FALSE){
+  
   reg_estimates = as.data.frame(matrix(ncol=9, nrow=0))
   
   colnames(reg_estimates) = c("WWTP", "date", "days_elapsed", "lmreg_n" , 
                               "lmreg_slope", "lmreg_sig", "modeled_percentchange", "Method", "LMmethod")
-  
-  distinct_wwtps = DF %>%
-    group_by(WWTP)%>%
-    #filter(n()>5)%>%
-    distinct(WWTP)
-  
-  for (i in 1:nrow(distinct_wwtps)){
     
     if(verbose){
-      print(paste(distinct_wwtps[i,1]))
+      print(unique(DF$WWTP)[[1]])
     }
     
-    ww.x = DF %>%
+    for (k in 1:(nrow(DF) - n)){
       
-      filter(WWTP==paste(distinct_wwtps[i,1]))
-    
-    for (k in 1:(nrow(ww.x) - n)){
-      try({
-        if(robust){
-          # Join with full set of reg estimates with robust LM
-          ww.x.tobind = bind_rows(lapply(Formulas,InnerFunc,DF=ww.x,k=k,n=n+1, robust = TRUE))
-        }else{
-          #Join with full set of reg estimates
-          ww.x.tobind = bind_rows(lapply(Formulas,InnerFunc,DF=ww.x,k=k,n=n))
-        }
-        reg_estimates = rbind(ww.x.tobind, reg_estimates)
-      }
-      )
+        ww.x.subset = DF[c(k:(k+n)),]
+        
+      #try({
+        ww.x.tobind = Formulas%>%
+          lapply(InnerFunc,
+                 DF=ww.x.subset,
+                 LMMethod = LMMethod)%>%
+          bind_rows()
+      #})
+        reg_estimates <- rbind(reg_estimates, ww.x.tobind)
     }
-  }
   
   #Bring into own function
-  Catagorylabel = c("major decrease","moderate decrease","fluctuating ","moderate increase","major increase")
+  Catagorylabel = c("major decrease","moderate decrease",
+                    "fluctuating ", "no change",
+                    "moderate increase","major increase")
   
   reg_estimates <- reg_estimates%>%
     mutate(Catagory = cut(modeled_percentchange, c(-Inf,-50,-10,10,100,Inf),
@@ -111,14 +88,12 @@ OuterLoop <- function(DF,Formulas,n = 4, PSigTest = TRUE,robust=FALSE, verbose =
            
   if(PSigTest){
     reg_estimates <- reg_estimates%>%
-      mutate(Catagory = ifelse(lmreg_sig>.3, "no change", Catagory),
-             Catagory = factor(Catagory, c(1,2,3,4,5,"no change"), 
-                               labels = c( Catagorylabel, "no change"), exclude = NULL))
-  }else{
-    reg_estimates <- reg_estimates%>%
-        mutate(Catagory = factor(Catagory, c(1,2,3,4,5), 
-                               labels = c( Catagorylabel, "no change"), exclude = NULL))
+      mutate(Catagory = ifelse(lmreg_sig>.3, "no change", Catagory))
   }
+  
+  reg_estimates <- reg_estimates%>%
+    mutate(Catagory = factor(Catagory, c(1,2,3,"no change",4,5), 
+                               labels = c( Catagorylabel), exclude = NULL))
   return(reg_estimates)
 }
 
