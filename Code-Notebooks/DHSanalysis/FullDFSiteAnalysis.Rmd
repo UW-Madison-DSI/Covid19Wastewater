@@ -17,7 +17,6 @@ knitr::opts_chunk$set(echo = TRUE)
 
 #?add parm script functionality
 BaseDir <- "./../../"
-#Var1 <- ""
 
 library(dplyr)
 library(ggplot2)
@@ -36,31 +35,23 @@ LIMSFullDF <- read.csv("../../data/processed/workset4.csv")%>%
   mutate(date = as.Date(date))
 
 
-SiteDFList <- LIMSFullDF%>%
+VecModOn <- "sars_cov2_adj_load_log10"
+
+
+DataMod <- LIMSFullDF%>%
     rename(Date=date, Site = WWTP)%>%
     group_by(Site)%>%
     #filter(n()>135)%>%
     mutate(sars_cov2_adj_load = 10^sars_cov2_adj_load_log10)%>%
-    group_split()
-
-VecModOn <- "sars_cov2_adj_load_log10"
-
-DataMod <- SiteDFList%>%
-  lapply(TrendSDOutlierFilter, "sars_cov2_adj_load", 1.25, 14, n = 5, 
+    group_split()%>%
+    lapply(TrendSDOutlierFilter, "sars_cov2_adj_load", 1.25, 14, n = 5, 
            TrendFunc = LoessSmoothMod, verbose = TRUE)%>%
-  lapply(LoessSmoothMod, VecModOn, "Loess", "guess")%>%
-  lapply(ExpSmoothMod, VecModOn, "EXP")%>%
-  lapply(sgolaySmoothMod, VecModOn, "sgolay")%>%
-  bind_rows()%>%
+    lapply(LoessSmoothMod, VecModOn, "Loess", "guess")%>%
+    lapply(ExpSmoothMod, VecModOn, "EXP")%>%
+    lapply(sgolaySmoothMod, VecModOn, "sgolay")%>%
+    bind_rows()%>%
     rename(date=Date, WWTP = Site)%>%
     mutate(RemovedOutlierCol = ifelse(FlaggedOutlier,NA,!!sym(VecModOn)))
-
-
-
-LIMSFullDF%>%
-  group_by(WWTP)%>%
-  summarise(n = n())%>%
-  arrange(n)
 ```
 
 
@@ -81,8 +72,6 @@ reg_estimates = DataMod%>%
           lapply(DHSOuterLoop, LMfited, verbose = FALSE)%>%
           bind_rows()%>%
           DHSClassificationFunc(PSigTest=TRUE)
-
-
 ```
 
 

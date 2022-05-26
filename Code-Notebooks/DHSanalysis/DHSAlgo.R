@@ -71,8 +71,8 @@ LMSelectBestList <- function(LMList, Verbose = FALSE){
 DHSInnerLoop <- function(Formula, DF, LMMethod = lm){
   IndiVar <- as.character(Formula)[2]
   
-  if(length(na.omit(pull(DF,IndiVar))) < 2){
-    reg_estimates = data.frame(
+  if(length(na.omit(pull(DF,IndiVar))) < 2){#The lm call will fail with 1 row
+    reg_estimates = data.frame(#create an empty DF that won't cause issues for row_bind
                                   WWTP = character(),
                                   date = as.Date(character()), 
                                   days_elapsed = double(),
@@ -93,7 +93,9 @@ DHSInnerLoop <- function(Formula, DF, LMMethod = lm){
   ww.x.tobind <- DF %>%
     
     filter(date == max(date)) %>%
+    
       select(WWTP, date) %>%
+    
       mutate(days_elapsed = as.numeric(max(DF$date) - min(DF$date)),
              
              lmreg_n = nrow(DF),
