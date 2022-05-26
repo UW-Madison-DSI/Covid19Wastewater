@@ -78,11 +78,8 @@ LMfited <- c(
 reg_estimates = DataMod%>%
           group_by(WWTP)%>%
           group_split()%>%
-          lapply(OuterLoop, LMfited, verbose = FALSE)%>%
-          bind_rows()
-
-
-reg_estimates <- reg_estimates%>%
+          lapply(DHSOuterLoop, LMfited, verbose = FALSE)%>%
+          bind_rows()%>%
           DHSClassificationFunc(PSigTest=TRUE)
 
 

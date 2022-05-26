@@ -55,10 +55,10 @@ LMSelectBestList <- function(LMList, Verbose = FALSE){
 }
 
 
-#' InnerFunc
+#' DHSInnerLoop
 #' 
 #' Runs a Linear regression on the data and returns it in a form to be merged
-#' in the OuterLoop function
+#' in the DHSOuterLoop function
 #'
 #' @param Formula LM model to be fit on DF
 #' @param DF Contains the data needed for Formula to work
@@ -68,7 +68,7 @@ LMSelectBestList <- function(LMList, Verbose = FALSE){
 #' @return a row of a DF containing the 
 #' WWTP, last date, timespan, number of rows, model slope and significance,
 #' and predicted percent change, and what linear model was used
-InnerFunc <- function(Formula, DF, LMMethod = lm){
+DHSInnerLoop <- function(Formula, DF, LMMethod = lm){
   IndiVar <- as.character(Formula)[2]
   
   if(length(na.omit(pull(DF,IndiVar))) < 2){
@@ -109,7 +109,7 @@ InnerFunc <- function(Formula, DF, LMMethod = lm){
   return(ww.x.tobind)
 }
 
-#' OuterLoop
+#' DHSOuterLoop
 #'
 #' The DHS model system. runs a LM on each each set of n consecutive measurements
 #' and returns a summary of the information
@@ -125,7 +125,7 @@ InnerFunc <- function(Formula, DF, LMMethod = lm){
 #' @return a row of a DF containing the 
 #' WWTP, last date, timespan, number of rows, model slope and significance,
 #' and predicted percent change, and what linear model was used
-OuterLoop <- function(DF,Formulas,n = 4,LMMethod=lm, verbose = FALSE){
+DHSOuterLoop <- function(DF,Formulas,n = 4,LMMethod=lm, verbose = FALSE){
   
   reg_estimates = as.data.frame(matrix(ncol=9, nrow=0))
   
@@ -142,7 +142,7 @@ OuterLoop <- function(DF,Formulas,n = 4,LMMethod=lm, verbose = FALSE){
         
       #try({
         ww.x.tobind = Formulas%>%
-          lapply(InnerFunc,
+          lapply(DHSInnerLoop,
                  DF=ww.x.subset,
                  LMMethod = LMMethod)%>%
           bind_rows()
@@ -156,7 +156,7 @@ OuterLoop <- function(DF,Formulas,n = 4,LMMethod=lm, verbose = FALSE){
 
 #' DHSClassificationFunc
 #' 
-#' Adds the DHS Classification scheme to data created by OuterLoop
+#' Adds the DHS Classification scheme to data created by DHSOuterLoop
 #'
 #' @param DF 
 #' @param PSigTest Controls if we filter values with P-values>.3
