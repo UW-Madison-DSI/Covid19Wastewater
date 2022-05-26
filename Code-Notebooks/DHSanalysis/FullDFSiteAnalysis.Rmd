@@ -60,9 +60,10 @@ DataMod <- LIMSFullDF%>%
 LMfited <- c(
               as.formula("sars_cov2_adj_load_log10 ~ date"),
               as.formula("Loess ~ date"),
-              as.formula("RemovedOutlierCol ~ date"))
-              # as.formula("EXP ~ date"),
-              # as.formula("sgolay ~ date")
+              as.formula("RemovedOutlierCol ~ date"),
+               as.formula("EXP ~ date"),
+               as.formula("sgolay ~ date")
+              )
 
 
 
@@ -71,7 +72,12 @@ reg_estimates = DataMod%>%
           group_split()%>%
           lapply(DHSOuterLoop, LMfited, verbose = FALSE)%>%
           bind_rows()%>%
+          DHSClassificationFunc(PSigTest=FALSE)%>%
+          rename(NoPsigCatagory = Catagory)%>%
           DHSClassificationFunc(PSigTest=TRUE)
+
+
+#write.csv(reg_estimates, "results_table.csv", row.names=FALSE)
 ```
 
 

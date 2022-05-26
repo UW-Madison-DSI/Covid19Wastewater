@@ -165,24 +165,30 @@ DHSOuterLoop <- function(DF,Formulas,n = 4,LMMethod=lm, verbose = FALSE){
 #'
 #' @return
 DHSClassificationFunc <- function(DF, PSigTest=TRUE){
-  #Bring into own function
-  Catagorylabel = c("major decrease","moderate decrease",
-                    "fluctuating ", "no change",
-                    "moderate increase","major increase")
+
   
   RetDF <- DF%>%
     mutate(Catagory = cut(modeled_percentchange, c(-Inf,-50,-10,10,100,Inf),
-                          include.lowest=TRUE,
-                          ordered_result=TRUE))
+                          ordered_result=TRUE),
+           Catagory = as.numeric(Catagory))
   
   if(PSigTest){
     RetDF <- RetDF%>%
       mutate(Catagory = ifelse(lmreg_sig>.3, "no change", Catagory))
+    levl <- c(1,2,3,"no change",4,5)
+    Catagorylabel = c("major decrease", "moderate decrease",
+                      "fluctuating", "no change",
+                      "moderate increase", "major increase")
+  }else{
+    levl <- c(1,2,3,4,5)
+    Catagorylabel = c("major decrease", "moderate decrease",
+                      "fluctuating", 
+                      "moderate increase", "major increase")
   }
   
   RetDF <- RetDF%>%
-    mutate(Catagory = factor(Catagory, c(1,2,3,"no change",4,5), 
-                             labels = c( Catagorylabel), exclude = NULL))
+    mutate(Catagory = factor(Catagory, levels = levl, 
+                             labels =  Catagorylabel))
   return(RetDF)
 }
 
