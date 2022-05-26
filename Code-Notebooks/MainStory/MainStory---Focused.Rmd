@@ -20,7 +20,7 @@ knit: (
     FileComp = strsplit(inputFile,"/")[[1]];
     File = FileComp[length(FileComp)];
     File = substr(File,1,nchar(File)-4);
-    pSubTitle <- paste0('RmdOutput/',Sys.Date(),"_",File,"_Green_Bay");
+    pSubTitle <- paste0('RmdOutput/',Sys.Date(),"_",File,"_Madison");
     rmarkdown::render( 
       input       = inputFile, 
       encoding    = encoding, 
@@ -69,6 +69,8 @@ source("../../lib/DataProccess.R")
 source("../../lib/NormFuncs.R")
 source("../../lib/OutlierDetectionFuncs.R")
 source("../../lib/DataPathName.R")
+source("../../lib/OutlierDetectionFuncs.R")
+source("../../lib/TSTrendGen.R")
 source("MainStory.R")
 BaseDir <- params$BaseDir#get the root of the directory where the data is stored
 ```
@@ -191,16 +193,17 @@ Looking at the wastewater measurements we observe there were some points many ti
 #default pass to IdentifyOutliers
 #method="SD", align="center", n = 5, Bin = 21, Action = "Flag"
 
-ErrorMarkedDF <- FullDF%>%#
-    mutate(FlagedOutliers = IdentifyOutliers(!!sym(SelectedIndVar), Action = "Flag"),
-           #Manual flagging that method misses due to boundary effect with binning
-           FlagedOutliers = ifelse(Date == mdy("01/24/2022"),
-                                   TRUE, FlagedOutliers),
-           NoOutlierVar = ifelse(FlagedOutliers, NA, !!sym(SelectedIndVar)))
+ErrorMarkedDF <- FullDF%>%
+  group_by(Site)%>%
+  group_split()%>%
+  lapply(TrendSDOutlierFilter, SelectedIndVar, 1.5, 14, n = 5, 
+          TrendFunc = LoessSmoothMod, verbose=FALSE)%>%
+  bind_rows()%>%
+    mutate(NoOutlierVar = ifelse(FlaggedOutlier, NA, !!sym(SelectedIndVar)))
 
 #Split N1 into outlier and non outlier for next ggplot
 OutLierPlotDF <- ErrorMarkedDF%>%
-  mutate(!!OutlierName := ifelse(FlagedOutliers,!!sym(SelectedIndVar),NA))%>%
+  mutate(!!OutlierName := ifelse(FlaggedOutlier,!!sym(SelectedIndVar),NA))%>%
            mutate(!!SelectedIndVar := NoOutlierVar)
 
 OutLierPlotObject <- OutLierPlotDF%>%
@@ -228,11 +231,16 @@ UpdatedDF <- ErrorMarkedDF%>%
 ```
 
 
+
+```{r fig.cap= 'Binned wastewater concentration and daily cases for Madison. Red squares are the median value of the bins without removing the flagged outliers. Blue circles are the median value of the bins removing the flagged outliers. The Black line connects the red square and blue circle representing the same bin.', include = FALSE}
+
 # Binning
 
-To isolate this relationship we used a primitive binning relationship. We used non overlapping bins of 2 weeks and took the median of the data within that range. This reduces autocorrelation issues and masks potential noise in the data. We see a very strong trend slightly improved without the outliers.
+# To isolate this relationship we used a primitive binning relationship. We used non overlapping bins of 2 weeks and took the median of the data within that range. This reduces autocorrelation issues and masks potential noise in the data. We see a very strong trend slightly improved without the outliers.
 
-```{r fig.cap= 'Binned wastewater concentration and daily cases for Madison. Red squares are the median value of the bins without removing the flagged outliers. Blue circles are the median value of the bins removing the flagged outliers. The Black line connects the red square and blue circle representing the same bin.'}
+
+
+
 #StartDate is Where the binning starts
 #DaySmoothing is The size of the bins
 #Lag is The offset between Cases and Var
@@ -362,10 +370,6 @@ To get a good smoothing of the `r SelectedIndVar ` measurement we employ loess s
 
 ```{r fig.cap= 'Loess smoothed N1 and SLD cases for Madison data. Using a Locally Weighted Scatterplot Smoothing process along with the previous figure SLD cases we get the most sophisticated relationship between the two signals discussed in this document.'}
 
-#SLDSmoothedDF[["SLDCases"]] <- loessFit(y=(SLDSmoothedDF[["SevenDayMACases"]]), 
-#                      x=SLDSmoothedDF$Date, #create loess fit of the data
-#                      span=.05, #span of .2 seems to give the best result, not rigorously chosen
-#                      iterations=2)$fitted#2 iterations remove some bad patterns
 SLDSmoothedDF <- LoessSmoothMod(SLDSmoothedDF,SelectedIndVar, loessVar, SpanConstant)
 
 
