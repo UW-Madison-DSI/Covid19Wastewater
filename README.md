@@ -1,5 +1,5 @@
 # COVID-19_WastewaterAnalysis
-# Surveillance branch
+# Main branch
 
 Collaboration with DHS on statewide wastewater surveillance. Their key sites are
 
