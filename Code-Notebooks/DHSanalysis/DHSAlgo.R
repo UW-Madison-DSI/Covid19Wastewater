@@ -71,17 +71,21 @@ LMSelectBestList <- function(LMList, Verbose = FALSE){
 DHSInnerLoop <- function(Formula, DF, LMMethod = lm){
   IndiVar <- as.character(Formula)[2]
   
+  
   if(length(na.omit(pull(DF,IndiVar))) < 2){#The lm call will fail with 1 row
-    reg_estimates = data.frame(#create an empty DF that won't cause issues for row_bind
-                                  WWTP = character(),
-                                  date = as.Date(character()), 
-                                  days_elapsed = double(),
-                                  lmreg_n = integer(),
-                                  lmreg_slope = double(),
-                                  lmreg_sig = double(),
-                                  modeled_percentchange = double(),
-                                  Method = character()
-                                  )
+    reg_estimates = DF %>%
+      
+      filter(date == max(date)) %>%
+      
+      select(WWTP, date) %>%
+      
+      mutate(days_elapsed = as.numeric(max(DF$date) - min(DF$date)),
+             lmreg_n = nrow(filter(DF, !is.na(!!sym(IndiVar)))),
+             lmreg_slope = NA,
+             lmreg_sig = NA,
+             modeled_percentchange = NA,
+             Method = IndiVar
+             )
     return(reg_estimates)
   }
   
@@ -127,7 +131,7 @@ DHSInnerLoop <- function(Formula, DF, LMMethod = lm){
 #' @return a row of a DF containing the 
 #' WWTP, last date, timespan, number of rows, model slope and significance,
 #' and predicted percent change, and what linear model was used
-DHSOuterLoop <- function(DF,Formulas,n = 4,LMMethod=lm, verbose = FALSE){
+DHSOuterLoop <- function(DF,Formulas,n = 5,LMMethod=lm, verbose = FALSE){
   
   reg_estimates = as.data.frame(matrix(ncol=9, nrow=0))
   
@@ -142,13 +146,12 @@ DHSOuterLoop <- function(DF,Formulas,n = 4,LMMethod=lm, verbose = FALSE){
       
         ww.x.subset = DF[c(k:(k+n)),]
         
-      #try({
         ww.x.tobind = Formulas%>%
           lapply(DHSInnerLoop,
                  DF=ww.x.subset,
                  LMMethod = LMMethod)%>%
           bind_rows()
-      #})
+        
         reg_estimates <- rbind(reg_estimates, ww.x.tobind)
     }
   
@@ -168,7 +171,7 @@ DHSClassificationFunc <- function(DF, PSigTest=TRUE){
 
   
   RetDF <- DF%>%
-    mutate(Catagory = cut(modeled_percentchange, c(-Inf,-50,-10,10,100,Inf),
+    mutate(Catagory = cut(modeled_percentchange, c(-Inf,-100,-10,10,100,Inf),
                           ordered_result=TRUE),
            Catagory = as.numeric(Catagory))
   
@@ -230,7 +233,7 @@ CreateHeatMaps <- function(DF, ToMerge = FALSE){#,
 #' @param x The first method to compare
 #' @param y The second method to compare
 #'
-#' @return
+#' @return a ggplot object of the confusion matrix
 ConfMatrix <- function(DF,Cat,x,y){
   RetPlt <- DF%>%
     filter(Method %in% c(x,y))%>%
