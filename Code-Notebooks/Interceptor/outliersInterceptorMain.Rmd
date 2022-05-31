@@ -61,7 +61,7 @@ LIMSWasteName <- "LIMSWasteData_02-09-22.csv"
 
 `r paste0(BaseDir,LIMSCaseName)`
 
-`rpaste0(BaseDir,LIMSWasteName)`
+`r paste0(BaseDir,LIMSWasteName)`
 
 
 ```{r DF Set Up, echo=FALSE}
