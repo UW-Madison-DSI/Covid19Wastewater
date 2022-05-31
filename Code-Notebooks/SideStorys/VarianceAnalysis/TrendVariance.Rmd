@@ -1,10 +1,24 @@
 ---
 params:
-  BaseDir: "Z:/"
+  BaseDir: "../../../"
 title: "Trend variance"
 author: "Marlin"
 date: "11/15/2021"
-output: html_document
+output: 
+  bookdown::html_document2: 
+    fig_width: 8
+    fig_height: 4
+    code_folding: hide
+knit: (
+  function(inputFile, encoding) { 
+    FileComp = strsplit(inputFile,"/")[[1]];
+    File = FileComp[length(FileComp)];
+    File = substr(File,1,nchar(File)-4);
+    pSubTitle <- paste0('RmdOutput/',Sys.Date(),"_",File);
+    rmarkdown::render( 
+      input       = inputFile, 
+      encoding    = encoding, 
+      output_file = pSubTitle) })
 ---
 
 ```{r set up markdown settings, echo=FALSE}
@@ -27,14 +41,22 @@ library(plotly)
   #library(psych)
 
 #Data Files and prep work
-source("../../../lib/DataProccess.R")
+source("../../../lib/DataPathName.R")
+BaseDir <- params$BaseDir#get the root of the directory where the data is stored
+LIMSWasteName <- "Data/processed/LIMSWasteData_02-09-22.csv"
 ```
+
+"Files Used: "
+
+`r HFGCasePath(BaseDir)`
+
+`r HFGWastePath(BaseDir)`
+
+`r paste0(BaseDir,LIMSWasteName)`
 
 
 
 ```{r DF Set Up, echo=FALSE}
-BaseDir <- params$BaseDir#get the root of the directory where the data is stored
-source("../../../lib/DataPathName.R")
 
 
 HFGCaseDF <- ParseData(HFGCasePath(BaseDir))#Reads in preprocessed data into consistent format
@@ -49,11 +71,10 @@ EndHFG <- max(HFGDF$Date)#used for graphing ranges later
 
 HFGLocations <- unique(HFGDF$Site)#Obtain list of Sites in the HFG dataset
 
-
 #Importing the LIMS waste water data
-LIMSHFGLocationsDF <- ParseData(LIMSWastePath(BaseDir))%>%
+LIMSHFGLocationsDF <- ParseData(paste0(BaseDir,LIMSWasteName))%>%
   filter(Site %in% HFGLocations)%>%#Filter LIMS data to only select Sites
-  select(Date, Site,  N1, N1Error)
+  select(Date, Site,  N1)
 
 #joining the two data frames together
 FullDF <- full_join(LIMSHFGLocationsDF,HFGDF, by = c("Date","Site"))%>%
