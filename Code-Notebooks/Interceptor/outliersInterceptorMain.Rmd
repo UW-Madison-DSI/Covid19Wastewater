@@ -59,9 +59,9 @@ LIMSWasteName <- "LIMSWasteData_02-09-22.csv"
 
 "Files Used: "
 
-`r LIMSCasePath(BaseDir)`
+`r paste0(BaseDir,LIMSCaseName)`
 
-`r LIMSWastePath(BaseDir)`
+`rpaste0(BaseDir,LIMSWasteName)`
 
 
 ```{r DF Set Up, echo=FALSE}
@@ -122,21 +122,21 @@ PlotlyConfig <- c("zoomIn2d", "zoomOut2d","lasso2d",
 MadDF <- FullDF%>%
     filter(Site=="Madison")%>%
   TrendSDOutlierFilter("N1", 1.5, 13, n = 5, TrendFunc = LoessSmoothMod,
-                       outCol = "FlagedOutliersN1")%>%
+                       outCol = "FlaggedOutliersN1")%>%
   TrendSDOutlierFilter("N2", 1.5, 13, n = 5, TrendFunc = LoessSmoothMod,
-                       outCol = "FlagedOutliersN2")%>%
-    mutate(NoOutlierVarN1 = ifelse(FlagedOutliersN1, NA, N1),
-           NoOutlierVarN2 = ifelse(FlagedOutliersN2, NA, N2))
+                       outCol = "FlaggedOutliersN2")%>%
+    mutate(NoOutlierVarN1 = ifelse(FlaggedOutliersN1, NA, N1),
+           NoOutlierVarN2 = ifelse(FlaggedOutliersN2, NA, N2))
 
 
 NonOuliersDF <- MadDF%>%
-  mutate(Outlier = ifelse(FlagedOutliersN1,N1,NA))%>%
+  mutate(Outlier = ifelse(FlaggedOutliersN1,N1,NA))%>%
            mutate(N1 = NoOutlierVarN1,
                   N2 = NoOutlierVarN2)
 
 OutLierPlotDF <- MadDF%>%
-  mutate(OutlierN1 = ifelse(FlagedOutliersN1,N1,NA),
-         OutlierN2 = ifelse(FlagedOutliersN2,N2,NA))%>%
+  mutate(OutlierN1 = ifelse(FlaggedOutliersN1,N1,NA),
+         OutlierN2 = ifelse(FlaggedOutliersN2,N2,NA))%>%
            mutate(N1 = NoOutlierVarN1,
                   N2 = NoOutlierVarN2)%>%
   #filter(!(is.na(N1)&is.na(Outlier)))%>%

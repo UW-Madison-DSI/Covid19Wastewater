@@ -7,7 +7,7 @@ output:
   html_document:
     df_print: paged
 params:
-  BaseDir: ./../../
+  BaseDir: ../../Data/processed/
   #~/Box/DSI/Projects/wastewater/RD/
 knit: (
   function(inputFile, encoding) { 
@@ -48,10 +48,12 @@ library(plotly)
 #Data Files and prep work
 source("../../lib/DataProccess.R")
 source("../../lib/NormFuncs.R")
+source("../../lib/TSTrendGen.R")
 source("../../lib/OutlierDetectionFuncs.R")
 source("../../lib/DataPathName.R")
 BaseDir <- params$BaseDir#get the root of the directory where the data is stored
-
+LIMSCaseName <- "MMSD_Interceptor_Cases_2_7_22.csv"
+LIMSWasteName <- "LIMSWasteData_02-09-22.csv"
 
 N1_N2ArrangeLab <- text_grob("Covid viral concentration (GC/L)", size = 12, rot = 90, vjust = .5)
 ```
@@ -59,9 +61,9 @@ N1_N2ArrangeLab <- text_grob("Covid viral concentration (GC/L)", size = 12, rot 
 
 "Files Used: "
 
-`r LIMSCasePath("")`
+`r paste0(BaseDir, LIMSCaseName)`
 
-`r LIMSWastePath("")`
+`r paste0(BaseDir, LIMSWasteName)`
 
 
 ```{r DF Set Up, echo=FALSE}
@@ -75,7 +77,7 @@ weights <- dgamma(1:SLDWidth, scale = Scale, shape = Shape)
 
 
 #Importing the Madison case data
-LatCaseDF <- ParseData(LIMSCasePath(BaseDir))%>% 
+LatCaseDF <- ParseData(paste0(BaseDir, LIMSCaseName))%>% 
   mutate(FirstConfirmed = ifelse(is.na(FirstConfirmed),0,FirstConfirmed))%>%
   arrange(Site,Date)%>%
   group_by(Site)%>%
@@ -89,7 +91,7 @@ LatCaseDF <- ParseData(LIMSCasePath(BaseDir))%>%
 SiteData <- unique(LatCaseDF$Site)
 
 #Importing the Madison waste water data
-LIMSFullDF <- ParseData(LIMSWastePath(BaseDir))%>%
+LIMSFullDF <- ParseData(paste0(BaseDir, LIMSWasteName))%>%
   filter(Site %in% SiteData)%>%
   mutate(N1Pure = ifelse(is.na(N1),N1,N1),
          N1Pure = ifelse(is.na(N1),N1,N1),
@@ -112,10 +114,12 @@ FullDF <- full_join(LatCaseDF,LIMSFullDF, by = c("Date","Site"))%>%
 
 
 ```{r Outlier}
-MadDF <- filter(FullDF,Site=="Madison")%>%
-  filter(Date>mdy("1/1/2021"))%>%
-    mutate(FlaggedOutliersN1 = IdentifyOutliers(N1,Bin = 21, Action = "Flag"),
-           FlaggedOutliersN2 = IdentifyOutliers(N2,Bin = 28, Action = "Flag"))
+MadDF <- FullDF%>%
+    filter(Site=="Madison")%>%
+  TrendSDOutlierFilter("N1", 1.5, 13, n = 5, TrendFunc = LoessSmoothMod,
+                       outCol = "FlaggedOutliersN1")%>%
+  TrendSDOutlierFilter("N2", 1.5, 13, n = 5, TrendFunc = LoessSmoothMod,
+                       outCol = "FlaggedOutliersN2")
 
 
 YMaxZoomIn <- 3e6
