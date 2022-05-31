@@ -23,6 +23,7 @@ library(ggplot2)
 library(limma)
 library(tidyr)
 library(patchwork)
+
 #Data Files and prep work
 #source("../../lib/DataPathName.R")
 source("../../lib/OutlierDetectionFuncs.R")
@@ -40,9 +41,9 @@ VecModOn <- "sars_cov2_adj_load_log10"
 
 DataMod <- LIMSFullDF%>%
     rename(Date=date, Site = WWTP)%>%
-    group_by(Site)%>%
     #filter(n()>135)%>%
     mutate(sars_cov2_adj_load = 10^sars_cov2_adj_load_log10)%>%
+    group_by(Site)%>%
     group_split()%>%
     lapply(TrendSDOutlierFilter, "sars_cov2_adj_load", 1.25, 14, n = 5, 
            TrendFunc = LoessSmoothMod, verbose = TRUE)%>%
@@ -52,30 +53,29 @@ DataMod <- LIMSFullDF%>%
     bind_rows()%>%
     rename(date=Date, WWTP = Site)%>%
     mutate(RemovedOutlierCol = ifelse(FlaggedOutlier,NA,!!sym(VecModOn)))
+
 ```
 
 
 ```{r AllSite Loop, Warning = FALSE}
-
+source("DHSAlgo.R")
 LMfited <- c(
-              as.formula("sars_cov2_adj_load_log10 ~ date"),
-              as.formula("Loess ~ date"),
-              as.formula("RemovedOutlierCol ~ date"),
-               as.formula("EXP ~ date"),
-               as.formula("sgolay ~ date")
+               as.formula("sars_cov2_adj_load_log10 ~ date"),
+               as.formula("Loess ~ date")#,
+               #as.formula("RemovedOutlierCol ~ date"),
+               #as.formula("EXP ~ date"),
+               #as.formula("sgolay ~ date")
               )
-
-
 
 reg_estimates = DataMod%>%
           group_by(WWTP)%>%
           group_split()%>%
-          lapply(DHSOuterLoop, LMfited, verbose = FALSE)%>%
+          lapply(DHSOuterLoop, LMfited, verbose = TRUE)%>%
           bind_rows()%>%
           DHSClassificationFunc(PSigTest=FALSE)%>%
           rename(NoPsigCatagory = Catagory)%>%
-          DHSClassificationFunc(PSigTest=TRUE)
-
+          DHSClassificationFunc(PSigTest=TRUE)%>%
+  filter(!is.na(Catagory))
 
 #write.csv(reg_estimates, "results_table.csv", row.names=FALSE)
 ```
@@ -93,11 +93,15 @@ reg_estimates%>%
   ggplot(aes(x=Catagory,y=n))+
            geom_col(aes(fill=Method),position = "dodge")+ 
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+reg_estimates%>%
+  filter(is.na(Catagory))
 ```
 
 ```{r MergePlot}
 source("../MainStory/MainStory.R")
-Dim = ceiling(length(unique(reg_estimates$WWTP))/4)
+VDim = length(LMfited)+1
+HDim = length(unique(reg_estimates$WWTP))
 
 BarGridSmoothRaw <- reg_estimates%>%
   FactorVecByNumPoints("WWTP","Catagory")%>%
@@ -125,6 +129,6 @@ SavePlot <- BarGridSmoothRaw/Gplt + plot_layout(heights = c(2, 1))
 
 
 ggsave("ClassCompare2.PDF",plot=SavePlot,
-         width = 32*Dim,height = 15,units="cm",limitsize =FALSE)
+         width = 8*HDim, height = 5*VDim,units="cm",limitsize =FALSE)
 
 ```
