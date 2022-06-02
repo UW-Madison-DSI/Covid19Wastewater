@@ -11,6 +11,11 @@
 #' @param outCol What the name of the outVec is
 #'
 #' @return DF With col saying whether the method was flagged
+#' @export
+#'
+#' @examples 
+#' TrendSDOutlierFilter(LIMSFullDF, "sars_cov2_adj_load", 1.25, 14, 
+#' n = 5, TrendFunc = LoessSmoothMod, verbose = TRUE)
 TrendSDOutlierFilter <- function(DF,VecName,SDDeg,DaySmoothed, outCol = "FlaggedOutlier",
                                  n = 5, TrendFunc = LoessSmoothMod, verbose=FALSE){
   ArangeDF <- DF%>%
@@ -49,6 +54,11 @@ TrendSDOutlierFilter <- function(DF,VecName,SDDeg,DaySmoothed, outCol = "Flagged
 #' @param TrendFunc What function that is used to generate the trend
 #'
 #' @return Boolean of each row being an outlier
+#' @export
+#'
+#' @examples 
+#' TrendSDOutlierDetec(LIMSFullDF, "sars_cov2_adj_load", 1.25, 14, 
+#' n = 5, TrendFunc = LoessSmoothMod)
 TrendSDOutlierDetec <- function(DF,VecName,SDDeg,DaySmoothed=36,n = 5,
                                 TrendFunc = LoessSmoothMod){
   FullDateRange <- data.frame(Date=seq(min(DF$Date, na.rm = TRUE),
@@ -61,7 +71,7 @@ TrendSDOutlierDetec <- function(DF,VecName,SDDeg,DaySmoothed=36,n = 5,
   
   
   for(i in 1:n){#robustly remove outliers and recalc smooth line
-    span = 2*spanGuess(DF, VecName)
+    span = 2*ParameterGuess(DF, VecName, 17.8, .6)
     BestVectorDF <- BestVectorDF%>%
       TrendFunc("UsedVar", "Temp", span = span)%>%
       mutate(SD = rollapply(UsedVar - Temp, DaySmoothed, sd, na.rm=TRUE, partial=TRUE),
