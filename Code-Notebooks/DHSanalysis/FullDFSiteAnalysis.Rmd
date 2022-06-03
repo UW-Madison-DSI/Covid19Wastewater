@@ -26,9 +26,7 @@ library(patchwork)
 
 #Data Files and prep work
 #source("../../lib/DataPathName.R")
-source("../../lib/OutlierDetectionFuncs.R")
-source("../../lib/TSTrendGen.R")
-source("DHSAlgo.R")
+library(DSIWasteWater)
 library(zoo)
 
 #Importing the waste water data
@@ -125,7 +123,7 @@ Gplt <- DataMod%>%
 )
 
 SavePlot <- BarGridSmoothRaw/Gplt + plot_layout(heights = c(2, 1))
-
+  
 
 
 ggsave("ClassCompare2.PDF",plot=SavePlot,
