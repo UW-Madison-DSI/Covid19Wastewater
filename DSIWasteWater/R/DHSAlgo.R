@@ -127,7 +127,7 @@ DHSInnerLoop <- function(Formula, DF, LMMethod = lm){
 #' @param LMMethod Controls what Linear model is applied. 
 #' intended options are lm and FCVLM
 #' @param verbose prints what site we are in
-#'
+#' @export
 #' @return a row of a DF containing the 
 #' WWTP, last date, timespan, number of rows, model slope and significance,
 #' and predicted percent change, and what linear model was used
@@ -148,7 +148,7 @@ DHSOuterLoop <- function(DF,Formulas,n = 5,LMMethod=lm, verbose = FALSE){
         
         ww.x.tobind = Formulas%>%
           lapply(DHSInnerLoop,
-                 DF=ww.x.subset,
+                 DF = ww.x.subset,
                  LMMethod = LMMethod)%>%
           bind_rows()
         
@@ -165,7 +165,7 @@ DHSOuterLoop <- function(DF,Formulas,n = 5,LMMethod=lm, verbose = FALSE){
 #'
 #' @param DF 
 #' @param PSigTest Controls if we filter values with P-values>.3
-#'
+#' @export
 #' @return
 DHSClassificationFunc <- function(DF, PSigTest=TRUE){
 
@@ -202,7 +202,7 @@ DHSClassificationFunc <- function(DF, PSigTest=TRUE){
 #'
 #' @param DF 
 #' @param ToMerge if true we remove the lower labels
-#'
+#' @export
 #' @return faceted ggplot
 CreateHeatMaps <- function(DF, ToMerge = FALSE){#, 
   CatagoryColors <- c("#0571b0","#92c5de", "#979797","WHITE","#f4a582","#ca0020")
@@ -232,7 +232,7 @@ CreateHeatMaps <- function(DF, ToMerge = FALSE){#,
 #' @param Cat The column with the values of the methods 
 #' @param x The first method to compare
 #' @param y The second method to compare
-#'
+#' @export
 #' @return a ggplot object of the confusion matrix
 ConfMatrix <- function(DF,Cat,x,y){
   RetPlt <- DF%>%
