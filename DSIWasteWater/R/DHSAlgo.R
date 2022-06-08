@@ -110,6 +110,36 @@ DHSInnerLoop <- function(Formula, DF,Keep = NULL, LMMethod = lm){
   return(ww.x.tobind)
 }
 
+
+#' Run DHS analysis at a top level
+#'
+#' @param DataMod The DF containing the col RunOn + date
+#' @param RunOn The col names of the values we wish to run
+#' @param SplitOn A category to separate to create independent TS data
+#' @param verbose Bool on whether it should print out what group it is on
+#' @param PSigTest When categorizing if it should reject high pVals
+#'
+#' @return A DF with the associated Date and DHS analysis
+#' @export
+#'
+#' @examples
+DHSTopLevelAnalysis <- function(DataMod, RunOn, SplitOn, 
+                                verbose=FALSE, PSigTest){
+  reg_estimates = DataMod%>%
+    pivot_longer(all_of(RunOn), names_to = "Method")%>%
+    filter(!is.na(value))%>%
+    group_by(across(all_of(c(SplitOn,"Method"))))%>%
+    group_split()%>%
+    lapply(DHSOuterLoop, 
+           Formula = value ~ date, #Should Be Gen
+           Keep  = c(SplitOn, "Method"), 
+           verbose = verbose)%>%
+    bind_rows()%>%
+    DHSClassificationFunc(PSigTest=PSigTest)%>%
+    filter(!is.na(Catagory))
+  return(reg_estimates)
+}
+
 uniqueVal <- function(Col,DF){
   return(unique(DF[[Col]]))
 }

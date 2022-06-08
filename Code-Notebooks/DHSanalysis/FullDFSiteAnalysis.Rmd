@@ -43,7 +43,7 @@ DataMod <- LIMSFullDF%>%
     group_by(Site)%>%
     group_split()%>%
     lapply(TrendSDOutlierFilter, "sars_cov2_adj_load", 1.25, 14, n = 5, 
-           TrendFunc = LoessSmoothMod, verbose = TRUE)%>%
+           TrendFunc = LoessSmoothMod, verbose = FALSE)%>%
     lapply(LoessSmoothMod, VecModOn, "Loess", "guess")%>%
     lapply(ExpSmoothMod, VecModOn, "EXP")%>%
     lapply(sgolaySmoothMod, VecModOn, "sgolay")%>%
@@ -56,18 +56,10 @@ DataMod <- LIMSFullDF%>%
 
 ```{r AllSite Loop, Warning = FALSE}
 #RunOn <- c(sars_cov2_adj_load_log10,RemovedOutlierCol,Loess,EXP ,sgolay)
+
+
 RunOn <- c("sars_cov2_adj_load_log10", "Loess", "sgolay")
-reg_estimates = DataMod%>%
-          pivot_longer(all_of(RunOn), names_to = "Method")%>%
-          filter(!is.na(value))%>%
-          group_by(WWTP, Method)%>%
-          group_split()%>%
-          lapply(DHSOuterLoop, Formula = value ~ date, Keep  = c("WWTP","Method"), verbose = FALSE)%>%
-          bind_rows()%>%
-          DHSClassificationFunc(PSigTest=FALSE)%>%
-          rename(NoPsigCatagory = Catagory)%>%
-          DHSClassificationFunc(PSigTest=TRUE)%>%
-          filter(!is.na(Catagory))
+reg_estimates = DHSTopLevelAnalysis(DataMod, RunOn, "WWTP", verbose=TRUE)
 
 ```
 
