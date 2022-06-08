@@ -1,4 +1,5 @@
 #' wrapper for TrendSDOutlierDetec that stores outlier results
+#' 
 #' in the data frame. The input assumes the data is from one TS
 #'
 #' @param DF The DF Needs to have the Time label to be Date
@@ -14,8 +15,7 @@
 #' @export
 #'
 #' @examples 
-#' TrendSDOutlierFilter(LIMSFullDF, "sars_cov2_adj_load", 1.25, 14, 
-#' n = 5, TrendFunc = LoessSmoothMod, verbose = TRUE)
+
 TrendSDOutlierFilter <- function(DF,VecName,SDDeg,DaySmoothed, outCol = "FlaggedOutlier",
                                  n = 5, TrendFunc = LoessSmoothMod, verbose=FALSE){
   ArangeDF <- DF%>%
@@ -44,6 +44,8 @@ TrendSDOutlierFilter <- function(DF,VecName,SDDeg,DaySmoothed, outCol = "Flagged
 
 
 #' Decide outliers using calculated trend and standard deviation
+#' 
+#' Need to be Done
 #'
 #' @param DF The DF Needs to have the Time label to be Date Needs to be sorted by 
 #' Date before called
@@ -57,8 +59,6 @@ TrendSDOutlierFilter <- function(DF,VecName,SDDeg,DaySmoothed, outCol = "Flagged
 #' @export
 #'
 #' @examples 
-#' TrendSDOutlierDetec(LIMSFullDF, "sars_cov2_adj_load", 1.25, 14, 
-#' n = 5, TrendFunc = LoessSmoothMod)
 TrendSDOutlierDetec <- function(DF,VecName,SDDeg,DaySmoothed=36,n = 5,
                                 TrendFunc = LoessSmoothMod){
   FullDateRange <- data.frame(Date=seq(min(DF$Date, na.rm = TRUE),

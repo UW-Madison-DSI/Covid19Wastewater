@@ -4,7 +4,7 @@
 \alias{CreateHeatMaps}
 \title{CreateHeatMaps}
 \usage{
-CreateHeatMaps(DF, ToMerge = FALSE)
+CreateHeatMaps(DF, FacGridFormula, FillFac, CatagoryColors, ToMerge = FALSE)
 }
 \arguments{
 \item{DF}{}

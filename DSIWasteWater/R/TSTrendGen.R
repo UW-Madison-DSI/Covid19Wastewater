@@ -10,7 +10,7 @@
 #'
 #' @return a number between 0 and max
 #'
-#' @examples ParameterGuess(DF,InVar, 17.8, .6)
+#' @examples
 ParameterGuess <- function(DF,InVar, Base, max){
   temp <- DF%>%
     filter(!is.na((!!sym(InVar))))%>%
@@ -132,7 +132,7 @@ ExpSmoothMod <- function(DF,InVar, OutVar,alpha="guess",beta="guess", Filter = N
 #'
 #' @return a number greater or equal to min
 #'
-#' @examples NGuess(DF,InVar,50/178, 7)
+#' @examples
 NGuess <- function(DF,InVar, Base, min){
   temp <- DF%>%
     filter(!is.na((!!sym(InVar))))%>%
@@ -156,7 +156,6 @@ NGuess <- function(DF,InVar, Base, min){
 #' @export
 #'
 #' @examples
-#' 
 sgolaySmoothMod <- function(DF,InVar, OutVar,poly=5,n="guess", Filter = NULL){
   if(n=="guess"){
     n <- NGuess(DF,InVar,50/178, 7)

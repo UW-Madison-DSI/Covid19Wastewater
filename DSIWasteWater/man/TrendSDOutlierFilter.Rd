@@ -2,8 +2,7 @@
 % Please edit documentation in R/OutlierDetectionFuncs.R
 \name{TrendSDOutlierFilter}
 \alias{TrendSDOutlierFilter}
-\title{wrapper for TrendSDOutlierDetec that stores outlier results
-in the data frame. The input assumes the data is from one TS}
+\title{wrapper for TrendSDOutlierDetec that stores outlier results}
 \usage{
 TrendSDOutlierFilter(
   DF,
@@ -37,10 +36,5 @@ TrendSDOutlierFilter(
 DF With col saying whether the method was flagged
 }
 \description{
-wrapper for TrendSDOutlierDetec that stores outlier results
 in the data frame. The input assumes the data is from one TS
-}
-\examples{
-TrendSDOutlierFilter(LIMSFullDF, "sars_cov2_adj_load", 1.25, 14, 
-n = 5, TrendFunc = LoessSmoothMod, verbose = TRUE)
 }

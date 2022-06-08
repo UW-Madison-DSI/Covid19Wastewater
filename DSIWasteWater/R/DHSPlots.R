@@ -6,14 +6,13 @@
 #' @param ToMerge if true we remove the lower labels
 #' @export
 #' @return faceted ggplot
-CreateHeatMaps <- function(DF, ToMerge = FALSE){#, 
-  CatagoryColors <- c("#0571b0","#92c5de", "#979797","WHITE","#f4a582","#ca0020")
+CreateHeatMaps <- function(DF, FacGridFormula, FillFac, CatagoryColors, ToMerge = FALSE){#, 
   BarGridSmoothRaw <- DF%>%
     ggplot()+
     geom_rect(aes(xmin=date-days_elapsed/2,xmax=date+days_elapsed/2,
                   ymin=0,
-                  ymax = 10,fill = Catagory))+
-    facet_grid(Method ~ WWTP)+
+                  ymax = 10,fill = !!sym(FillFac)))+
+    facet_grid(FacGridFormula)+
     scale_fill_manual(values = CatagoryColors)
   if(ToMerge){
     BarGridSmoothRaw <- BarGridSmoothRaw+

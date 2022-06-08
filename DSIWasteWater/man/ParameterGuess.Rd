@@ -23,6 +23,3 @@ a number between 0 and max
 \description{
 Get a fitting parameter for the model
 }
-\examples{
-ParameterGuess(DF,InVar, 17.8, .6)
-}

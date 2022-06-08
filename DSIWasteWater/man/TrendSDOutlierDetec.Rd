@@ -31,9 +31,5 @@ Date before called}
 Boolean of each row being an outlier
 }
 \description{
-Decide outliers using calculated trend and standard deviation
-}
-\examples{
-TrendSDOutlierDetec(LIMSFullDF, "sars_cov2_adj_load", 1.25, 14, 
-n = 5, TrendFunc = LoessSmoothMod)
+Need to be Done
 }
