@@ -19,15 +19,15 @@ knitr::opts_chunk$set(echo = TRUE)
 BaseDir <- "./../../"
 
 library(dplyr)
-library(ggplot2)
-library(limma)
-library(tidyr)
-library(patchwork)
+ library(ggplot2)
+ library(limma)
+ library(tidyr)
+ library(patchwork)
 
 #Data Files and prep work
 #source("../../lib/DataPathName.R")
 library(DSIWasteWater)
-library(zoo)
+#library(zoo)
 
 #Importing the waste water data
 LIMSFullDF <- read.csv("../../data/processed/workset4.csv")%>%
@@ -92,14 +92,15 @@ unique(reg_estimates$Method)
 ```
 
 ```{r MergePlot}
-VDim = length(LMfited)+1
+VDim = length(RunOn)+1
 HDim = length(unique(reg_estimates$WWTP))
 
+CatagoryColors <- c("#0571b0","#92c5de", "#979797","WHITE","#f4a582","#ca0020")
 BarGridSmoothRaw <- reg_estimates%>%
   
   FactorVecByNumPoints("WWTP","Catagory")%>%
   
-  CreateHeatMaps(ToMerge=TRUE)
+  CreateHeatMaps(Method ~ WWTP, "Catagory", CatagoryColors,ToMerge=TRUE)
 
  
 Gplt <- DataMod%>%
