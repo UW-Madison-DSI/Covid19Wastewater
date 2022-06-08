@@ -89,24 +89,9 @@ unique(reg_estimates$Method)
 VDim = length(RunOn)+1
 HDim = length(unique(reg_estimates$WWTP))
 
-CatagoryColors <- c("#0571b0","#92c5de", "#979797","WHITE","#f4a582","#ca0020")
-BarGridSmoothRaw <- reg_estimates%>%
-  
-  FactorVecByNumPoints("WWTP","Catagory")%>%
-  
-  CreateHeatMaps(Method ~ WWTP, "Catagory", CatagoryColors,ToMerge=TRUE)
 
- 
-Gplt <- DataMod%>%
-  FactorVecByNumPoints("WWTP","sars_cov2_adj_load_log10")%>%
-  
-  mutate(Data = "Data")%>%
-  
-  filter(WWTP %in% unique(reg_estimates$WWTP))%>%
-  
-  WastePlot("date", "sars_cov2_adj_load_log10", "Loess", "sars_cov2_adj_load_log10", "Loess", ToMerge = TRUE)
-
-SavePlot <- BarGridSmoothRaw/Gplt + plot_layout(heights = c(2, 1))
+SavePlot <- DHSTopLevelPlots(reg_estimates,DataMod, Method ~ WWTP,
+                             "WWTP", "sars_cov2_adj_load_log10", "Loess")
   
 
 

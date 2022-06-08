@@ -107,3 +107,42 @@ WastePlot <- function(DF, xVal, PointVal, LineVal,PointName = NULL, LineName = N
   }
   return(RetPlot)
 }
+
+
+#' Title
+#'
+#' @param RegDF 
+#' @param BaseDF 
+#' @param FacGridFormula 
+#' @param SiteName 
+#' @param PointName 
+#' @param LineName 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+DHSTopLevelPlots <- function(RegDF,BaseDF, FacGridFormula,
+                             SiteName, PointName,  LineName){
+  
+  CatagoryColors <- c("#0571b0","#92c5de", "#979797","WHITE","#f4a582","#ca0020")
+  BarGridSmoothRaw <- RegDF%>%
+    
+    FactorVecByNumPoints(SiteName,"Catagory")%>%
+    
+    CreateHeatMaps(FacGridFormula, "Catagory", CatagoryColors,ToMerge=TRUE)
+  
+  
+  Gplt <- BaseDF%>%
+    FactorVecByNumPoints("WWTP","sars_cov2_adj_load_log10")%>%
+    
+    mutate(Data = "Data")%>%
+    
+    filter(!!sym(SiteName) %in% unique(RegDF[[SiteName]]))%>%
+    
+    WastePlot("date", PointName,  LineName, PointName,  LineName, ToMerge = TRUE)
+  
+  SavePlot <- BarGridSmoothRaw/Gplt + plot_layout(heights = c(2, 1))
+  
+  return(SavePlot)
+}
