@@ -36,7 +36,6 @@ LIMSFullDF <- read.csv("../../data/processed/workset4.csv")%>%
 
 VecModOn <- "sars_cov2_adj_load_log10"
 
-
 DataMod <- LIMSFullDF%>%
     rename(Date=date, Site = WWTP)%>%
     #filter(n()>135)%>%
@@ -56,7 +55,7 @@ DataMod <- LIMSFullDF%>%
 
 
 ```{r AllSite Loop, Warning = FALSE}
-source("DHSAlgo.R")
+
 LMfited <- c(
                as.formula("sars_cov2_adj_load_log10 ~ date"),
                as.formula("Loess ~ date")#,
@@ -104,23 +103,15 @@ HDim = length(unique(reg_estimates$WWTP))
 BarGridSmoothRaw <- reg_estimates%>%
   FactorVecByNumPoints("WWTP","Catagory")%>%
   CreateHeatMaps(ToMerge=TRUE)
+
  
 Gplt <- DataMod%>%
   FactorVecByNumPoints("WWTP","sars_cov2_adj_load_log10")%>%
-  filter(WWTP %in% unique(reg_estimates$WWTP))%>%
   mutate(Data = "Data")%>%
-  ggplot(aes(x=date))+
-  geom_point(aes(y = sars_cov2_adj_load_log10), size = .5)+
-  geom_point(aes(y = RemovedOutlierCol, color = "OutlierError"), size = .5)+
-  #geom_line(aes(y = EXP, color = "EXP"))+
-  geom_line(aes(y = Loess, color = "Loess"))+
-  #geom_line(aes(y = sgolay, color = "sgolay"))+
-  facet_grid(Data~WWTP)+
-  scale_x_date(date_labels = "%b %y") +
-  theme(
-  strip.background = element_blank(),
-  strip.text.x = element_blank()
-)
+  filter(WWTP %in% unique(reg_estimates$WWTP))%>%
+  WastePlot("Date", "sars_cov2_adj_load_log10", "Loess", "sars_cov2_adj_load_log10", "Loess", ToMerge = TRUE)+
+  facet_grid(~WWTP)+
+  scale_x_date(date_labels = "%b %y")
 
 SavePlot <- BarGridSmoothRaw/Gplt + plot_layout(heights = c(2, 1))
   
