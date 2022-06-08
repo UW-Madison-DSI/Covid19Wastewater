@@ -112,6 +112,16 @@ NormThird <- function(DF,Vec1Name,Vec2Name, Vec3Name,RetName){
 }
 
 
+#' Title
+#'
+#' @param DF 
+#' @param FacVar 
+#' @param FiltVar 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 FactorVecByNumPoints <- function(DF,FacVar, FiltVar){
   FactorOrder <- (DF%>%
                     filter(!is.na(!!sym(FiltVar)))%>%

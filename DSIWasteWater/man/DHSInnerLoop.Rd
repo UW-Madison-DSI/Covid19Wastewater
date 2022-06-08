@@ -4,7 +4,7 @@
 \alias{DHSInnerLoop}
 \title{DHSInnerLoop}
 \usage{
-DHSInnerLoop(Formula, DF, LMMethod = lm)
+DHSInnerLoop(Formula, DF, Keep = NULL, LMMethod = lm)
 }
 \arguments{
 \item{Formula}{LM model to be fit on DF}

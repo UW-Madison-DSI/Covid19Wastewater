@@ -4,10 +4,12 @@
 \alias{DHSOuterLoop}
 \title{DHSOuterLoop}
 \usage{
-DHSOuterLoop(DF, Formulas, n = 5, LMMethod = lm, verbose = FALSE)
+DHSOuterLoop(DF, Formula, Keep = NULL, n = 5, LMMethod = lm, verbose = FALSE)
 }
 \arguments{
 \item{DF}{Contains TS data should only contain one WWTP}
+
+\item{Formula}{LM model to be fit on a subsection of the data}
 
 \item{n}{number of rows to be in each LM regression}
 
@@ -15,8 +17,6 @@ DHSOuterLoop(DF, Formulas, n = 5, LMMethod = lm, verbose = FALSE)
 intended options are lm and FCVLM}
 
 \item{verbose}{prints what site we are in}
-
-\item{Formula}{LM model to be fit on a subsection of the data}
 }
 \value{
 a row of a DF containing the 

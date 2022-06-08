@@ -96,6 +96,9 @@ WastePlot <- function(DF, xVal, PointVal, LineVal,PointName = NULL, LineName = N
     RetPlot <- RetPlot%>%
       Abstract_PlotAdd(geom_line, LineName, LineVal)
   }
+  RetPlot <- RetPlot+
+    facet_grid(~WWTP)+
+    scale_x_date(date_labels = "%b %y")
   if(ToMerge){
     RetPlot <- RetPlot+
       theme(

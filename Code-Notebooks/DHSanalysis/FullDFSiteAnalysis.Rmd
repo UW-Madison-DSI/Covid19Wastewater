@@ -55,31 +55,24 @@ DataMod <- LIMSFullDF%>%
 
 
 ```{r AllSite Loop, Warning = FALSE}
-
-LMfited <- c(
-               as.formula("sars_cov2_adj_load_log10 ~ date"),
-               as.formula("Loess ~ date")#,
-               #as.formula("RemovedOutlierCol ~ date"),
-               #as.formula("EXP ~ date"),
-               #as.formula("sgolay ~ date")
-              )
-
+#RunOn <- c(sars_cov2_adj_load_log10,RemovedOutlierCol,Loess,EXP ,sgolay)
+RunOn <- c("sars_cov2_adj_load_log10", "Loess", "sgolay")
 reg_estimates = DataMod%>%
-          group_by(WWTP)%>%
+          pivot_longer(all_of(RunOn), names_to = "Method")%>%
+          filter(!is.na(value))%>%
+          group_by(WWTP, Method)%>%
           group_split()%>%
-          lapply(DHSOuterLoop, LMfited, verbose = TRUE)%>%
+          lapply(DHSOuterLoop, Formula = value ~ date, Keep  = c("WWTP","Method"), verbose = FALSE)%>%
           bind_rows()%>%
           DHSClassificationFunc(PSigTest=FALSE)%>%
           rename(NoPsigCatagory = Catagory)%>%
           DHSClassificationFunc(PSigTest=TRUE)%>%
-  filter(!is.na(Catagory))
+          filter(!is.na(Catagory))
 
-#write.csv(reg_estimates, "results_table.csv", row.names=FALSE)
 ```
 
 
 ```{r Edge Include, include = TRUE}
-
 ConfMatrix(reg_estimates,"Catagory","Loess","sars_cov2_adj_load_log10")+ 
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
@@ -93,25 +86,30 @@ reg_estimates%>%
 
 reg_estimates%>%
   filter(is.na(Catagory))
+
+
+unique(reg_estimates$Method)
 ```
 
 ```{r MergePlot}
-source("../MainStory/MainStory.R")
 VDim = length(LMfited)+1
 HDim = length(unique(reg_estimates$WWTP))
 
 BarGridSmoothRaw <- reg_estimates%>%
+  
   FactorVecByNumPoints("WWTP","Catagory")%>%
+  
   CreateHeatMaps(ToMerge=TRUE)
 
  
 Gplt <- DataMod%>%
   FactorVecByNumPoints("WWTP","sars_cov2_adj_load_log10")%>%
+  
   mutate(Data = "Data")%>%
+  
   filter(WWTP %in% unique(reg_estimates$WWTP))%>%
-  WastePlot("Date", "sars_cov2_adj_load_log10", "Loess", "sars_cov2_adj_load_log10", "Loess", ToMerge = TRUE)+
-  facet_grid(~WWTP)+
-  scale_x_date(date_labels = "%b %y")
+  
+  WastePlot("date", "sars_cov2_adj_load_log10", "Loess", "sars_cov2_adj_load_log10", "Loess", ToMerge = TRUE)
 
 SavePlot <- BarGridSmoothRaw/Gplt + plot_layout(heights = c(2, 1))
   

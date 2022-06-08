@@ -68,24 +68,25 @@ LMSelectBestList <- function(LMList, Verbose = FALSE){
 #' @return a row of a DF containing the 
 #' WWTP, last date, timespan, number of rows, model slope and significance,
 #' and predicted percent change, and what linear model was used
-DHSInnerLoop <- function(Formula, DF, LMMethod = lm){
+DHSInnerLoop <- function(Formula, DF,Keep = NULL, LMMethod = lm){
   IndiVar <- as.character(Formula)[2]
+  DepVar <- as.character(Formula)[3]
+  
+  reg_estimates <- DF %>%
+    
+    filter(date == max(date)) %>%
+    
+    select(all_of(Keep), date)%>%
+    
+    mutate(days_elapsed = as.numeric(max(DF$date) - min(DF$date)),
+           lmreg_n = nrow(filter(DF, !is.na(!!sym(IndiVar)))),
+           lmreg_slope = NA,
+           lmreg_sig = NA,
+           modeled_percentchange = NA
+    )
   
   
   if(length(na.omit(pull(DF,IndiVar))) < 2){#The lm call will fail with 1 row
-    reg_estimates = DF %>%
-      
-      filter(date == max(date)) %>%
-      
-      select(WWTP, date) %>%
-      
-      mutate(days_elapsed = as.numeric(max(DF$date) - min(DF$date)),
-             lmreg_n = nrow(filter(DF, !is.na(!!sym(IndiVar)))),
-             lmreg_slope = NA,
-             lmreg_sig = NA,
-             modeled_percentchange = NA,
-             Method = IndiVar
-             )
     return(reg_estimates)
   }
   
@@ -94,11 +95,7 @@ DHSInnerLoop <- function(Formula, DF, LMMethod = lm){
   )
   
   # Extract row to bind with workset
-  ww.x.tobind <- DF %>%
-    
-    filter(date == max(date)) %>%
-    
-      select(WWTP, date) %>%
+  ww.x.tobind <- reg_estimates%>%
     
       mutate(days_elapsed = as.numeric(max(DF$date) - min(DF$date)),
              
@@ -108,11 +105,13 @@ DHSInnerLoop <- function(Formula, DF, LMMethod = lm){
              
              lmreg_sig = lm.subset.sum$coefficients[2,4],
              
-             modeled_percentchange = ((10^(lmreg_slope*days_elapsed))-1)*100,
-             
-             Method = IndiVar)
+            modeled_percentchange = ((10^(lmreg_slope*days_elapsed))-1)*100)
 
   return(ww.x.tobind)
+}
+
+uniqueVal <- function(Col,DF){
+  return(unique(DF[[Col]]))
 }
 
 #' DHSOuterLoop
@@ -131,26 +130,32 @@ DHSInnerLoop <- function(Formula, DF, LMMethod = lm){
 #' @return a row of a DF containing the 
 #' WWTP, last date, timespan, number of rows, model slope and significance,
 #' and predicted percent change, and what linear model was used
-DHSOuterLoop <- function(DF,Formulas,n = 5,LMMethod=lm, verbose = FALSE){
+DHSOuterLoop <- function(DF, Formula,Keep = NULL,n = 5,LMMethod=lm, verbose = FALSE){
   
-  reg_estimates = as.data.frame(matrix(ncol=9, nrow=0))
+  reg_estimates = as.data.frame(matrix(ncol=8+length(Keep), nrow=0))
   
-  colnames(reg_estimates) = c("WWTP", "date", "days_elapsed", "lmreg_n" , 
+  
+  colnames(reg_estimates) = c(Keep, "date", "days_elapsed", "lmreg_n" , 
                               "lmreg_slope", "lmreg_sig", "modeled_percentchange", "Method", "LMmethod")
-    
     if(verbose){
-      print(unique(DF$WWTP)[[1]])
-    }
+      Keep%>%
+        lapply(uniqueVal,DF = DF)%>%
+        paste()%>%
+        print()
+    }#as.character(Formula)[2]
+  
+    ModDF <- DF%>%
+      arrange(date)
     
-    for (k in 1:(nrow(DF) - n)){
+    for (k in 1:(nrow(ModDF) - n)){
       
-        ww.x.subset = DF[c(k:(k+n)),]
+        ww.x.subset = ModDF[c(k:(k+n)),]
         
-        ww.x.tobind = Formulas%>%
-          lapply(DHSInnerLoop,
+        ww.x.tobind = DHSInnerLoop(
+                Formula,
                  DF = ww.x.subset,
-                 LMMethod = LMMethod)%>%
-          bind_rows()
+                 Keep = Keep,
+                 LMMethod = LMMethod)
         
         reg_estimates <- rbind(reg_estimates, ww.x.tobind)
     }
