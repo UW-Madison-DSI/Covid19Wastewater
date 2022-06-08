@@ -59,7 +59,9 @@ DataMod <- LIMSFullDF%>%
 
 
 RunOn <- c("sars_cov2_adj_load_log10", "Loess", "sgolay")
-reg_estimates = DHSTopLevelAnalysis(DataMod, RunOn, "WWTP", verbose=TRUE)
+reg_estimates = DHSTopLevelAnalysis(DataMod, RunOn, 
+                                    "WWTP", verbose=TRUE,
+                                    PSigTest=TRUE)
 
 ```
 

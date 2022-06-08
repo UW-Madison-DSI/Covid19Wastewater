@@ -124,7 +124,7 @@ DHSInnerLoop <- function(Formula, DF,Keep = NULL, LMMethod = lm){
 #'
 #' @examples
 DHSTopLevelAnalysis <- function(DataMod, RunOn, SplitOn, 
-                                verbose=FALSE, PSigTest){
+                                verbose=FALSE, PSigTest=TRUE){
   reg_estimates = DataMod%>%
     pivot_longer(all_of(RunOn), names_to = "Method")%>%
     filter(!is.na(value))%>%
