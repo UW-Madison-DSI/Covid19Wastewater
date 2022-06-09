@@ -4,7 +4,13 @@
 \alias{DHSTopLevelAnalysis}
 \title{Run DHS analysis at a top level}
 \usage{
-DHSTopLevelAnalysis(DataMod, RunOn, SplitOn, verbose = FALSE, PSigTest = TRUE)
+DHSTopLevelAnalysis(
+  DataMod,
+  RunOn,
+  SplitOn = "WWTP",
+  verbose = FALSE,
+  PSigTest = TRUE
+)
 }
 \arguments{
 \item{DataMod}{The DF containing the col RunOn + date}

@@ -4,7 +4,14 @@
 \alias{DHSTopLevelPlots}
 \title{Title}
 \usage{
-DHSTopLevelPlots(RegDF, BaseDF, FacGridFormula, SiteName, PointName, LineName)
+DHSTopLevelPlots(
+  RegDF,
+  BaseDF,
+  FacGridFormula = Method ~ WWTP,
+  SiteName = "WWTP",
+  PointName = "sars_cov2_adj_load_log10",
+  LineName = NULL
+)
 }
 \arguments{
 \item{RegDF}{}

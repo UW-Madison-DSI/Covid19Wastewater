@@ -16,5 +16,7 @@ Imports:
   zoo,
   robets,
   signal,
-  limma
-  
+  limma,
+  patchwork
+Suggests: knitr, rmarkdown
+VignetteBuilder: knitr

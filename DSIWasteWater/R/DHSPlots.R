@@ -1,3 +1,45 @@
+#' Title
+#'
+#' @param RegDF 
+#' @param BaseDF 
+#' @param FacGridFormula 
+#' @param SiteName 
+#' @param PointName 
+#' @param LineName 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+DHSTopLevelPlots <- function(RegDF,BaseDF, FacGridFormula = Method ~ WWTP,
+                             SiteName = "WWTP", PointName = "sars_cov2_adj_load_log10",  
+                             LineName = NULL){
+  
+  CatagoryColors <- c("#92c5de", "#979797","WHITE","#f4a582","#ca0020")
+  BarGridSmoothRaw <- RegDF%>%#"#0571b0",
+    
+    FactorVecByNumPoints(SiteName,"Catagory")%>%
+    
+    CreateHeatMaps(FacGridFormula, "Catagory", CatagoryColors,ToMerge=TRUE)
+  
+  
+  Gplt <- BaseDF%>%
+    FactorVecByNumPoints("WWTP","sars_cov2_adj_load_log10")%>%
+    
+    mutate(Data = "Data")%>%
+    
+    filter(!!sym(SiteName) %in% unique(RegDF[[SiteName]]))%>%
+    
+    WastePlot("date", PointName,  LineName, PointName,  LineName, ToMerge = TRUE)
+  
+  SavePlot <- BarGridSmoothRaw/Gplt + plot_layout(heights = c(2, 1))
+  
+  return(SavePlot)
+}
+
+
+
+
 #' CreateHeatMaps
 #' 
 #' Creates graphic of model prediction for each method
@@ -87,11 +129,11 @@ Abstract_PlotAdd <- function(GGObj, GGfunc, YName, YVal){
 WastePlot <- function(DF, xVal, PointVal, LineVal,PointName = NULL, LineName = NULL, ToMerge = FALSE){
   RetPlot <- DF%>%
     ggplot( aes(x = !!sym(xVal)))
-  if(!is.na(PointName)){
+  if(!is.null(PointName)){
     RetPlot <- RetPlot%>%
       Abstract_PlotAdd(geom_point, PointName, PointVal)
   }
-  if(!is.na(LineName)){
+  if(!is.null(LineName)){
     RetPlot <- RetPlot%>%
       Abstract_PlotAdd(geom_line, LineName, LineVal)
   }
@@ -106,43 +148,4 @@ WastePlot <- function(DF, xVal, PointVal, LineVal,PointName = NULL, LineName = N
       )
   }
   return(RetPlot)
-}
-
-
-#' Title
-#'
-#' @param RegDF 
-#' @param BaseDF 
-#' @param FacGridFormula 
-#' @param SiteName 
-#' @param PointName 
-#' @param LineName 
-#'
-#' @return
-#' @export
-#'
-#' @examples
-DHSTopLevelPlots <- function(RegDF,BaseDF, FacGridFormula,
-                             SiteName, PointName,  LineName){
-  
-  CatagoryColors <- c("#0571b0","#92c5de", "#979797","WHITE","#f4a582","#ca0020")
-  BarGridSmoothRaw <- RegDF%>%
-    
-    FactorVecByNumPoints(SiteName,"Catagory")%>%
-    
-    CreateHeatMaps(FacGridFormula, "Catagory", CatagoryColors,ToMerge=TRUE)
-  
-  
-  Gplt <- BaseDF%>%
-    FactorVecByNumPoints("WWTP","sars_cov2_adj_load_log10")%>%
-    
-    mutate(Data = "Data")%>%
-    
-    filter(!!sym(SiteName) %in% unique(RegDF[[SiteName]]))%>%
-    
-    WastePlot("date", PointName,  LineName, PointName,  LineName, ToMerge = TRUE)
-  
-  SavePlot <- BarGridSmoothRaw/Gplt + plot_layout(heights = c(2, 1))
-  
-  return(SavePlot)
 }
