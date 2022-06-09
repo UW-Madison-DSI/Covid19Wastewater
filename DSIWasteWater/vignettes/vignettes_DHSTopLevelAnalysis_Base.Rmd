@@ -1,0 +1,24 @@
+---
+title: "DHS analysis using reproducable package"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Put the title of your vignette here}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r create worksheet4}
+```
+
+```{r run package code}
+
+```
+
+```{r make DHS plot}
+
+
+```
