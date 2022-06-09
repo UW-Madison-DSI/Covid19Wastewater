@@ -2,21 +2,21 @@
 title: "DHS analysis using reproducable package"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Put the title of your vignette here}
+  %\VignetteIndexEntry{DHS analysis using reproducable package}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---
 
 ```{r load packages}
 library(DSIWasteWater)
-library(readr)
 library(dplyr)
 ```
 
 
 ```{r create worksheet4}
-CleanedDHSData = "../../data/processed/Shareable_Data_wastewater.edited.cleaned.csv"
-df <- read_csv(CleanedDHSData)
+data(Data_wastewater, package = "DSIWasteWater")
+
+df <- Data_wastewater
 
 ## format data as DHS code expects
 df <- df %>% 

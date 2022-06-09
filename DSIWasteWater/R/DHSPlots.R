@@ -31,8 +31,7 @@ DHSTopLevelPlots <- function(RegDF,BaseDF, FacGridFormula = Method ~ WWTP,
     filter(!!sym(SiteName) %in% unique(RegDF[[SiteName]]))%>%
     
     WastePlot("date", PointName,  LineName, PointName,  LineName, ToMerge = TRUE)
-  
-  SavePlot <- BarGridSmoothRaw/Gplt + plot_layout(heights = c(2, 1))
+  SavePlot <- BarGridSmoothRaw/Gplt + plot_layout(heights = c(1, 1))
   
   return(SavePlot)
 }
