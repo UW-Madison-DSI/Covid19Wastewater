@@ -15,8 +15,11 @@ DHSTopLevelPlots <- function(RegDF,BaseDF, FacGridFormula = Method ~ WWTP,
                              SiteName = "WWTP", PointName = "sars_cov2_adj_load_log10",  
                              LineName = NULL){
   
-  CatagoryColors <- c("#92c5de", "#979797","WHITE","#f4a582","#ca0020")
-  BarGridSmoothRaw <- RegDF%>%#"#0571b0",
+  CatagoryColors <- c("major decrease" = "#0571b0", "moderate decrease" = "#92c5de",
+                      "fluctuating" = "#979797", "no change" = "WHITE", 
+                      "moderate increase" = "#f4a582", "major increase" = "#ca0020")
+  
+  BarGridSmoothRaw <- RegDF%>%
     
     FactorVecByNumPoints(SiteName,"Catagory")%>%
     
@@ -31,7 +34,11 @@ DHSTopLevelPlots <- function(RegDF,BaseDF, FacGridFormula = Method ~ WWTP,
     filter(!!sym(SiteName) %in% unique(RegDF[[SiteName]]))%>%
     
     WastePlot("date", PointName,  LineName, PointName,  LineName, ToMerge = TRUE)
-  SavePlot <- BarGridSmoothRaw/Gplt + plot_layout(heights = c(1, 1))
+  
+  
+  methodsUsed <- length(uniqueVal(as.character(Formula)[2], RegDF))
+
+  SavePlot <- BarGridSmoothRaw/Gplt + plot_layout(heights = c(methodsUsed, 1))
   
   return(SavePlot)
 }
