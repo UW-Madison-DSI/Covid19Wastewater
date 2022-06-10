@@ -27,76 +27,58 @@ DHSTopLevelAnalysis <- function(DataMod, RunOn, SplitOn = "WWTP",
   return(reg_estimates)
 }
 
-#' Find all unique values in the column selected
+#' DHSOuterLoop
 #'
-#' @param Col Col being looked at
-#' @param DF the DF containing Col
+#' The DHS model system. runs a LM on each each set of n consecutive measurements
+#' and returns a summary of the information
 #'
-#' @return a list of each unique col value
 #'
-#' @examples
-uniqueVal <- function(Col,DF){
-  return(unique(DF[[Col]]))
-}
-
-
-
-#' FCVLM
+#' @param DF Contains TS data should only contain one WWTP
+#' @param Formula LM model to be fit on a subsection of the data
+#' @param n number of rows to be in each LM regression
+#' @param LMMethod Controls what Linear model is applied. 
+#' intended options are lm and FCVLM
+#' @param Keep The col in the original DF to keep besides Date
+#' @param verbose prints what site we are in
 #'
-#'fit n-1 models droping 1 data point
-#'returns the model with the lowest p-val form among the,
-#'
-#' @param Formula LM model to be fit on robust data
-#' @param data Contains the data needed for Formula to work
-#'
-#' @return the best of the lm models by p values
-FCVLM <- function(Formula, data){
-  lenDF <- nrow(data)
-  LMOptions <- lapply(1:(lenDF+1), LMDropList, Formula, data)%>%
-                  LMSelectBestList()
-}
-
-#' LMDropList
-#' 
-#' fits a lm model with the nth row of data removed
-#'
-#' @param n the index of the row to drow
-#' @param Formula LM model to be fit on robust data
-#' @param data Contains the data needed for Formula to work
-#'
-#' @return a lm object
 #' @export
-#'
-#' @examples
-LMDropList <- function(n, Formula, data){
-  ReducedDF <- data[-n,] 
-  return(lm(Formula, data = ReducedDF))
-}
-
-#' LMSelectBestList
-#' 
-#'
-#' @param LMList List of possible linear models
-#' @param Verbose prints the row removed and the p value
-#'
-#' @return the LM with the lowest P-value
-LMSelectBestList <- function(LMList, Verbose = FALSE){
-  BestPVal <- 1
-  RetLM <- LMList[[1]]
-  for(i in 1:length(LMList)){
-    ModPVal <- summary(LMList[[i]])$coefficients[2,4]
-    if(is.nan(ModPVal)){next}
-    if(Verbose){
-      print(paste(BestPVal, ModPVal))
-    }
-    if(BestPVal > ModPVal){
-      BestPVal <- ModPVal
-      RetLM <- LMList[[i]]
-    }
+#' @return a row of a DF containing the 
+#' WWTP, last date, timespan, number of rows, model slope and significance,
+#' and predicted percent change, and what linear model was used
+DHSOuterLoop <- function(DF, Formula,Keep = NULL,n = 5,LMMethod=lm, verbose = FALSE){
+  
+  
+  reg_estimates = as.data.frame(matrix(ncol=8+length(Keep), nrow=0))
+  
+  
+  colnames(reg_estimates) = c(Keep, "date", "days_elapsed", "lmreg_n" , 
+                              "lmreg_slope", "lmreg_sig", "modeled_percentchange", "Method", "LMmethod")
+  if(verbose){
+    Keep%>%
+      lapply(uniqueVal,DF = DF)%>%
+      paste()%>%
+      print()
   }
-  return(RetLM)
+  
+  ModDF <- DF%>%
+    filter(!is.na(!!sym(as.character(Formula)[2])))%>%
+    arrange(date)
+  
+  for (k in 1:(nrow(ModDF) - n)){
+    
+    ww.x.subset = ModDF[c(k:(k+n)),]
+    
+    ww.x.tobind = DHSInnerLoop(
+      Formula,
+      DF = ww.x.subset,
+      Keep = Keep,
+      LMMethod = LMMethod)
+    
+    reg_estimates <- rbind(reg_estimates, ww.x.tobind)
+  }
+  
+  return(reg_estimates)
 }
-
 
 #' DHSInnerLoop
 #' 
@@ -141,75 +123,18 @@ DHSInnerLoop <- function(Formula, DF,Keep = NULL, LMMethod = lm){
   # Extract row to bind with workset
   ww.x.tobind <- reg_estimates%>%
     
-      mutate(days_elapsed = as.numeric(max(DF$date) - min(DF$date)),
-             
-             lmreg_n = nrow(DF),
-             
-             lmreg_slope = lm.subset.sum$coefficients[2,1],
-             
-             lmreg_sig = lm.subset.sum$coefficients[2,4],
-             
-            modeled_percentchange = ((10^(lmreg_slope*days_elapsed))-1)*100)
-
+    mutate(days_elapsed = as.numeric(max(DF$date) - min(DF$date)),
+           
+           lmreg_n = nrow(DF),
+           
+           lmreg_slope = lm.subset.sum$coefficients[2,1],
+           
+           lmreg_sig = lm.subset.sum$coefficients[2,4],
+           
+           modeled_percentchange = ((10^(lmreg_slope*days_elapsed))-1)*100)
+  
   return(ww.x.tobind)
 }
-
-
-
-
-#' DHSOuterLoop
-#'
-#' The DHS model system. runs a LM on each each set of n consecutive measurements
-#' and returns a summary of the information
-#'
-#'
-#' @param DF Contains TS data should only contain one WWTP
-#' @param Formula LM model to be fit on a subsection of the data
-#' @param n number of rows to be in each LM regression
-#' @param LMMethod Controls what Linear model is applied. 
-#' intended options are lm and FCVLM
-#' @param Keep The col in the original DF to keep besides Date
-#' @param verbose prints what site we are in
-#'
-#' @export
-#' @return a row of a DF containing the 
-#' WWTP, last date, timespan, number of rows, model slope and significance,
-#' and predicted percent change, and what linear model was used
-DHSOuterLoop <- function(DF, Formula,Keep = NULL,n = 5,LMMethod=lm, verbose = FALSE){
-  
-  
-  reg_estimates = as.data.frame(matrix(ncol=8+length(Keep), nrow=0))
-  
-  
-  colnames(reg_estimates) = c(Keep, "date", "days_elapsed", "lmreg_n" , 
-                              "lmreg_slope", "lmreg_sig", "modeled_percentchange", "Method", "LMmethod")
-    if(verbose){
-      Keep%>%
-        lapply(uniqueVal,DF = DF)%>%
-        paste()%>%
-        print()
-    }
-  
-    ModDF <- DF%>%
-      filter(!is.na(!!sym(as.character(Formula)[2])))%>%
-      arrange(date)
-    
-    for (k in 1:(nrow(ModDF) - n)){
-      
-        ww.x.subset = ModDF[c(k:(k+n)),]
-        
-        ww.x.tobind = DHSInnerLoop(
-                Formula,
-                 DF = ww.x.subset,
-                 Keep = Keep,
-                 LMMethod = LMMethod)
-        
-        reg_estimates <- rbind(reg_estimates, ww.x.tobind)
-    }
-  
-  return(reg_estimates)
-}
-
 
 #' DHSClassificationFunc
 #' 
@@ -221,7 +146,7 @@ DHSOuterLoop <- function(DF, Formula,Keep = NULL,n = 5,LMMethod=lm, verbose = FA
 #' @export
 #' @return DF with an extra column Catagory containing the results of the DHS binning
 DHSClassificationFunc <- function(DF, PSigTest=TRUE){
-
+  
   
   RetDF <- DF%>%
     mutate(Catagory = cut(modeled_percentchange, c(-Inf,-100,-10,10,100,Inf),
@@ -246,4 +171,18 @@ DHSClassificationFunc <- function(DF, PSigTest=TRUE){
     mutate(Catagory = factor(Catagory, levels = levl, 
                              labels =  Catagorylabel))
   return(RetDF)
+}
+
+
+
+#' Find all unique values in the column selected
+#'
+#' @param Col Col being looked at
+#' @param DF the DF containing Col
+#'
+#' @return a list of each unique col value
+#'
+#' @examples
+uniqueVal <- function(Col,DF){
+  return(unique(DF[[Col]]))
 }
