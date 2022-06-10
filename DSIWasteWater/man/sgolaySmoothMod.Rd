@@ -8,7 +8,7 @@ Add a column of the smoothed values using sgolayfilt}
 sgolaySmoothMod(DF, InVar, OutVar, poly = 5, n = "guess", Filter = NULL)
 }
 \arguments{
-\item{DF}{}
+\item{DF}{dataframe containing the columns specified below}
 
 \item{InVar}{The column to be smoothed}
 
@@ -22,7 +22,7 @@ if it equals "guess" then it is found using ParameterGuess}
 \item{Filter}{Prefilter using the value of a Filter col}
 }
 \value{
-A DF with an extra col with a sgolayfilt smoothed version of InVar
+DF with an extra col with a sgolayfilt smoothed version of InVar
 }
 \description{
 sgolaySmoothMod

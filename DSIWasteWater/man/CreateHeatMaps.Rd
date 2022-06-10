@@ -7,12 +7,18 @@
 CreateHeatMaps(DF, FacGridFormula, FillFac, CatagoryColors, ToMerge = FALSE)
 }
 \arguments{
-\item{DF}{}
+\item{DF}{The DF used to create the Heatmap}
+
+\item{FacGridFormula}{how we wan to facet the heatmap}
+
+\item{FillFac}{the name of the catagory method}
+
+\item{CatagoryColors}{The color scheme used}
 
 \item{ToMerge}{if true we remove the lower labels}
 }
 \value{
-faceted ggplot
+faceted ggplot heatmap
 }
 \description{
 Creates graphic of model prediction for each method

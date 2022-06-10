@@ -7,7 +7,7 @@
 LMDropList(n, Formula, data)
 }
 \arguments{
-\item{n}{}
+\item{n}{the index of the row to drow}
 
 \item{Formula}{LM model to be fit on robust data}
 

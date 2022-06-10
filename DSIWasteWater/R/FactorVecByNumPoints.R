@@ -1,14 +1,18 @@
-#' Title
+#' convert column to factor based on amount of entries
 #'
-#' @param DF 
-#' @param FacVar 
-#' @param FiltVar 
+#' @param DF The data frame being manipulated
+#' @param FacVar The column being converted to a factor
+#' @param FiltVar A column to filter before counting entrys.
+#' Defaults to FacVar
 #'
-#' @return
+#' @return DF with the FacVar column a factor
 #' @export
 #'
 #' @examples
-FactorVecByNumPoints <- function(DF,FacVar, FiltVar){
+FactorVecByNumPoints <- function(DF,FacVar, FiltVar = NA){
+  if(is.na(FiltVar)){
+    FiltVar <- FacVar
+  }
   FactorOrder <- (DF%>%
                     filter(!is.na(!!sym(FiltVar)))%>%
                     group_by(!!sym(FacVar))%>%

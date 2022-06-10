@@ -27,6 +27,14 @@ DHSTopLevelAnalysis <- function(DataMod, RunOn, SplitOn = "WWTP",
   return(reg_estimates)
 }
 
+#' Find all unique values in the column selected
+#'
+#' @param Col Col being looked at
+#' @param DF the DF containing Col
+#'
+#' @return a list of each unique col value
+#'
+#' @examples
 uniqueVal <- function(Col,DF){
   return(unique(DF[[Col]]))
 }
@@ -52,7 +60,7 @@ FCVLM <- function(Formula, data){
 #' 
 #' fits a lm model with the nth row of data removed
 #'
-#' @param n 
+#' @param n the index of the row to drow
 #' @param Formula LM model to be fit on robust data
 #' @param data Contains the data needed for Formula to work
 #'
@@ -68,7 +76,7 @@ LMDropList <- function(n, Formula, data){
 #' LMSelectBestList
 #' 
 #'
-#' @param LMList List of posible linear models
+#' @param LMList List of possible linear models
 #' @param Verbose prints the row removed and the p value
 #'
 #' @return the LM with the lowest P-value
@@ -99,6 +107,7 @@ LMSelectBestList <- function(LMList, Verbose = FALSE){
 #' @param DF Contains the data needed for Formula to work
 #' @param LMMethod Controls what Linear model is applied. 
 #' intended options are lm and FCVLM
+#' @param Keep The col in the original DF to keep besides Date
 #'
 #' @return a row of a DF containing the 
 #' WWTP, last date, timespan, number of rows, model slope and significance,
@@ -159,12 +168,15 @@ DHSInnerLoop <- function(Formula, DF,Keep = NULL, LMMethod = lm){
 #' @param n number of rows to be in each LM regression
 #' @param LMMethod Controls what Linear model is applied. 
 #' intended options are lm and FCVLM
+#' @param Keep The col in the original DF to keep besides Date
 #' @param verbose prints what site we are in
+#'
 #' @export
 #' @return a row of a DF containing the 
 #' WWTP, last date, timespan, number of rows, model slope and significance,
 #' and predicted percent change, and what linear model was used
 DHSOuterLoop <- function(DF, Formula,Keep = NULL,n = 5,LMMethod=lm, verbose = FALSE){
+  
   
   reg_estimates = as.data.frame(matrix(ncol=8+length(Keep), nrow=0))
   
@@ -176,9 +188,10 @@ DHSOuterLoop <- function(DF, Formula,Keep = NULL,n = 5,LMMethod=lm, verbose = FA
         lapply(uniqueVal,DF = DF)%>%
         paste()%>%
         print()
-    }#as.character(Formula)[2]
+    }
   
     ModDF <- DF%>%
+      filter(!is.na(!!sym(as.character(Formula)[2])))%>%
       arrange(date)
     
     for (k in 1:(nrow(ModDF) - n)){
@@ -204,6 +217,7 @@ DHSOuterLoop <- function(DF, Formula,Keep = NULL,n = 5,LMMethod=lm, verbose = FA
 #'
 #' @param DF 
 #' @param PSigTest Controls if we filter values with P-values>.3
+#'
 #' @export
 #' @return
 DHSClassificationFunc <- function(DF, PSigTest=TRUE){

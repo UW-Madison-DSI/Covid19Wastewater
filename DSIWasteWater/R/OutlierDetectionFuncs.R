@@ -71,18 +71,17 @@ TrendSDOutlierDetec <- function(DF,VecName,SDDeg,DaySmoothed=36,n = 5,
   
   
   for(i in 1:n){#robustly remove outliers and recalc smooth line
-    span = 2*ParameterGuess(DF, VecName, 17.8, .6)
+    span = 2*ParameterGuess(DF, VecName, 17.8, .6)#Preset for loess span guess
     BestVectorDF <- BestVectorDF%>%
       TrendFunc("UsedVar", "Temp", span = span)%>%
       mutate(SD = rollapply(UsedVar - Temp, DaySmoothed, sd, na.rm=TRUE, partial=TRUE),
              UsedVar = ifelse(UsedVar > Temp + SDDeg * SD, Temp, UsedVar),
              UsedVar = ifelse(UsedVar < Temp - 2 * SDDeg * SD, Temp, UsedVar))%>%
-              #Extra fudge as we are less intrested in errors from being to small
+              #Extra fudge as we are less interested in errors from being to small
       select(-Temp)#Remove col to prevent contamination
   }
   
-  BestVectorDF <- BestVectorDF#%>%
-    #filter(Date %in% DF$Date)
+  BestVectorDF <- BestVectorDF
   
   booleanReturn <- abs(BestVectorDF$UsedVar-log1p(DF[[VecName]])) > 2
   booleanReturn[is.na(booleanReturn)] <- FALSE

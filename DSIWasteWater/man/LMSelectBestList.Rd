@@ -7,7 +7,7 @@
 LMSelectBestList(LMList, Verbose = FALSE)
 }
 \arguments{
-\item{LMList}{List of posible linear models}
+\item{LMList}{List of possible linear models}
 
 \item{Verbose}{prints the row removed and the p value}
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/DHSPlots.R
 \name{DHSTopLevelPlots}
 \alias{DHSTopLevelPlots}
-\title{Title}
+\title{Create representative plot of the DHS analysis}
 \usage{
 DHSTopLevelPlots(
   RegDF,
@@ -14,18 +14,21 @@ DHSTopLevelPlots(
 )
 }
 \arguments{
-\item{RegDF}{}
+\item{RegDF}{DF containing the regression analysis}
 
-\item{BaseDF}{}
+\item{BaseDF}{The DF containing the raw data}
 
-\item{FacGridFormula}{}
+\item{FacGridFormula}{The formula we wish to facet the heatmaps with}
 
-\item{SiteName}{}
+\item{SiteName}{The column names for Site}
 
-\item{PointName}{}
+\item{PointName}{The point columns we want to plot}
 
-\item{LineName}{}
+\item{LineName}{The line columns we want to plot}
+}
+\value{
+a ggplot of the heatmap of each method and the underlying data
 }
 \description{
-Title
+Create representative plot of the DHS analysis
 }

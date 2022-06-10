@@ -2,7 +2,7 @@
 % Please edit documentation in R/DHSPlots.R
 \name{WastePlot}
 \alias{WastePlot}
-\title{Title}
+\title{Waste Water graphic}
 \usage{
 WastePlot(
   DF,
@@ -15,20 +15,20 @@ WastePlot(
 )
 }
 \arguments{
-\item{DF}{}
+\item{DF}{DF containing waste water measurements specified in the remaining params}
 
-\item{xVal}{}
+\item{xVal}{name of x variable, normally close to "Date"}
 
-\item{PointVal}{}
+\item{PointVal}{the discrete measurement}
 
-\item{LineVal}{}
+\item{LineVal}{the continuous measurement}
 
-\item{PointName}{}
+\item{PointName}{the label of PointVal}
 
-\item{LineName}{}
+\item{LineName}{the label of LineVal}
 
-\item{ToMerge}{}
+\item{ToMerge}{remove facet info if true. be careful that the to plots have same ordering}
 }
 \description{
-Title
+Waste Water graphic
 }

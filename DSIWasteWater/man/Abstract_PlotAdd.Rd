@@ -2,19 +2,22 @@
 % Please edit documentation in R/DHSPlots.R
 \name{Abstract_PlotAdd}
 \alias{Abstract_PlotAdd}
-\title{Title}
+\title{adds a ggplot component}
 \usage{
-Abstract_PlotAdd(GGObj, GGfunc, YName, YVal)
+Abstract_PlotAdd(GGObj, GGfunc, YcolorName, YVal)
 }
 \arguments{
-\item{GGObj}{}
+\item{GGObj}{a ggplot object we are adding to}
 
-\item{GGfunc}{}
+\item{GGfunc}{what gg type object used}
 
-\item{YName}{}
+\item{YcolorName}{name of the color, either a factor or a string}
 
-\item{YVal}{}
+\item{YVal}{name of the y variable used}
+}
+\value{
+GGObj with the appended graphic
 }
 \description{
-Title
+adds a ggplot component
 }

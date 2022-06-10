@@ -11,6 +11,8 @@ DHSInnerLoop(Formula, DF, Keep = NULL, LMMethod = lm)
 
 \item{DF}{Contains the data needed for Formula to work}
 
+\item{Keep}{The col in the original DF to keep besides Date}
+
 \item{LMMethod}{Controls what Linear model is applied. 
 intended options are lm and FCVLM}
 }

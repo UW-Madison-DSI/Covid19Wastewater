@@ -8,7 +8,7 @@ Add a column of the smoothed values using exponential smoothing}
 ExpSmoothMod(DF, InVar, OutVar, alpha = "guess", beta = "guess", Filter = NULL)
 }
 \arguments{
-\item{DF}{}
+\item{DF}{The DF we are to add a exponential smoothing column to}
 
 \item{InVar}{The column to be smoothed}
 

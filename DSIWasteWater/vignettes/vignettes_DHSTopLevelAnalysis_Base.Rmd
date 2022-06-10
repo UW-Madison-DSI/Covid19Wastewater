@@ -53,7 +53,7 @@ workset4 <- workset4 %>%
 
 ```{r run package code}
 reg_estimates <- DHSTopLevelAnalysis(workset4, 
-                                     c("sars_cov2_adj_load_log10"), 
+                                     "sars_cov2_adj_load_log10"
                                     )
 head(reg_estimates)
 ```

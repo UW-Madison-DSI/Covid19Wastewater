@@ -68,7 +68,7 @@ LoessSmoothMod <- function(DF,InVar, OutVar, span="guess", Filter = NULL){
 #' ExpSmoothMod
 #' Add a column of the smoothed values using exponential smoothing
 #'
-#' @param DF 
+#' @param DF The DF we are to add a exponential smoothing column to
 #' @param InVar The column to be smoothed
 #' @param OutVar The name of the new column
 #' @param alpha The alpha fed into robets exponential smoothing. if it equals "guess" then it
@@ -144,7 +144,7 @@ NGuess <- function(DF,InVar, Base, min){
 
 #' sgolaySmoothMod
 #' Add a column of the smoothed values using sgolayfilt
-#' @param DF 
+#' @param DF dataframe containing the columns specified below
 #' @param InVar The column to be smoothed
 #' @param OutVar The name of the new column
 #' @param poly The degree of the polynomial fit
@@ -152,7 +152,7 @@ NGuess <- function(DF,InVar, Base, min){
 #' if it equals "guess" then it is found using ParameterGuess
 #' @param Filter Prefilter using the value of a Filter col
 #'
-#' @return A DF with an extra col with a sgolayfilt smoothed version of InVar
+#' @return DF with an extra col with a sgolayfilt smoothed version of InVar
 #' @export
 #'
 #' @examples

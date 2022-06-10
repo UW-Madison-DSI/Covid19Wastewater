@@ -1,13 +1,13 @@
-#' Title
+#' Create representative plot of the DHS analysis
 #'
-#' @param RegDF 
-#' @param BaseDF 
-#' @param FacGridFormula 
-#' @param SiteName 
-#' @param PointName 
-#' @param LineName 
+#' @param RegDF DF containing the regression analysis
+#' @param BaseDF The DF containing the raw data
+#' @param FacGridFormula The formula we wish to facet the heatmaps with
+#' @param SiteName The column names for Site
+#' @param PointName The point columns we want to plot
+#' @param LineName The line columns we want to plot
 #'
-#' @return
+#' @return a ggplot of the heatmap of each method and the underlying data
 #' @export
 #'
 #' @examples
@@ -43,10 +43,14 @@ DHSTopLevelPlots <- function(RegDF,BaseDF, FacGridFormula = Method ~ WWTP,
 #' 
 #' Creates graphic of model prediction for each method
 #'
-#' @param DF 
+#' @param DF The DF used to create the Heatmap
+#' @param FacGridFormula how we wan to facet the heatmap
+#' @param FillFac the name of the catagory method
+#' @param CatagoryColors The color scheme used
 #' @param ToMerge if true we remove the lower labels
+#'
 #' @export
-#' @return faceted ggplot
+#' @return faceted ggplot heatmap
 CreateHeatMaps <- function(DF, FacGridFormula, FillFac, CatagoryColors, ToMerge = FALSE){#, 
   BarGridSmoothRaw <- DF%>%
     ggplot()+
@@ -74,6 +78,7 @@ CreateHeatMaps <- function(DF, FacGridFormula, FillFac, CatagoryColors, ToMerge 
 #' @param Cat The column with the values of the methods 
 #' @param x The first method to compare
 #' @param y The second method to compare
+#'
 #' @export
 #' @return a ggplot object of the confusion matrix
 ConfMatrix <- function(DF,Cat,x,y){
@@ -91,35 +96,35 @@ ConfMatrix <- function(DF,Cat,x,y){
   return(RetPlt)
 }
 
-#' Title
+#' adds a ggplot component
 #'
-#' @param GGObj 
-#' @param GGfunc 
-#' @param YName 
-#' @param YVal 
+#' @param GGObj a ggplot object we are adding to
+#' @param GGfunc what gg type object used
+#' @param YcolorName name of the color, either a factor or a string
+#' @param YVal name of the y variable used
 #'
-#' @return
+#' @return GGObj with the appended graphic
 #'
 #' @examples
-Abstract_PlotAdd <- function(GGObj, GGfunc, YName, YVal){
-  if(YName != YVal){
-    YName <- sym(YName)
+Abstract_PlotAdd <- function(GGObj, GGfunc, YcolorName, YVal){
+  if(YcolorName != YVal){
+    YcolorName <- sym(YcolorName)
   }
   RetObj <- GGObj+
-    GGfunc(aes(y = !!sym(YVal), color = !!YName))
+    GGfunc(aes(y = !!sym(YVal), color = !!YcolorName))
   return(RetObj)
 }
 
 
-#' Title
+#' Waste Water graphic
 #'
-#' @param DF 
-#' @param xVal 
-#' @param PointVal 
-#' @param LineVal 
-#' @param PointName 
-#' @param LineName 
-#' @param ToMerge 
+#' @param DF DF containing waste water measurements specified in the remaining params
+#' @param xVal name of x variable, normally close to "Date"
+#' @param PointVal the discrete measurement
+#' @param LineVal the continuous measurement
+#' @param PointName the label of PointVal
+#' @param LineName the label of LineVal
+#' @param ToMerge remove facet info if true. be careful that the to plots have same ordering
 #'
 #' @return
 #' @export

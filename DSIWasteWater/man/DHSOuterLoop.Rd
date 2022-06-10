@@ -11,6 +11,8 @@ DHSOuterLoop(DF, Formula, Keep = NULL, n = 5, LMMethod = lm, verbose = FALSE)
 
 \item{Formula}{LM model to be fit on a subsection of the data}
 
+\item{Keep}{The col in the original DF to keep besides Date}
+
 \item{n}{number of rows to be in each LM regression}
 
 \item{LMMethod}{Controls what Linear model is applied. 
