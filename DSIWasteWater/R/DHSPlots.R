@@ -74,7 +74,7 @@ CreateHeatMaps <- function(DF, FacGridFormula, FillFac, CatagoryColors, ToMerge 
 #' 
 #' creates a confusion matrix from data long format
 #'
-#' @param DF 
+#' @param DF data frame containing results of DHS analysis
 #' @param Cat The column with the values of the methods 
 #' @param x The first method to compare
 #' @param y The second method to compare
@@ -126,7 +126,7 @@ Abstract_PlotAdd <- function(GGObj, GGfunc, YcolorName, YVal){
 #' @param LineName the label of LineVal
 #' @param ToMerge remove facet info if true. be careful that the to plots have same ordering
 #'
-#' @return
+#' @return a ggplot object
 #' @export
 #'
 #' @examples

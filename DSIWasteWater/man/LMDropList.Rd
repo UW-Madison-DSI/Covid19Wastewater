@@ -13,6 +13,9 @@ LMDropList(n, Formula, data)
 
 \item{data}{Contains the data needed for Formula to work}
 }
+\value{
+a lm object
+}
 \description{
 fits a lm model with the nth row of data removed
 }

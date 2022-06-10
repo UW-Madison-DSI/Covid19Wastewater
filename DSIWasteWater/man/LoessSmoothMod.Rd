@@ -8,7 +8,7 @@ Add a column of the smoothed values using Loess}
 LoessSmoothMod(DF, InVar, OutVar, span = "guess", Filter = NULL)
 }
 \arguments{
-\item{DF}{}
+\item{DF}{DF we are adding the loess smooth col to}
 
 \item{InVar}{The column to be smoothed}
 

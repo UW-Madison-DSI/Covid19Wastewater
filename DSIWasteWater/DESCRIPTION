@@ -7,6 +7,7 @@ Author: Marlin R Lee <mrlee6@wisc.edu>
 Maintainer: Marlin R Lee <mrlee6@wisc.edu>
 RoxygenNote: 7.2.0
 License: GPL-3
+Encoding: UTF-8
 Imports:
   stats,
   rlang,

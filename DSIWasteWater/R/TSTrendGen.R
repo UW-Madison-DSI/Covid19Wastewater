@@ -23,7 +23,7 @@ ParameterGuess <- function(DF,InVar, Base, max){
 #' LoessSmoothMod
 #' Add a column of the smoothed values using Loess
 #'
-#' @param DF 
+#' @param DF DF we are adding the loess smooth col to
 #' @param InVar The column to be smoothed
 #' @param OutVar The name of the new column
 #' @param span The span fed into loess smoothing. if it equals "guess" then it

@@ -7,7 +7,7 @@
 ConfMatrix(DF, Cat, x, y)
 }
 \arguments{
-\item{DF}{}
+\item{DF}{data frame containing results of DHS analysis}
 
 \item{Cat}{The column with the values of the methods}
 

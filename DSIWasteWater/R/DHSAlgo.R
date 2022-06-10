@@ -64,7 +64,7 @@ FCVLM <- function(Formula, data){
 #' @param Formula LM model to be fit on robust data
 #' @param data Contains the data needed for Formula to work
 #'
-#' @return
+#' @return a lm object
 #' @export
 #'
 #' @examples
@@ -215,11 +215,11 @@ DHSOuterLoop <- function(DF, Formula,Keep = NULL,n = 5,LMMethod=lm, verbose = FA
 #' 
 #' Adds the DHS Classification scheme to data created by DHSOuterLoop
 #'
-#' @param DF 
+#' @param DF DF that contains results of DHS analysis
 #' @param PSigTest Controls if we filter values with P-values>.3
 #'
 #' @export
-#' @return
+#' @return DF with an extra column Catagory containing the results of the DHS binning
 DHSClassificationFunc <- function(DF, PSigTest=TRUE){
 
   

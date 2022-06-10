@@ -7,9 +7,12 @@
 DHSClassificationFunc(DF, PSigTest = TRUE)
 }
 \arguments{
-\item{DF}{}
+\item{DF}{DF that contains results of DHS analysis}
 
 \item{PSigTest}{Controls if we filter values with P-values>.3}
+}
+\value{
+DF with an extra column Catagory containing the results of the DHS binning
 }
 \description{
 Adds the DHS Classification scheme to data created by DHSOuterLoop

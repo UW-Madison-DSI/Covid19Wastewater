@@ -29,6 +29,9 @@ WastePlot(
 
 \item{ToMerge}{remove facet info if true. be careful that the to plots have same ordering}
 }
+\value{
+a ggplot object
+}
 \description{
 Waste Water graphic
 }
