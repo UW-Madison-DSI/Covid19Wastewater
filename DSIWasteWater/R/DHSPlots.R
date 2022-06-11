@@ -36,7 +36,7 @@ DHSTopLevelPlots <- function(RegDF,BaseDF, FacGridFormula = Method ~ WWTP,
     WastePlot("date", PointName,  LineName, PointName,  LineName, ToMerge = TRUE)
   
   
-  methodsUsed <- length(uniqueVal(as.character(Formula)[2], RegDF))
+  methodsUsed <- length(uniqueVal(as.character(FacGridFormula)[2], RegDF))
 
   SavePlot <- BarGridSmoothRaw/Gplt + plot_layout(heights = c(methodsUsed, 1))
   
