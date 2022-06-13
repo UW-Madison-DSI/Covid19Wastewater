@@ -1,7 +1,7 @@
-#' computeJumps
+#' compute first difference Jumps for N1 and N2
 #'
-#' @param n/a
-#' 
+#' @param df DataFrame. needs Col n1_sars_cov2_conc, n2_sars_cov2_conc, WWTP
+#'
 #' @return dataframe with 4 columns appended: delta(n1), delta(n2) from left and right
 #' @export
 #'
@@ -26,8 +26,13 @@ computeJumps <- function(df) {
 }
 
 #' rankJumps
+#' 
+#' Convert jumps from last step into a ordering
 #'
-#' @param n/a
+#' @param df DataFrame. needs Col n1.jumpFromLeft, n1.jumpFromRight, 
+#'           n2.jumpFromLeft, n2.jumpFromRight, WWTP
+#'           
+#' First 4 gen from computeJumps
 #' 
 #' @return dataframe with 4 columns appended: ranks of each of the 4 jumps;
 #' @export
@@ -48,10 +53,15 @@ rankJumps <- function(df) {
 }
 
 #' computeRankQuantiles
-#'
-#' @param n/a
 #' 
-#' @return 
+#' Convert jumps from last step into a ordering quintile 
+#'
+#' @param df dataframe. needs Col n1.jumpFromLeft, n1.jumpFromRight, 
+#'           n2.jumpFromLeft, n2.jumpFromRight, WWTP
+#'           
+#' First 4 gen from computeJumps
+#' 
+#' @return dataframe with 4 columns appended: ranks of each of the 4 jumps;
 #' @export
 #'
 #' @examples

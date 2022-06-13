@@ -7,11 +7,14 @@
 rankJumps(df)
 }
 \arguments{
-\item{n/a}{}
+\item{df}{DataFrame. needs Col n1.jumpFromLeft, n1.jumpFromRight, 
+          n2.jumpFromLeft, n2.jumpFromRight, WWTP
+          
+First 4 gen from computeJumps}
 }
 \value{
 dataframe with 4 columns appended: ranks of each of the 4 jumps;
 }
 \description{
-rankJumps
+Convert jumps from last step into a ordering
 }

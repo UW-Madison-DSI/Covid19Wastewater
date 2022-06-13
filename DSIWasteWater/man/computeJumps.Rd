@@ -2,16 +2,16 @@
 % Please edit documentation in R/outlierTools.R
 \name{computeJumps}
 \alias{computeJumps}
-\title{computeJumps}
+\title{compute first difference Jumps for N1 and N2}
 \usage{
 computeJumps(df)
 }
 \arguments{
-\item{n/a}{}
+\item{df}{DataFrame. needs Col n1_sars_cov2_conc, n2_sars_cov2_conc, WWTP}
 }
 \value{
 dataframe with 4 columns appended: delta(n1), delta(n2) from left and right
 }
 \description{
-computeJumps
+compute first difference Jumps for N1 and N2
 }
