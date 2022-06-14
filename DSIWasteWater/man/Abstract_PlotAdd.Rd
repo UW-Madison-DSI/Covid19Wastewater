@@ -4,16 +4,16 @@
 \alias{Abstract_PlotAdd}
 \title{adds a ggplot component}
 \usage{
-Abstract_PlotAdd(GGObj, GGfunc, YcolorName, YVal)
+Abstract_PlotAdd(GGObj, GGfunc, YVal, YcolorName = NULL)
 }
 \arguments{
 \item{GGObj}{a ggplot object we are adding to}
 
 \item{GGfunc}{what gg type object used}
 
-\item{YcolorName}{name of the color, either a factor or a string}
-
 \item{YVal}{name of the y variable used}
+
+\item{YcolorName}{name of the color, either a factor or a string}
 }
 \value{
 GGObj with the appended graphic

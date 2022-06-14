@@ -4,33 +4,21 @@
 \alias{WastePlot}
 \title{Waste Water graphic}
 \usage{
-WastePlot(
-  DF,
-  xVal,
-  PointVal,
-  LineVal,
-  PointName = NULL,
-  LineName = NULL,
-  ToMerge = FALSE
-)
+WastePlot(DF, xVal, PointValVec = NULL, LineValVec = NULL, ToMerge = FALSE)
 }
 \arguments{
 \item{DF}{DF containing waste water measurements specified in the remaining params}
 
 \item{xVal}{name of x variable, normally close to "Date"}
 
-\item{PointVal}{the discrete measurement}
+\item{PointValVec}{the discrete measurements}
 
-\item{LineVal}{the continuous measurement}
-
-\item{PointName}{the label of PointVal}
-
-\item{LineName}{the label of LineVal}
+\item{LineValVec}{the continuous measurements}
 
 \item{ToMerge}{remove facet info if true. be careful that the to plots have same ordering}
 }
 \value{
-a ggplot object
+a ggplot object with points with lables for each PointValVec and a lines for each LineValVec
 }
 \description{
 Waste Water graphic

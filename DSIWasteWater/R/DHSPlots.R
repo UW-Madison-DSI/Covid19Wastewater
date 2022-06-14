@@ -12,8 +12,10 @@
 #'
 #' @examples
 DHSTopLevelPlots <- function(RegDF,BaseDF, FacGridFormula = Method ~ WWTP,
-                             SiteName = "WWTP", PointName = "sars_cov2_adj_load_log10",  
-                             LineName = NULL){
+                             SiteName = "WWTP", 
+                             PointVal = "sars_cov2_adj_load_log10", 
+                             LineVal = NULL
+                             ){
   
   CatagoryColors <- c("major decrease" = "#0571b0", "moderate decrease" = "#92c5de",
                       "fluctuating" = "#979797", "no change" = "WHITE", 
@@ -26,6 +28,8 @@ DHSTopLevelPlots <- function(RegDF,BaseDF, FacGridFormula = Method ~ WWTP,
     CreateHeatMaps(FacGridFormula, "Catagory", CatagoryColors,ToMerge=TRUE)
   
   
+  
+  
   Gplt <- BaseDF%>%
     FactorVecByNumPoints("WWTP","sars_cov2_adj_load_log10")%>%
     
@@ -33,7 +37,7 @@ DHSTopLevelPlots <- function(RegDF,BaseDF, FacGridFormula = Method ~ WWTP,
     
     filter(!!sym(SiteName) %in% unique(RegDF[[SiteName]]))%>%
     
-    WastePlot("date", PointName,  LineName, PointName,  LineName, ToMerge = TRUE)
+    WastePlot("date", PointVal = PointVal, LineVal = LineVal, ToMerge = TRUE)
   
   
   methodsUsed <- length(uniqueVal(as.character(FacGridFormula)[2], RegDF))
@@ -42,9 +46,6 @@ DHSTopLevelPlots <- function(RegDF,BaseDF, FacGridFormula = Method ~ WWTP,
   
   return(SavePlot)
 }
-
-
-
 
 #' CreateHeatMaps
 #' 
@@ -75,6 +76,74 @@ CreateHeatMaps <- function(DF, FacGridFormula, FillFac, CatagoryColors, ToMerge 
   return(BarGridSmoothRaw)
 }
 
+#' adds a ggplot component
+#'
+#' @param GGObj a ggplot object we are adding to
+#' @param GGfunc what gg type object used
+#' @param YcolorName name of the color, either a factor or a string
+#' @param YVal name of the y variable used
+#'
+#' @return GGObj with the appended graphic
+#'
+#' @examples
+Abstract_PlotAdd <- function(GGObj, GGfunc, YVal, YcolorName = NULL){
+  
+  if(is.null(YcolorName)){
+    YcolorName <- YVal
+  }else{
+    YcolorName <- sym(YcolorName)
+  }
+  
+  
+  RetObj <- GGObj+
+    GGfunc(aes(y = !!sym(YVal), color = !!YcolorName))
+  return(RetObj)
+}
+
+
+#' Waste Water graphic
+#'
+#' @param DF DF containing waste water measurements specified in the remaining params
+#' @param xVal name of x variable, normally close to "Date"
+#' @param ToMerge remove facet info if true. be careful that the to plots have same ordering
+#' @param PointValVec the discrete measurements
+#' @param LineValVec the continuous measurements
+#'
+#' @return a ggplot object with points with lables for each PointValVec and a lines for each LineValVec
+#' @export
+#'
+#' @examples
+WastePlot <- function(DF, xVal, PointValVec = NULL, LineValVec = NULL, ToMerge = FALSE){
+  RetPlot <- DF%>%
+    ggplot( aes(x = !!sym(xVal)))
+  
+  if(!is.null(PointValVec)){
+    for (ele in PointValVec) {
+      RetPlot <- RetPlot%>%
+        Abstract_PlotAdd(geom_point, ele)
+    }
+  }
+  
+  if(!is.null(LineValVec)){
+    for (ele in LineValVec) {
+      RetPlot <- RetPlot%>%
+        Abstract_PlotAdd(geom_line, ele)
+    }
+  }
+  
+  RetPlot <- RetPlot+
+    facet_grid(~WWTP)+
+    scale_x_date(date_labels = "%b %y")
+  
+  if(ToMerge){
+    RetPlot <- RetPlot+
+      theme(
+        strip.background = element_blank(),
+        strip.text.x = element_blank()
+      )
+  }
+  return(RetPlot)
+}
 
 
 #' ConfMatrix
@@ -93,70 +162,13 @@ ConfMatrix <- function(DF,Cat,x,y){
     filter(Method %in% c(x,y))%>%
     select(WWTP,date,Method,Catagory)%>%
     filter(WWTP != "Portage WWTF"  & WWTP != "Cedarburg WWTF")%>%
-    pivot_wider(id_cols=c(WWTP,date),names_from = Method, values_from = !!sym(Cat))%>%
+    pivot_wider(id_cols=c(WWTP, date),names_from = Method, values_from = !!sym(Cat))%>%
     group_by(!!sym(x),!!sym(y))%>%
     summarise(n = n())%>%
     filter(!is.na(!!sym(y)))%>%
     ggplot(aes(x=!!sym(x),y=!!sym(y)))+
     geom_tile(aes(fill = n))+
-    scale_fill_gradient(low="blue", high="red")
+    scale_fill_gradient(low="blue", high="red")+ 
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
   return(RetPlt)
-}
-
-#' adds a ggplot component
-#'
-#' @param GGObj a ggplot object we are adding to
-#' @param GGfunc what gg type object used
-#' @param YcolorName name of the color, either a factor or a string
-#' @param YVal name of the y variable used
-#'
-#' @return GGObj with the appended graphic
-#'
-#' @examples
-Abstract_PlotAdd <- function(GGObj, GGfunc, YcolorName, YVal){
-  if(YcolorName != YVal){
-    YcolorName <- sym(YcolorName)
-  }
-  RetObj <- GGObj+
-    GGfunc(aes(y = !!sym(YVal), color = !!YcolorName))
-  return(RetObj)
-}
-
-
-#' Waste Water graphic
-#'
-#' @param DF DF containing waste water measurements specified in the remaining params
-#' @param xVal name of x variable, normally close to "Date"
-#' @param PointVal the discrete measurement
-#' @param LineVal the continuous measurement
-#' @param PointName the label of PointVal
-#' @param LineName the label of LineVal
-#' @param ToMerge remove facet info if true. be careful that the to plots have same ordering
-#'
-#' @return a ggplot object
-#' @export
-#'
-#' @examples
-WastePlot <- function(DF, xVal, PointVal, LineVal,PointName = NULL, LineName = NULL, ToMerge = FALSE){
-  RetPlot <- DF%>%
-    ggplot( aes(x = !!sym(xVal)))
-  if(!is.null(PointName)){
-    RetPlot <- RetPlot%>%
-      Abstract_PlotAdd(geom_point, PointName, PointVal)
-  }
-  if(!is.null(LineName)){
-    RetPlot <- RetPlot%>%
-      Abstract_PlotAdd(geom_line, LineName, LineVal)
-  }
-  RetPlot <- RetPlot+
-    facet_grid(~WWTP)+
-    scale_x_date(date_labels = "%b %y")
-  if(ToMerge){
-    RetPlot <- RetPlot+
-      theme(
-        strip.background = element_blank(),
-        strip.text.x = element_blank()
-      )
-  }
-  return(RetPlot)
 }

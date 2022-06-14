@@ -9,8 +9,8 @@ DHSTopLevelPlots(
   BaseDF,
   FacGridFormula = Method ~ WWTP,
   SiteName = "WWTP",
-  PointName = "sars_cov2_adj_load_log10",
-  LineName = NULL
+  PointVal = "sars_cov2_adj_load_log10",
+  LineVal = NULL
 )
 }
 \arguments{

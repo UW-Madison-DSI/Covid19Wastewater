@@ -1,6 +1,7 @@
 library(devtools)
 
 document()
-build()
+build_vignettes()
+build(vignettes = FALSE)
 install()
 
