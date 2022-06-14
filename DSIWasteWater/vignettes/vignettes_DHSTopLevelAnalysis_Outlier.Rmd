@@ -56,20 +56,20 @@ workset4 <- workset4 %>%
 ```
 
 ```{r flag outlier}
-#TODO create sars_adj_log10_Filtered col in worksheet 4 using Steve code
-#Roughly like
+
 df <- computeJumps(workset4)
 df.ranked <- rankJumps(df)
 df.ranked.quantile <- computeRankQuantiles(df.ranked)
-df.classied <- flagOutliers(df.ranked.quantile,threshold)
+df.classied <- flagOutliers(df.ranked.quantile, 9)
+df.created <- RemoveOutlier(df.classied)
 
 ```
 
 ```{r run package code}
 
-reg_estimates <- DHSTopLevelAnalysis(df.classied, 
-                                     "sars_cov2_adj_load_log10",
-                                     "sars_adj_log10_Filtered"
+reg_estimates <- DHSTopLevelAnalysis(df.created, 
+                                     c("sars_cov2_adj_load_log10",
+                                     "sars_adj_log10_Filtered")
                                     )
 head(reg_estimates)
 ```
@@ -77,6 +77,5 @@ head(reg_estimates)
 ```{r make DHS plot, fig.height=5,fig.width=316}
 #TODO restructure so it can accept 2 point vars
 #underlying function can already do this, just not the wrapper
-DHSTopLevelPlots(reg_estimates,df.classied)
-
+DHSTopLevelPlots(reg_estimates, df.created, PointVal = Method,)
 ```

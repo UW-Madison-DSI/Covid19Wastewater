@@ -41,11 +41,12 @@ computeJumps <- function(df) {
 rankJumps <- function(df) {
   df <- df %>% 
     group_by(WWTP)   %>% 
-    mutate(rank.n1.jumpFromLeft = rank(-n1.jumpFromLeft)) %>% 
-    mutate(rank.n1.jumpFromRight = rank(-n1.jumpFromRight)) %>% 
-    
-    mutate(rank.n2.jumpFromLeft = rank(-n2.jumpFromLeft)) %>% 
-    mutate(rank.n2.jumpFromRight = rank(-n2.jumpFromRight)) %>% 
+    mutate(rank.n1.jumpFromLeft = rank(-n1.jumpFromLeft),
+      rank.n1.jumpFromRight = rank(-n1.jumpFromRight),
+      rank.n2.jumpFromLeft = rank(-n2.jumpFromLeft), 
+      rank.n2.jumpFromRight = rank(-n2.jumpFromRight),
+      MessureRank = pmin(rank.n1.jumpFromLeft, rank.n1.jumpFromRight, rank.n2.jumpFromLeft, rank.n2.jumpFromRight)
+      ) %>% 
 
     ## sort by first jump ranks just to be definitive
     arrange(WWTP,rank.n1.jumpFromLeft) 
@@ -74,11 +75,47 @@ computeRankQuantiles <- function(df) {
       n1.jumpFromRight.quantile = rank.n1.jumpFromRight/numValues,
 
       n2.jumpFromLeft.quantile  = rank.n2.jumpFromLeft/numValues,
-      n2.jumpFromRight.quantile = rank.n2.jumpFromRight/numValues
+      n2.jumpFromRight.quantile = rank.n2.jumpFromRight/numValues,
+      MessureRank.quantile = pmin(n1.jumpFromLeft.quantile, n1.jumpFromRight.quantile, n2.jumpFromLeft.quantile, n2.jumpFromRight.quantile)
     ) %>%
     select(-numValues) %>%
     
     ## sort by first jump ranks just to be definitive
     arrange(WWTP,n1.jumpFromLeft.quantile)   
-  
 }
+
+#' Create column with Boolean based on a threashold
+#'
+#' @param DF Dataframe containing col column
+#' @param threshold a numeric used to flag if its an outlier
+#' @param col column being flagged based on threshold 
+#' @param outputColName name of flag column
+#'
+#' @return DF Dataframe with the extra column of if its flagged an outlier
+#' @export
+#'
+#' @examples
+flagOutliers <- function(DF, threshold, col = MessureRank, outputColName = FlaggedOutlier){
+  RetDF <- DF%>%
+    mutate({{outputColName}} := {{col}} < threshold)
+  return(RetDF)
+}
+
+
+#' Add column with NA values where the data was flagged
+#'
+#' @param DF DF containing the columns Measure and Filtcol
+#' @param Messure The original measurement we want to keep inliers for
+#' @param Filtcol the column containing the Boolean info needed to remove outliers
+#' @param outputColName the name for the clean column
+#'
+#' @return DF with new column without the flagged values
+#' @export
+#'
+#' @examples
+RemoveOutlier <- function(DF, Messure = sars_cov2_adj_load_log10, Filtcol = FlaggedOutlier, outputColName = sars_adj_log10_Filtered){
+  RetDF <- DF%>%
+    mutate({{outputColName}} := ifelse({{Filtcol}}, NA, {{Messure}}))
+  return(RetDF)
+}
+
