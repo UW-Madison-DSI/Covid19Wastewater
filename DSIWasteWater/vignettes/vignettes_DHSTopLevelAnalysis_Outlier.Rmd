@@ -76,6 +76,7 @@ head(reg_estimates)
 
 
 ```{r temp explore}
+library(ggplot2)
 
 ConfMatrix(reg_estimates, "Catagory", "sars_cov2_adj_load_log10", "sars_adj_log10_Filtered")
 
