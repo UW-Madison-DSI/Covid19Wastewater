@@ -67,7 +67,7 @@ df.created <- RemoveOutlier(df.classied)
 
 ```{r run package code}
 
-reg_estimates <- DHSTopLevelAnalysis(df.created, 
+reg_estimates <- BuildRegressionEstimateTable(df.created, 
                                      c("sars_cov2_adj_load_log10",
                                      "sars_adj_log10_Filtered")
                                     )
@@ -75,7 +75,7 @@ head(reg_estimates)
 ```
 
 
-```{r temp explore}
+```{r temp explore,fig.width=15}
 library(ggplot2)
 
 ConfMatrix(reg_estimates, "Catagory", "sars_cov2_adj_load_log10", "sars_adj_log10_Filtered")
@@ -93,5 +93,5 @@ reg_estimates%>%
 #TODO restructure so it can accept 2 point vars
 #underlying function can already do this, just not the wrapper
 DHSTopLevelPlots(reg_estimates, df.created, 
-                 PointVal = c("sars_cov2_adj_load_log10", "sars_adj_log10_Filtered"))
+                 PointVal = c( "sars_cov2_adj_load_log10","sars_adj_log10_Filtered"))
 ```

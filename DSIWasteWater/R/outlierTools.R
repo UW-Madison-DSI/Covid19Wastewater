@@ -97,7 +97,7 @@ computeRankQuantiles <- function(df) {
 #' @examples
 flagOutliers <- function(DF, threshold, col = MessureRank, outputColName = FlaggedOutlier){
   RetDF <- DF%>%
-    mutate({{outputColName}} := {{col}} > threshold)
+    mutate({{outputColName}} := {{col}} < threshold)
   return(RetDF)
 }
 

@@ -52,7 +52,7 @@ workset4 <- workset4 %>%
 ```
 
 ```{r run package code}
-reg_estimates <- DHSTopLevelAnalysis(workset4, 
+reg_estimates <- BuildRegressionEstimateTable(workset4, 
                                      "sars_cov2_adj_load_log10"
                                     )
 head(reg_estimates)
