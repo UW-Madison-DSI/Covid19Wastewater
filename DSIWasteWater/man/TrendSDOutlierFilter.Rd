@@ -30,7 +30,7 @@ TrendSDOutlierFilter(
 
 \item{TrendFunc}{What function that is used to generate the trend}
 
-\item{verbose}{Controls if it prints the % of data that is outliers}
+\item{verbose}{Controls if it prints the \% of data that is outliers}
 }
 \value{
 DF With col saying whether the method was flagged

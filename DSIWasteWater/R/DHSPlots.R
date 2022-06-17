@@ -3,9 +3,9 @@
 #' @param RegDF DF containing the regression analysis
 #' @param BaseDF The DF containing the raw data
 #' @param FacGridFormula The formula we wish to facet the heatmaps with
+#' @param PointVal The point columns we want to plot
+#' @param LineVal The Line columns we want to plot
 #' @param SiteName The column names for Site
-#' @param PointName The point columns we want to plot
-#' @param LineName The line columns we want to plot
 #'
 #' @return a ggplot of the heatmap of each method and the underlying data
 #' @export

@@ -8,14 +8,13 @@
 #' @param DaySmoothed Days used to get Standard deviation
 #' @param n Number of iterations of method done
 #' @param TrendFunc What function that is used to generate the trend
-#' @param verbose Controls if it prints the % of data that is outliers
+#' @param verbose Controls if it prints the \% of data that is outliers
 #' @param outCol What the name of the outVec is
 #'
 #' @return DF With col saying whether the method was flagged
 #' @export
 #'
 #' @examples 
-
 TrendSDOutlierFilter <- function(DF,VecName,SDDeg,DaySmoothed, outCol = "FlaggedOutlier",
                                  n = 5, TrendFunc = LoessSmoothMod, verbose=FALSE){
   ArangeDF <- DF%>%

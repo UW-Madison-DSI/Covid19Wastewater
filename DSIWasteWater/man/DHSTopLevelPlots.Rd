@@ -22,9 +22,9 @@ DHSTopLevelPlots(
 
 \item{SiteName}{The column names for Site}
 
-\item{PointName}{The point columns we want to plot}
+\item{PointVal}{The point columns we want to plot}
 
-\item{LineName}{The line columns we want to plot}
+\item{LineVal}{The Line columns we want to plot}
 }
 \value{
 a ggplot of the heatmap of each method and the underlying data
