@@ -7,7 +7,7 @@
 flagOutliers(DF, threshold, col = MessureRank, outputColName = FlaggedOutlier)
 }
 \arguments{
-\item{DF}{Dataframe containing col column}
+\item{DF}{Dataframe containing Column column}
 
 \item{threshold}{a numeric used to flag if its an outlier}
 

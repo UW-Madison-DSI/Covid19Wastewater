@@ -7,7 +7,7 @@
 computeRankQuantiles(df)
 }
 \arguments{
-\item{df}{dataframe. needs Col n1.jumpFromLeft, n1.jumpFromRight, 
+\item{df}{dataframe. needs Column n1.jumpFromLeft, n1.jumpFromRight, 
           n2.jumpFromLeft, n2.jumpFromRight, WWTP
           
 First 4 gen from computeJumps}

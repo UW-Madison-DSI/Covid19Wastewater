@@ -52,7 +52,7 @@ workset4 <- workset4 %>%
   mutate(n = n()) %>% 
   arrange(date, .by_group = TRUE) %>% 
   ungroup %>% 
-  filter(n >= 5)
+  filter(n >= 150)#To reduce knitting time
 ```
 
 ```{r flag outlier}

@@ -7,7 +7,7 @@
 rankJumps(df)
 }
 \arguments{
-\item{df}{DataFrame. needs Col n1.jumpFromLeft, n1.jumpFromRight, 
+\item{df}{DataFrame. needs Column n1.jumpFromLeft, n1.jumpFromRight, 
           n2.jumpFromLeft, n2.jumpFromRight, WWTP
           
 First 4 gen from computeJumps}

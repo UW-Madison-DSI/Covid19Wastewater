@@ -1,6 +1,6 @@
 #' compute first difference Jumps for N1 and N2
 #'
-#' @param df DataFrame. needs Col n1_sars_cov2_conc, n2_sars_cov2_conc, WWTP
+#' @param df DataFrame. needs Column n1_sars_cov2_conc, n2_sars_cov2_conc, WWTP
 #'
 #' @return dataframe with 4 columns appended: delta(n1), delta(n2) from left and right
 #' @export
@@ -29,7 +29,7 @@ computeJumps <- function(df) {
 #' 
 #' Convert jumps from last step into a ordering
 #'
-#' @param df DataFrame. needs Col n1.jumpFromLeft, n1.jumpFromRight, 
+#' @param df DataFrame. needs Column n1.jumpFromLeft, n1.jumpFromRight, 
 #'           n2.jumpFromLeft, n2.jumpFromRight, WWTP
 #'           
 #' First 4 gen from computeJumps
@@ -57,7 +57,7 @@ rankJumps <- function(df) {
 #' 
 #' Convert jumps from last step into a ordering quintile 
 #'
-#' @param df dataframe. needs Col n1.jumpFromLeft, n1.jumpFromRight, 
+#' @param df dataframe. needs Column n1.jumpFromLeft, n1.jumpFromRight, 
 #'           n2.jumpFromLeft, n2.jumpFromRight, WWTP
 #'           
 #' First 4 gen from computeJumps
@@ -86,7 +86,7 @@ computeRankQuantiles <- function(df) {
 
 #' Create column with Boolean based on a threashold
 #'
-#' @param DF Dataframe containing col column
+#' @param DF Dataframe containing Column column
 #' @param threshold a numeric used to flag if its an outlier
 #' @param col column being flagged based on threshold 
 #' @param outputColName name of flag column
@@ -97,7 +97,7 @@ computeRankQuantiles <- function(df) {
 #' @examples
 flagOutliers <- function(DF, threshold, col = MessureRank, outputColName = FlaggedOutlier){
   RetDF <- DF%>%
-    mutate({{outputColName}} := {{col}} < threshold)
+    mutate({{outputColName}} := {{col}} > threshold)
   return(RetDF)
 }
 
