@@ -113,7 +113,7 @@ flagOutliers <- function(DF, threshold, col = MessureRank, outputColName = Flagg
 #' @export
 #'
 #' @examples
-RemoveOutlier <- function(DF, Messure = sars_cov2_adj_load_log10, Filtcol = FlaggedOutlier, outputColName = sars_adj_log10_Filtered){
+RemoveOutliers <- function(DF, Messure = sars_cov2_adj_load_log10, Filtcol = FlaggedOutlier, outputColName = sars_adj_log10_Filtered){
   RetDF <- DF%>%
     mutate({{outputColName}} := ifelse({{Filtcol}}, NA, {{Messure}}))
   return(RetDF)
