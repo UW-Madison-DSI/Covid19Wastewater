@@ -5,6 +5,9 @@ library(dplyr)
 ## ----create worksheet4--------------------------------------------------------
 data(Data_wastewater, package = "DSIWasteWater")
 
+#TODO abstract saved data -> workset4? save workset4 instead?
+#Filter number of sites for faster kniting time?
+
 df <- Data_wastewater
 
 ## format data as DHS code expects
@@ -37,16 +40,55 @@ workset4 <- workset4 %>%
   mutate(n = n()) %>% 
   arrange(date, .by_group = TRUE) %>% 
   ungroup %>% 
-  filter(n >= 150)
+  filter(n >= 150)#To reduce knitting time
+
+## ----flag outlier-------------------------------------------------------------
+VecModOn <- "sars_cov2_adj_load_log10"
+
+df.created <- workset4%>%
+    rename(Date=date, Site = WWTP)%>%
+    group_by(Site)%>%
+    group_split()%>%
+    lapply(LoessSmoothMod, VecModOn, "Loess", "guess")%>%
+    lapply(ExpSmoothMod, VecModOn, "EXP")%>%
+    lapply(sgolaySmoothMod, VecModOn, "sgolay")%>%
+    bind_rows()%>%
+    rename(date=Date, WWTP = Site)
+
 
 ## ----run package code---------------------------------------------------------
-reg_estimates <- BuildRegressionEstimateTable(workset4, 
-                                     "sars_cov2_adj_load_log10"
+
+reg_estimates <- BuildRegressionEstimateTable(df.created, 
+                                     c("sars_cov2_adj_load_log10",
+                                     "Loess",
+                                     "EXP",
+                                     "sgolay")
                                     )
 head(reg_estimates)
 
+## ----temp explore,fig.width=6-------------------------------------------------
+library(ggplot2)
+
+
+
+
+ConfMatrix(reg_estimates, "Catagory", "sars_cov2_adj_load_log10", "Loess")
+
+
+reg_estimates%>%
+  group_by(Method,Catagory)%>%
+  summarise(n = n())%>%
+  ggplot(aes(x=Catagory,y=n))+
+           geom_col(aes(fill=Method),position = "dodge")+ 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
 ## ----make DHS plot, fig.height=5,fig.width=78---------------------------------
 
-DHSTopLevelPlots(reg_estimates,workset4)
 
+
+DHSTopLevelPlots(reg_estimates, df.created, 
+                 PointVal = c( "sars_cov2_adj_load_log10"),
+                 LineVal = c("Loess",
+                                     "EXP",
+                                     "sgolay"))
 

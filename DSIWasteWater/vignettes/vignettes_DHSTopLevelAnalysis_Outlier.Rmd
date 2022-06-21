@@ -75,7 +75,7 @@ head(reg_estimates)
 ```
 
 
-```{r temp explore,fig.width=8}
+```{r temp explore,fig.width=6}
 library(ggplot2)
 
 ConfMatrix(reg_estimates, "Catagory", "sars_cov2_adj_load_log10", "sars_adj_log10_Filtered")
@@ -89,7 +89,7 @@ reg_estimates%>%
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 ```
 
-```{r make DHS plot, fig.height=5,fig.width=158}
+```{r make DHS plot, fig.height=5,fig.width=78}
 #TODO restructure so it can accept 2 point vars
 #underlying function can already do this, just not the wrapper
 DHSTopLevelPlots(reg_estimates, df.created, 
