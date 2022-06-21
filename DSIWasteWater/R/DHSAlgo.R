@@ -10,7 +10,8 @@
 #' @export
 #'
 #' @examples
-BuildRegressionEstimateTable <- function(DataMod, RunOn, SplitOn = "WWTP", 
+BuildRegressionEstimateTable <- function(DataMod, RunOn = "sars_cov2_adj_load_log10",
+                                         SplitOn = "WWTP", 
                                 verbose=FALSE, PSigTest=TRUE){
   reg_estimates = DataMod%>%
     pivot_longer(all_of(RunOn), names_to = "Method")%>%

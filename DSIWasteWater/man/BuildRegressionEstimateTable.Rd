@@ -6,7 +6,7 @@
 \usage{
 BuildRegressionEstimateTable(
   DataMod,
-  RunOn,
+  RunOn = "sars_cov2_adj_load_log10",
   SplitOn = "WWTP",
   verbose = FALSE,
   PSigTest = TRUE
