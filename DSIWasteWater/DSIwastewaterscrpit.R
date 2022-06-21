@@ -9,3 +9,4 @@ install(quick=FALSE)
 
 check(vignettes  = FALSE)
 vignette("vignettes_DHSTopLevelAnalysis_Outlier")
+vignette("vignettes_DHSTopLevelAnalysis_Base")
