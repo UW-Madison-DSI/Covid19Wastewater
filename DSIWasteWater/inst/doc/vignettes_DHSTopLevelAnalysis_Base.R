@@ -14,9 +14,7 @@ workset4 <- workset4%>%
 
 ## ----run package code---------------------------------------------------------
 
-reg_estimates <- BuildRegressionEstimateTable(workset4, 
-                                     "sars_cov2_adj_load_log10"
-                                    )
+reg_estimates <- BuildRegressionEstimateTable(workset4)
 head(reg_estimates)
 
 ## ----make DHS plot, fig.height=5,fig.width=78---------------------------------

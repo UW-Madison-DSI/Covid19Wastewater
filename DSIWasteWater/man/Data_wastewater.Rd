@@ -13,4 +13,11 @@ data("Data_wastewater")
 \description{
 Data from the DHS of waste water prevalence in Wisconsin cites
 }
+\details{
+Raw file 'Shareable_Data_wastewater.csv'
+From zip file attached to 4/21/2022 email from Matthew Schinwald
+
+Processed into 'Shareable_Data_wastewater.edited.cleaned.csv'
+In surveillance branch
+}
 \keyword{datasets}
