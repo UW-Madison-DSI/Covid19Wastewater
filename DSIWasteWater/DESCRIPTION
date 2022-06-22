@@ -19,7 +19,7 @@ Imports:
   signal,
   limma,
   patchwork
-Suggests: knitr, rmarkdown, testthat
+Suggests: knitr, rmarkdown, testthat,digest, vdiffr
 VignetteBuilder: knitr
 Depends: 
     R (>= 2.10)
