@@ -11,9 +11,21 @@
 #'
 #' @docType data
 #'
-#' @usage data("Data_wastewater")
+#' @usage data("wastewater_data")
 #'
 #' @format Rows: 8373 Columns: 30
 #'
 #' @keywords datasets
-"Data_wastewater"
+"wastewater_data"
+
+#' Toy example of worksheet 4 to be used in package examples
+#' 
+#'
+#' @docType data
+#'
+#' @usage data("example_data")
+#'
+#' @format Rows: 7 Columns: 3
+#'
+#' @keywords datasets
+"example_data"

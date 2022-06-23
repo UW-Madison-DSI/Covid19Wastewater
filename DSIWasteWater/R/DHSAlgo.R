@@ -1,4 +1,6 @@
 #' Run DHS analysis at a top level
+#' 
+#' 
 #'
 #' @param DataMod The DF containing the col RunOn + date
 #' @param RunOn The col names of the values we wish to run
@@ -10,7 +12,10 @@
 #' @export
 #'
 #' @examples
-BuildRegressionEstimateTable <- function(DataMod, RunOn = "sars_cov2_adj_load_log10",
+#' data(example_data, package = "DSIWasteWater")
+#' buildRegressionEstimateTable(example_data)
+#' 
+buildRegressionEstimateTable <- function(DataMod, RunOn = "sars_cov2_adj_load_log10",
                                          SplitOn = "WWTP", 
                                 verbose=FALSE, PSigTest=TRUE){
   reg_estimates = DataMod%>%

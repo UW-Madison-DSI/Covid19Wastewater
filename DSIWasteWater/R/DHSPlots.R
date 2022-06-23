@@ -11,7 +11,11 @@
 #' @export
 #'
 #' @examples
-DHSTopLevelPlots <- function(RegDF,BaseDF, FacGridFormula = Method ~ WWTP,
+#' 
+#' data(example_data, package = "DSIWasteWater")
+#' example_reg_table <- buildRegressionEstimateTable(example_data)
+#' createDHSMethod_Plot(example_reg_table, example_data)
+createDHSMethod_Plot <- function(RegDF,BaseDF, FacGridFormula = Method ~ WWTP,
                              SiteName = "WWTP", 
                              PointVal = "sars_cov2_adj_load_log10", 
                              LineVal = NULL

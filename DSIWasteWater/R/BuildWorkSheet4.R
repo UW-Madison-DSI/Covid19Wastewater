@@ -1,4 +1,9 @@
-#' Convert DHS data to workset4 shape
+#' Convert wastewater_data data to workset4 shape
+#' 
+#' This takes the wastewater_data DF and rename variables, calculate 
+#' sars_cov2_adj_load_log10 column.
+#' It also filters rows where average_flow_rate is NA
+#' 
 #'
 #' @param df DF stored in vignette data
 #'
@@ -6,7 +11,9 @@
 #' @export
 #'
 #' @examples
-BuildWorkSheet4 <- function(df){
+#' data(wastewater_data, package = "DSIWasteWater")
+#' buildWorkSheet4(wastewater_data)
+buildWorkSheet4 <- function(df){
   ## format data as DHS code expects
   df <- df %>% 
     select(
