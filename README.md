@@ -25,3 +25,12 @@ Are Release notes are stored here:
 
 https://docs.google.com/document/d/1-Rbd0YTyPZ2slbW9ksvF36n_nhhEBNi0vJZAmhwNHsg/edit
 
+##Code style
+
+Camle case for functions
+
+Snake case for variables
+
+_data for data objects
+
+add _Plot if the function creates a plot
