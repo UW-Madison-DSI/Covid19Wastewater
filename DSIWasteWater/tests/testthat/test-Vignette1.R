@@ -13,7 +13,7 @@ test_that("Test vignettes DHSTopLevelAnalysis_Base.Rmd produces expected output"
   
   reg_estimates <- buildRegressionEstimateTable(workset4)
   
-  expect_identical(digest::digest(reg_estimates),"e0922bb0966e1fa7265d77333e4ca69d")
+  expect_identical(digest::digest(reg_estimates),"fee9f7483109c0fb2c7bade3e3496463")
   
   DHSPlot <- createDHSMethod_Plot(reg_estimates, workset4)
   

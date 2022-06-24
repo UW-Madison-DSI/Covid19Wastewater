@@ -107,23 +107,23 @@ Abstract_PlotAdd <- function(GGObj, GGfunc, YVal, YcolorName = NULL){
 #' @param DF DF containing waste water measurements specified in the remaining params
 #' @param xVal name of x variable, normally close to "Date"
 #' @param ToMerge remove facet info if true. be careful that the to plots have same ordering
-#' @param PointValVec the discrete measurements
-#' @param LineValVec the continuous measurements
+#' @param PointVal the discrete measurements
+#' @param LineVal the continuous measurements
 #'
-#' @return a ggplot object with points with lables for each PointValVec and a lines for each LineValVec
-createWasteGraph_Plot <- function(DF, xVal, PointValVec = NULL, LineValVec = NULL, ToMerge = FALSE){
+#' @return a ggplot object with points with lables for each PointVal and a lines for each LineVal
+createWasteGraph_Plot <- function(DF, xVal, PointVal = NULL, LineVal = NULL, ToMerge = FALSE){
   RetPlot <- DF%>%
     ggplot( aes(x = !!sym(xVal)))
   
-  if(!is.null(PointValVec)){
-    for (ele in PointValVec) {
+  if(!is.null(PointVal)){
+    for (ele in PointVal) {
       RetPlot <- RetPlot%>%
         Abstract_PlotAdd(geom_point, ele)
     }
   }
   
-  if(!is.null(LineValVec)){
-    for (ele in LineValVec) {
+  if(!is.null(LineVal)){
+    for (ele in LineVal) {
       RetPlot <- RetPlot%>%
         Abstract_PlotAdd(geom_line, ele)
     }

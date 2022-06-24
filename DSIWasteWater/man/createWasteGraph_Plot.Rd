@@ -7,8 +7,8 @@
 createWasteGraph_Plot(
   DF,
   xVal,
-  PointValVec = NULL,
-  LineValVec = NULL,
+  PointVal = NULL,
+  LineVal = NULL,
   ToMerge = FALSE
 )
 }
@@ -17,14 +17,14 @@ createWasteGraph_Plot(
 
 \item{xVal}{name of x variable, normally close to "Date"}
 
-\item{PointValVec}{the discrete measurements}
+\item{PointVal}{the discrete measurements}
 
-\item{LineValVec}{the continuous measurements}
+\item{LineVal}{the continuous measurements}
 
 \item{ToMerge}{remove facet info if true. be careful that the to plots have same ordering}
 }
 \value{
-a ggplot object with points with lables for each PointValVec and a lines for each LineValVec
+a ggplot object with points with lables for each PointVal and a lines for each LineVal
 }
 \description{
 Waste Water graphic

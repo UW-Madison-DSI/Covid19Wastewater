@@ -7,15 +7,15 @@
 buildWorkSheet4(df)
 }
 \arguments{
-\item{df}{DF stored in vignette data}
+\item{df}{data frame object from data/wastewater_data.rda}
 }
 \value{
 data frame
 }
 \description{
-This takes the wastewater_data DF and rename variables, calculate 
-sars_cov2_adj_load_log10 column.
-It also filters rows where average_flow_rate is NA
+This takes the wastewater_data dataframe and rename variables, 
+calculates sars_cov2_adj_load_log10 column, 
+and filters rows where average_flow_rate is NA
 }
 \examples{
 data(wastewater_data, package = "DSIWasteWater")

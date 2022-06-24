@@ -27,7 +27,9 @@ buildRegressionEstimateTable(
 A DF with the associated Date and DHS analysis
 }
 \description{
-Run DHS analysis at a top level
+buildRegressionEstimateTable is used to create a data frame that has the 
+predicted categorization as layed out by the DHS. For each RunOn var supplied
+It uses the var to create a 5 day prediction
 }
 \examples{
 data(example_data, package = "DSIWasteWater")

@@ -1,6 +1,8 @@
 #' Run DHS analysis at a top level
 #' 
-#' 
+#' buildRegressionEstimateTable is used to create a data frame that has the 
+#' predicted categorization as layed out by the DHS. For each RunOn var supplied
+#' It uses the var to create a 5 day prediction 
 #'
 #' @param DataMod The DF containing the col RunOn + date
 #' @param RunOn The col names of the values we wish to run
@@ -70,9 +72,9 @@ DHSOuterLoop <- function(DF, Formula,Keep = NULL,n = 5,LMMethod=lm, verbose = FA
     filter(!is.na(!!sym(as.character(Formula)[2])))%>%
     arrange(date)
   
-  for (k in 1:(nrow(ModDF) - n)){
+  for (k in 1:(nrow(ModDF) - (n - 1))){
     
-    ww.x.subset = ModDF[c(k:(k+n)),]
+    ww.x.subset = ModDF[k:(k+(n - 1)),]
     
     ww.x.tobind = DHSInnerLoop(
       Formula,
