@@ -135,13 +135,13 @@ createWasteGraph_Plot <- function(DF, xVal, PointVal = NULL, LineVal = NULL, ToM
   }
   
   RetPlot <- RetPlot+
-    facet_grid(~WWTP)+
+    facet_grid(Data~WWTP)+
     scale_x_date(date_labels = "%b %y")
   
   if(ToMerge){
     RetPlot <- RetPlot+
       theme(
-        strip.background = element_blank(),
+        strip.background.x = element_blank(),
         strip.text.x = element_blank()
       )
   }

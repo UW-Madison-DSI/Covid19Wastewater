@@ -3,8 +3,10 @@ title: "DHS analysis using reproducible package"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{DHS analysis using reproducible package}
-  %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r load packages}
