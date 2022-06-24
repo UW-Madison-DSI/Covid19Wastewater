@@ -28,8 +28,11 @@ A DF with the associated Date and DHS analysis
 }
 \description{
 buildRegressionEstimateTable is used to create a data frame that has the 
-predicted categorization as layed out by the DHS. For each RunOn var supplied
-It uses the var to create a 5 day prediction
+predicted categorization as laid out by the DHS. For each RunOn var supplied
+It uses the var to create a 5 day lm fit and uses the percent change to bin
+the results into 5 categories, "major decrease", "moderate decrease",
+"fluctuating", moderate increase", and "major increase".
+If the model P-value if over .3 the category is replaced with "no change"
 }
 \examples{
 data(example_data, package = "DSIWasteWater")
