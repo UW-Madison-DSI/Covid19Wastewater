@@ -33,5 +33,9 @@ Camel case for functions
 Snake case for variables
  
 _data for data objects
+
+_Plot if the function creates a plot
+
+## Organization practice
  
-add _Plot if the function creates a plot
+Thursday at 5 PM - freeze code. Have package ready for friday meeting and make no changes between then and friday meeting
