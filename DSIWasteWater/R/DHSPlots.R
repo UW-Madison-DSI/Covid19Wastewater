@@ -2,12 +2,12 @@
 #'
 #' @param RegDF DF containing the regression analysis
 #' @param BaseDF The DF containing the raw data
-#' @param FacGridFormula The formula we wish to facet the heatmaps with
+#' @param FacGridFormula The formula we wish to facet the heat maps with
 #' @param PointVal The point columns we want to plot
 #' @param LineVal The Line columns we want to plot
 #' @param SiteName The column names for Site
 #'
-#' @return a ggplot of the heatmap of each method and the underlying data
+#' @return a ggplot of the heat map of each method and the underlying data
 #' @export
 #'
 #' @examples
@@ -29,7 +29,7 @@ createDHSMethod_Plot <- function(RegDF,BaseDF, FacGridFormula = Method ~ WWTP,
     
     FactorVecByNumPoints(SiteName,"Catagory")%>%
     
-    CreateHeatMaps(FacGridFormula, "Catagory", CatagoryColors,ToMerge=TRUE)
+    CreateHeatMaps_Plot(FacGridFormula, "Catagory", CatagoryColors,ToMerge=TRUE)
   
   
   
@@ -41,7 +41,7 @@ createDHSMethod_Plot <- function(RegDF,BaseDF, FacGridFormula = Method ~ WWTP,
     
     filter(!!sym(SiteName) %in% unique(RegDF[[SiteName]]))%>%
     
-    WastePlot("date", PointVal = PointVal, LineVal = LineVal, ToMerge = TRUE)
+    createWasteGraph_Plot("date", PointVal = PointVal, LineVal = LineVal, ToMerge = TRUE)
   
   
   methodsUsed <- length(uniqueVal(as.character(FacGridFormula)[2], RegDF))
@@ -51,7 +51,7 @@ createDHSMethod_Plot <- function(RegDF,BaseDF, FacGridFormula = Method ~ WWTP,
   return(SavePlot)
 }
 
-#' CreateHeatMaps
+#' CreateHeatMaps_Plot
 #' 
 #' Creates graphic of model prediction for each method
 #'
@@ -61,9 +61,8 @@ createDHSMethod_Plot <- function(RegDF,BaseDF, FacGridFormula = Method ~ WWTP,
 #' @param CatagoryColors The color scheme used
 #' @param ToMerge if true we remove the lower labels
 #'
-#' @export
 #' @return faceted ggplot heatmap
-CreateHeatMaps <- function(DF, FacGridFormula, FillFac, CatagoryColors, ToMerge = FALSE){#, 
+CreateHeatMaps_Plot <- function(DF, FacGridFormula, FillFac, CatagoryColors, ToMerge = FALSE){#, 
   BarGridSmoothRaw <- DF%>%
     ggplot()+
     geom_rect(aes(xmin=date-days_elapsed/2,xmax=date+days_elapsed/2,
@@ -88,8 +87,6 @@ CreateHeatMaps <- function(DF, FacGridFormula, FillFac, CatagoryColors, ToMerge 
 #' @param YVal name of the y variable used
 #'
 #' @return GGObj with the appended graphic
-#'
-#' @examples
 Abstract_PlotAdd <- function(GGObj, GGfunc, YVal, YcolorName = NULL){
   
   if(is.null(YcolorName)){
@@ -114,10 +111,7 @@ Abstract_PlotAdd <- function(GGObj, GGfunc, YVal, YcolorName = NULL){
 #' @param LineValVec the continuous measurements
 #'
 #' @return a ggplot object with points with lables for each PointValVec and a lines for each LineValVec
-#' @export
-#'
-#' @examples
-WastePlot <- function(DF, xVal, PointValVec = NULL, LineValVec = NULL, ToMerge = FALSE){
+createWasteGraph_Plot <- function(DF, xVal, PointValVec = NULL, LineValVec = NULL, ToMerge = FALSE){
   RetPlot <- DF%>%
     ggplot( aes(x = !!sym(xVal)))
   
@@ -150,7 +144,7 @@ WastePlot <- function(DF, xVal, PointValVec = NULL, LineValVec = NULL, ToMerge =
 }
 
 
-#' ConfMatrix
+#' createConfMatrix_Plot
 #' 
 #' creates a confusion matrix from data long format
 #'
@@ -158,10 +152,8 @@ WastePlot <- function(DF, xVal, PointValVec = NULL, LineValVec = NULL, ToMerge =
 #' @param Cat The column with the values of the methods 
 #' @param x The first method to compare
 #' @param y The second method to compare
-#'
-#' @export
 #' @return a ggplot object of the confusion matrix
-ConfMatrix <- function(DF,Cat,x,y){
+createConfMatrix_Plot <- function(DF,Cat,x,y){
   RetPlt <- DF%>%
     filter(Method %in% c(x,y))%>%
     select(WWTP,date,Method,Catagory)%>%

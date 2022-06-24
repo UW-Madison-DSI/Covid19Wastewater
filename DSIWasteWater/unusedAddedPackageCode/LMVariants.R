@@ -22,9 +22,6 @@ FCVLM <- function(Formula, data){
 #' @param data Contains the data needed for Formula to work
 #'
 #' @return a lm object
-#' @export
-#'
-#' @examples
 LMDropList <- function(n, Formula, data){
   ReducedDF <- data[-n,] 
   return(lm(Formula, data = ReducedDF))

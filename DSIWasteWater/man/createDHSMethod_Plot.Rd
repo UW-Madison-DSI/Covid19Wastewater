@@ -18,7 +18,7 @@ createDHSMethod_Plot(
 
 \item{BaseDF}{The DF containing the raw data}
 
-\item{FacGridFormula}{The formula we wish to facet the heatmaps with}
+\item{FacGridFormula}{The formula we wish to facet the heat maps with}
 
 \item{SiteName}{The column names for Site}
 
@@ -27,7 +27,7 @@ createDHSMethod_Plot(
 \item{LineVal}{The Line columns we want to plot}
 }
 \value{
-a ggplot of the heatmap of each method and the underlying data
+a ggplot of the heat map of each method and the underlying data
 }
 \description{
 Create representative plot of the DHS analysis

@@ -1,40 +1,33 @@
 ---
-title: "DHS analysis using reproducable package"
+title: "DHS analysis using reproducible package"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{DHS analysis using reproducable package}
+  %\VignetteIndexEntry{DHS analysis using reproducible package}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---
 
 ```{r load packages}
 library(DSIWasteWater)
-library(dplyr)
 ```
 
 
 ```{r create worksheet4}
-#Should add more info about the data
 data(wastewater_data, package = "DSIWasteWater")
 
-workset4 <- buildWorkSheet4(wastewater_data)
+workset4_data <- buildWorkSheet4(wastewater_data)
 
-#Only show Site with 150 measurements for vignette 
-workset4 <- workset4%>% 
-  filter(n >= 150)
+#Only show Site with 180 measurements for vignette 
+workset4_data <- workset4_data[workset4_data$n >= 180,]
 ```
 
 
-```{r run package code}
-
-reg_estimates <- buildRegressionEstimateTable(workset4)
-head(reg_estimates)
+```{r run regression analysis}
+reg_estimates_data <- buildRegressionEstimateTable(workset4_data)
+head(reg_estimates_data)
 ```
 
 
-```{r make DHS plot, fig.height=5,fig.width=78}
-#comment explaining why we need two dataframes
-#Pick better name for plot function
-createDHSMethod_Plot(reg_estimates, workset4)
-
+```{r make DHS plot, fig.height=5,fig.width=38}
+createDHSMethod_Plot(reg_estimates_data, workset4_data)
 ```

@@ -6,9 +6,6 @@
 #' Defaults to FacVar
 #'
 #' @return DF with the FacVar column a factor
-#' @export
-#'
-#' @examples
 FactorVecByNumPoints <- function(DF,FacVar, FiltVar = NA){
   if(is.na(FiltVar)){
     FiltVar <- FacVar

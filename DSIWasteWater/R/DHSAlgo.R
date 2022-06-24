@@ -187,8 +187,6 @@ DHSClassificationFunc <- function(DF, PSigTest=TRUE){
 #' @param DF the DF containing Col
 #'
 #' @return a list of each unique col value
-#'
-#' @examples
 uniqueVal <- function(Col,DF){
   return(unique(DF[[Col]]))
 }
