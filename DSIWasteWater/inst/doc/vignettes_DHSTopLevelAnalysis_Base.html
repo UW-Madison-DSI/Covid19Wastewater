@@ -340,7 +340,7 @@ package</h1>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>workset4_data <span class="ot">&lt;-</span> <span class="fu">buildWorkSheet4</span>(wastewater_data)</span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co">#Only show Site with 180 measurements for vignette </span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co">#Only show Site with more than 180 measurements for vignette for brevity</span></span>
 <span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>workset4_data <span class="ot">&lt;-</span> workset4_data[workset4_data<span class="sc">$</span>n <span class="sc">&gt;=</span> <span class="dv">180</span>,]</span></code></pre></div>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>reg_estimates_data <span class="ot">&lt;-</span> <span class="fu">buildRegressionEstimateTable</span>(workset4_data)</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(reg_estimates_data)</span></code></pre></div>

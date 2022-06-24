@@ -6,7 +6,7 @@ data(wastewater_data, package = "DSIWasteWater")
 
 workset4_data <- buildWorkSheet4(wastewater_data)
 
-#Only show Site with 180 measurements for vignette 
+#Only show Site with more than 180 measurements for vignette for brevity
 workset4_data <- workset4_data[workset4_data$n >= 180,]
 
 ## ----run regression analysis--------------------------------------------------

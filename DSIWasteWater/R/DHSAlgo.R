@@ -4,7 +4,7 @@
 #' predicted categorization as laid out by the DHS. For each RunOn var supplied
 #' It uses the var to create a 5 day lm fit and uses the percent change to bin
 #' the results into 5 categories, "major decrease", "moderate decrease",
-#' "fluctuating", moderate increase", and "major increase".
+#' "fluctuating", "moderate increase", and "major increase".
 #' If the model P-value if over .3 the category is replaced with "no change"
 #'
 #' @param DataMod The DF containing the col RunOn + date

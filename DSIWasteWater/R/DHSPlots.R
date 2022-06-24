@@ -1,7 +1,12 @@
 #' Create representative plot of the DHS analysis
+#' 
+#' createDHSMethod_Plot uses RegDF to create the top set of plots showing the 
+#' predictions at each time period. 
+#' It uses BaseDF to create the lower plot that shows what the regressed data
+#' looks like
 #'
-#' @param RegDF DF containing the regression analysis
-#' @param BaseDF The DF containing the raw data
+#' @param RegDF data frame containing the regression analysis
+#' @param BaseDF The data frame containing the raw data
 #' @param FacGridFormula The formula we wish to facet the heat maps with
 #' @param PointVal The point columns we want to plot
 #' @param LineVal The Line columns we want to plot

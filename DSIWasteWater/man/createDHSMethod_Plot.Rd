@@ -14,9 +14,9 @@ createDHSMethod_Plot(
 )
 }
 \arguments{
-\item{RegDF}{DF containing the regression analysis}
+\item{RegDF}{data frame containing the regression analysis}
 
-\item{BaseDF}{The DF containing the raw data}
+\item{BaseDF}{The data frame containing the raw data}
 
 \item{FacGridFormula}{The formula we wish to facet the heat maps with}
 
@@ -30,7 +30,10 @@ createDHSMethod_Plot(
 a ggplot of the heat map of each method and the underlying data
 }
 \description{
-Create representative plot of the DHS analysis
+createDHSMethod_Plot uses RegDF to create the top set of plots showing the 
+predictions at each time period. 
+It uses BaseDF to create the lower plot that shows what the regressed data
+looks like
 }
 \examples{
 
