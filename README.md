@@ -21,6 +21,10 @@ To get a AURTHTOKEN you need to go to https://github.com/settings/tokens and cre
 View The package vignettes with:
  
 vignette(package = "DSIWasteWater")
+
+Look at all package functionality with:
+
+help(package = "DSIWasteWater")
  
 Release notes are stored here:
  
