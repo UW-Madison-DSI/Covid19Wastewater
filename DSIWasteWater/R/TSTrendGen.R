@@ -9,8 +9,6 @@
 #' @param max The largest value returned
 #'
 #' @return a number between 0 and max
-#'
-#' @examples
 ParameterGuess <- function(DF,InVar, Base, max){
   temp <- DF%>%
     filter(!is.na((!!sym(InVar))))%>%
@@ -34,7 +32,8 @@ ParameterGuess <- function(DF,InVar, Base, max){
 #' @export
 #'
 #' @examples
-LoessSmoothMod <- function(DF,InVar, OutVar, span="guess", Filter = NULL){
+LoessSmoothMod <- function(DF,InVar="sars_cov2_adj_load_log10",
+                           OutVar="Loess", span="guess", Filter = NULL){
   if(span=="guess"){
     span <- ParameterGuess(DF,InVar, 17.8, .6)
   }
@@ -48,10 +47,10 @@ LoessSmoothMod <- function(DF,InVar, OutVar, span="guess", Filter = NULL){
   }
   
   DF <- DF%>%
-    arrange(Date)
+    arrange(date)
   
   DF[[OutVar]] <- loessFit(y=(DF[[InVar]]), 
-                            x=DF$Date, #create loess fit of the data
+                            x=DF$date, #create loess fit of the data
                             span=span, 
                             iterations=2)$fitted#2 iterations remove some bad patterns
   
@@ -107,7 +106,7 @@ ExpSmoothMod <- function(DF,InVar, OutVar,alpha="guess",beta="guess", Filter = N
   }
   
   DF <- DF%>%
-    arrange(Date)
+    arrange(date)
   
   DF[[OutVar]] <- robets::robets(y=DF[[InVar]],
                           model = "AAN",
@@ -177,7 +176,7 @@ sgolaySmoothMod <- function(DF,InVar, OutVar,poly=5,n="guess", Filter = NULL){
   }
   
   SmthDF <- SmthDF%>%
-    arrange(Date)
+    arrange(date)
 
   SmthDF[[OutVar]] <- SmthDF%>%
     pull(!!InVar)%>%
@@ -185,7 +184,7 @@ sgolaySmoothMod <- function(DF,InVar, OutVar,poly=5,n="guess", Filter = NULL){
   
   RetDF <- SmthDF%>%
     bind_rows(OutDF)%>%
-    arrange(Date)
+    arrange(date)
   
   return(RetDF)
 }
