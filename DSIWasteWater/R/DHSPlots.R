@@ -158,7 +158,11 @@ createWasteGraph_Plot <- function(DF, xVal, PointVal = NULL, LineVal = NULL, ToM
 #' @param x The first method to compare
 #' @param y The second method to compare
 #' @return a ggplot object of the confusion matrix
-createConfMatrix_Plot <- function(DF,Cat,x,y){
+#' 
+#' @export
+#'
+#' @examples
+createConfMatrix_Plot <- function(DF,x,y, Cat="Catagory"){
   RetPlt <- DF%>%
     filter(Method %in% c(x,y))%>%
     select(WWTP,date,Method,Catagory)%>%
@@ -172,4 +176,25 @@ createConfMatrix_Plot <- function(DF,Cat,x,y){
     scale_fill_gradient(low="blue", high="red")+ 
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
   return(RetPlt)
+}
+
+
+
+#' createMethodCompareBar_Plot: Compare Regression analysis methods
+#'
+#' @param DF data frame containing all the analysis for every method
+#' @param Method factor column for each type of regression done
+#' @param Cat Category column that the regression analysis is store
+#'
+#' @return ggplot object
+#' @export
+#'
+#' @examples
+createMethodCompareBar_Plot <- function(DF,Method = "Method",Cat="Catagory"){
+  DF%>%
+    group_by(!!sym(Method),!!sym(Cat))%>%
+    summarise(n = n())%>%
+    ggplot(aes(x=!!sym(Cat),y=n))+
+    geom_col(aes(fill=!!sym(Method)),position = "dodge")+ 
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 }

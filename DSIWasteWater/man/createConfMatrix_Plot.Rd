@@ -4,16 +4,16 @@
 \alias{createConfMatrix_Plot}
 \title{createConfMatrix_Plot}
 \usage{
-createConfMatrix_Plot(DF, Cat, x, y)
+createConfMatrix_Plot(DF, x, y, Cat = "Catagory")
 }
 \arguments{
 \item{DF}{data frame containing results of DHS analysis}
 
-\item{Cat}{The column with the values of the methods}
-
 \item{x}{The first method to compare}
 
 \item{y}{The second method to compare}
+
+\item{Cat}{The column with the values of the methods}
 }
 \value{
 a ggplot object of the confusion matrix
