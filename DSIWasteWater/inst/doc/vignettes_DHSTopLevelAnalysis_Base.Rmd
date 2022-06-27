@@ -6,7 +6,7 @@ vignette: >
   \usepackage[utf8]{inputenc}
   %\VignetteEngine{knitr::rmarkdown}
 editor_options: 
-  chunk_output_type: console
+  chunk_output_type: inline
 ---
 
 ```{r load packages}
@@ -32,4 +32,12 @@ head(reg_estimates_data)
 
 ```{r make DHS plot, fig.height=5,fig.width=38}
 createDHSMethod_Plot(reg_estimates_data, workset4_data)
+```
+
+```{r Show Madison Version of The Data}
+reg_estimates_Reduced_data <- reg_estimates_data[reg_estimates_data$WWTP == "Madison MSD WWTF",]
+
+workset4_Reduced_data <- workset4_data[workset4_data$WWTP == "Madison MSD WWTF",]
+
+createDHSMethod_Plot(reg_estimates_Reduced_data, workset4_Reduced_data)
 ```

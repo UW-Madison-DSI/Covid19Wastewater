@@ -16,3 +16,10 @@ head(reg_estimates_data)
 ## ----make DHS plot, fig.height=5,fig.width=38---------------------------------
 createDHSMethod_Plot(reg_estimates_data, workset4_data)
 
+## ----Show Madison Version of The Data-----------------------------------------
+reg_estimates_Reduced_data <- reg_estimates_data[reg_estimates_data$WWTP == "Madison MSD WWTF",]
+
+workset4_Reduced_data <- workset4_data[workset4_data$WWTP == "Madison MSD WWTF",]
+
+createDHSMethod_Plot(reg_estimates_Reduced_data, workset4_Reduced_data)
+
