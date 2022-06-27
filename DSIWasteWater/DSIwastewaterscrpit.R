@@ -1,7 +1,7 @@
 library(devtools)
 
 document()
-build_vignettes()
+build_vignettes(quiet=FALSE)
 dir.create("inst/doc", recursive = TRUE)
 file.copy(dir("doc", full.names=TRUE), "inst/doc", overwrite=TRUE)
 build(vignettes = FALSE)
