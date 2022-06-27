@@ -28,17 +28,17 @@ buildRegressionEstimateTable <- function(DataMod, RunOn = "sars_cov2_adj_load_lo
     filter(!is.na(value))%>%
     group_by(across(all_of(c(SplitOn,"Method"))))%>%
     group_split()%>%
-    lapply(DHSOuterLoop, 
+    lapply(runRegressionAnalysis, 
            Formula = value ~ date, #Should Be Gen
            Keep  = c(SplitOn, "Method"), 
            verbose = verbose)%>%
     bind_rows()%>%
-    DHSClassificationFunc(PSigTest=PSigTest)%>%
+    ClassifyRegressionAnalysis(PSigTest=PSigTest)%>%
     filter(!is.na(Catagory))
   return(reg_estimates)
 }
 
-#' DHSOuterLoop
+#' runRegressionAnalysis
 #'
 #' The DHS model system. runs a LM on each each set of n consecutive measurements
 #' and returns a summary of the information
@@ -56,7 +56,7 @@ buildRegressionEstimateTable <- function(DataMod, RunOn = "sars_cov2_adj_load_lo
 #' @return a row of a DF containing the 
 #' WWTP, last date, timespan, number of rows, model slope and significance,
 #' and predicted percent change, and what linear model was used
-DHSOuterLoop <- function(DF, Formula,Keep = NULL,n = 5,LMMethod=lm, verbose = FALSE){
+runRegressionAnalysis <- function(DF, Formula,Keep = NULL,n = 5,LMMethod=lm, verbose = FALSE){
   
   
   reg_estimates = as.data.frame(matrix(ncol=8+length(Keep), nrow=0))
@@ -94,7 +94,7 @@ DHSOuterLoop <- function(DF, Formula,Keep = NULL,n = 5,LMMethod=lm, verbose = FA
 #' DHSInnerLoop
 #' 
 #' Runs a Linear regression on the data and returns it in a form to be merged
-#' in the DHSOuterLoop function
+#' in the runRegressionAnalysis function
 #'
 #' @param Formula LM model to be fit on DF
 #' @param DF Contains the data needed for Formula to work
@@ -147,16 +147,16 @@ DHSInnerLoop <- function(Formula, DF,Keep = NULL, LMMethod = lm){
   return(ww.x.tobind)
 }
 
-#' DHSClassificationFunc
+#' ClassifyRegressionAnalysis
 #' 
-#' Adds the DHS Classification scheme to data created by DHSOuterLoop
+#' Adds the DHS Classification scheme to data created by runRegressionAnalysis
 #'
 #' @param DF DF that contains results of DHS analysis
 #' @param PSigTest Controls if we filter values with P-values>.3
 #'
 #' @export
 #' @return DF with an extra column Catagory containing the results of the DHS binning
-DHSClassificationFunc <- function(DF, PSigTest=TRUE){
+ClassifyRegressionAnalysis <- function(DF, PSigTest=TRUE){
   
   
   RetDF <- DF%>%
