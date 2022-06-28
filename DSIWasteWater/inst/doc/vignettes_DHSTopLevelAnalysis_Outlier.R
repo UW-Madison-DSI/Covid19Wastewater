@@ -31,16 +31,16 @@ reg_estimates_data <- buildRegressionEstimateTable(created_data,
                                 "Loess"))
 head(reg_estimates_data)
 
-## ----Compare methods,fig.width=6, include = FALSE-----------------------------
-
-createConfMatrix_Plot(reg_estimates_data, 
-                      "sars_cov2_adj_load_log10",
-                      "Loess")
-createConfMatrix_Plot(reg_estimates_data, 
-                      "Loess",
-                      "sars_adj_log10_Filtered")
-
-createMethodCompareBar_Plot(reg_estimates_data)
+## ----Compare methods,fig.width=6, eval = FALSE--------------------------------
+#  
+#  createConfMatrix_Plot(reg_estimates_data,
+#                        "sars_cov2_adj_load_log10",
+#                        "Loess")
+#  createConfMatrix_Plot(reg_estimates_data,
+#                        "Loess",
+#                        "sars_adj_log10_Filtered")
+#  
+#  createMethodCompareBar_Plot(reg_estimates_data)
 
 ## ----make DHS plot, fig.height=10,fig.width=38--------------------------------
 createDHSMethod_Plot(reg_estimates_data, created_data, 

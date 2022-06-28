@@ -21,3 +21,10 @@ DF Dataframe with the extra column of if its flagged an outlier
 \description{
 Create column with Boolean based on a threashold
 }
+\examples{
+data(example_data, package = "DSIWasteWater")
+df_data <- computeJumps(example_data)
+ranked_data <- rankJumps(df_data)
+ranked_quantile_data <- computeRankQuantiles(ranked_data)
+flagOutliers(ranked_quantile_data, 9)
+}

@@ -158,10 +158,6 @@ createWasteGraph_Plot <- function(DF, xVal, PointVal = NULL, LineVal = NULL, ToM
 #' @param x The first method to compare
 #' @param y The second method to compare
 #' @return a ggplot object of the confusion matrix
-#' 
-#' @export
-#'
-#' @examples
 createConfMatrix_Plot <- function(DF,x,y, Cat="Catagory"){
   RetPlt <- DF%>%
     filter(Method %in% c(x,y))%>%
@@ -187,9 +183,6 @@ createConfMatrix_Plot <- function(DF,x,y, Cat="Catagory"){
 #' @param Cat Category column that the regression analysis is store
 #'
 #' @return ggplot object
-#' @export
-#'
-#' @examples
 createMethodCompareBar_Plot <- function(DF,Method = "Method",Cat="Catagory"){
   DF%>%
     group_by(!!sym(Method),!!sym(Cat))%>%

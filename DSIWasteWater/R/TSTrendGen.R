@@ -32,6 +32,8 @@ ParameterGuess <- function(DF,InVar, Base, max){
 #' @export
 #'
 #' @examples
+#' data(example_data, package = "DSIWasteWater")
+#' LoessSmoothMod(example_data)
 LoessSmoothMod <- function(DF,InVar="sars_cov2_adj_load_log10",
                            OutVar="Loess", span="guess", Filter = NULL){
   if(span=="guess"){
@@ -78,9 +80,6 @@ LoessSmoothMod <- function(DF,InVar="sars_cov2_adj_load_log10",
 #' @param Filter Prefilter using the value of a Filter col
 #'
 #' @return A DF with an extra col with a loesss smoothed version of InVar
-#' @export
-#'
-#' @examples
 ExpSmoothMod <- function(DF,InVar, OutVar,alpha="guess",beta="guess", Filter = NULL ){
   
   if(alpha=="guess"){
@@ -130,8 +129,6 @@ ExpSmoothMod <- function(DF,InVar, OutVar,alpha="guess",beta="guess", Filter = N
 #' @param min The smallest value returned
 #'
 #' @return a number greater or equal to min
-#'
-#' @examples
 NGuess <- function(DF,InVar, Base, min){
   temp <- DF%>%
     filter(!is.na((!!sym(InVar))))%>%
@@ -152,9 +149,6 @@ NGuess <- function(DF,InVar, Base, min){
 #' @param Filter Prefilter using the value of a Filter col
 #'
 #' @return DF with an extra col with a sgolayfilt smoothed version of InVar
-#' @export
-#'
-#' @examples
 sgolaySmoothMod <- function(DF,InVar, OutVar,poly=5,n="guess", Filter = NULL){
   if(n=="guess"){
     n <- NGuess(DF,InVar,50/178, 7)

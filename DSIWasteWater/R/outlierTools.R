@@ -6,6 +6,8 @@
 #' @export
 #'
 #' @examples
+#' data(example_data, package = "DSIWasteWater")
+#' computeJumps(example_data)
 computeJumps <- function(df) {
   df <- df %>% 
     group_by(WWTP) %>% 
@@ -38,6 +40,9 @@ computeJumps <- function(df) {
 #' @export
 #'
 #' @examples
+#' data(example_data, package = "DSIWasteWater")
+#' df_data <- computeJumps(example_data)
+#' rankJumps(df_data)
 rankJumps <- function(df) {
   df <- df %>% 
     group_by(WWTP)   %>% 
@@ -66,6 +71,11 @@ rankJumps <- function(df) {
 #' @export
 #'
 #' @examples
+#' data(example_data, package = "DSIWasteWater")
+
+#' df_data <- computeJumps(example_data)
+#' ranked_data <- rankJumps(df_data)
+#' computeRankQuantiles(ranked_data)
 computeRankQuantiles <- function(df) {
   df <- df %>% 
     group_by(WWTP) %>% 
@@ -95,6 +105,11 @@ computeRankQuantiles <- function(df) {
 #' @export
 #'
 #' @examples
+#' data(example_data, package = "DSIWasteWater")
+#' df_data <- computeJumps(example_data)
+#' ranked_data <- rankJumps(df_data)
+#' ranked_quantile_data <- computeRankQuantiles(ranked_data)
+#' flagOutliers(ranked_quantile_data, 9)
 flagOutliers <- function(DF, threshold, col = MessureRank, outputColName = FlaggedOutlier){
   RetDF <- DF%>%
     mutate({{outputColName}} := {{col}} < threshold)
@@ -113,6 +128,12 @@ flagOutliers <- function(DF, threshold, col = MessureRank, outputColName = Flagg
 #' @export
 #'
 #' @examples
+#' data(example_data, package = "DSIWasteWater")
+#' df_data <- computeJumps(example_data)
+#' ranked_data <- rankJumps(df_data)
+#' ranked_quantile_data <- computeRankQuantiles(ranked_data)
+#' classied_data <- flagOutliers(ranked_quantile_data, 9)
+#' RemoveOutliers(classied_data)
 RemoveOutliers <- function(DF, Messure = sars_cov2_adj_load_log10, Filtcol = FlaggedOutlier, outputColName = sars_adj_log10_Filtered){
   RetDF <- DF%>%
     mutate({{outputColName}} := ifelse({{Filtcol}}, NA, {{Messure}}))

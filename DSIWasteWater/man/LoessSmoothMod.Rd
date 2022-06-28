@@ -32,3 +32,7 @@ A DF with an extra col with a loesss smoothed version of InVar
 LoessSmoothMod
 Add a column of the smoothed values using Loess
 }
+\examples{
+data(example_data, package = "DSIWasteWater")
+LoessSmoothMod(example_data)
+}
