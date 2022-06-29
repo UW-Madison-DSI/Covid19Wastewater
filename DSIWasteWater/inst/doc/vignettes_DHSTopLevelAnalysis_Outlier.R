@@ -42,7 +42,7 @@ head(reg_estimates_data)
 #  
 #  createMethodCompareBar_Plot(reg_estimates_data)
 
-## ----make DHS plot, fig.height=10,fig.width=38--------------------------------
+## ----make DHS plot, fig.height=15,fig.width=14.25, warning = FALSE------------
 createDHSMethod_Plot(reg_estimates_data, created_data, 
                  PointVal = c( "sars_cov2_adj_load_log10",
                                "sars_adj_log10_Filtered"),

@@ -13,7 +13,7 @@ workset4_data <- workset4_data[workset4_data$n >= 180,]
 reg_estimates_data <- buildRegressionEstimateTable(workset4_data)
 head(reg_estimates_data)
 
-## ----make DHS plot, fig.height=5,fig.width=38---------------------------------
+## ----make DHS plot, fig.height=15,fig.width=14.25-----------------------------
 createDHSMethod_Plot(reg_estimates_data, workset4_data)
 
 ## ----Show Madison Version of The Data, fig.height=5, fig.width = 7.3----------

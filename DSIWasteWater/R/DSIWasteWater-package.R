@@ -5,5 +5,5 @@
 #' @importFrom zoo rollapply
 #' @importFrom limma loessFit
 #' @importFrom rlang :=
-#' @importFrom patchwork plot_layout
+#' @importFrom patchwork plot_layout wrap_plots
 NULL

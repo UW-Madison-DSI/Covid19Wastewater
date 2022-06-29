@@ -32,29 +32,65 @@ createDHSMethod_Plot <- function(RegDF,BaseDF, FacGridFormula = Method ~ WWTP,
   
   BarGridSmoothRaw <- RegDF%>%
     
-    FactorVecByNumPoints(SiteName,"Catagory")%>%
+    split(.,.$WWTP)%>%
     
-    CreateHeatMaps_Plot(FacGridFormula, "Catagory", CatagoryColors,ToMerge=TRUE)
+    lapply(CreateHeatMaps_Plot, FacGridFormula, "Catagory", CatagoryColors,
+           ToMerge=TRUE)
   
   
   
   
   Gplt <- BaseDF%>%
-    FactorVecByNumPoints("WWTP","sars_cov2_adj_load_log10")%>%
     
     mutate(Data = "Data")%>%
     
     filter(!!sym(SiteName) %in% unique(RegDF[[SiteName]]))%>%
     
-    createWasteGraph_Plot("date", PointVal = PointVal, LineVal = LineVal, ToMerge = TRUE)
+    split(.,.$WWTP)%>%
+    
+    lapply(createWasteGraph_Plot, "date", PointVal = PointVal, LineVal = LineVal,
+           ToMerge = TRUE)
   
   
   methodsUsed <- length(uniqueVal(as.character(FacGridFormula)[2], RegDF))
 
-  SavePlot <- BarGridSmoothRaw/Gplt + plot_layout(heights = c(methodsUsed, 1))
+  SavePlot <- orderAndZipListsOfPlots_Plot(BarGridSmoothRaw,Gplt,ratA = methodsUsed)
   
   return(SavePlot)
 }
+
+#' Temp
+#'
+#' @param top_plot_list 
+#' @param bot_plot_list 
+#' @param ratA 
+#' @param ratB 
+#'
+#' @return
+orderAndZipListsOfPlots_Plot <- function(top_plot_list, bot_plot_list, ratA=3,ratB=1){
+  stopifnot(length(top_plot_list) == length(bot_plot_list))
+  RetList <- list()
+  
+  ele_list_length <- length(top_plot_list)
+  for(i in 1:ele_list_length){
+    a <- top_plot_list[[i]]
+    b <- bot_plot_list[[i]]
+    if(i%%3 != 1){
+      b <- b + theme(axis.title.y = element_blank())
+    }
+    if(i%%3 != 0 && i!=ele_list_length){
+      a <- a + theme(strip.background.y = element_blank(),
+                     strip.text.y = element_blank())
+      b <- b + theme(strip.background.y = element_blank(),
+                     strip.text.y = element_blank())
+    }
+    RetList[[i]] <- a/b + plot_layout(heights = c(ratA, ratB))
+  }
+  retPlot <- wrap_plots(RetList)+plot_layout(guide="collect",ncol=3)
+  return(retPlot)
+}
+
+
 
 #' CreateHeatMaps_Plot
 #' 
@@ -72,14 +108,15 @@ CreateHeatMaps_Plot <- function(DF, FacGridFormula, FillFac, CatagoryColors, ToM
     ggplot()+
     geom_rect(aes(xmin=date-days_elapsed/2,xmax=date+days_elapsed/2,
                   ymin=0,
-                  ymax = 10,fill = !!sym(FillFac)))+
+                  ymax = 10,fill = !!sym(FillFac)),
+              na.rm=TRUE)+
     facet_grid(FacGridFormula)+
     scale_fill_manual(values = CatagoryColors)
   if(ToMerge){
     BarGridSmoothRaw <- BarGridSmoothRaw+
-      theme(axis.title.x=element_blank(),
-            axis.text.x=element_blank(),
-            axis.ticks.x=element_blank())
+      theme(axis.title.x = element_blank(),
+            axis.text.x = element_blank(),
+            axis.ticks.x = element_blank())
   }
   return(BarGridSmoothRaw)
 }
@@ -102,7 +139,7 @@ Abstract_PlotAdd <- function(GGObj, GGfunc, YVal, YcolorName = NULL){
   
   
   RetObj <- GGObj+
-    GGfunc(aes(y = !!sym(YVal), color = !!YcolorName))
+    GGfunc(aes(y = !!sym(YVal), color = !!YcolorName), na.rm = TRUE)
   return(RetObj)
 }
 
@@ -168,7 +205,7 @@ createConfMatrix_Plot <- function(DF,x,y, Cat="Catagory"){
     summarise(n = n())%>%
     filter(!is.na(!!sym(y)))%>%
     ggplot(aes(x=!!sym(x),y=!!sym(y)))+
-    geom_tile(aes(fill = n))+
+    geom_tile(aes(fill = n), na.rm=TRUE)+
     scale_fill_gradient(low="blue", high="red")+ 
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
   return(RetPlt)
@@ -188,6 +225,6 @@ createMethodCompareBar_Plot <- function(DF,Method = "Method",Cat="Catagory"){
     group_by(!!sym(Method),!!sym(Cat))%>%
     summarise(n = n())%>%
     ggplot(aes(x=!!sym(Cat),y=n))+
-    geom_col(aes(fill=!!sym(Method)),position = "dodge")+ 
+    geom_col(aes(fill=!!sym(Method)),position = "dodge", na.rm=TRUE)+ 
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 }
