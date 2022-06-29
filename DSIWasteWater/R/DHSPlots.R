@@ -11,6 +11,7 @@
 #' @param PointVal The point columns we want to plot
 #' @param LineVal The Line columns we want to plot
 #' @param SiteName The column names for Site
+#' @param ncol The number of plots in each row
 #'
 #' @return a ggplot of the heat map of each method and the underlying data
 #' @export
@@ -23,7 +24,8 @@
 createDHSMethod_Plot <- function(RegDF,BaseDF, FacGridFormula = Method ~ WWTP,
                              SiteName = "WWTP", 
                              PointVal = "sars_cov2_adj_load_log10", 
-                             LineVal = NULL
+                             LineVal = NULL, 
+                             ncol = 3
                              ){
   
   CatagoryColors <- c("major decrease" = "#0571b0", "moderate decrease" = "#92c5de",
@@ -54,7 +56,8 @@ createDHSMethod_Plot <- function(RegDF,BaseDF, FacGridFormula = Method ~ WWTP,
   
   methodsUsed <- length(uniqueVal(as.character(FacGridFormula)[2], RegDF))
   if(length(Gplt)!=1){
-    SavePlot <- orderAndZipListsOfPlots_Plot(BarGridSmoothRaw,Gplt,ratA = methodsUsed)
+    SavePlot <- orderAndZipListsOfPlots_Plot(BarGridSmoothRaw,Gplt,
+                                             ratA = methodsUsed, ncol = ncol)
   }else{
     SavePlot <- BarGridSmoothRaw[[1]]/Gplt[[1]] + plot_layout(heights = c(methodsUsed, 1))
   }
