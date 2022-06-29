@@ -15,10 +15,10 @@ Imports:
   dplyr,
   tidyr, 
   zoo,
+  patchwork,
   robets,
   signal,
-  limma,
-  patchwork
+  limma
 Suggests: knitr, rmarkdown, testthat, digest, vdiffr
 VignetteBuilder: knitr
 Depends: 
