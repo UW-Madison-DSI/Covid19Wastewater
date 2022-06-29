@@ -18,4 +18,16 @@ test_that("Test vignettes DHSTopLevelAnalysis_Base.Rmd produces expected output"
   DHSPlot <- createDHSMethod_Plot(reg_estimates_data, workset4_data)
   
   vdiffr::expect_doppelganger("Vignette1Plot", DHSPlot)
+  
+  reg_estimates_Reduced_data <- reg_estimates_data[
+    reg_estimates_data$WWTP == "Madison MSD WWTF",
+  ]
+  
+  workset4_Reduced_data <- workset4_data[
+    workset4_data$WWTP == "Madison MSD WWTF",
+  ]
+  
+  DHSPlot_Madison <- createDHSMethod_Plot(reg_estimates_Reduced_data, workset4_Reduced_data)
+  
+  vdiffr::expect_doppelganger("Vignette1Plot_Madison", DHSPlot_Madison)
 })
