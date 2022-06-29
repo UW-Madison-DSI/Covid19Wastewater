@@ -2,19 +2,31 @@
 % Please edit documentation in R/DHSPlots.R
 \name{orderAndZipListsOfPlots_Plot}
 \alias{orderAndZipListsOfPlots_Plot}
-\title{Take two list of plots and combine}
+\title{Take two list of plots and combine them into one 3 col long plot}
 \usage{
-orderAndZipListsOfPlots_Plot(top_plot_list, bot_plot_list, ratA = 3, ratB = 1)
+orderAndZipListsOfPlots_Plot(
+  top_plot_list,
+  bot_plot_list,
+  ratA = 3,
+  ratB = 1,
+  ncol = 3
+)
 }
 \arguments{
-\item{top_plot_list}{}
+\item{top_plot_list}{Lists of plots that get added on top, generically the 
+rectangle plot of method prediction. Needs to be the same length as bot_plot_list}
 
-\item{bot_plot_list}{}
+\item{bot_plot_list}{List of plots to be combined on the bottom}
 
-\item{ratA}{}
+\item{ratA}{The proportion the top plot should be.}
 
-\item{ratB}{}
+\item{ratB}{The proportion the bot plot should be.}
+
+\item{ncol}{Where the plot should be faceted}
+}
+\value{
+a ggplot
 }
 \description{
-Take two list of plots and combine
+Take two list of plots and combine them into one 3 col long plot
 }

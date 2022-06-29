@@ -61,15 +61,18 @@ createDHSMethod_Plot <- function(RegDF,BaseDF, FacGridFormula = Method ~ WWTP,
   return(SavePlot)
 }
 
-#' Take two list of plots and combine
+#' Take two list of plots and combine them into one 3 col long plot
 #'
-#' @param top_plot_list 
-#' @param bot_plot_list 
-#' @param ratA 
-#' @param ratB 
+#' @param top_plot_list Lists of plots that get added on top, generically the 
+#' rectangle plot of method prediction. Needs to be the same length as bot_plot_list
+#' @param bot_plot_list  List of plots to be combined on the bottom 
+#' @param ratA The proportion the top plot should be.
+#' @param ratB The proportion the bot plot should be.
+#' @param ncol Where the plot should be faceted
 #'
-#' @return
-orderAndZipListsOfPlots_Plot <- function(top_plot_list, bot_plot_list, ratA=3,ratB=1){
+#' @return a ggplot
+orderAndZipListsOfPlots_Plot <- function(top_plot_list, bot_plot_list, ratA=3,
+                                         ratB=1, ncol = 3){
   stopifnot(length(top_plot_list) == length(bot_plot_list))
   RetList <- list()
   
@@ -77,10 +80,10 @@ orderAndZipListsOfPlots_Plot <- function(top_plot_list, bot_plot_list, ratA=3,ra
   for(i in 1:ele_list_length){
     a <- top_plot_list[[i]]
     b <- bot_plot_list[[i]]
-    if(i%%3 != 1){
+    if(i%%ncol != 1){
       b <- b + theme(axis.title.y = element_blank())
     }
-    if(i%%3 != 0 && i!=ele_list_length){
+    if(i%%ncol != 0 && i!=ele_list_length){
       a <- a + theme(strip.background.y = element_blank(),
                      strip.text.y = element_blank())
       b <- b + theme(strip.background.y = element_blank(),
@@ -88,7 +91,7 @@ orderAndZipListsOfPlots_Plot <- function(top_plot_list, bot_plot_list, ratA=3,ra
     }
     RetList[[i]] <- a/b + plot_layout(heights = c(ratA, ratB))
   }
-  retPlot <- wrap_plots(RetList)+plot_layout(guide="collect",ncol=3)
+  retPlot <- wrap_plots(RetList)+plot_layout(guide="collect",ncol=ncol)
   return(retPlot)
 }
 
