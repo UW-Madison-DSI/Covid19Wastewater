@@ -53,13 +53,15 @@ createDHSMethod_Plot <- function(RegDF,BaseDF, FacGridFormula = Method ~ WWTP,
   
   
   methodsUsed <- length(uniqueVal(as.character(FacGridFormula)[2], RegDF))
-
-  SavePlot <- orderAndZipListsOfPlots_Plot(BarGridSmoothRaw,Gplt,ratA = methodsUsed)
-  
+  if(length(Gplt)!=1){
+    SavePlot <- orderAndZipListsOfPlots_Plot(BarGridSmoothRaw,Gplt,ratA = methodsUsed)
+  }else{
+    SavePlot <- BarGridSmoothRaw[[1]]/Gplt[[1]] + plot_layout(heights = c(methodsUsed, 1))
+  }
   return(SavePlot)
 }
 
-#' Temp
+#' Take two list of plots and combine
 #'
 #' @param top_plot_list 
 #' @param bot_plot_list 

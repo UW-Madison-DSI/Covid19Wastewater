@@ -2,7 +2,7 @@
 % Please edit documentation in R/DHSPlots.R
 \name{orderAndZipListsOfPlots_Plot}
 \alias{orderAndZipListsOfPlots_Plot}
-\title{Temp}
+\title{Take two list of plots and combine}
 \usage{
 orderAndZipListsOfPlots_Plot(top_plot_list, bot_plot_list, ratA = 3, ratB = 1)
 }
@@ -16,5 +16,5 @@ orderAndZipListsOfPlots_Plot(top_plot_list, bot_plot_list, ratA = 3, ratB = 1)
 \item{ratB}{}
 }
 \description{
-Temp
+Take two list of plots and combine
 }
