@@ -152,9 +152,9 @@ Abstract_PlotAdd <- function(GGObj, GGfunc, YVal, YcolorName = NULL){
 }
 
 
-#' Waste Water graphic
+#' Wastewater graphic
 #'
-#' @param DF DF containing waste water measurements specified in the remaining params
+#' @param DF DF containing wastewater measurements specified in the remaining params
 #' @param xVal name of x variable, normally close to "Date"
 #' @param ToMerge remove facet info if true. be careful that the to plots have same ordering
 #' @param PointVal the discrete measurements

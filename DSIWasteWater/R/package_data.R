@@ -1,6 +1,6 @@
 #' Wastewater data set cleaned from the surveillance branch
 #'
-#' Data from the DHS of waste water prevalence in Wisconsin cites
+#' Data from the DHS of wastewater prevalence in Wisconsin cites
 #' 
 #' Raw file 'Shareable_Data_wastewater.csv'
 #' From zip file attached to 4/21/2022 email from Matthew Schinwald
