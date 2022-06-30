@@ -32,7 +32,7 @@ https://docs.google.com/document/d/1-Rbd0YTyPZ2slbW9ksvF36n_nhhEBNi0vJZAmhwNHsg/
  
 ## Code style
  
-Camel case for functions
+Camel case for functions and file names
  
 Snake case for variables
  
