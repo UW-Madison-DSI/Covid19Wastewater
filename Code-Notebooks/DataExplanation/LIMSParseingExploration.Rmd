@@ -22,7 +22,7 @@ library(shinycssloaders)
 #source("../../Scripts/HelperFunctions.R")
 
 source("../../lib/GenPlotMaking.R")
-source("../../lib/WasteWaterDataProccess.R")
+source("../../lib/WastewaterDataProccess.R")
 source("../../lib/CasesDataProccess.R")
 ```
 

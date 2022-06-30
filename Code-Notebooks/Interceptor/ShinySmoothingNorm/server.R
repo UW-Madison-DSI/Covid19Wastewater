@@ -2,10 +2,10 @@
 Server <- function(input, output, session) {
   
   NormType <- reactive({
-    if(input$WasteWaterNorm == "No Norm"){
-      UsedVar <- input$WasteWaterSignal
+    if(input$WastewaterNorm == "No Norm"){
+      UsedVar <- input$WastewaterSignal
     }else{
-      UsedVar <- paste0(input$WasteWaterNorm,input$WasteWaterSignal)
+      UsedVar <- paste0(input$WastewaterNorm,input$WastewaterSignal)
     }
     return(UsedVar)
   })
@@ -32,7 +32,7 @@ Server <- function(input, output, session) {
 
     
     BasePlot <- FiltDF()%>%
-      filter(!is.na(!!sym(input$WasteWaterSignal)))%>%
+      filter(!is.na(!!sym(input$WastewaterSignal)))%>%
       ggplot(aes(x=Date, color = Site))+
       geom_point(aes(y=!!sym(NormType()), shape = Threshold), alpha = .2)+
       geom_line(aes(y=!!sym(paste0("Loess",NormType()))))

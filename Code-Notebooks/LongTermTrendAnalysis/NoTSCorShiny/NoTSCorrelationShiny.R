@@ -10,7 +10,7 @@ library(shiny)
 
 #Data Files and prep work
 source("GenPlotMaking.R")
-source("WasteWaterDataProccess.R")
+source("WastewaterDataProccess.R")
 source("CasesDataProccess.R")
 source("HelperFunctions.R")
 

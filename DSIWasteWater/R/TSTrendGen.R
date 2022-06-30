@@ -32,7 +32,7 @@ ParameterGuess <- function(DF,InVar, Base, max){
 #' @export
 #'
 #' @examples
-#' data(example_data, package = "DSIWasteWater")
+#' data(example_data, package = "DSIWastewater")
 #' LoessSmoothMod(example_data)
 LoessSmoothMod <- function(DF,InVar="sars_cov2_adj_load_log10",
                            OutVar="Loess", span="guess", Filter = NULL){

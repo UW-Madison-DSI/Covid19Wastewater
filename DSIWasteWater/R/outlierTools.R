@@ -6,7 +6,7 @@
 #' @export
 #'
 #' @examples
-#' data(example_data, package = "DSIWasteWater")
+#' data(example_data, package = "DSIWastewater")
 #' computeJumps(example_data)
 computeJumps <- function(df) {
   df <- df %>% 
@@ -40,7 +40,7 @@ computeJumps <- function(df) {
 #' @export
 #'
 #' @examples
-#' data(example_data, package = "DSIWasteWater")
+#' data(example_data, package = "DSIWastewater")
 #' df_data <- computeJumps(example_data)
 #' rankJumps(df_data)
 rankJumps <- function(df) {
@@ -71,7 +71,7 @@ rankJumps <- function(df) {
 #' @export
 #'
 #' @examples
-#' data(example_data, package = "DSIWasteWater")
+#' data(example_data, package = "DSIWastewater")
 
 #' df_data <- computeJumps(example_data)
 #' ranked_data <- rankJumps(df_data)
@@ -105,7 +105,7 @@ computeRankQuantiles <- function(df) {
 #' @export
 #'
 #' @examples
-#' data(example_data, package = "DSIWasteWater")
+#' data(example_data, package = "DSIWastewater")
 #' df_data <- computeJumps(example_data)
 #' ranked_data <- rankJumps(df_data)
 #' ranked_quantile_data <- computeRankQuantiles(ranked_data)
@@ -128,7 +128,7 @@ flagOutliers <- function(DF, threshold, col = MessureRank, outputColName = Flagg
 #' @export
 #'
 #' @examples
-#' data(example_data, package = "DSIWasteWater")
+#' data(example_data, package = "DSIWastewater")
 #' df_data <- computeJumps(example_data)
 #' ranked_data <- rankJumps(df_data)
 #' ranked_quantile_data <- computeRankQuantiles(ranked_data)

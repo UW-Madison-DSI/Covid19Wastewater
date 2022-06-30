@@ -12,7 +12,7 @@ tmpfn <- function(N1, N2) {
 }
 #su
 #
-WasteWater = function(filename){
+Wastewater = function(filename){
   missing_codes <- c("","NA","0","Undetected","Not Detected",
                      "Field Parameters to be filled in", 
                      "Inhibited-to be re-ran", "#DIV/0!","-","In progress")

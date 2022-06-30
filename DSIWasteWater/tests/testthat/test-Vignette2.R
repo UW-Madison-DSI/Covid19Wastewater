@@ -1,5 +1,5 @@
 test_that("Test vignettes vignettes_DHSTopLevelAnalysis_Outlier produces expected output", {
-  data(wastewater_data, package = "DSIWasteWater")
+  data(wastewater_data, package = "DSIWastewater")
   DF <- wastewater_data
   
   workset4_data <- buildWorkSheet4(wastewater_data)

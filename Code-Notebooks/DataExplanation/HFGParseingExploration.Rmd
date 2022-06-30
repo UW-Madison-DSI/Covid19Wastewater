@@ -22,7 +22,7 @@ library(lubridate)
 
 #Data Files and prep work
 source("../../Scripts/GenPlotMaking.R")
-source("../../Scripts/WasteWaterDataProccess.R")
+source("../../Scripts/WastewaterDataProccess.R")
 source("../../Scripts/CasesDataProccess.R")
 source("../../Scripts/HelperFunctions.R")
 

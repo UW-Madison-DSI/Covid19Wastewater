@@ -22,7 +22,7 @@ library(dplyr)
 
 #Data Files and prepwork
 source("../Scripts/GenPlotMaking.R")
-source("../Scripts/WasteWaterDataProccess.R")
+source("../Scripts/WastewaterDataProccess.R")
 source("../Scripts/CasesDataProccess.R")
 source("../Scripts/HelperFunctions.R")
 LatWasteFN <- "../../UntrackedData/WW SARS-COV-2 Data V5.xlsx"

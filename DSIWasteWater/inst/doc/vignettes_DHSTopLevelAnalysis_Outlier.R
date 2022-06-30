@@ -1,8 +1,8 @@
 ## ----load packages------------------------------------------------------------
-library(DSIWasteWater)
+library(DSIWastewater)
 
 ## ----create worksheet4--------------------------------------------------------
-data(wastewater_data, package = "DSIWasteWater")
+data(wastewater_data, package = "DSIWastewater")
 
 workset4_data <- buildWorkSheet4(wastewater_data)
 

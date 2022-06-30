@@ -40,7 +40,7 @@ looks like
 }
 \examples{
 
-data(example_data, package = "DSIWasteWater")
+data(example_data, package = "DSIWastewater")
 example_reg_table <- buildRegressionEstimateTable(example_data)
 createDHSMethod_Plot(example_reg_table, example_data)
 }

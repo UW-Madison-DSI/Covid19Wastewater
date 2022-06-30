@@ -138,7 +138,7 @@ N1Fixer = function(data){
 
 
 
-WasteWater <- function(Waterfilename){
+Wastewater <- function(Waterfilename){
   missing_codes <- MissingCode()
   sheets <- excel_sheets(Waterfilename)
   water_MMSD <- read_excel(Waterfilename,

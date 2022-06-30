@@ -1,6 +1,6 @@
-#' DSIWasteWater: A package for running Covid wastewater concentration analysis
+#' DSIWastewater: A package for running Covid wastewater concentration analysis
 #'
-#' The DSIWasteWater package provides three categories of important functions:
+#' The DSIWastewater package provides three categories of important functions:
 #' DataTableGen, DataMod and Viz
 #' 
 #' @section DataTableGen functions:
@@ -19,5 +19,5 @@
 #' createDHSMethod_Plot
 #'
 #' @docType package
-#' @name DSIWasteWater
+#' @name DSIWastewater
 NULL

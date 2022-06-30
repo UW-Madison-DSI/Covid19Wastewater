@@ -9,13 +9,13 @@ vignette: >
 
 
 ```{r load packages}
-library(DSIWasteWater)
+library(DSIWastewater)
 library(dplyr)
 ```
 
 
 ```{r create worksheet4}
-data(Data_wastewater, package = "DSIWasteWater")
+data(Data_wastewater, package = "DSIWastewater")
 
 workset4 <- BuildWorkSheet4(Data_wastewater)
 

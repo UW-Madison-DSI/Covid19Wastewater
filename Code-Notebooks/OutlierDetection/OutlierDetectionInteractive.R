@@ -46,7 +46,7 @@ FullDF <- full_join(LatCaseDF,LIMSFullDF, by = c("Date","Site"))
 ui <- fluidPage(
   # Title 
   titlePanel(
-    h1("WasteWaterData Outlier detection", style = "padding-bottom: 20px")
+    h1("WastewaterData Outlier detection", style = "padding-bottom: 20px")
   ),
   
   # Sidebar layout

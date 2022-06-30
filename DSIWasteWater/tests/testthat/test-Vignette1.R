@@ -1,5 +1,5 @@
 test_that("Test vignettes DHSTopLevelAnalysis_Base.Rmd produces expected output", {
-  data(wastewater_data, package = "DSIWasteWater")
+  data(wastewater_data, package = "DSIWastewater")
   DF_data <- wastewater_data
   
   expect_identical(digest::digest(DF_data),"dfec63c14ed23c7f8829c074296043d6")

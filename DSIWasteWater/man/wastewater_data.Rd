@@ -3,7 +3,7 @@
 \docType{data}
 \name{wastewater_data}
 \alias{wastewater_data}
-\title{WasteWater data set cleaned from the surveillance branch}
+\title{Wastewater data set cleaned from the surveillance branch}
 \format{
 Rows: 8373 Columns: 30
 }

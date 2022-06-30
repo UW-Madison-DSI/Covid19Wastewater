@@ -11,7 +11,7 @@ Download package using the R command below
 ```
 devtools::install_github(
                         "AFIDSI/COVID-19_WastewaterAnalysis",
-                        ref="MainBranchInPackageFormat", subdir = "DSIWasteWater",
+                        ref="MainBranchInPackageFormat", subdir = "DSIWastewater",
                         auth_token = "REPLACEWITHYOURAURTHTOKEN"
 )
 ```
@@ -20,11 +20,11 @@ To get a AURTHTOKEN you need to go to https://github.com/settings/tokens and cre
  
 View The package vignettes with:
  
-vignette(package = "DSIWasteWater")
+vignette(package = "DSIWastewater")
 
 Look at all package functionality with:
 
-help(package = "DSIWasteWater")
+help(package = "DSIWastewater")
  
 Release notes are stored here:
  

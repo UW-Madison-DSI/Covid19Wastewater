@@ -19,7 +19,7 @@ dataframe with 4 columns appended: ranks of each of the 4 jumps;
 Convert jumps from last step into a ordering quintile
 }
 \examples{
-data(example_data, package = "DSIWasteWater")
+data(example_data, package = "DSIWastewater")
 df_data <- computeJumps(example_data)
 ranked_data <- rankJumps(df_data)
 computeRankQuantiles(ranked_data)

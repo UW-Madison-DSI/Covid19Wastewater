@@ -17,7 +17,7 @@
 #' @export
 #'
 #' @examples
-#' data(example_data, package = "DSIWasteWater")
+#' data(example_data, package = "DSIWastewater")
 #' buildRegressionEstimateTable(example_data)
 #' 
 buildRegressionEstimateTable <- function(DataMod, RunOn = "sars_cov2_adj_load_log10",

@@ -18,6 +18,6 @@ calculates sars_cov2_adj_load_log10 column,
 and filters rows where average_flow_rate is NA
 }
 \examples{
-data(wastewater_data, package = "DSIWasteWater")
+data(wastewater_data, package = "DSIWastewater")
 buildWorkSheet4(wastewater_data)
 }

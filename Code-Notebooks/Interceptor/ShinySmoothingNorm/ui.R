@@ -11,7 +11,7 @@ UI <- function(){
                  box(width=4,
                      title = "parameters",
 
-                     selectInput("WasteWaterSignal", 
+                     selectInput("WastewaterSignal", 
                                  "Waste Water Signal", 
                                  choices = c("N1","N2"), 
                                  selected = "N1"),
@@ -22,7 +22,7 @@ UI <- function(){
                      checkboxInput("isLog", 
                                    "Log conc",
                                    value=F),
-                     selectInput("WasteWaterNorm", 
+                     selectInput("WastewaterNorm", 
                                  "Normalization", 
                                  choices = c("No Norm","Flow", "FlowPop"), 
                                  selected = "No Norm"),
@@ -41,7 +41,7 @@ UI <- function(){
     dashboardHeader(title = "Waste Water loess interactive"),
     #left hand side tab selector
     dashboardSidebar(sidebarMenu(
-      menuItem("Madison WasteWater", tabName = "MadDash")
+      menuItem("Madison Wastewater", tabName = "MadDash")
     )),
     #Contents of different tabs defined above
     dashboardBody(

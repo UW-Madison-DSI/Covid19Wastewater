@@ -11,7 +11,7 @@
 #' @export
 #'
 #' @examples
-#' data(wastewater_data, package = "DSIWasteWater")
+#' data(wastewater_data, package = "DSIWastewater")
 #' buildWorkSheet4(wastewater_data)
 buildWorkSheet4 <- function(df){
   ## format data as DHS code expects

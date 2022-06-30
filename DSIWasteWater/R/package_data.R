@@ -1,4 +1,4 @@
-#' WasteWater data set cleaned from the surveillance branch
+#' Wastewater data set cleaned from the surveillance branch
 #'
 #' Data from the DHS of waste water prevalence in Wisconsin cites
 #' 

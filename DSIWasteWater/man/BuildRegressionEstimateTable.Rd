@@ -35,7 +35,7 @@ the results into 5 categories, "major decrease", "moderate decrease",
 If the model P-value if over .3 the category is replaced with "no change"
 }
 \examples{
-data(example_data, package = "DSIWasteWater")
+data(example_data, package = "DSIWastewater")
 buildRegressionEstimateTable(example_data)
 
 }

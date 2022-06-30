@@ -442,7 +442,7 @@ SevenLoess <- ModelTesting(SLDSmoothedDF,loessVar,"SevenDayMACases")
 SLDLoess <- ModelTesting(SLDSmoothedDF,loessVar,"SLDCases")
 
 
-Output <- data.frame(row.names=c("Max Cross Correlation","Lag of largest Cross correlation","P-value WasteWater predicts Cases","P-value Cases predicts wastewater"),
+Output <- data.frame(row.names=c("Max Cross Correlation","Lag of largest Cross correlation","P-value Wastewater predicts Cases","P-value Cases predicts wastewater"),
   CasesvsVar = BaseLine,
   SevenDayMACasesvsVar = BaseLineSevenDay,
   ErrorRemoved = ErrorRemoved,

@@ -29,7 +29,7 @@ Tab1=tabItem(tabName = "MadDash",
                                "Case data used", 
                                c("EpisodeCase","SpecCollectedCase","FirstConfirmed"), 
                                selected = "EpisodeCase"),
-                   selectInput("WasteWaterSignal", 
+                   selectInput("WastewaterSignal", 
                                "Waste Water Signal", 
                                choices = c("N1","N2","AVG"), 
                                selected = "N1"),
@@ -76,7 +76,7 @@ UI  <- dashboardPage(
   dashboardHeader(title = "Waste Water MainStory interactive"),
   #left hand side tab selector
   dashboardSidebar(sidebarMenu(
-    menuItem("Madison WasteWater", tabName = "MadDash")
+    menuItem("Madison Wastewater", tabName = "MadDash")
   )),
   #Contents of different tabs defined above
   dashboardBody(
@@ -157,10 +157,10 @@ Server <- function(input, output, session) {
   })
   
   
-  TransformWasteWaterData = reactive({
+  TransformWastewaterData = reactive({
     ReturnedDF <- LIMSFullDF%>% 
       filter(Site == input$Site)%>%
-      rename(WasteVar = input$WasteWaterSignal)
+      rename(WasteVar = input$WastewaterSignal)
     if(input$VarianceOutliers){
       ReturnedDF <- VarianceOutliers(ReturnedDF,input$Error,input$TrendSmooth,
                                      BinSize=input$TrendSmooth,Threshhold = input$Error)
@@ -176,14 +176,14 @@ Server <- function(input, output, session) {
   
   TranformData = reactive({
     #joining the two data frames together
-    FullDF <- full_join(TransformCaseData(),TransformWasteWaterData(), by = c("Date","Site"))
+    FullDF <- full_join(TransformCaseData(),TransformWastewaterData(), by = c("Date","Site"))
     return(FullDF)
   })
   
   
   MakePlot = reactive({
     
-    WasteVarName <- input$WasteWaterSignal
+    WasteVarName <- input$WastewaterSignal
     CaseVarName <- input$CaseSignal
     OutlierName <- paste(WasteVarName,"Outlier")
     loessVar <- paste0("loess",WasteVarName)

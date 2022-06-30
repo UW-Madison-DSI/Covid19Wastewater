@@ -59,7 +59,7 @@ BaseDir <- params$BaseDir#get the root of the directory where the data is stored
 ```
 
 ```{r helpful data manipulations, include = FALSE}
-SelectedIndVar <- params$IndVar#WasteWater Var Used in Analysis
+SelectedIndVar <- params$IndVar#Wastewater Var Used in Analysis
 SelectedDepVar <- params$DepVar#Case Var Used in Analysis
 OutlierName <- paste(SelectedIndVar,"Outlier")
 
