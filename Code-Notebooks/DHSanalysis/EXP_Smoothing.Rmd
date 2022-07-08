@@ -7,6 +7,8 @@ output: html_document
 
 ```{r load packages}
 library(DSIWastewater)
+library(dplyr)
+library(zoo)
 ```
 
 ```{r exp}
@@ -19,7 +21,7 @@ ParameterGuess <- function(DF,InVar, Base, max){
 }
 
 ExpSmoothMod <- function(DF,InVar="sars_cov2_adj_load_log10",
-                         OutVar="EXP",alpha="guess",beta="guess",
+                         OutVar="EXP", alpha="guess", beta="guess",
                          Filter = NULL ){
   
   if(alpha=="guess"){
@@ -50,7 +52,7 @@ ExpSmoothMod <- function(DF,InVar="sars_cov2_adj_load_log10",
   DF[[OutVar]] <- robets::robets(y=DF[[InVar]],
                           model = "AAN",
                           beta  = beta,
-                          alpha=alpha)$fitted#2 iterations remove some bad patterns
+                          alpha=alpha)$fitted
   DF <- DF%>%
     bind_rows(OutDF)
   
@@ -67,23 +69,21 @@ workset4_data <- buildWorkSheet4(wastewater_data)
 workset4_data <- workset4_data[workset4_data$n >= 180,]
 workset4_data <- workset4_data[workset4_data$WWTP == "Madison MSD WWTF",]
 
+workset4_Smooth_data <- workset4_data%>%
+                    LoessSmoothMod()%>%
+                    ExpSmoothMod(alpha = 0.07688985,
+                                 beta = 0.01922246)%>%
 
-workset4_Smooth_data <- do.call(rbind,
-                              lapply(
-                                split(workset4_data,~WWTP),
-                                LoessSmoothMod))
+    arrange(date)%>%
+  mutate(SevSmooth = rollmean(sars_cov2_adj_load_log10, k=7, fill=NA, align="right"))
 
-workset4_Smooth_data <- do.call(rbind,
-                              lapply(
-                                split(workset4_Smooth_data,~WWTP),
-                                ExpSmoothMod))
-
-
+workset4_Smooth_data
 ```
 
 ```{r run regression analysis}
 reg_estimates_data <- buildRegressionEstimateTable(workset4_Smooth_data,
                                RunOn = c("sars_cov2_adj_load_log10",
+                                "SevSmooth",
                                 "EXP",
                                 "Loess"))
 head(reg_estimates_data)
@@ -92,18 +92,14 @@ head(reg_estimates_data)
 
 ```{r Compare methods,fig.width=6, eval = FALSE}
 
-createConfMatrix_Plot(reg_estimates_data, 
-                      "sars_cov2_adj_load_log10",
-                      "Loess")
-createConfMatrix_Plot(reg_estimates_data, 
-                      "Loess",
-                      "EXP")
-
 createMethodCompareBar_Plot(reg_estimates_data)
+
+reg_estimates_data%>%
+  filter(Method == "SevSmooth")
 ```
 
 ```{r make DHS plot, fig.height=15,fig.width=14.25, warning = FALSE}
 createDHSMethod_Plot(reg_estimates_data, workset4_Smooth_data, 
                  PointVal = c( "sars_cov2_adj_load_log10"),
-                 LineVal = c("Loess","EXP"))
+                 LineVal = c("Loess","EXP", "SevSmooth"))
 ```
