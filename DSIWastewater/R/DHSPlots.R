@@ -211,7 +211,7 @@ createConfMatrix_Plot <- function(DF,x,y, Cat="Catagory"){
     pivot_wider(id_cols=c(WWTP, date),names_from = Method, values_from = !!sym(Cat))%>%
     group_by(!!sym(x),!!sym(y))%>%
     summarise(n = n())%>%
-    filter(!is.na(!!sym(y)))%>%
+    filter(!is.na(!!sym(y)), !is.na(!!sym(x)))%>%
     ggplot(aes(x=!!sym(x),y=!!sym(y)))+
     geom_tile(aes(fill = n), na.rm=TRUE)+
     scale_fill_gradient(low="blue", high="red")+ 

@@ -30,12 +30,18 @@ workset4_Smooth_data <- do.call(rbind,
 ```
 
 ```{r flag outlier}
+filter_outliers <- function(df, n){
+  df_data <- computeJumps(df)
+  ranked_data <- rankJumps(df_data)
+  ranked_quantile_data <- computeRankQuantiles(ranked_data)
+  classied_data <- flagOutliers(ranked_quantile_data, n)
+  created_data <- RemoveOutliers(classied_data)
+}
+```
 
-df_data <- computeJumps(workset4_Smooth_data)
-ranked_data <- rankJumps(df_data)
-ranked_quantile_data <- computeRankQuantiles(ranked_data)
-classied_data <- flagOutliers(ranked_quantile_data, 9)
-created_data <- RemoveOutliers(classied_data)
+```{r}
+created_data <- workset4_Smooth_data%>%
+                            filter_outliers(9)
 ```
 
 ```{r run regression analysis}

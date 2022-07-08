@@ -79,7 +79,7 @@ LoessSmoothMod <- function(DF,InVar="sars_cov2_adj_load_log10",
 #' 
 #' @param Filter Prefilter using the value of a Filter col
 #'
-#' @return A DF with an extra col with a loesss smoothed version of InVar
+#' @return A DF with an extra col with a exp smoothed version of InVar
 ExpSmoothMod <- function(DF,InVar, OutVar,alpha="guess",beta="guess", Filter = NULL ){
   
   if(alpha=="guess"){
@@ -111,7 +111,6 @@ ExpSmoothMod <- function(DF,InVar, OutVar,alpha="guess",beta="guess", Filter = N
                           model = "AAN",
                           beta  = beta,
                           alpha=alpha)$fitted#2 iterations remove some bad patterns
-  
   DF <- DF%>%
     bind_rows(OutDF)
   
