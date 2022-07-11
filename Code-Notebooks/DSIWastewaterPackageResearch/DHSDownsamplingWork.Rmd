@@ -1,0 +1,53 @@
+---
+title: "DHS downsampling work"
+author: "Marlin"
+date: '2022-07-11'
+output: html_document
+---
+
+```{r}
+library(DSIWastewater)
+```
+
+```{r}
+data(wastewater_data, package = "DSIWastewater")
+library(lubridate)
+workset4_data$date <- wday(workset4_data$date)
+
+workset4_data%>%
+  filter(WWTP == "Madison MSD WWTF")%>%
+  group_by(date)%>%
+  summarise(n())
+```
+```{r day of week}
+#Analyse day of week effect with new data
+#see if mean changes on day of week
+#push off to later
+a <- workset4_data%>%
+  group_by(date)%>%
+  summarise(m = mean(sars_cov2_adj_load_log10))
+#1, 4
+```
+
+
+```{r downsample}
+DownSampleDF <-  function(DF, dayOfWeekVec){
+  #filter(wday(date) %in% dayOfWeekVec)
+}
+```
+
+```{r build table}
+#build reg table of down samples data and original data
+#add specification column
+#rowbind
+```
+
+```{r do messure}
+#do numerical validation of each method
+```
+
+```{r plot}
+#plot with func diffs 
+```
+
+

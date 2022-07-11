@@ -1,6 +1,6 @@
 #' Run DHS analysis at a top level
 #' 
-#' buildRegressionEstimateTable is used to create a data frame that has the 
+#' buildRegressionEstimateTable is used to create a data frame that has the
 #' predicted categorization as laid out by the DHS. For each RunOn var supplied
 #' It uses the var to create a 5 day lm fit and uses the percent change to bin
 #' the results into 5 categories, "major decrease", "moderate decrease",
@@ -20,9 +20,10 @@
 #' data(example_data, package = "DSIWastewater")
 #' buildRegressionEstimateTable(example_data)
 #' 
-buildRegressionEstimateTable <- function(DataMod, RunOn = "sars_cov2_adj_load_log10",
+buildRegressionEstimateTable <- function(DataMod, 
+                                         RunOn = "sars_cov2_adj_load_log10",
                                          SplitOn = "WWTP", 
-                                verbose=FALSE, PSigTest=TRUE){
+                                         verbose=FALSE, PSigTest=TRUE){
   reg_estimates = DataMod%>%
     pivot_longer(all_of(RunOn), names_to = "Method")%>%
     filter(!is.na(value))%>%

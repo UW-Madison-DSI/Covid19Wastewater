@@ -27,6 +27,17 @@ workset4_Smooth_data <- do.call(rbind,
                                 split(workset4_data,~WWTP),
                                 LoessSmoothMod))
 
+unique(workset4_data$WWTP)
+
+
+library(dplyr)
+workset4_data%>%
+  group_by(WWTP)%>%
+  summarise(p = mean(population_served),
+            n = n())%>%
+  arrange(p)
+#Milwaukee MSD South Shore
+
 ```
 
 ```{r flag outlier}
