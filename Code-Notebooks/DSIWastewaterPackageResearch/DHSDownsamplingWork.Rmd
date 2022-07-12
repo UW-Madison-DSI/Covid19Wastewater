@@ -178,16 +178,17 @@ Messure_data <- Messure_reg_estimates_data%>%
          vol = abs(Catagory-lag(Catagory)),
          Bigvol = vol>= 2)%>%
   summarise(diff = mean(diff),
-            #PerBigDiff = mean(BigDiff),
-            #vol = mean(vol, na.rm = TRUE)#,
-            #PerBigvol = mean(Bigvol, na.rm = TRUE)
+            PerBigDiff = mean(BigDiff),
+            vol = mean(vol, na.rm = TRUE),
+            PerBigvol = mean(Bigvol, na.rm = TRUE)
             )
 
 
 Messure_data%>%
   pivot_longer(col = -c(Method, data))%>%
   ggplot(aes(x = data, y = value))+
-  geom_line(aes(color = Method, linetype = name))
+  geom_line(aes(color = Method))+
+  facet_wrap(~name, scales = "free")
 ```
 
 ```{r plot,fig.width=9}
