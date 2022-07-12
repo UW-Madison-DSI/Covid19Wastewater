@@ -9,16 +9,21 @@ output: html_document
 library(DSIWastewater)
 ```
 
+
 ```{r}
 data(wastewater_data, package = "DSIWastewater")
+
+Mad_data <- wastewater_data%>%
+  buildWorkSheet4()%>%
+  filter(WWTP == "Madison MSD WWTF")
 library(lubridate)
 workset4_data$date <- wday(workset4_data$date)
 
 workset4_data%>%
-  filter(WWTP == "Madison MSD WWTF")%>%
   group_by(date)%>%
   summarise(n())
 ```
+
 ```{r day of week}
 #Analyse day of week effect with new data
 #see if mean changes on day of week
@@ -29,14 +34,37 @@ a <- workset4_data%>%
 #1, 4
 ```
 
-
 ```{r downsample}
 DownSampleDF <-  function(DF, dayOfWeekVec){
-  #filter(wday(date) %in% dayOfWeekVec)
+  RetDF <- DF%>%
+    filter(wday(date) %in% dayOfWeekVec)
+  return(RetDF)
 }
+
+two_day_mad_data <- Mad_data%>%
+  DownSampleDF(c(3,5))
 ```
 
 ```{r build table}
+
+Normal_reg_estimate_Table_data <- Mad_data%>%
+                          buildRegressionEstimateTable(
+                               RunOn = c("sars_cov2_adj_load_log10",
+                                "SevSmooth",
+                                "EXP",
+                                "Loess"))%>%
+  mutate(data = "full_data")
+down_sample_reg_table_data <- two_day_mad_data%>%
+                          buildRegressionEstimateTable(
+                               RunOn = c("sars_cov2_adj_load_log10",
+                                "SevSmooth",
+                                "EXP",
+                                "Loess"))%>%
+  mutate(data = "two_day_data")
+
+
+Full_data = rbind(down_sample_reg_table_data,
+                  Normal_reg_estimate_Table_data)
 #build reg table of down samples data and original data
 #add specification column
 #rowbind
@@ -48,6 +76,9 @@ DownSampleDF <-  function(DF, dayOfWeekVec){
 
 ```{r plot}
 #plot with func diffs 
+
+createDHSMethod_Plot(reg_estimates_data, workset4_Smooth_data, 
+                 PointVal = c( "sars_cov2_adj_load_log10"),
+                 LineVal = c("Loess","EXP", "SevSmooth"),
+                 FacGridFormula = Method ~ data)
 ```
-
-
