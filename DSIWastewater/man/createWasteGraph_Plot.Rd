@@ -2,7 +2,7 @@
 % Please edit documentation in R/DHSPlots.R
 \name{createWasteGraph_Plot}
 \alias{createWasteGraph_Plot}
-\title{Waste Water graphic}
+\title{Wastewater graphic}
 \usage{
 createWasteGraph_Plot(
   DF,
@@ -13,7 +13,7 @@ createWasteGraph_Plot(
 )
 }
 \arguments{
-\item{DF}{DF containing waste water measurements specified in the remaining params}
+\item{DF}{DF containing wastewater measurements specified in the remaining params}
 
 \item{xVal}{name of x variable, normally close to "Date"}
 
@@ -27,5 +27,5 @@ createWasteGraph_Plot(
 a ggplot object with points with lables for each PointVal and a lines for each LineVal
 }
 \description{
-Waste Water graphic
+Wastewater graphic
 }

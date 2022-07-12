@@ -10,7 +10,6 @@
 #' @param FacGridFormula The formula we wish to facet the heat maps with
 #' @param PointVal The point columns we want to plot
 #' @param LineVal The Line columns we want to plot
-#' @param SiteName The column names for Site
 #' @param ncol The number of plots in each row
 #'
 #' @return a ggplot of the heat map of each method and the underlying data
@@ -21,20 +20,19 @@
 #' data(example_data, package = "DSIWastewater")
 #' example_reg_table <- buildRegressionEstimateTable(example_data)
 #' createDHSMethod_Plot(example_reg_table, example_data)
-createDHSMethod_Plot <- function(RegDF,BaseDF, FacGridFormula = Method ~ WWTP,
-                             SiteName = "WWTP", 
+createDHSMethod_Plot <- function(RegDF,BaseDF, 
+                             FacGridFormula = Method ~ WWTP,
                              PointVal = "sars_cov2_adj_load_log10", 
                              LineVal = NULL, 
                              ncol = 3
                              ){
-  
+  Xbreak <- as.character(FacGridFormula)[3]
   CatagoryColors <- c("major decrease" = "#0571b0", "moderate decrease" = "#92c5de",
                       "fluctuating" = "#979797", "no change" = "WHITE", 
                       "moderate increase" = "#f4a582", "major increase" = "#ca0020")
-  
   BarGridSmoothRaw <- RegDF%>%
     
-    split(.,.$WWTP)%>%
+    split(.,.[[Xbreak]])%>%
     
     lapply(CreateHeatMaps_Plot, FacGridFormula, "Catagory", CatagoryColors,
            ToMerge=TRUE)
@@ -46,11 +44,14 @@ createDHSMethod_Plot <- function(RegDF,BaseDF, FacGridFormula = Method ~ WWTP,
     
     mutate(Data = "Data")%>%
     
-    filter(!!sym(SiteName) %in% unique(RegDF[[SiteName]]))%>%
+    filter(!!sym(Xbreak) %in% unique(RegDF[[Xbreak]]))%>%
     
-    split(.,.$WWTP)%>%
+    split(.,.[[Xbreak]])%>%
     
-    lapply(createWasteGraph_Plot, "date", PointVal = PointVal, LineVal = LineVal,
+    lapply(createWasteGraph_Plot, 
+           "date", 
+           PointVal = PointVal, 
+           LineVal = LineVal,
            ToMerge = TRUE)
   
   
@@ -83,10 +84,10 @@ orderAndZipListsOfPlots_Plot <- function(top_plot_list, bot_plot_list, ratA=3,
   for(i in 1:ele_list_length){
     a <- top_plot_list[[i]]
     b <- bot_plot_list[[i]]
-    if(i%%ncol != 1){
+    if(i %% ncol != 1){
       b <- b + theme(axis.title.y = element_blank())
     }
-    if(i%%ncol != 0 && i!=ele_list_length){
+    if(i%%ncol != 0 && i != ele_list_length){
       a <- a + theme(strip.background.y = element_blank(),
                      strip.text.y = element_blank())
       b <- b + theme(strip.background.y = element_blank(),
@@ -94,7 +95,8 @@ orderAndZipListsOfPlots_Plot <- function(top_plot_list, bot_plot_list, ratA=3,
     }
     RetList[[i]] <- a/b + plot_layout(heights = c(ratA, ratB))
   }
-  retPlot <- wrap_plots(RetList)+plot_layout(guide="collect",ncol=ncol)
+  EffectiveNcol = min(ncol, length(top_plot_list))
+  retPlot <- wrap_plots(RetList)+plot_layout(guide="collect", ncol = EffectiveNcol)
   return(retPlot)
 }
 

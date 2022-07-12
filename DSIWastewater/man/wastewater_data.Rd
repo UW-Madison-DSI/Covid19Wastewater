@@ -11,7 +11,7 @@ Rows: 8373 Columns: 30
 data("wastewater_data")
 }
 \description{
-Data from the DHS of waste water prevalence in Wisconsin cites
+Data from the DHS of wastewater prevalence in Wisconsin cites
 }
 \details{
 Raw file 'Shareable_Data_wastewater.csv'

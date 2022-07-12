@@ -9,6 +9,56 @@ output: html_document
 library(DSIWastewater)
 ```
 
+```{r exp code}
+ParameterGuess <- function(DF,InVar, Base, max){
+  temp <- DF%>%
+    filter(!is.na((!!sym(InVar))))%>%
+    summarise(n=n())
+  span <- min(c(Base/temp$n, max))#More can be done here
+  return(span)
+}
+
+ExpSmoothMod <- function(DF,InVar="sars_cov2_adj_load_log10",
+                         OutVar="EXP", alpha="guess", beta="guess",
+                         Filter = NULL ){
+  
+  if(alpha=="guess"){
+    alpha <- ParameterGuess(DF,InVar, 35.6, .4)
+  }
+  if(beta=="guess"){
+    beta <- ParameterGuess(DF,InVar, 8.9, .4)
+  }
+  if(!is.null(Filter)){
+    OutDF <- DF%>%
+      filter((!!sym(Filter)) | is.na(!!sym(InVar)))%>%
+      mutate(!!OutVar := NA)
+    
+    DF <- DF%>%
+      filter(!(!!sym(Filter))  & !is.na(!!sym(InVar)))
+  }else{
+    OutDF <- DF%>%
+      filter(is.na(!!sym(InVar)))%>%
+      mutate(!!OutVar := NA)
+    
+    DF <- DF%>%
+      filter(!is.na(!!sym(InVar)))
+  }
+  
+  DF <- DF%>%
+    arrange(date)
+  
+  DF[[OutVar]] <- robets::robets(y=DF[[InVar]],
+                          model = "AAN",
+                          beta  = beta,
+                          alpha=alpha,
+                          k = 3)$fitted
+  DF <- DF%>%
+    bind_rows(OutDF)
+  
+  return(DF)
+}
+
+```
 
 ```{r}
 data(wastewater_data, package = "DSIWastewater")
@@ -41,43 +91,109 @@ DownSampleDF <-  function(DF, dayOfWeekVec){
   return(RetDF)
 }
 
-two_day_mad_data <- Mad_data%>%
-  DownSampleDF(c(3,5))
+PrepDataSmoothings <- function(DF, filterVec){
+  RetDF <- DF%>%
+    DownSampleDF(filterVec)%>%
+    LoessSmoothMod()%>%
+    ExpSmoothMod(alpha = 0.07688985 * 6 / length(filterVec),
+               beta = 0.01922246 * 6 / length(filterVec))%>%
+    arrange(date)%>%
+    mutate(SevSmooth = rollmean(sars_cov2_adj_load_log10,
+                              k=7, fill=NA, align="right"))%>%
+  mutate(data = length(filterVec),
+         TrueName = paste0(filterVec, collapse = ""))
+}
+```
+
+```{r data prep}
+data(wastewater_data, package = "DSIWastewater")
+
+Mad_data <- wastewater_data%>%
+  buildWorkSheet4()%>%
+  filter(WWTP == "Madison MSD WWTF")
+
+Full_Mad_data <- unlist(lapply(1:6,    # Get all combinations
+              combinat::combn, 
+              x = 1:6,
+              simplify = FALSE), 
+       recursive = FALSE)%>%
+  lapply(FUN = PrepDataSmoothings,
+         DF = Mad_data)%>%
+  bind_rows()
+
 ```
 
 ```{r build table}
 
-Normal_reg_estimate_Table_data <- Mad_data%>%
+Full_reg_data <- Full_Mad_data%>%
                           buildRegressionEstimateTable(
                                RunOn = c("sars_cov2_adj_load_log10",
                                 "SevSmooth",
                                 "EXP",
-                                "Loess"))%>%
-  mutate(data = "full_data")
-down_sample_reg_table_data <- two_day_mad_data%>%
-                          buildRegressionEstimateTable(
-                               RunOn = c("sars_cov2_adj_load_log10",
-                                "SevSmooth",
-                                "EXP",
-                                "Loess"))%>%
-  mutate(data = "two_day_data")
-
-
-Full_data = rbind(down_sample_reg_table_data,
-                  Normal_reg_estimate_Table_data)
-#build reg table of down samples data and original data
-#add specification column
-#rowbind
+                                "Loess"),
+                               SplitOn = "TrueName",
+                               verbose = TRUE)%>%
+  mutate(data = nchar(TrueName))
 ```
 
 ```{r do messure}
+library(ggplot2)
 #do numerical validation of each method
+Full_reg_data%>%
+  filter(data == "full_data")%>%
+createMethodCompareBar_Plot()
+
+Full_reg_data%>%
+  filter(data != "full_data")%>%
+createMethodCompareBar_Plot()
 ```
 
-```{r plot}
+```{r}
+library(tidyr)
+prepDataForMessure <- function(DF, BreakOn = "WWTP"){
+  Cat.map <- c("major increase" = 2, "moderate increase" = 1, 
+              "fluctuating" = 0, "no change" = 0,
+              "moderate decrease" = -1, "major decrease" = -2)
+  
+  num_reg_estimates_data <- DF%>%
+    select(!!sym(BreakOn), date, Method, Catagory)%>%
+    mutate(Catagory = Cat.map[Catagory])
+
+  RetDF <- num_reg_estimates_data%>%
+    filter(Method == "Loess", data == 6)%>%
+    select(date, Loess = Catagory)%>%
+    full_join(num_reg_estimates_data)%>%
+    select(!!sym(BreakOn),date,Method,Catagory,Loess)
+  return(RetDF)
+}
+
+
+Messure_reg_estimates_data <- Full_reg_data%>%
+  prepDataForMessure(BreakOn = "data")
+
+Messure_data <- Messure_reg_estimates_data%>%
+  group_by(Method, data)%>%
+  mutate(diff = abs(Catagory - Loess),
+         BigDiff = diff >= 2,
+         vol = abs(Catagory-lag(Catagory)),
+         Bigvol = vol>= 2)%>%
+  summarise(diff = mean(diff),
+            #PerBigDiff = mean(BigDiff),
+            #vol = mean(vol, na.rm = TRUE)#,
+            #PerBigvol = mean(Bigvol, na.rm = TRUE)
+            )
+
+
+Messure_data%>%
+  pivot_longer(col = -c(Method, data))%>%
+  ggplot(aes(x = data, y = value))+
+  geom_line(aes(color = Method, linetype = name))
+```
+
+```{r plot,fig.width=9}
 #plot with func diffs 
 
-createDHSMethod_Plot(reg_estimates_data, workset4_Smooth_data, 
+createDHSMethod_Plot(Full_reg_data, Full_Mad_data, 
                  PointVal = c( "sars_cov2_adj_load_log10"),
                  LineVal = c("Loess","EXP", "SevSmooth"),
                  FacGridFormula = Method ~ data)

@@ -27,7 +27,7 @@ buildRegressionEstimateTable(
 A DF with the associated Date and DHS analysis
 }
 \description{
-buildRegressionEstimateTable is used to create a data frame that has the 
+buildRegressionEstimateTable is used to create a data frame that has the
 predicted categorization as laid out by the DHS. For each RunOn var supplied
 It uses the var to create a 5 day lm fit and uses the percent change to bin
 the results into 5 categories, "major decrease", "moderate decrease",

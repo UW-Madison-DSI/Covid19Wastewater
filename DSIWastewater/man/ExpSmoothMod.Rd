@@ -23,7 +23,7 @@ if found using ParameterGuess}
 \item{Filter}{Prefilter using the value of a Filter col}
 }
 \value{
-A DF with an extra col with a loesss smoothed version of InVar
+A DF with an extra col with a exp smoothed version of InVar
 }
 \description{
 ExpSmoothMod

@@ -8,7 +8,6 @@ createDHSMethod_Plot(
   RegDF,
   BaseDF,
   FacGridFormula = Method ~ WWTP,
-  SiteName = "WWTP",
   PointVal = "sars_cov2_adj_load_log10",
   LineVal = NULL,
   ncol = 3
@@ -20,8 +19,6 @@ createDHSMethod_Plot(
 \item{BaseDF}{The data frame containing the raw data}
 
 \item{FacGridFormula}{The formula we wish to facet the heat maps with}
-
-\item{SiteName}{The column names for Site}
 
 \item{PointVal}{The point columns we want to plot}
 
