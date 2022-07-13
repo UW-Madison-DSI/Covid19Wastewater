@@ -1,5 +1,5 @@
 ---
-title: "DHS Two Days Downsampling"
+title: "DHS downsampling work"
 author: "Marlin"
 date: '2022-07-11'
 output: 
@@ -30,20 +30,41 @@ library(ggplot2)
 source("DownSamplingFuncs.R")
 ```
 
+```{r day of week}
+#Analyse day of week effect with new data
+#see if mean changes on day of week
+#push off to later
+#a <- workset4_data%>%
+#  group_by(date)%>%
+#  summarise(m = mean(sars_cov2_adj_load_log10))
+#1, 4
+```
+
+
+
 ```{r get base data}
 data(wastewater_data, package = "DSIWastewater")
 
-Mad_data <- wastewater_data%>%
-  buildWorkSheet4()%>%
-  filter(WWTP == "Madison MSD WWTF")
+Full_data <- wastewater_data%>%
+  buildWorkSheet4()
 
+InterceptorDates_data <- Full_data%>%
+  filter(WWTP == "Madison-P2-Central")%>%
+  pull(date)
+
+Mad_data <- Full_data%>%
+  filter(WWTP == "Madison MSD WWTF")%>%
+  mutate(data = "Full")
+
+Down_Mad_data <- Mad_data%>%
+            filter(date %in% InterceptorDates_data)%>%
+  mutate(data = "Down")
 ```
 
 ```{r data prep}
-Full_Mad_data <- list(1:7, c(2,5))%>%
-  lapply(FUN = PrepDataSmoothings,
-         DF = Mad_data)%>%
-  bind_rows()
+Full_Mad_data <- list(Mad_data,Down_Mad_data)%>%
+    lapply(FUN = PrepDataSmoothings)%>%
+    bind_rows()
 
 Full_reg_data <- Full_Mad_data%>%
                           buildRegressionEstimateTable(
@@ -51,11 +72,9 @@ Full_reg_data <- Full_Mad_data%>%
                                 "SevSmooth",
                                 "EXP",
                                 "Loess"),
-                               SplitOn = "TrueName")%>%
-  mutate(data = nchar(TrueName))
+                               SplitOn = "data")
 
 ```
-
 
 ```{r data, fig.width= 15, fig.height=14}
 
@@ -70,7 +89,7 @@ createDHSMethod_Plot(Full_reg_data, Full_Mad_data,
 
 
 Messure_reg_estimates_data <- Full_reg_data%>%
-  prepDataForMessure(BreakOn = "data", dataBase = 7)
+  prepDataForMessure(BreakOn = "data", dataBase="Full")
 
 Messure_data <- Messure_reg_estimates_data%>%
   group_by(Method, data)%>%
@@ -86,6 +105,7 @@ Messure_data <- Messure_reg_estimates_data%>%
 
 
 Messure_data%>%
+  mutate(data = ifelse(data == "Down",3,7))%>%
   pivot_longer(col = -c(Method, data))%>%
   ggplot(aes(x = data, y = value))+
   geom_line(aes(color = Method))+

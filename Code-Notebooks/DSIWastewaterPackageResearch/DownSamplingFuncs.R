@@ -56,22 +56,31 @@ DownSampleDF <-  function(DF, dayOfWeekVec){
   return(RetDF)
 }
 
-PrepDataSmoothings <- function(DF, filterVec){
-  RetDF <- DF%>%
-    DownSampleDF(filterVec)%>%
+PrepDataSmoothings <- function(DF, filterVec = NA){
+  if(typeof(filterVec) != "logical"){
+    RetDF <- DF%>%
+      DownSampleDF(filterVec)%>%
+      mutate(data = length(filterVec),
+             TrueName = paste0(filterVec, collapse = ""))
+    Alpha = 0.07688985 * 6 / length(filterVec)
+    Beta =  0.01922246 * 6 / length(filterVec)
+  }else{
+    RetDF <- DF
+    Alpha = 0.07688985
+    Beta =  0.01922246
+  }
+  RetDF <- RetDF%>%
     LoessSmoothMod()%>%
-    ExpSmoothMod(alpha = 0.07688985 * 6 / length(filterVec),
-                 beta = 0.01922246 * 6 / length(filterVec))%>%
+    ExpSmoothMod(alpha = Alpha,
+                 beta = Beta)%>%
     arrange(date)%>%
     mutate(SevSmooth = rollmean(sars_cov2_adj_load_log10,
-                                k=7, fill=NA, align="right"))%>%
-    mutate(data = length(filterVec),
-           TrueName = paste0(filterVec, collapse = ""))
+                                k=7, fill=NA, align = "right"))
 }
 
 
 
-prepDataForMessure <- function(DF, BreakOn = "WWTP"){
+prepDataForMessure <- function(DF, BreakOn = "WWTP", dataBase = 6){
   Cat.map <- c("major increase" = 2, "moderate increase" = 1, 
                "fluctuating" = 0, "no change" = 0,
                "moderate decrease" = -1, "major decrease" = -2)
@@ -81,7 +90,7 @@ prepDataForMessure <- function(DF, BreakOn = "WWTP"){
     mutate(Catagory = Cat.map[Catagory])
   
   RetDF <- num_reg_estimates_data%>%
-    filter(Method == "Loess", data == 6)%>%
+    filter(Method == "Loess", data == dataBase)%>%
     select(date, Loess = Catagory)%>%
     full_join(num_reg_estimates_data)%>%
     select(!!sym(BreakOn),date,Method,Catagory,Loess)
