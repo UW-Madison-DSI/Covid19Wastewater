@@ -452,13 +452,6 @@ library(dplyr)
 library(tidyr)
 library(ggplot2)</code></pre>
 <pre class="r"><code>source(&quot;DownSamplingFuncs.R&quot;)</code></pre>
-<pre class="r"><code>#Analyse day of week effect with new data
-#see if mean changes on day of week
-#push off to later
-#a &lt;- workset4_data%&gt;%
-#  group_by(date)%&gt;%
-#  summarise(m = mean(sars_cov2_adj_load_log10))
-#1, 4</code></pre>
 <pre class="r"><code>data(wastewater_data, package = &quot;DSIWastewater&quot;)
 
 Full_data &lt;- wastewater_data%&gt;%
@@ -475,6 +468,31 @@ Mad_data &lt;- Full_data%&gt;%
 Down_Mad_data &lt;- Mad_data%&gt;%
             filter(date %in% InterceptorDates_data)%&gt;%
   mutate(data = &quot;Down&quot;)</code></pre>
+<pre class="r"><code>#Analyse day of week effect with new data
+#see if mean changes on day of week
+#push off to later
+#a &lt;- workset4_data%&gt;%
+#  group_by(date)%&gt;%
+#  summarise(m = mean(sars_cov2_adj_load_log10))
+#1, 4
+
+intercepter &lt;- c(&quot;Madison-P2-Central&quot;,
+                 &quot;Madison-P8-West&quot;,
+                 &quot;Madison-P11-SW&quot;,
+                 &quot;Madison-P7-SE&quot;,
+                 &quot;Madison-P18-NE&quot;
+                 )
+
+Full_data%&gt;%
+  filter(WWTP %in% intercepter)%&gt;%
+  mutate(Wday = wday(date))%&gt;%
+  group_by(Wday)%&gt;%
+  summarize(n = n())</code></pre>
+<pre><code>## # A tibble: 2 × 2
+##    Wday     n
+##   &lt;dbl&gt; &lt;int&gt;
+## 1     2   332
+## 2     5   317</code></pre>
 <pre class="r"><code>Full_Mad_data &lt;- list(Mad_data,Down_Mad_data)%&gt;%
     lapply(FUN = PrepDataSmoothings)%&gt;%
     bind_rows()

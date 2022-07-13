@@ -28,18 +28,8 @@ library(ggplot2)
 
 ```{r exp code}
 source("DownSamplingFuncs.R")
-```
 
-```{r day of week}
-#Analyse day of week effect with new data
-#see if mean changes on day of week
-#push off to later
-#a <- workset4_data%>%
-#  group_by(date)%>%
-#  summarise(m = mean(sars_cov2_adj_load_log10))
-#1, 4
 ```
-
 
 
 ```{r get base data}
@@ -60,6 +50,29 @@ Down_Mad_data <- Mad_data%>%
             filter(date %in% InterceptorDates_data)%>%
   mutate(data = "Down")
 ```
+```{r day of week}
+#Analyse day of week effect with new data
+#see if mean changes on day of week
+#push off to later
+#a <- workset4_data%>%
+#  group_by(date)%>%
+#  summarise(m = mean(sars_cov2_adj_load_log10))
+#1, 4
+
+intercepter <- c("Madison-P2-Central",
+                 "Madison-P8-West",
+                 "Madison-P11-SW",
+                 "Madison-P7-SE",
+                 "Madison-P18-NE"
+                 )
+
+Full_data%>%
+  filter(WWTP %in% intercepter)%>%
+  mutate(Wday = wday(date))%>%
+  group_by(Wday)%>%
+  summarize(n = n())
+```
+
 
 ```{r data prep}
 Full_Mad_data <- list(Mad_data,Down_Mad_data)%>%
