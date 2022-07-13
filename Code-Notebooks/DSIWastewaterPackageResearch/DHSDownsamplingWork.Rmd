@@ -2,11 +2,20 @@
 title: "DHS downsampling work"
 author: "Marlin"
 date: '2022-07-11'
-output: html_document
+output: 
+  bookdown::html_document2: 
+    fig_width: 15
+    fig_height: 8
+    code_folding: hide
 ---
 
 ```{r}
 library(DSIWastewater)
+library(zoo)
+library(lubridate)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
 ```
 
 ```{r exp code}
@@ -60,29 +69,16 @@ ExpSmoothMod <- function(DF,InVar="sars_cov2_adj_load_log10",
 
 ```
 
-```{r}
-data(wastewater_data, package = "DSIWastewater")
-
-Mad_data <- wastewater_data%>%
-  buildWorkSheet4()%>%
-  filter(WWTP == "Madison MSD WWTF")
-library(lubridate)
-workset4_data$date <- wday(workset4_data$date)
-
-workset4_data%>%
-  group_by(date)%>%
-  summarise(n())
-```
-
 ```{r day of week}
 #Analyse day of week effect with new data
 #see if mean changes on day of week
 #push off to later
-a <- workset4_data%>%
-  group_by(date)%>%
-  summarise(m = mean(sars_cov2_adj_load_log10))
+#a <- workset4_data%>%
+#  group_by(date)%>%
+#  summarise(m = mean(sars_cov2_adj_load_log10))
 #1, 4
 ```
+
 
 ```{r downsample}
 DownSampleDF <-  function(DF, dayOfWeekVec){
@@ -105,13 +101,16 @@ PrepDataSmoothings <- function(DF, filterVec){
 }
 ```
 
-```{r data prep}
+```{r get base data}
 data(wastewater_data, package = "DSIWastewater")
 
 Mad_data <- wastewater_data%>%
   buildWorkSheet4()%>%
   filter(WWTP == "Madison MSD WWTF")
 
+```
+
+```{r data prep}
 Full_Mad_data <- unlist(lapply(1:6,    # Get all combinations
               combinat::combn, 
               x = 1:6,
@@ -121,35 +120,37 @@ Full_Mad_data <- unlist(lapply(1:6,    # Get all combinations
          DF = Mad_data)%>%
   bind_rows()
 
-```
-
-```{r build table}
-
 Full_reg_data <- Full_Mad_data%>%
                           buildRegressionEstimateTable(
                                RunOn = c("sars_cov2_adj_load_log10",
                                 "SevSmooth",
                                 "EXP",
                                 "Loess"),
-                               SplitOn = "TrueName",
-                               verbose = TRUE)%>%
+                               SplitOn = "TrueName")%>%
   mutate(data = nchar(TrueName))
+
 ```
 
-```{r do messure}
-library(ggplot2)
-#do numerical validation of each method
-Full_reg_data%>%
-  filter(data == "full_data")%>%
-createMethodCompareBar_Plot()
+```{r loess compare data prep}
+sliceVec <- c("1","13","135","1356","12356","123456","1234567")
+Singular_Mad_data <- Full_Mad_data%>%
+  filter(TrueName %in% sliceVec)
 
-Full_reg_data%>%
-  filter(data != "full_data")%>%
-createMethodCompareBar_Plot()
+Singular_reg_data <- Full_reg_data%>%
+  filter(TrueName %in% sliceVec)
 ```
 
-```{r}
-library(tidyr)
+
+```{r data, fig.width= 15, fig.height=14}
+
+createDHSMethod_Plot(Singular_reg_data, Singular_Mad_data, 
+                 PointVal = c( "sars_cov2_adj_load_log10"),
+                 LineVal = c("Loess", "EXP", "SevSmooth"),
+                 FacGridFormula = Method ~ data)
+```
+
+
+```{r, fig.width=15}
 prepDataForMessure <- function(DF, BreakOn = "WWTP"){
   Cat.map <- c("major increase" = 2, "moderate increase" = 1, 
               "fluctuating" = 0, "no change" = 0,
@@ -189,13 +190,4 @@ Messure_data%>%
   ggplot(aes(x = data, y = value))+
   geom_line(aes(color = Method))+
   facet_wrap(~name, scales = "free")
-```
-
-```{r plot,fig.width=9}
-#plot with func diffs 
-
-createDHSMethod_Plot(Full_reg_data, Full_Mad_data, 
-                 PointVal = c( "sars_cov2_adj_load_log10"),
-                 LineVal = c("Loess","EXP", "SevSmooth"),
-                 FacGridFormula = Method ~ data)
 ```
