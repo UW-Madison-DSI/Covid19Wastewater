@@ -26,19 +26,8 @@ workset4_Smooth_data <- do.call(rbind,
                               lapply(
                                 split(workset4_data,~WWTP),
                                 LoessSmoothMod))
-
-unique(workset4_data$WWTP)
-
-
-library(dplyr)
-workset4_data%>%
-  group_by(WWTP)%>%
-  summarise(p = mean(population_served),
-            n = n())%>%
-  arrange(p)
-#Milwaukee MSD South Shore
-
 ```
+
 
 ```{r flag outlier}
 filter_outliers <- function(df, n){
@@ -51,8 +40,7 @@ filter_outliers <- function(df, n){
 ```
 
 ```{r}
-created_data <- workset4_Smooth_data%>%
-                            filter_outliers(9)
+created_data <- filter_outliers(workset4_Smooth_data, 9)
 ```
 
 ```{r run regression analysis}

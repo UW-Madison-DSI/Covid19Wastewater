@@ -15,14 +15,17 @@ workset4_Smooth_data <- do.call(rbind,
                                 split(workset4_data,~WWTP),
                                 LoessSmoothMod))
 
-
 ## ----flag outlier-------------------------------------------------------------
+filter_outliers <- function(df, n){
+  df_data <- computeJumps(df)
+  ranked_data <- rankJumps(df_data)
+  ranked_quantile_data <- computeRankQuantiles(ranked_data)
+  classied_data <- flagOutliers(ranked_quantile_data, n)
+  created_data <- RemoveOutliers(classied_data)
+}
 
-df_data <- computeJumps(workset4_Smooth_data)
-ranked_data <- rankJumps(df_data)
-ranked_quantile_data <- computeRankQuantiles(ranked_data)
-classied_data <- flagOutliers(ranked_quantile_data, 9)
-created_data <- RemoveOutliers(classied_data)
+## -----------------------------------------------------------------------------
+created_data <- filter_outliers(workset4_Smooth_data, 9)
 
 ## ----run regression analysis--------------------------------------------------
 reg_estimates_data <- buildRegressionEstimateTable(created_data,
