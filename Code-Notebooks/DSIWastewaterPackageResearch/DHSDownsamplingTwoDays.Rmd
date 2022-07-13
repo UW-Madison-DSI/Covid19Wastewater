@@ -1,5 +1,5 @@
 ---
-title: "DHS downsampling work"
+title: "DHS Two Days Downsampling"
 author: "Marlin"
 date: '2022-07-11'
 output: 
@@ -30,18 +30,6 @@ library(ggplot2)
 source("DownSamplingFuncs.R")
 ```
 
-```{r day of week}
-#Analyse day of week effect with new data
-#see if mean changes on day of week
-#push off to later
-#a <- workset4_data%>%
-#  group_by(date)%>%
-#  summarise(m = mean(sars_cov2_adj_load_log10))
-#1, 4
-```
-
-
-
 ```{r get base data}
 data(wastewater_data, package = "DSIWastewater")
 
@@ -52,11 +40,7 @@ Mad_data <- wastewater_data%>%
 ```
 
 ```{r data prep}
-Full_Mad_data <- unlist(lapply(1:6,    # Get all combinations
-              combinat::combn, 
-              x = 1:6,
-              simplify = FALSE), 
-       recursive = FALSE)%>%
+Full_Mad_data <- list(1:6, c(2,5))%>%
   lapply(FUN = PrepDataSmoothings,
          DF = Mad_data)%>%
   bind_rows()
@@ -69,22 +53,12 @@ Full_reg_data <- Full_Mad_data%>%
                                 "Loess"),
                                SplitOn = "TrueName")%>%
   mutate(data = nchar(TrueName))
-
-```
-
-```{r loess compare data prep}
-sliceVec <- c("1","13","135","1356","12356","123456","1234567")
-Singular_Mad_data <- Full_Mad_data%>%
-  filter(TrueName %in% sliceVec)
-
-Singular_reg_data <- Full_reg_data%>%
-  filter(TrueName %in% sliceVec)
 ```
 
 
 ```{r data, fig.width= 15, fig.height=14}
 
-createDHSMethod_Plot(Singular_reg_data, Singular_Mad_data, 
+createDHSMethod_Plot(Full_reg_data, Full_Mad_data, 
                  PointVal = c( "sars_cov2_adj_load_log10"),
                  LineVal = c("Loess", "EXP", "SevSmooth"),
                  FacGridFormula = Method ~ data)
