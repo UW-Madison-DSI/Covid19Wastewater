@@ -73,7 +73,7 @@ Full_reg_data <- Full_Mad_data%>%
 ```
 
 ```{r loess compare data prep}
-sliceVec <- c("1","13","135","1356","12356","123456","1234567")
+sliceVec <- c("2","25","1235","1256","12356","123456")
 Singular_Mad_data <- Full_Mad_data%>%
   filter(TrueName %in% sliceVec)
 
