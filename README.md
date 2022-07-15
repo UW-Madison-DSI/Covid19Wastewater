@@ -10,7 +10,7 @@ Collaboration with DHS on statewide wastewater surveillance. Their key sites are
 Download package using the R command below
 ```
 devtools::install_github(
-                        "AFIDSI/COVID-DSIWastewater",
+                        "AFIDSI/DSIWastewater",
                         auth_token = "REPLACEWITHYOURAUTHTOKEN"
 )
 ```
