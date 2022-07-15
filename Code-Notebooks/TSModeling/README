@@ -1,5 +1,0 @@
-TSAnalysis- Main exploration of autocorrelation effect in data
-
-TSBestCorrelation- Plots and analysis to compares diffrent models. Not currently running on most recent implimentations of codebase.
-
-TSBestPredCorrelation- Plots to compare diffrent models. Fixed to not allow leakage. Not currently running on most recent implimentations of codebase.

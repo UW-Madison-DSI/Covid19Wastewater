@@ -1,5 +1,0 @@
-NoTSCorrelation - explores simple binning methods with offsets to get simple picture of relationship
-ModelExploration - Derivitive of NoTSCorrelation. Not currently running.
-LMSmoothingInteractive - Old visualization of relationship. Not currently running.
-HFGPredictVar - uses HFG data to get handle on N1 variance
-NoTSCorShiny - Interactive version of NoTSCorrelation 

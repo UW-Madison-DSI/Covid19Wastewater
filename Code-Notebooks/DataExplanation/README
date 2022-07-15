@@ -1,7 +1,0 @@
-RawToProccessed - Parses the raw data and write the parsed data to a csv for use in other code
-SEExploration - Exploration to get a handle on how SE scales with the size of N1
-CaseDataCompare - looks at diffrent case df to see delay in reporting
-HFGParseingExploration - initial exploration of HFG data
-LIMSParseingExploration - initial exploration of LIMS data
-MatrixMonthShiny - Interactive plot. Using old data parsing
-ShinyCovidDashboardExploration - Interactive plot. Using old data parsing

@@ -1,5 +1,0 @@
-This is about the relationship between N1 and case data.
-There is mainly 3 parts to this story:
-1) A simple easy to communicate model of the key relationship
-2) A medium complexity smoothing analysis
-3) A full power time series analysis with causal inference

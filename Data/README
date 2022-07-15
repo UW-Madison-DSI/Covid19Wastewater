@@ -1,3 +1,0 @@
-Data is given to the DSI by the Wisconsin Department of Health Services and the Wisconsin State Laboratory of Hygiene.
-Data given is stored in the Source directory and data that has had preprocessing is in the processed directory. All data
-processing was done in ../Code-Notebooks/DataExplanation/RawToProccessed.Rmd with the date and the input and output filename labeled
