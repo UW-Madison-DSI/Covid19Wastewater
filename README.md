@@ -1,4 +1,4 @@
-# COVID-19_WastewaterAnalysis
+# DSIWastewater
 ## Package Branch
  
 Collaboration with DHS on statewide wastewater surveillance. Their key sites are
