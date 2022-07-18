@@ -7,7 +7,7 @@
 # DSI Covid Wastewater Analysis
 ## Package Branch
  
-This is a collaborative project between the University of Wiscosin's Data Science Institute and the Wisconsin Department of Health Services (DHS) on data analsysis for statewide covid wastewater surveillance. 
+This is a collaborative project between the University of Wiscosin's Data Science Institute (DSI) and the Wisconsin Department of Health Services (DHS) on data analsysis for statewide covid wastewater surveillance. 
 
 DSI:
 - <https://datascience.wisc.edu>
@@ -31,7 +31,7 @@ To get a AUTHTOKEN you need to go to https://github.com/settings/tokens and crea
 
 ## Viewing
  
-- View The package vignettes with:
+- View the package vignettes with:
 
 ```
 vignette(package = "DSIWastewater")
