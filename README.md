@@ -22,8 +22,8 @@ DHS:
 Download package using the R command below
 ```
 devtools::install_github(
-                        "AFIDSI/DSIWastewater",
-                        auth_token = "REPLACEWITHYOURAUTHTOKEN"
+    "AFIDSI/DSIWastewater",
+    auth_token = "REPLACEWITHYOURAUTHTOKEN"
 )
 ```
  
