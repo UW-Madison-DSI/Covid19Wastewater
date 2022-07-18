@@ -1,0 +1,28 @@
+# Creating GitHub Personal Access Tokens with Repo Level Access
+
+To create a personal access token with repo level access, follow these steps:
+
+- Step 1: Go to your GitHub settings:
+  <div align="center">
+    <img src="../images/github/settings.png" style="width:33%">
+  </div>
+
+- Step 2: At the bottom of the left hand sidebar, click on "Developer settings":
+  <div align="center">
+    <img src="../images/github/developer-settings.png" style="width:50%">
+  </div>
+  
+- Step 3: Click the "Generate new token" button:
+  <div align="center">
+    <img src="../images/github/generate-new-token.png">
+  </div>
+
+- Step 4: Under "Select scope", click on the "repo" checkbox:
+  <div align="center">
+    <img src="../images/github/select-scopes.png">
+  </div>
+  
+- Step 5: Click the "Generate token" button:
+  <div align="center">
+    <img src="../images/github/generate-token.png">
+  </div>
