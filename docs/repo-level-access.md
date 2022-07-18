@@ -4,7 +4,7 @@ To create a personal access token with repo level access, follow these steps:
 
 - Step 1: Go to your GitHub settings:
   <div align="center">
-    <img src="../images/github/settings.png" style="max-width:250px">
+    <img src="../images/github/settings.png" style="max-width:200px">
   </div>
 
 - Step 2: At the bottom of the left hand sidebar, click on "Developer settings":
