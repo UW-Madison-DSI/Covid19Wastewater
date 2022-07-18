@@ -19,9 +19,9 @@ DHS:
 
 ## Sample results
 
-- [Top Level Analysis](inst/doc/vignettes_DHSTopLevelAnalysis_Base.html)
+- [Top Level Analysis](inst/doc/vignettes_DHSTopLevelAnalysis_Base.pdf)
 
-- [Top Level Outlier Analysis](inst/doc/vignettes_DHSTopLevelAnalysis_Outlier.html)
+- [Top Level Outlier Analysis](inst/doc/vignettes_DHSTopLevelAnalysis_Outlier.pdf)
 
 ## Installation
 Download package using the R command below
