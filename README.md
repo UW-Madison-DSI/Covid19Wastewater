@@ -7,9 +7,13 @@
 # DSI Covid Wastewater Analysis
 ## Package Branch
  
-This is a collaborative project with Wisconsin Department of Health Services (DHS) on statewide covid wastewater surveillance. 
+This is a collaborative project between the University of Wiscosin's Data Science Institute and the Wisconsin Department of Health Services (DHS) on data analsysis for statewide covid wastewater surveillance. 
 
-The key DHS sites are:
+DSI:
+- <https://datascience.wisc.edu>
+
+DHS:
+- <https://www.dhs.wisconsin.gov>
 - <https://www.dhs.wisconsin.gov/covid-19/wastewater.htm>
 - <http://www.slh.wisc.edu/environmental/covid-19-wastewater/>
  
@@ -27,27 +31,43 @@ To get a AUTHTOKEN you need to go to https://github.com/settings/tokens and crea
 
 ## Viewing
  
-View The package vignettes with:
- 
+- View The package vignettes with:
+
+```
 vignette(package = "DSIWastewater")
+```
 
-Look at all package functionality with:
+- Look at all package functionality with:
 
+```
 help(package = "DSIWastewater")
+```
  
-Release notes are stored here:
+- Release notes are stored here:
  
 https://docs.google.com/document/d/1-Rbd0YTyPZ2slbW9ksvF36n_nhhEBNi0vJZAmhwNHsg/edit
  
 ## Code style
  
-Camel case for functions and file names
+- Camel case for functions and file names
  
-Snake case for variables
+- Snake case for variables
  
-_data for data objects
+- _data for data objects
 
-_Plot if the function creates a plot
+- _Plot if the function creates a plot
+
+<!-- LICENSE -->
+## License
+
+Distributed under the Sustainable Use License. See `LICENSE.md` for more information.
+
+<!-- CONTACT -->
+## Contact
+
+Steve Goldstein - (mailto:sgoldstein@wisc.edu) - email
+
+Project Link: [https://github.com/AFIDSI/DSIWastewater](https://github.com/AFIDSI/DSIWastewater)
 
 ## Organization practice
  
