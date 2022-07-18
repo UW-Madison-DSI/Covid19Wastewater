@@ -16,8 +16,13 @@ DHS:
 - <https://www.dhs.wisconsin.gov>
 - <https://www.dhs.wisconsin.gov/covid-19/wastewater.htm>
 - <http://www.slh.wisc.edu/environmental/covid-19-wastewater/>
- 
- 
+
+## Sample results
+
+- [Top Level Analysis](inst/doc/vignettes_DHSTopLevelAnalysis_Base.html)
+
+- [Top Level Outlier Analysis](inst/doc/vignettes_DHSTopLevelAnalysis_Outlier.html)
+
 ## Installation
 Download package using the R command below
 ```
@@ -28,12 +33,6 @@ devtools::install_github(
 ```
  
 To get a AUTHTOKEN you need to go to https://github.com/settings/tokens and create one with at least repo level access
-
-## Sample results
-
-- [Top Level Analysis](inst/doc/vignettes_DHSTopLevelAnalysis_Base.html)
-
-- [Top Level Outlier Analysis](inst/doc/vignettes_DHSTopLevelAnalysis_Outlier.html)
 
 ## Viewing
  
