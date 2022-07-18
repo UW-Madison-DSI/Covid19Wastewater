@@ -29,6 +29,12 @@ devtools::install_github(
  
 To get a AUTHTOKEN you need to go to https://github.com/settings/tokens and create one with at least repo level access
 
+## Sample results
+
+- [Top Level Analysis](inst/doc/vignettes_DHSTopLevelAnalysis_Base.html)
+
+- [Top Level Outlier Analysis](inst/doc/vignettes_DHSTopLevelAnalysis_Outlier.html)
+
 ## Viewing
  
 - View the package vignettes with:
@@ -46,7 +52,7 @@ help(package = "DSIWastewater")
 - Release notes are stored here:
  
 https://docs.google.com/document/d/1-Rbd0YTyPZ2slbW9ksvF36n_nhhEBNi0vJZAmhwNHsg/edit
- 
+
 ## Code style
  
 - Camel case for functions and file names
