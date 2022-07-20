@@ -23,7 +23,13 @@ DHS:
 - [Top Level Outlier Analysis](inst/doc/vignettes_DHSTopLevelAnalysis_Outlier.pdf)
 
 ## Installation
-Download the package using the R command below
+
+Run this R command to install devtools  
+```
+install.packages("devtools")
+```
+
+Download the package using the R command below  
 ```
 devtools::install_github(
     "AFIDSI/DSIWastewater",
@@ -36,23 +42,22 @@ To get an AUTHTOKEN you need to go to https://github.com/settings/tokens and cre
 
 If you do not have a github account, you can install this package using a .tar.gz file. 
 
-Open rStudios, click Tools, and install packages.
-Under 'Install from:' select 'Package Archive File (.tar.gz)'
-Click browse and select the DSIWastewater.tar.gz file from where you downloaded it to
-Make sure your 'Install to Library:' is the correct R package library (Default is usually correct)
-Then click install
+Open rStudios, click Tools, and install packages  
+Under 'Install from:' select 'Package Archive File (.tar.gz)'  
+Click browse and select the DSIWastewater.tar.gz file from where you downloaded it to  
+Make sure your 'Install to Library:' is the correct R package library (Default is usually correct)  
+Then click install.  
 
-After the R console says 'DONE' run this command to install devtools
-```
-install.packages("devtools")
-```
+After the R console says 'DONE' 
 
-Once devtools is installed, run this command to install all of our dependences for our package
+Install devtools (see above)  
+
+Run this R command to install all of our dependences for our package  
 ```
 devtools::install_dev_deps(pkg = "DSIWastewater")
 ```
-This will prompt you to select which packages you want updated/installed
-We STRONGLY suggest you select '1: ALL' so that you don't need to install any dependeces later. 
+This will prompt you to select which packages you want updated/installed  
+We STRONGLY suggest you select '1: ALL' so that you don't need to install any dependeces later  
 
 ## Viewing
  
