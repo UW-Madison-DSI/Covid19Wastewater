@@ -2,12 +2,14 @@
 library(DSIWastewater)
 
 ## ----create worksheet4--------------------------------------------------------
-data(wastewater_data, package = "DSIWastewater")
+data(DHSWaste_data, package = "DSIWastewater")
 
-workset4_data <- buildWorkSheet4(wastewater_data)
+workset4_data <- buildWorkSheet4(DHSWaste_data)
 
 #Only show Site with more than 180 measurements for vignette for brevity
 workset4_data <- workset4_data[workset4_data$n >= 180,]
+
+unique(workset4_data$WWTP)
 
 ## ----run regression analysis--------------------------------------------------
 reg_estimates_data <- buildRegressionEstimateTable(workset4_data)

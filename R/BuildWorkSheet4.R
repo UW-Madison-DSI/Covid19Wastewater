@@ -11,11 +11,20 @@
 #' @export
 #'
 #' @examples
-#' data(wastewater_data, package = "DSIWastewater")
-#' buildWorkSheet4(wastewater_data)
+#' data(DHSWaste_data, package = "DSIWastewater")
+#' buildWorkSheet4(DHSWaste_data)
 buildWorkSheet4 <- function(df){
   ## format data as DHS code expects
+  
+  ### Note: Replacement small values with LOD/2 (as per 5/20/2022 discussion w/DHS)
   df <- df %>% 
+     mutate(n1_sars_cov2_lod = gsub(" ", "",tolower(n1_sars_cov2_lod)) == "yes",
+         n2_sars_cov2_lod = gsub(" ", "",tolower(n2_sars_cov2_lod)) == "yes",
+         n1_sars_cov2_conc = ifelse(n1_sars_cov2_lod, 
+                                    as.numeric(n1_lod)/2, n1_sars_cov2_conc),
+         n2_sars_cov2_conc = ifelse(n2_sars_cov2_lod, 
+                                    as.numeric(n2_lod)/2, n2_sars_cov2_conc),
+         population_served = as.numeric(population_served))%>%
     select(
       wwtp_name,sample_collect_date,population_served,  ## site data
       n1_sars_cov2_conc, n2_sars_cov2_conc,             ## N1, N2 measurement
@@ -23,9 +32,6 @@ buildWorkSheet4 <- function(df){
     ) %>% 
     rename(WWTP = wwtp_name, date = sample_collect_date) %>% 
     mutate(date = as.Date(date,format="%m/%d/%Y"))
-  
-  ### Note: Replacement small values with LOD/2 (as per 5/20/2022 discussion w/DHS)
-  ##   in bin/cleanData.pl
   
   ## dependent regression variable: log of normalized average SARS-COV-2 level
   workset4 <- df %>% 

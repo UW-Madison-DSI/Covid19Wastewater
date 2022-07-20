@@ -1,19 +1,19 @@
 test_that("Test vignettes DHSTopLevelAnalysis_Base.Rmd produces expected output", {
-  data(wastewater_data, package = "DSIWastewater")
-  DF_data <- wastewater_data
+  data(DHSWaste_data, package = "DSIWastewater")
+  DF_data <- DHSWaste_data
   
-  expect_identical(digest::digest(DF_data),"dfec63c14ed23c7f8829c074296043d6")
+  expect_identical(digest::digest(DF_data),"24eeac5cf5e258881882809d45daa4d7")
   
-  workset4_data <- buildWorkSheet4(wastewater_data)
+  workset4_data <- buildWorkSheet4(DHSWaste_data)
   
   workset4_data <- workset4_data%>% 
     filter(n >= 180)
   
-  expect_identical(digest::digest(workset4_data),"9e0deb36d570d2ba0800de04043717bd")
+  expect_identical(digest::digest(workset4_data),"5d530c77c4ac8b80e47d1f2857bdf0dc")
   
   reg_estimates_data <- buildRegressionEstimateTable(workset4_data)
   
-  expect_identical(digest::digest(reg_estimates_data),"e814c899d1dd4db02afe3179b3a7c465")
+  expect_identical(digest::digest(reg_estimates_data),"bf1480a0b06404c0c79301e1f07dcc09")
   
   DHSPlot <- createDHSMethod_Plot(reg_estimates_data, workset4_data)
   
