@@ -6,7 +6,9 @@
 
 # AFIDSI Wastewater Analysis Package
  
-This is a collaborative project between the University of Wiscosin's Data Science Institute (DSI), the Wisconsin Department of Health Services (DHS), and the State Lab of Hygiene (SLH) to perform analysis on wastewater data for pathogenic surveillance and monitoring. 
+This is an R package of utilities to perform wastewater data analysis for pathogenic surveillance and monitoring. 
+
+This project is a collaboration between the University of Wiscosin's Data Science Institute (DSI), the Wisconsin Department of Health Services (DHS), and the State Lab of Hygiene (SLH).
 
 DSI:
 - <https://datascience.wisc.edu>
