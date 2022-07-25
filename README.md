@@ -4,9 +4,9 @@
   </div>
 </p>
 
-# DSI Covid Wastewater Analysis
+# AFIDSI Covid-19 Wastewater Analysis
  
-This is a collaborative project between the University of Wiscosin's Data Science Institute (DSI) and the Wisconsin Department of Health Services (DHS) on data analsysis for statewide covid wastewater surveillance. 
+This is a collaborative project between the University of Wiscosin's Data Science Institute (DSI), the Wisconsin Department of Health Services (DHS), and the State Lab of Hygiene (SLH) to perform analysis on wastewater data for covid-19 surveillance and monitoring. 
 
 DSI:
 - <https://datascience.wisc.edu>
@@ -14,6 +14,8 @@ DSI:
 DHS:
 - <https://www.dhs.wisconsin.gov>
 - <https://www.dhs.wisconsin.gov/covid-19/wastewater.htm>
+
+SLH:
 - <http://www.slh.wisc.edu/environmental/covid-19-wastewater/>
 
 ## Sample results
