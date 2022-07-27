@@ -10,7 +10,8 @@
 #' @param FacGridFormula The formula we wish to facet the heat maps with
 #' @param PointVal The point columns we want to plot
 #' @param LineVal The Line columns we want to plot
-#' @param ncol The number of plots in each row
+#' @param nbreak The number of plots in each row
+#' @param IsLong Controls whether the plot is wide or long
 #'
 #' @return a ggplot of the heat map of each method and the underlying data
 #' @export
@@ -20,22 +21,28 @@
 #' data(example_data, package = "DSIWastewater")
 #' example_reg_table <- buildRegressionEstimateTable(example_data)
 #' createDHSMethod_Plot(example_reg_table, example_data)
-createDHSMethod_Plot <- function(RegDF,BaseDF, 
+createDHSMethod_Plot <- function(RegDF, BaseDF, 
                              FacGridFormula = Method ~ WWTP,
                              PointVal = "sars_cov2_adj_load_log10", 
                              LineVal = NULL, 
-                             ncol = 3
+                             nbreak = 3,
+                             IsLong = TRUE
                              ){
-  Xbreak <- as.character(FacGridFormula)[3]
+  if(IsLong){
+    Mainbreak <- as.character(FacGridFormula)[3]
+  }else{
+    Mainbreak <- as.character(FacGridFormula)[2]
+  }
+  
   CatagoryColors <- c("major decrease" = "#0571b0", "moderate decrease" = "#92c5de",
                       "fluctuating" = "#979797", "no change" = "WHITE", 
                       "moderate increase" = "#f4a582", "major increase" = "#ca0020")
+  
   BarGridSmoothRaw <- RegDF%>%
     
-    split(.,.[[Xbreak]])%>%
+    split(.,.[[Mainbreak]])%>%
     
-    lapply(CreateHeatMaps_Plot, FacGridFormula, "Catagory", CatagoryColors,
-           ToMerge=TRUE)
+    lapply(CreateHeatMaps_Plot, FacGridFormula, "Catagory", CatagoryColors)
   
   
   
@@ -44,9 +51,9 @@ createDHSMethod_Plot <- function(RegDF,BaseDF,
     
     mutate(Data = "Data")%>%
     
-    filter(!!sym(Xbreak) %in% unique(RegDF[[Xbreak]]))%>%
+    filter(!!sym(Mainbreak) %in% unique(RegDF[[Mainbreak]]))%>%
     
-    split(.,.[[Xbreak]])%>%
+    split(.,.[[Mainbreak]])%>%
     
     lapply(createWasteGraph_Plot, 
            "date", 
@@ -55,10 +62,12 @@ createDHSMethod_Plot <- function(RegDF,BaseDF,
            ToMerge = TRUE)
   
   
-  methodsUsed <- length(uniqueVal(as.character(FacGridFormula)[2], RegDF))
-  if(length(Gplt)!=1){
+  methodsUsed <- length(uniqueVal(Mainbreak, RegDF))
+  if(length(Gplt) != 1){
     SavePlot <- orderAndZipListsOfPlots_Plot(BarGridSmoothRaw,Gplt,
-                                             ratA = methodsUsed, ncol = ncol)
+                                             ratA = methodsUsed, 
+                                             nbreak = nbreak,
+                                             IsLong = IsLong)
   }else{
     SavePlot <- BarGridSmoothRaw[[1]]/Gplt[[1]] + plot_layout(heights = c(methodsUsed, 1))
   }
@@ -72,31 +81,74 @@ createDHSMethod_Plot <- function(RegDF,BaseDF,
 #' @param bot_plot_list  List of plots to be combined on the bottom 
 #' @param ratA The proportion the top plot should be.
 #' @param ratB The proportion the bot plot should be.
-#' @param ncol Where the plot should be faceted
+#' @param nbreak Where the plot should be faceted
+#' @param IsLong Controls whether the plot is wide or long
 #'
 #' @return a ggplot
 orderAndZipListsOfPlots_Plot <- function(top_plot_list, bot_plot_list, ratA=3,
-                                         ratB=1, ncol = 3){
+                                         ratB=1, nbreak = 3, IsLong = TRUE){
   stopifnot(length(top_plot_list) == length(bot_plot_list))
+  
+  EffectiveNbreak = min(nbreak, length(top_plot_list))
+  if(IsLong){
+    Height = c(ratA, ratB)
+    Width = NULL
+    nrow = NULL
+    ncol = EffectiveNbreak
+  }else{
+    Height = NULL
+    Width = c(ratB, ratA)
+    nrow = EffectiveNbreak
+    ncol = NULL
+  }
+  TitleRemove<- theme(axis.title.y = element_blank())
+  topStripRemove <- theme(strip.background.x = element_blank(),
+                          strip.text.x = element_blank())
+  sideRemove<- theme(strip.background.y = element_blank(),
+                     strip.text.y = element_blank())
+  XAxisRemove <- theme(axis.title.x = element_blank(),
+                       axis.text.x = element_blank(),
+                       axis.ticks.x = element_blank())
   RetList <- list()
   
   ele_list_length <- length(top_plot_list)
   for(i in 1:ele_list_length){
-    a <- top_plot_list[[i]]
-    b <- bot_plot_list[[i]]
-    if(i %% ncol != 1){
-      b <- b + theme(axis.title.y = element_blank())
+    botElement <- bot_plot_list[[i]]
+    topElement <- top_plot_list[[i]]
+    if(i %% EffectiveNbreak != 1){
+      
+      if(IsLong){
+        botElement <- botElement + TitleRemove
+      }else{
+        topElement <- topElement + topStripRemove
+      }
+      
     }
-    if(i%%ncol != 0 && i != ele_list_length){
-      a <- a + theme(strip.background.y = element_blank(),
-                     strip.text.y = element_blank())
-      b <- b + theme(strip.background.y = element_blank(),
-                     strip.text.y = element_blank())
+    
+    if(i %% EffectiveNbreak != 0 && i != ele_list_length){
+      if(IsLong){
+        topElement <- topElement + sideRemove
+        botElement <- botElement + sideRemove
+      }else{
+        topElement <- topElement + XAxisRemove
+        botElement <- botElement + XAxisRemove
+      }
     }
-    RetList[[i]] <- a/b + plot_layout(heights = c(ratA, ratB))
+    
+    if(IsLong){
+      topElement <- topElement + XAxisRemove
+      
+      compPlot <- (topElement / botElement)
+    }else{
+      botElement <- botElement + sideRemove
+      compPlot <- (botElement | topElement)
+    }
+    RetList[[i]] <- compPlot + plot_layout(heights = Height,
+                                   widths = Width)
   }
-  EffectiveNcol = min(ncol, length(top_plot_list))
-  retPlot <- wrap_plots(RetList)+plot_layout(guide="collect", ncol = EffectiveNcol)
+  retPlot <- wrap_plots(RetList) + plot_layout(guide="collect", 
+                                               ncol = ncol,
+                                               nrow = nrow)
   return(retPlot)
 }
 
@@ -108,12 +160,11 @@ orderAndZipListsOfPlots_Plot <- function(top_plot_list, bot_plot_list, ratA=3,
 #'
 #' @param DF The DF used to create the Heatmap
 #' @param FacGridFormula how we wan to facet the heatmap
-#' @param FillFac the name of the catagory method
+#' @param FillFac the name of the category method
 #' @param CatagoryColors The color scheme used
-#' @param ToMerge if true we remove the lower labels
 #'
 #' @return faceted ggplot heatmap
-CreateHeatMaps_Plot <- function(DF, FacGridFormula, FillFac, CatagoryColors, ToMerge = FALSE){#, 
+CreateHeatMaps_Plot <- function(DF, FacGridFormula, FillFac, CatagoryColors){#, 
   BarGridSmoothRaw <- DF%>%
     ggplot()+
     geom_rect(aes(xmin=date-days_elapsed/2,xmax=date+days_elapsed/2,
@@ -122,12 +173,7 @@ CreateHeatMaps_Plot <- function(DF, FacGridFormula, FillFac, CatagoryColors, ToM
               na.rm=TRUE)+
     facet_grid(FacGridFormula)+
     scale_fill_manual(values = CatagoryColors)
-  if(ToMerge){
-    BarGridSmoothRaw <- BarGridSmoothRaw+
-      theme(axis.title.x = element_blank(),
-            axis.text.x = element_blank(),
-            axis.ticks.x = element_blank())
-  }
+
   return(BarGridSmoothRaw)
 }
 

@@ -4,24 +4,16 @@
 \alias{CreateHeatMaps_Plot}
 \title{CreateHeatMaps_Plot}
 \usage{
-CreateHeatMaps_Plot(
-  DF,
-  FacGridFormula,
-  FillFac,
-  CatagoryColors,
-  ToMerge = FALSE
-)
+CreateHeatMaps_Plot(DF, FacGridFormula, FillFac, CatagoryColors)
 }
 \arguments{
 \item{DF}{The DF used to create the Heatmap}
 
 \item{FacGridFormula}{how we wan to facet the heatmap}
 
-\item{FillFac}{the name of the catagory method}
+\item{FillFac}{the name of the category method}
 
 \item{CatagoryColors}{The color scheme used}
-
-\item{ToMerge}{if true we remove the lower labels}
 }
 \value{
 faceted ggplot heatmap

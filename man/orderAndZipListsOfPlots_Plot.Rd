@@ -9,7 +9,8 @@ orderAndZipListsOfPlots_Plot(
   bot_plot_list,
   ratA = 3,
   ratB = 1,
-  ncol = 3
+  nbreak = 3,
+  IsLong = TRUE
 )
 }
 \arguments{
@@ -22,7 +23,9 @@ rectangle plot of method prediction. Needs to be the same length as bot_plot_lis
 
 \item{ratB}{The proportion the bot plot should be.}
 
-\item{ncol}{Where the plot should be faceted}
+\item{nbreak}{Where the plot should be faceted}
+
+\item{IsLong}{Controls whether the plot is wide or long}
 }
 \value{
 a ggplot

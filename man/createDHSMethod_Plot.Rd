@@ -10,7 +10,8 @@ createDHSMethod_Plot(
   FacGridFormula = Method ~ WWTP,
   PointVal = "sars_cov2_adj_load_log10",
   LineVal = NULL,
-  ncol = 3
+  nbreak = 3,
+  IsLong = TRUE
 )
 }
 \arguments{
@@ -24,7 +25,9 @@ createDHSMethod_Plot(
 
 \item{LineVal}{The Line columns we want to plot}
 
-\item{ncol}{The number of plots in each row}
+\item{nbreak}{The number of plots in each row}
+
+\item{IsLong}{Controls whether the plot is wide or long}
 }
 \value{
 a ggplot of the heat map of each method and the underlying data
