@@ -1,13 +1,13 @@
 test_that("Test vignettes vignettes_DHSTopLevelAnalysis_Outlier produces expected output", {
-  data(DHSWaste_data, package = "DSIWastewater")
-  DF <- DHSWaste_data
+  data(WasteWater_data, package = "DSIWastewater")
+  DF <- WasteWater_data
   
-  workset4_data <- buildWorkSheet4(DHSWaste_data)
+  baseWaste_data <- buildWasteAnalysisDF(WasteWater_data)
   
-  workset4_data <- workset4_data%>% 
+  baseWaste_data <- baseWaste_data%>% 
     filter(n >= 180)
   
-  workset4_Smooth_data <- workset4_data%>%
+  workset4_Smooth_data <- baseWaste_data%>%
     group_by(WWTP)%>%
     group_split()%>%
     lapply(LoessSmoothMod)%>%
@@ -43,7 +43,7 @@ test_that("Test vignettes vignettes_DHSTopLevelAnalysis_Outlier produces expecte
   
   
 
-  DHSPlot <- createDHSMethod_Plot(reg_estimates_data, created_data, 
+  DHSPlot <- createRegressionAnalysis_Plot(reg_estimates_data, created_data, 
                        PointVal = c( "sars_cov2_adj_load_log10",
                                      "sars_adj_log10_Filtered"),
                        LineVal = "Loess")

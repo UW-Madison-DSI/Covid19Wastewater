@@ -11,9 +11,9 @@
 #' @export
 #'
 #' @examples
-#' data(DHSWaste_data, package = "DSIWastewater")
-#' buildWorkSheet4(DHSWaste_data)
-buildWorkSheet4 <- function(df){
+#' data(WasteWater_data, package = "DSIWastewater")
+#' buildWasteAnalysisDF(WasteWater_data)
+buildWasteAnalysisDF <- function(df){
   ## format data as DHS code expects
   
   ### Note: Replacement small values with LOD/2 (as per 5/20/2022 discussion w/DHS)

@@ -1,6 +1,6 @@
 #' Create representative plot of the DHS analysis
 #' 
-#' createDHSMethod_Plot uses RegDF to create the top set of plots showing the 
+#' createRegressionAnalysis_Plot uses RegDF to create the top set of plots showing the 
 #' predictions at each time period. 
 #' It uses BaseDF to create the lower plot that shows what the regressed data
 #' looks like
@@ -20,8 +20,8 @@
 #' 
 #' data(example_data, package = "DSIWastewater")
 #' example_reg_table <- buildRegressionEstimateTable(example_data)
-#' createDHSMethod_Plot(example_reg_table, example_data)
-createDHSMethod_Plot <- function(RegDF, BaseDF, 
+#' createRegressionAnalysis_Plot(example_reg_table, example_data)
+createRegressionAnalysis_Plot <- function(RegDF, BaseDF, 
                              FacGridFormula = Method ~ WWTP,
                              PointVal = "sars_cov2_adj_load_log10", 
                              LineVal = NULL, 
@@ -30,9 +30,11 @@ createDHSMethod_Plot <- function(RegDF, BaseDF,
                              ){
   if(IsLong){
     Mainbreak <- as.character(FacGridFormula)[3]
+    SubBreak <- as.character(FacGridFormula)[2]
     facetFormula = paste("Data ~", Mainbreak)
   }else{
     Mainbreak <- as.character(FacGridFormula)[2]
+    SubBreak <- as.character(FacGridFormula)[3]
     facetFormula = paste(Mainbreak, "~ Data")
   }
   
@@ -64,16 +66,12 @@ createDHSMethod_Plot <- function(RegDF, BaseDF,
            facetFormula = facetFormula)
   
   
-  methodsUsed <- length(uniqueVal(Mainbreak, RegDF))
+  methodsUsed <- length(uniqueVal(SubBreak, RegDF))
   
-  if(length(Gplt) != 1){
-    SavePlot <- orderAndZipListsOfPlots_Plot(BarGridSmoothRaw,Gplt,
+  SavePlot <- orderAndZipListsOfPlots_Plot(BarGridSmoothRaw,Gplt,
                                              ratA = methodsUsed, 
                                              nbreak = nbreak,
                                              IsLong = IsLong)
-  }else{
-    SavePlot <- BarGridSmoothRaw[[1]]/Gplt[[1]] + plot_layout(heights = c(methodsUsed, 1))
-  }
   return(SavePlot)
 }
 
@@ -112,6 +110,25 @@ orderAndZipListsOfPlots_Plot <- function(top_plot_list, bot_plot_list, ratA=3,
   XAxisRemove <- theme(axis.title.x = element_blank(),
                        axis.text.x = element_blank(),
                        axis.ticks.x = element_blank())
+  
+  if(length(top_plot_list) == 1){
+    botElement <- bot_plot_list[[1]]
+    topElement <- top_plot_list[[1]]
+    if(IsLong){
+      topElement <- topElement + XAxisRemove
+      botElement <- botElement + topStripRemove
+      
+      compPlot <- (topElement / botElement)
+    }else{
+      botElement <- botElement + sideRemove
+      compPlot <- (botElement | topElement)
+    }
+    retPlot <- compPlot + plot_layout(heights = Height,
+                                           widths = Width)
+    return(retPlot)
+  }
+  
+  
   
   RetList <- list()
   

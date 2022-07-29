@@ -2,17 +2,17 @@
 library(DSIWastewater)
 
 ## ----create worksheet4--------------------------------------------------------
-data(DHSWaste_data, package = "DSIWastewater")
+data(WasteWater_data, package = "DSIWastewater")
 
-workset4_data <- buildWorkSheet4(DHSWaste_data)
+baseWaste_data <- buildWasteAnalysisDF(WasteWater_data)
 
 #Only show Site with more than 180 measurements for vignette for brevity
-workset4_data <- workset4_data[workset4_data$n >= 180,]
+baseWaste_data <- baseWaste_data[baseWaste_data$n >= 180,]
 
 
 workset4_Smooth_data <- do.call(rbind,
                               lapply(
-                                split(workset4_data, ~WWTP),
+                                split(baseWaste_data, ~WWTP),
                                 LoessSmoothMod))
 
 ## ----flag outlier-------------------------------------------------------------
@@ -22,6 +22,7 @@ filter_outliers <- function(df, n){
   ranked_quantile_data <- computeRankQuantiles(ranked_data)
   classied_data <- flagOutliers(ranked_quantile_data, n)
   created_data <- RemoveOutliers(classied_data)
+  return(created_data)
 }
 
 ## -----------------------------------------------------------------------------
@@ -46,7 +47,7 @@ head(reg_estimates_data)
 #  createMethodCompareBar_Plot(reg_estimates_data)
 
 ## ----make DHS plot, fig.height=15,fig.width=14.25, warning = FALSE------------
-createDHSMethod_Plot(reg_estimates_data, created_data, 
+createRegressionAnalysis_Plot(reg_estimates_data, created_data, 
                  PointVal = c( "sars_cov2_adj_load_log10",
                                "sars_adj_log10_Filtered"),
                  LineVal = "Loess")

@@ -7,12 +7,12 @@
 #'
 #' @docType data
 #'
-#' @usage data("DHSWaste_data")
+#' @usage data("WasteWater_data")
 #'
 #' @format Rows: 8386 Columns: 30
 #'
 #' @keywords datasets
-"DHSWaste_data"
+"WasteWater_data"
 
 
 #' Toy example of worksheet 4 to be used in package examples
@@ -39,12 +39,12 @@
 #'
 #' @docType data
 #'
-#' @usage data("DHSCase_data")
+#' @usage data("Case_data")
 #'
 #' @format Rows: 33103  Columns: 3
 #'
 #' @keywords datasets
-"DHSCase_data"
+"Case_data"
 
 #' Case data set from the SLH on 2/7/22
 #'
@@ -81,6 +81,7 @@
 #'
 #' @keywords datasets
 "HFGWaste_data"
+
 
 #' Madison interceptor Case data set
 #'

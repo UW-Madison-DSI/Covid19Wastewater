@@ -89,7 +89,7 @@ runRegressionAnalysis <- function(DF,
     
     ww.x.subset = ModDF[k:(k+(n - 1)),]
     
-    ww.x.tobind = DHSInnerLoop(
+    ww.x.tobind = regressionInnerLoop(
       Formula,
       DF = ww.x.subset,
       Keep = Keep,
@@ -101,7 +101,7 @@ runRegressionAnalysis <- function(DF,
   return(reg_estimates)
 }
 
-#' DHSInnerLoop
+#' regressionInnerLoop
 #' 
 #' Runs a Linear regression on the data and returns it in a form to be merged
 #' in the runRegressionAnalysis function
@@ -115,7 +115,7 @@ runRegressionAnalysis <- function(DF,
 #' @return a row of a DF containing the 
 #' WWTP, last date, timespan, number of rows, model slope and significance,
 #' and predicted percent change, and what linear model was used
-DHSInnerLoop <- function(Formula, DF,Keep = NULL, LMMethod = lm){
+regressionInnerLoop <- function(Formula, DF,Keep = NULL, LMMethod = lm){
   IndiVar <- as.character(Formula)[2]
   DepVar <- as.character(Formula)[3]
   

@@ -21,11 +21,11 @@ ClassifyRegressionAnalysis
 
 \section{DataMod functions}{
 
-buildWorkSheet4
+buildWasteAnalysisDF
 }
 
 \section{Viz functions}{
 
-createDHSMethod_Plot
+createRegressionAnalysis_Plot
 }
 
