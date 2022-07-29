@@ -36,6 +36,7 @@ filter_outliers <- function(df, n){
   ranked_quantile_data <- computeRankQuantiles(ranked_data)
   classied_data <- flagOutliers(ranked_quantile_data, n)
   created_data <- RemoveOutliers(classied_data)
+  return(created_data)
 }
 ```
 

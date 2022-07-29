@@ -30,8 +30,10 @@ createDHSMethod_Plot <- function(RegDF, BaseDF,
                              ){
   if(IsLong){
     Mainbreak <- as.character(FacGridFormula)[3]
+    facetFormula = paste("Data ~", Mainbreak)
   }else{
     Mainbreak <- as.character(FacGridFormula)[2]
+    facetFormula = paste(Mainbreak, "~ Data")
   }
   
   CatagoryColors <- c("major decrease" = "#0571b0", "moderate decrease" = "#92c5de",
@@ -49,7 +51,7 @@ createDHSMethod_Plot <- function(RegDF, BaseDF,
   
   Gplt <- BaseDF%>%
     
-    mutate(Data = "Data")%>%
+    mutate(Data = "Base Data")%>%
     
     filter(!!sym(Mainbreak) %in% unique(RegDF[[Mainbreak]]))%>%
     
@@ -59,10 +61,11 @@ createDHSMethod_Plot <- function(RegDF, BaseDF,
            "date", 
            PointVal = PointVal, 
            LineVal = LineVal,
-           ToMerge = TRUE)
+           facetFormula = facetFormula)
   
   
   methodsUsed <- length(uniqueVal(Mainbreak, RegDF))
+  
   if(length(Gplt) != 1){
     SavePlot <- orderAndZipListsOfPlots_Plot(BarGridSmoothRaw,Gplt,
                                              ratA = methodsUsed, 
@@ -109,6 +112,7 @@ orderAndZipListsOfPlots_Plot <- function(top_plot_list, bot_plot_list, ratA=3,
   XAxisRemove <- theme(axis.title.x = element_blank(),
                        axis.text.x = element_blank(),
                        axis.ticks.x = element_blank())
+  
   RetList <- list()
   
   ele_list_length <- length(top_plot_list)
@@ -121,6 +125,7 @@ orderAndZipListsOfPlots_Plot <- function(top_plot_list, bot_plot_list, ratA=3,
         botElement <- botElement + TitleRemove
       }else{
         topElement <- topElement + topStripRemove
+        botElement <- botElement + topStripRemove
       }
       
     }
@@ -137,6 +142,7 @@ orderAndZipListsOfPlots_Plot <- function(top_plot_list, bot_plot_list, ratA=3,
     
     if(IsLong){
       topElement <- topElement + XAxisRemove
+      botElement <- botElement + topStripRemove
       
       compPlot <- (topElement / botElement)
     }else{
@@ -204,12 +210,14 @@ Abstract_PlotAdd <- function(GGObj, GGfunc, YVal, YcolorName = NULL){
 #'
 #' @param DF DF containing wastewater measurements specified in the remaining params
 #' @param xVal name of x variable, normally close to "Date"
-#' @param ToMerge remove facet info if true. be careful that the to plots have same ordering
 #' @param PointVal the discrete measurements
 #' @param LineVal the continuous measurements
+#' @param facetFormula formula of how to facet the plot
 #'
 #' @return a ggplot object with points with lables for each PointVal and a lines for each LineVal
-createWasteGraph_Plot <- function(DF, xVal, PointVal = NULL, LineVal = NULL, ToMerge = FALSE){
+createWasteGraph_Plot <- function(DF, xVal, PointVal = NULL,
+                                  LineVal = NULL,
+                                  facetFormula = "Data ~ WWTP"){
   RetPlot <- DF%>%
     ggplot( aes(x = !!sym(xVal)))
   
@@ -228,16 +236,9 @@ createWasteGraph_Plot <- function(DF, xVal, PointVal = NULL, LineVal = NULL, ToM
   }
   
   RetPlot <- RetPlot+
-    facet_grid(Data~WWTP)+
+    facet_grid(as.formula(facetFormula))+
     scale_x_date(date_labels = "%b %y")
   
-  if(ToMerge){
-    RetPlot <- RetPlot+
-      theme(
-        strip.background.x = element_blank(),
-        strip.text.x = element_blank()
-      )
-  }
   return(RetPlot)
 }
 

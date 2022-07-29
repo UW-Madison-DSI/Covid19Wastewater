@@ -8,6 +8,7 @@ buildRegressionEstimateTable(
   DataMod,
   RunOn = "sars_cov2_adj_load_log10",
   SplitOn = "WWTP",
+  DaysRegressed = 5,
   verbose = FALSE,
   PSigTest = TRUE
 )
@@ -18,6 +19,8 @@ buildRegressionEstimateTable(
 \item{RunOn}{The col names of the values we wish to run}
 
 \item{SplitOn}{A category to separate to create independent TS data}
+
+\item{DaysRegressed}{number of days used in each regression}
 
 \item{verbose}{Bool on whether it should print out what group it is on}
 

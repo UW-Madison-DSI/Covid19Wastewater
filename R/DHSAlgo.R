@@ -12,6 +12,7 @@
 #' @param SplitOn A category to separate to create independent TS data
 #' @param verbose Bool on whether it should print out what group it is on
 #' @param PSigTest When categorizing if it should reject high pVals
+#' @param DaysRegressed number of days used in each regression
 #'
 #' @return A DF with the associated Date and DHS analysis
 #' @export
@@ -22,8 +23,10 @@
 #' 
 buildRegressionEstimateTable <- function(DataMod, 
                                          RunOn = "sars_cov2_adj_load_log10",
-                                         SplitOn = "WWTP", 
-                                         verbose=FALSE, PSigTest=TRUE){
+                                         SplitOn = "WWTP",
+                                         DaysRegressed = 5,
+                                         verbose=FALSE, 
+                                         PSigTest=TRUE){
   reg_estimates = DataMod%>%
     pivot_longer(all_of(RunOn), names_to = "Method")%>%
     filter(!is.na(value))%>%
@@ -32,6 +35,7 @@ buildRegressionEstimateTable <- function(DataMod,
     lapply(runRegressionAnalysis, 
            Formula = value ~ date, #Should Be Gen
            Keep  = c(SplitOn, "Method"), 
+           n = DaysRegressed,
            verbose = verbose)%>%
     bind_rows()%>%
     ClassifyRegressionAnalysis(PSigTest=PSigTest)%>%
@@ -57,7 +61,12 @@ buildRegressionEstimateTable <- function(DataMod,
 #' @return a row of a DF containing the 
 #' WWTP, last date, timespan, number of rows, model slope and significance,
 #' and predicted percent change, and what linear model was used
-runRegressionAnalysis <- function(DF, Formula,Keep = NULL,n = 5,LMMethod=lm, verbose = FALSE){
+runRegressionAnalysis <- function(DF, 
+                                  Formula,
+                                  Keep = NULL,
+                                  n = 5,
+                                  LMMethod=lm,
+                                  verbose = FALSE){
   
   
   reg_estimates = as.data.frame(matrix(ncol=8+length(Keep), nrow=0))
