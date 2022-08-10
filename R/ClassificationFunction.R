@@ -48,10 +48,12 @@ ClassifyCaseRegression <- function(DF){
       #A flag when the slope for most recent week is greater than 5/100k/day
       case_flag = case_when(lmreg_slope > 5 ~ 1,
                             TRUE ~ 0),
+      
       #A flag when the previous slope and the signal is above 200
       case_flag_plus_comm.threshold = case_when(case_flag == 1 
                                                 & value > 200 ~ 1,
                                                 TRUE ~ 0),
+      
       #What about a case flag where slope shifts from <5 to >5
       slope_switch_flag = case_when(lag(lmreg_slope, 1) < 5 & 
                                       lmreg_slope > 5 ~ 1,

@@ -27,9 +27,6 @@ knitr::opts_chunk$set(
 #how to best explore the relationship
 
 library(ggplot2)
-library(dplyr)
-library(zoo)
-library(tidyr)
 ```
 
 ```{r create case data in right format}
@@ -61,19 +58,7 @@ CaseFlagOutput <- buildRegressionEstimateTable(DataMod = Case_DF,
                              DaysRegressed = 7,
                              PSigTest = FALSE)
 
-CaseFlagOutput <- CaseFlagOutput%>%
-  rename(FirstConfirmed.Per100K = value)%>%
-  #add case flags
-  ClassifyCaseRegression()
-```
-
-
-```{r assemble wastewater dataframe}
-data(WasteWater_data, package = "DSIWastewater")
-
-baseWaste_data <- buildWasteAnalysisDF(WasteWater_data)%>%
-  filter(date  >= as.Date("2021-02-01"))%>%
-  filter(WWTP == "Madison MSD WWTF")
+CaseFlagOutput <- ClassifyCaseRegression(CaseFlagOutput)
 ```
 
 
@@ -141,11 +126,12 @@ data(WasteWater_data, package = "DSIWastewater")
 
 baseWaste_data <- buildWasteAnalysisDF(WasteWater_data)
 
-baseWaste_data <- filter(baseWaste_data, 
-                         date  >= as.Date("2021-02-01"))
+baseWaste_data <- baseWaste_data[
+  baseWaste_data$date  >= as.Date("2021-02-01"),]
 
-baseWaste_data <- filter(baseWaste_data, 
-                         WWTP == "Madison MSD WWTF")
+baseWaste_data <- baseWaste_data[
+  baseWaste_data$WWTP == "Madison MSD WWTF",]
+
 windows <- c(14, 30, 60 , 90)
 quants <- c(5:9)/10
 
