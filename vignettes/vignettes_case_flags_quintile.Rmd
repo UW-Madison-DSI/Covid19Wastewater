@@ -1,5 +1,5 @@
 ---
-title: "Peter_flags"
+title: "case_flags"
 author: "Marlin"
 date: '2022-07-27'
 output: pdf_document
@@ -62,6 +62,7 @@ CaseFlagOutput <- buildRegressionEstimateTable(DataMod = Case_DF,
                              PSigTest = FALSE)
 
 CaseFlagOutput <- CaseFlagOutput%>%
+  rename(FirstConfirmed.Per100K = value)%>%
   #add case flags
   ClassifyCaseRegression()
 ```
@@ -146,7 +147,7 @@ FULL_reg_DF <- full_join(Quantiles_DF, CDCMethod, by = c("WWTP", "date"))%>%
 
 
 ```{r Merge flag data frames}
-CaseFlags <- CaseOutput%>%
+CaseFlags <- CaseFlagOutput%>%
   rename(WWTP = Site)%>%
   select(WWTP, date, case_flag, case_flag_plus_comm.threshold, slope_switch_flag)
 
@@ -160,21 +161,36 @@ Full_Flag_DF
 ```
 
 ```{r plot case and waste flags}
-A <- CaseOutput%>%
+A <- Case_DF%>%
   ggplot(aes(x = date))+
   geom_point(aes(y=FirstConfirmed.Per100K), size = .5) +
-  geom_vline(aes(xintercept = date, color = "Marlin flag"), color = "red",
-             data = filter(Full_Flag_DF,slope_switch_flag==1)) +
-  ylab("Marlin case data and sum") +
-  ggtitle("Case data with slope_switch flags")#+
-  #scale_y_log10()
+  geom_vline(aes(xintercept = date, color = "Case flag"),
+             data = filter(Full_Flag_DF, slope_switch_flag==1, 
+                           quant == .8, window == 90, flag_ntile == 0))+
+  geom_vline(aes(xintercept = date, color = "Waste flag"),
+             data = filter(Full_Flag_DF, slope_switch_flag==0, 
+                           quant == .8, window == 90, flag_ntile == 1))+
+  geom_vline(aes(xintercept = date, color = "Both"),
+             data = filter(Full_Flag_DF, slope_switch_flag==1, 
+                           quant == .8, window == 90, flag_ntile == 1))+
+  ylab("Case data") +
+  ggtitle("Case data with slope_switch flags")+
+  scale_y_continuous(limits = c(0, 700))+
+  scale_y_log10()
 
-B <- CaseOutput%>%
+B <- baseWaste_data%>%
   ggplot(aes(x = date))+
-  geom_point(aes(y=FirstConfirmed.Per100K), size = .5) +
-  geom_vline(aes(xintercept = date, color = "Waste flag"), color = "blue",
-             data = filter(Full_Flag_DF, flag_ntile==1, quant == .8, window == 90)) +
-  ylab("case data with  flag_ntile .8 90 flags")#+
+  geom_point(aes(y=sars_cov2_adj_load_log10), size = .5) +
+  geom_vline(aes(xintercept = date, color = "Case flag"),
+             data = filter(Full_Flag_DF, slope_switch_flag==1, 
+                           quant == .8, window == 90, flag_ntile == 0))+
+  geom_vline(aes(xintercept = date, color = "Waste flag"),
+             data = filter(Full_Flag_DF, slope_switch_flag==0, 
+                           quant == .8, window == 90, flag_ntile == 1))+
+  geom_vline(aes(xintercept = date, color = "Both"),
+             data = filter(Full_Flag_DF, slope_switch_flag==1, 
+                           quant == .8, window == 90, flag_ntile == 1))+
+  ylab("WasteData")#+
   #scale_y_log10()
 patchwork::wrap_plots(A,B, ncol = 1)
 ```
@@ -210,24 +226,38 @@ server <- function(input, output) {
 
   
   output$Flag_Compare_plot <- renderPlot({
-    A <- CaseOutput%>%
-      ggplot(aes(x = date))+
-      geom_point(aes(y=FirstConfirmed.Per100K), size = .5) +
-      geom_vline(aes(xintercept = date, color = "Marlin flag"), color = "red",
-                 data = filter(Full_Flag_DF,slope_switch_flag==1)) +
-      ylab("Marlin case data and sum") +
-      ggtitle("Case data with slope_switch flags")#+
-      #scale_y_log10()
+    A <- Case_DF%>%
+  ggplot(aes(x = date))+
+  geom_point(aes(y=FirstConfirmed.Per100K), size = .5) +
+  geom_vline(aes(xintercept = date, color = "Case flag"),
+             data = filter(Full_Flag_DF, slope_switch_flag==1, 
+                           quant == input$quants, window == input$Window, flag_ntile == 0))+
+  geom_vline(aes(xintercept = date, color = "Waste flag"),
+             data = filter(Full_Flag_DF, slope_switch_flag==0, 
+                           quant == input$quants, window == input$Window, flag_ntile == 1))+
+  geom_vline(aes(xintercept = date, color = "Both"),
+             data = filter(Full_Flag_DF, slope_switch_flag==1, 
+                           quant == input$quants, window == input$Window, flag_ntile == 1))+
+  ylab("Case data") +
+  ggtitle("Case data with slope_switch flags")+
+  scale_y_continuous(limits = c(0, 700))+
+  scale_y_log10()
 
-  B <- CaseOutput%>%
-    ggplot(aes(x = date))+
-    geom_point(aes(y=FirstConfirmed.Per100K), size = .5) +
-    geom_vline(aes(xintercept = date, color = "Waste flag"), color = "blue",
-               data = filter(Full_Flag_DF,flag_ntile==1,
-                             quant == input$quants, window == input$Window)) +
-    ylab("case data with  flag_ntile .8 90 flags")#+
-    #scale_y_log10()
-  patchwork::wrap_plots(A,B, ncol = 1)
+B <- baseWaste_data%>%
+  ggplot(aes(x = date))+
+  geom_point(aes(y=sars_cov2_adj_load_log10), size = .5) +
+  geom_vline(aes(xintercept = date, color = "Case flag"),
+             data = filter(Full_Flag_DF, slope_switch_flag==1, 
+                           quant == input$quants, window == input$Window, flag_ntile == 0))+
+  geom_vline(aes(xintercept = date, color = "Waste flag"),
+             data = filter(Full_Flag_DF, slope_switch_flag==0, 
+                           quant == input$quants, window == input$Window, flag_ntile == 1))+
+  geom_vline(aes(xintercept = date, color = "Both"),
+             data = filter(Full_Flag_DF, slope_switch_flag==1, 
+                           quant == input$quants, window == input$Window, flag_ntile == 1))+
+  ylab("WasteData")#+
+  #scale_y_log10()
+patchwork::wrap_plots(A,B, ncol = 1)
   })
 }
 
