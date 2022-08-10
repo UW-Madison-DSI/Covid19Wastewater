@@ -27,6 +27,7 @@ knitr::opts_chunk$set(
 #how to best explore the relationship
 
 library(ggplot2)
+library(dplyr)
 ```
 
 ```{r create case data in right format}
@@ -38,7 +39,6 @@ Case_DF <- buildCaseAnalysisDF(Case_data)
 Case_DF <- Case_DF[Case_DF$Site == "Madison",]
 
 Case_DF <- Case_DF[Case_DF$date  >= as.Date("2021-02-01"),]
-
 ```
 
 ```{r create case flags}
@@ -98,16 +98,16 @@ MakeQuantileColumns <- function(DF, column, quants, windows){
 
   colnames(Method_DF) <- c("window", "quant", "WWTP")
 
-  Quantiles_DF <- left_join(DF,Method_DF)%>%
-    split(Quantiles_DF, ~WWTP+window+quant)%>%
-    lapply(Quantiles_DF_list, WindowingQuantFunc,
-                              column = column)%>%
-    bind_rows(Quantiles_DF_list)
+  Quantiles_DF <- DF%>%
+    full_join(Method_DF, by = c("WWTP"))%>%
+    split(~WWTP+window+quant)%>%
+    lapply(WindowingQuantFunc, column = column)%>%
+    bind_rows()
   return(Quantiles_DF)
 }
 
 ClassifyQuantileFlagRegression <- function(DF){
-  DF%>%
+  RetDF <- DF%>%
     mutate(cdc_flag = case_when(Catagory == "major increase"~ 1,
                               TRUE ~ 0),
          flag_ntile = case_when(
@@ -117,6 +117,7 @@ ClassifyQuantileFlagRegression <- function(DF){
            flag_ntile & lmreg_sig < pval ~ 1,
                               TRUE ~ 0))%>%
   mutate(across(where(is.numeric), ~ ifelse(is.na(.x), 0, .x)))
+  return(RetDF)
 }
 ```
 
@@ -194,7 +195,10 @@ A <- Case_DF%>%
   ylab("Case data") +
   ggtitle("Case data with slope_switch flags")+
   scale_y_continuous(limits = c(0, 700))+
-  scale_y_log10()
+  scale_y_log10() +
+  scale_color_manual(values = c("Case flag" = "red",
+                                "Waste flag" = "blue",
+                                "Both" = "purple")) 
 
 B <- baseWaste_data%>%
   ggplot(aes(x = date))+
@@ -208,8 +212,11 @@ B <- baseWaste_data%>%
   geom_vline(aes(xintercept = date, color = "Both"),
              data = filter(Full_Flag_DF, slope_switch_flag==1, 
                            quant == .8, window == 90, flag_ntile == 1))+
-  ylab("WasteData")#+
-  #scale_y_log10()
+  ylab("WasteData")+
+  #scale_y_log10() +
+  scale_color_manual(values = c("Case flag" = "red",
+                                "Waste flag" = "blue",
+                                "Both" = "purple")) 
 patchwork::wrap_plots(A,B, ncol = 1)
 ```
 
@@ -259,7 +266,10 @@ server <- function(input, output) {
   ylab("Case data") +
   ggtitle("Case data with slope_switch flags")+
   scale_y_continuous(limits = c(0, 700))+
-  scale_y_log10()
+  scale_y_log10() +
+  scale_color_manual(values = c("Case flag" = "red",
+                                "Waste flag" = "blue",
+                                "Both" = "purple")) 
 
 B <- baseWaste_data%>%
   ggplot(aes(x = date))+
@@ -273,8 +283,11 @@ B <- baseWaste_data%>%
   geom_vline(aes(xintercept = date, color = "Both"),
              data = filter(Full_Flag_DF, slope_switch_flag==1, 
                            quant == input$quants, window == input$Window, flag_ntile == 1))+
-  ylab("WasteData")#+
-  #scale_y_log10()
+  ylab("WasteData")+
+  #scale_y_log10() +
+  scale_color_manual(values = c("Case flag" = "red",
+                                "Waste flag" = "blue",
+                                "Both" = "purple")) 
 patchwork::wrap_plots(A,B, ncol = 1)
   })
 }
