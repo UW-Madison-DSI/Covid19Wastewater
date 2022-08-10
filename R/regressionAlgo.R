@@ -34,12 +34,13 @@ buildRegressionEstimateTable <- function(DataMod,
     group_split()%>%
     lapply(runRegressionAnalysis, 
            Formula = value ~ date, #Should Be Gen
-           Keep  = c(SplitOn, "Method"), 
+           Keep  = c(SplitOn, "Method","value"), 
            n = DaysRegressed,
            verbose = verbose)%>%
     bind_rows()%>%
     ClassifyRegressionAnalysis(PSigTest=PSigTest)%>%
     filter(!is.na(Catagory))
+  
   return(reg_estimates)
 }
 
@@ -115,7 +116,7 @@ runRegressionAnalysis <- function(DF,
 #' @return a row of a DF containing the 
 #' WWTP, last date, timespan, number of rows, model slope and significance,
 #' and predicted percent change, and what linear model was used
-regressionInnerLoop <- function(Formula, DF,Keep = NULL, LMMethod = lm){
+regressionInnerLoop <- function(Formula, DF, Keep = NULL, LMMethod = lm){
   IndiVar <- as.character(Formula)[2]
   DepVar <- as.character(Formula)[3]
   
@@ -156,45 +157,6 @@ regressionInnerLoop <- function(Formula, DF,Keep = NULL, LMMethod = lm){
   
   return(ww.x.tobind)
 }
-
-#' ClassifyRegressionAnalysis
-#' 
-#' Adds the DHS Classification scheme to data created by runRegressionAnalysis
-#'
-#' @param DF DF that contains results of DHS analysis
-#' @param PSigTest Controls if we filter values with P-values>.3
-#'
-#' @export
-#' @return DF with an extra column Catagory containing the results of the DHS binning
-ClassifyRegressionAnalysis <- function(DF, PSigTest=TRUE){
-  
-  
-  RetDF <- DF%>%
-    mutate(Catagory = cut(modeled_percentchange, c(-Inf,-100,-10,10,100,Inf),
-                          ordered_result=TRUE),
-           Catagory = as.numeric(Catagory))
-  
-  if(PSigTest){
-    RetDF <- RetDF%>%
-      mutate(Catagory = ifelse(lmreg_sig>.3, "no change", Catagory))
-    levl <- c(1,2,3,"no change",4,5)
-    Catagorylabel = c("major decrease", "moderate decrease",
-                      "fluctuating", "no change",
-                      "moderate increase", "major increase")
-  }else{
-    levl <- c(1,2,3,4,5)
-    Catagorylabel = c("major decrease", "moderate decrease",
-                      "fluctuating", 
-                      "moderate increase", "major increase")
-  }
-  
-  RetDF <- RetDF%>%
-    mutate(Catagory = factor(Catagory, levels = levl, 
-                             labels =  Catagorylabel))
-  return(RetDF)
-}
-
-
 
 #' Find all unique values in the column selected
 #'

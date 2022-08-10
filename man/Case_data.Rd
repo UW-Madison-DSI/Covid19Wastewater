@@ -5,7 +5,7 @@
 \alias{Case_data}
 \title{Case data set from the DHS on 4/21/2022}
 \format{
-Rows: 33103  Columns: 3
+Rows: 33103  Columns: 4
 }
 \usage{
 data("Case_data")

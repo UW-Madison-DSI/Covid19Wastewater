@@ -1,4 +1,9 @@
 library(devtools)
+document()
+build(path = ".", vignettes = FALSE)
+install(quick=FALSE)
+
+
 
 document()
 build_vignettes(quiet=FALSE)

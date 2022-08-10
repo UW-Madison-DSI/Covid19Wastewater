@@ -41,7 +41,7 @@
 #'
 #' @usage data("Case_data")
 #'
-#' @format Rows: 33103  Columns: 3
+#' @format Rows: 33103  Columns: 4
 #'
 #' @keywords datasets
 "Case_data"
