@@ -244,14 +244,16 @@ ui <- fluidPage(
               label = "choose Wastewater quants", 
               choices = quants,
               selected = .8),
-  plotOutput(outputId = "Flag_Compare_plot", width="50%")#, height="")
+    dateRangeInput("daterange", "Select date range:", start = min(Full_Flag_DF$date), end = max(Full_Flag_DF$date), min = min(Full_Flag_DF$date), max = max(Full_Flag_DF$date), startview = "year"),
+  plotOutput(outputId = "Flag_Compare_plot", width="100%")#, height="")
+
 )
 
-server <- function(input, output) {
-
+server <- function(input, output, session) {
   
   output$Flag_Compare_plot <- renderPlot({
     A <- Case_DF%>%
+      filter(date >= input$daterange[1] & date <= input$daterange[2])%>% #filter using date range
   ggplot(aes(x = date))+
   geom_point(aes(y=FirstConfirmed.Per100K), size = .5) +
   geom_vline(aes(xintercept = date, color = "Case flag"),
@@ -272,6 +274,7 @@ server <- function(input, output) {
                                 "Both" = "purple")) 
 
 B <- baseWaste_data%>%
+  filter(date >= input$daterange[1] & date <= input$daterange[2])%>% #filter using date range
   ggplot(aes(x = date))+
   geom_point(aes(y=sars_cov2_adj_load_log10), size = .5) +
   geom_vline(aes(xintercept = date, color = "Case flag"),
