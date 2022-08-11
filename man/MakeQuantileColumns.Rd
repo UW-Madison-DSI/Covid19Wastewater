@@ -2,19 +2,32 @@
 % Please edit documentation in R/MakeQuantileFunction.R
 \name{MakeQuantileColumns}
 \alias{MakeQuantileColumns}
-\title{Title}
+\title{Add many combo of rolling quantile columns to dataframe
+have info for each quant window combo}
 \usage{
-MakeQuantileColumns(DF, column, quants, windows)
+MakeQuantileColumns(DF, quants, windows, column = "sars_cov2_adj_load_log10")
 }
 \arguments{
-\item{DF}{}
+\item{DF}{Dataframe containing columns:
+WWTP: what site the data is from
+date: date variable communicating the day the measurement is from
+*column: DF needs to contain a column with the same name as the string
+in the variable column}
 
-\item{column}{}
+\item{quants}{vector containing the different quantiles}
 
-\item{quants}{}
+\item{windows}{vector containing the different windows}
 
-\item{windows}{}
+\item{column}{string name of column in DF}
+}
+\value{
+DF with added columns
+window:what window group the row is in
+quant:what quantile group the row is in
+ntile: a rolling quantile of the data
+pastKavg.wwlog10: a mean of the last K days
 }
 \description{
-Title
+Add many combo of rolling quantile columns to dataframe
+have info for each quant window combo
 }

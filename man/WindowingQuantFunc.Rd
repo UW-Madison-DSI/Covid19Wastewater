@@ -2,15 +2,27 @@
 % Please edit documentation in R/MakeQuantileFunction.R
 \name{WindowingQuantFunc}
 \alias{WindowingQuantFunc}
-\title{Title}
+\title{create rolling quantile column based on date}
 \usage{
 WindowingQuantFunc(DF, column)
 }
 \arguments{
-\item{DF}{}
+\item{DF}{dataframe containing columns:
+date: date variable communicating the day the measurement is from
+window: singular type column saying what window the rolling function
+ should use
+quant: singular value column saying what quantile to return
+*column: DF needs to contain a column with the same name as the string
+in the variable column}
 
-\item{column}{}
+\item{column}{what column to use for the rolling quantile and mean functions}
+}
+\value{
+DF with added columns
+ntile: a rolling quantile of the data
+pastKavg.wwlog10: a mean of the last K days
 }
 \description{
-Title
+Takes 1 time series dataframe and adds a some columns specifying the 
+rolling quantile and rolling mean of the selected column.
 }

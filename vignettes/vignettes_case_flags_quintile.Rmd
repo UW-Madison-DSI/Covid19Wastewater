@@ -73,48 +73,52 @@ windows <- c(14, 30, 60 , 90)
 
 quants <- c(5:9)/10
 
+#as.Date, as.Date.numeric
 Quantiles_DF <- MakeQuantileColumns(baseWaste_data,
-                                    "sars_cov2_adj_load_log10",
-                                    quants, windows)
+                                    quants, windows,
+                                    "sars_cov2_adj_load_log10")
 
-Quantiles_DF <- Quantiles_DF[,c("WWTP", "date", "pastKavg.wwlog10",
+Quantiles_DF <- Quantiles_DF[,c("WWTP", "date",
+                                "pastKavg.wwlog10",
                                 "window", "quant", "ntile")]
 
 CDCMethod <- buildRegressionEstimateTable(baseWaste_data,
                                           PSigTest=FALSE)
 
-CDCMethod <- select(CDCMethod, WWTP, date,lmreg_sig,  Catagory)
+CDCMethod <- CDCMethod[,c("WWTP", "date",
+                          "lmreg_sig",  "Catagory",
+                          "modeled_percentchange")]
 
-pval = .3
-
-FULL_reg_DF <- full_join(Quantiles_DF, CDCMethod,
+FULL_reg_DF <- dplyr::full_join(Quantiles_DF, CDCMethod,
                          by = c("WWTP", "date"))
 
 FULL_reg_DF <- ClassifyQuantileFlagRegression(FULL_reg_DF)
 ```
 
 ```{r Merge flag data frames}
-CaseFlags <- rename(CaseFlagOutput, WWTP = Site)
+names(CaseFlagOutput)[names(CaseFlagOutput) == 'Site'] <- 'WWTP'
   
-CaseFlags <- select(CaseFlags, WWTP, date, case_flag,
-                    case_flag_plus_comm.threshold, slope_switch_flag)
+CaseFlags <- CaseFlagOutput[,c("WWTP", "date", "case_flag",
+                    "case_flag_plus_comm.threshold",
+                    "slope_switch_flag")]
 
-Full_wasteFlags <- mutate(FULL_reg_DF,
-                          WWTP = ifelse(
-                            WWTP == "Madison MSD WWTF",
-                            "Madison",WWTP))
+FULL_reg_DF$WWTP <- ifelse(FULL_reg_DF$WWTP == "Madison MSD WWTF",
+                           "Madison",
+                           FULL_reg_DF$WWTP)
   
-Full_wasteFlags <- select(Full_wasteFlags, WWTP, date, window,
-                          quant, cdc_flag, flag_ntile,
-                          flag_ntile_pval)
+Full_wasteFlags <- FULL_reg_DF[,c("WWTP", "date", "window",
+                          "quant", "cdc_flag", "flag_ntile",
+                          "flag_ntile_pval")]
 
-Full_Flag_DF <- inner_join(Full_wasteFlags, CaseFlags,
+Full_Flag_DF <- dplyr::inner_join(Full_wasteFlags, CaseFlags,
                            by = c("WWTP", "date"))
 Full_Flag_DF
 
 ```
 
 ```{r plot case and waste flags}
+library(ggplot2)
+library(dplyr)
 #Two plot functions
 #stacked plot
 #single plot 
@@ -159,10 +163,10 @@ B <- baseWaste_data%>%
 patchwork::wrap_plots(A,B, ncol = 1)
 
 #give case data, waste data, flag data - output stacked scatter plot
-Stacked_plot_flag(baseWaste_DF, Case_DF, Full_Flag_DF)
+#Stacked_plot_flag(baseWaste_DF, Case_DF, Full_Flag_DF)
 
 #give case data, waste data, flag data - output single scatter plot
-Combo_plot_flag(baseWaste_DF, Case_DF, Full_Flag_DF)
+#Combo_plot_flag(baseWaste_DF, Case_DF, Full_Flag_DF)
 ```
 
 

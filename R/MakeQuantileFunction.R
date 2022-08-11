@@ -1,64 +1,102 @@
-#' Title
+#' create rolling quantile column based on date
 #'
-#' @param DF 
-#' @param column 
+#'Takes 1 time series dataframe and adds a some columns specifying the 
+#'rolling quantile and rolling mean of the selected column.
 #'
-#' @return
-#' @export
+#' @param DF dataframe containing columns:
+#' date: date variable communicating the day the measurement is from
+#' window: singular type column saying what window the rolling function
+#'  should use
+#' quant: singular value column saying what quantile to return
+#' *column: DF needs to contain a column with the same name as the string
+#' in the variable column
+#' 
+#' @param column  what column to use for the rolling quantile and mean functions
 #'
-#' @examples
+#' @return DF with added columns
+#' ntile: a rolling quantile of the data
+#' pastKavg.wwlog10: a mean of the last K days
 WindowingQuantFunc <- function(DF, column){
+  #get the start of the time series
   mindate <- min(DF$date, na.rm = TRUE)
+  #get the end of the time series
   maxdate <- max(DF$date, na.rm = TRUE)
+  #get what window to use. min should equal max
   FuncWindow <- min(DF$window, na.rm = TRUE)
+  #get what quant to use. min should equal max
   FuncQuant <- min(DF$quant, na.rm = TRUE)
   
-  dateTOMERGEVec <- data.frame(date = seq(mindate, maxdate, 1),
-                               window = FuncWindow,
-                               quant = FuncQuant)
+  #get a dataframe that contains all dates in range of DF
+  dateTOMERGEVec <- data.frame(date = seq(mindate, maxdate, 1))
   
+  #how many days the rolling mean should include
   K = 3
   
-  RetDF <- left_join(DF, dateTOMERGEVec, by = C("date", "window", "quant"))%>%
+  #Merge DF to add rows for each date 
+  RetDF <- full_join(DF, dateTOMERGEVec, by = c("date"))%>%
+    #sort by date so the rolling functions work correctly
     arrange(date)%>%
-    mutate(ntile = rollapply(!!sym(column), 
-                             width = FuncWindow,
-                             FUN = quantile, 
-                             probs  = FuncQuant,
-                             align = "right", 
-                             na.rm=T, fill=NA, 
-                             names = FALSE))%>%
-    mutate(pastKavg.wwlog10 = rollmean(!!sym(column),
+    #add ntile column that is the window day Quant quantile of the column column
+    mutate(ntile = rollapply(!!sym(column),
+                     width = FuncWindow,
+                     FUN = quantile, 
+                     probs  = FuncQuant,
+                     #align right so its not predictive
+                     align = "right", 
+                     #remove outliers and fill edges with NA
+                     #so it does not return NA
+                     na.rm=TRUE, fill=NA,
+                     #returns as a vector instead of a list
+                     names = FALSE),
+           #create K day mean of the same column to use later
+           pastKavg.wwlog10 = rollmean(!!sym(column),
                                        K, align = "right",
-                                       na.pad = T,
-                                       na.rm=T))%>%
+                                       fill=NA))%>%
+    #removes all extra rows created that were used in rolling process
     filter(!is.na(population_served))
   
   return(RetDF)
 }
 
-#' Title
+#' Add many combo of rolling quantile columns to dataframe
+#' have info for each quant window combo 
 #'
-#' @param DF 
-#' @param column 
-#' @param quants 
-#' @param windows 
+#' @param DF Dataframe containing columns:
+#' WWTP: what site the data is from
+#' date: date variable communicating the day the measurement is from
+#' *column: DF needs to contain a column with the same name as the string
+#' in the variable column
+#' 
+#' @param column string name of column in DF
+#' @param quants vector containing the different quantiles
+#' @param windows vector containing the different windows
 #'
-#' @return
+#' @return DF with added columns
+#' window:what window group the row is in
+#' quant:what quantile group the row is in
+#' ntile: a rolling quantile of the data
+#' pastKavg.wwlog10: a mean of the last K days
 #' @export
-#'
-#' @examples
-MakeQuantileColumns <- function(DF, column, quants, windows){
+MakeQuantileColumns <- function(DF, quants, windows,
+                                column = "sars_cov2_adj_load_log10"){
+  #create a DF with every combo of windows, quants, WWTP
+  #Used to merge with DF to get a DF length(quants)*length(windows) times longer
   Method_DF <- expand.grid(windows, 
                            quants, 
                            unique(DF$WWTP))
   
+  #rename columns of merging DF to help the full joing function
   colnames(Method_DF) <- c("window", "quant", "WWTP")
   
+  
   Quantiles_DF <- DF%>%
+    #merge with Method_DF to get the right number of rows for incoming split
     full_join(Method_DF, by = c("WWTP"))%>%
-    split(~WWTP+window+quant)%>%
+    #split the data by WWTP,Window,quant so each DF has one time series
+    split(~WWTP + window + quant)%>%
+    #Feed each time series into the WindowingQuantFunc to get the actualy quant
     lapply(WindowingQuantFunc, column = column)%>%
+    #append the DF back together to return
     bind_rows()
   return(Quantiles_DF)
 }

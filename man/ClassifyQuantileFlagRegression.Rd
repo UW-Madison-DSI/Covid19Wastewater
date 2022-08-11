@@ -2,13 +2,24 @@
 % Please edit documentation in R/ClassificationFunction.R
 \name{ClassifyQuantileFlagRegression}
 \alias{ClassifyQuantileFlagRegression}
-\title{Title}
+\title{Classify FlagRegression  with rolling Quantile info}
 \usage{
-ClassifyQuantileFlagRegression(DF)
+ClassifyQuantileFlagRegression(DF, pval = 0.3)
 }
 \arguments{
-\item{DF}{}
+\item{DF}{dataframe that contains results of buildRegressionEstimateTable and
+MakeQuantileColumns}
+
+\item{Pval}{threashold needed for flag_ntile_pval to flag}
+}
+\value{
+DF with three extra columns 
+cdc_flag: when the CDC method labels as 'major increase'
+flag_ntile: when the cdc flag and its in the top quantile
+flag_ntile_pval: when the flag ntile and the regression slope is less
+than pval
 }
 \description{
-Title
+Create wastewater flags based on the CDC classification defined in 
+ClassifyRegressionAnalysis and the quantile rank of the date.
 }

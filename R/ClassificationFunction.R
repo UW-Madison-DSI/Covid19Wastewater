@@ -40,7 +40,10 @@ ClassifyRegressionAnalysis <- function(DF, PSigTest=TRUE){
 #'
 #' @param DF dataframe that contains results of buildRegressionEstimateTable
 #'
-#' @return DF with an three extra column Catagory containing the case flags
+#' @return DF with an three extra column Category containing the case flags
+#' case_flag: when the 7 day slope is above 5
+#' case_flag_plus_comm.threshold: when case flag and more then 200 cases
+#' slope_switch_flag: the first case flags in consecutive case flags
 #' @export
 ClassifyCaseRegression <- function(DF){
   RetDF <- DF%>%
@@ -61,24 +64,38 @@ ClassifyCaseRegression <- function(DF){
   return(RetDF)
 }
 
-#' Title
+#' Classify FlagRegression  with rolling Quantile info 
+#' 
+#' Create wastewater flags based on the CDC classification defined in 
+#' ClassifyRegressionAnalysis and the quantile rank of the date.
 #'
-#' @param DF 
+#' @param DF dataframe that contains results of buildRegressionEstimateTable and
+#' MakeQuantileColumns
+#' @param Pval threashold needed for flag_ntile_pval to flag 
 #'
-#' @return
 #' @export
-#'
-#' @examples
-ClassifyQuantileFlagRegression <- function(DF){
-  RetDF <- DF%>%
+#' @return DF with three extra columns 
+#' cdc_flag: when the CDC method labels as 'major increase'
+#' flag_ntile: when the cdc flag and its in the top quantile
+#' flag_ntile_pval: when the flag ntile and the regression slope is less
+#' than pval
+ClassifyQuantileFlagRegression <- function(DF, pval = .3){
+  #Get the DHS Classification scheme of wastewater concentration
+  Classification_DF <- ClassifyRegressionAnalysis(DF, PSigTest = FALSE)
+  #returned DF piped into four mutate calls to add three columns
+  Ret_DF <- Classification_DF%>%
+    #Convert the classification scheme from the cdc into a flag
     mutate(cdc_flag = case_when(Catagory == "major increase"~ 1,
-                                TRUE ~ 0),
-           flag_ntile = case_when(
+                                TRUE ~ 0))%>%
+    #select only the flags that are on days that are larger then quantile
+    mutate(flag_ntile = case_when(
              pastKavg.wwlog10 > ntile & cdc_flag ~ 1,
-             TRUE ~ 0),
-           flag_ntile_pval = case_when(
+             TRUE ~ 0))%>%
+    #further select so that the slope of the regression is less then pval
+    mutate(flag_ntile_pval = case_when(
              flag_ntile & lmreg_sig < pval ~ 1,
              TRUE ~ 0))%>%
+    #make NA into 0 or FALSE
     mutate(across(where(is.numeric), ~ ifelse(is.na(.x), 0, .x)))
-  return(RetDF)
+  return(Ret_DF)
 }
