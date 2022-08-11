@@ -25,15 +25,12 @@ knitr::opts_chunk$set(
 #code for Case flag
 #code for waste flag
 #how to best explore the relationship
-
-library(ggplot2)
-library(dplyr)
-library(zoo)
 ```
 
 ```{r create case data in right format}
 library(DSIWastewater)
 data(Case_data, package = "DSIWastewater")
+
 
 Case_DF <- buildCaseAnalysisDF(Case_data)
 
@@ -53,84 +50,24 @@ Case_DF <- Case_DF[Case_DF$date  >= as.Date("2021-02-01"),]
 #prep -> regression -> classification
 
 #get 7 day slope of data
-CaseFlagOutput <- buildRegressionEstimateTable(DataMod = Case_DF,
+CaseRegressionOutput <- buildRegressionEstimateTable(DataMod = Case_DF,
                              RunOn = "FirstConfirmed.Per100K",
                              SplitOn = "Site",
                              DaysRegressed = 7,
                              PSigTest = FALSE)
 
-CaseFlagOutput <- ClassifyCaseRegression(CaseFlagOutput)
-```
-
-
-```{r waste flags}
-
-WindowingQuantFunc <- function(DF, column){
-  mindate <- min(DF$date, na.rm = TRUE)
-  maxdate <- max(DF$date, na.rm = TRUE)
-  FuncWindow <- min(DF$window, na.rm = TRUE)
-  FuncQuant <- min(DF$quant, na.rm = TRUE)
-  
-  dateTOMERGEVec <- data.frame(date = seq(mindate, maxdate, 1),
-                               window = FuncWindow,
-                               quant = FuncQuant)
-  
-  K = 3
-  
-  RetDF <- left_join(DF, dateTOMERGEVec)%>%
-    arrange(date)%>%
-    mutate(ntile = rollapply(!!sym(column), 
-                              width = FuncWindow,
-                             FUN = quantile, 
-                              probs  = FuncQuant,
-                             align = "right", 
-                              na.rm=T, fill=NA, 
-                              names = FALSE))%>%
-  mutate(pastKavg.wwlog10 = rollmean(!!sym(column),
-                                       K, align = "right",
-                                       na.pad = T,
-                                       na.rm=T))%>%
-    filter(!is.na(population_served))
-  
-  return(RetDF)
-}
-
-MakeQuantileColumns <- function(DF, column, quants, windows){
-  Method_DF <- expand.grid(windows, 
-                         quants, 
-                         unique(DF$WWTP))
-
-  colnames(Method_DF) <- c("window", "quant", "WWTP")
-
-  Quantiles_DF <- DF%>%
-    full_join(Method_DF, by = c("WWTP"))%>%
-    split(~WWTP+window+quant)%>%
-    lapply(WindowingQuantFunc, column = column)%>%
-    bind_rows()
-  return(Quantiles_DF)
-}
-
-ClassifyQuantileFlagRegression <- function(DF){
-  RetDF <- DF%>%
-    mutate(cdc_flag = case_when(Catagory == "major increase"~ 1,
-                              TRUE ~ 0),
-         flag_ntile = case_when(
-           pastKavg.wwlog10 > ntile & cdc_flag ~ 1,
-                              TRUE ~ 0),
-         flag_ntile_pval = case_when(
-           flag_ntile & lmreg_sig < pval ~ 1,
-                              TRUE ~ 0))%>%
-  mutate(across(where(is.numeric), ~ ifelse(is.na(.x), 0, .x)))
-  return(RetDF)
-}
+CaseFlagOutput <- ClassifyCaseRegression(CaseRegressionOutput)
 ```
 
 ```{r}
 data(WasteWater_data, package = "DSIWastewater")
 
-baseWaste_data <- buildWasteAnalysisDF(WasteWater_data)%>%
-  filter(date  >= as.Date("2021-02-01"))%>%
-  filter(WWTP == "Madison MSD WWTF")
+baseWaste_data <- buildWasteAnalysisDF(WasteWater_data)
+
+baseWaste_data <- baseWaste_data[baseWaste_data$date >= as.Date("2021-02-01"),]
+
+baseWaste_data <- baseWaste_data[baseWaste_data$WWTP == "Madison MSD WWTF",]
+
 
 windows <- c(14, 30, 60 , 90)
 
@@ -139,17 +76,20 @@ quants <- c(5:9)/10
 Quantiles_DF <- MakeQuantileColumns(baseWaste_data,
                                     "sars_cov2_adj_load_log10",
                                     quants, windows)
-Quantiles_DF <- select(Quantiles_DF, WWTP, date, pastKavg.wwlog10,
-                       window, quant, ntile)
+
+Quantiles_DF <- Quantiles_DF[,c("WWTP", "date", "pastKavg.wwlog10",
+                                "window", "quant", "ntile")]
 
 CDCMethod <- buildRegressionEstimateTable(baseWaste_data,
                                           PSigTest=FALSE)
+
 CDCMethod <- select(CDCMethod, WWTP, date,lmreg_sig,  Catagory)
 
 pval = .3
 
 FULL_reg_DF <- full_join(Quantiles_DF, CDCMethod,
                          by = c("WWTP", "date"))
+
 FULL_reg_DF <- ClassifyQuantileFlagRegression(FULL_reg_DF)
 ```
 
@@ -171,9 +111,19 @@ Full_wasteFlags <- select(Full_wasteFlags, WWTP, date, window,
 Full_Flag_DF <- inner_join(Full_wasteFlags, CaseFlags,
                            by = c("WWTP", "date"))
 Full_Flag_DF
+
 ```
 
 ```{r plot case and waste flags}
+#Two plot functions
+#stacked plot
+#single plot 
+#have the ability to run on multiple sites
+colorScheme <- scale_color_manual(values = c("Case flag" = "red",
+                                "Waste flag" = "blue",
+                                "Both" = "green",
+                                "7 day average" = "deeppink")) 
+
 A <- Case_DF%>%
   ggplot(aes(x = date))+
   geom_point(aes(y=FirstConfirmed.Per100K), size = .5) +
@@ -189,10 +139,7 @@ A <- Case_DF%>%
   ylab("Case data") +
   ggtitle("Case data with slope_switch flags")+
   scale_y_continuous(limits = c(0, 700))+
-  scale_y_log10() +
-  scale_color_manual(values = c("Case flag" = "red",
-                                "Waste flag" = "blue",
-                                "Both" = "purple")) 
+  colorScheme
 
 B <- baseWaste_data%>%
   ggplot(aes(x = date))+
@@ -207,11 +154,15 @@ B <- baseWaste_data%>%
              data = filter(Full_Flag_DF, slope_switch_flag==1, 
                            quant == .8, window == 90, flag_ntile == 1))+
   ylab("WasteData")+
-  #scale_y_log10() +
-  scale_color_manual(values = c("Case flag" = "red",
-                                "Waste flag" = "blue",
-                                "Both" = "purple")) 
+  colorScheme
+
 patchwork::wrap_plots(A,B, ncol = 1)
+
+#give case data, waste data, flag data - output stacked scatter plot
+Stacked_plot_flag(baseWaste_DF, Case_DF, Full_Flag_DF)
+
+#give case data, waste data, flag data - output single scatter plot
+Combo_plot_flag(baseWaste_DF, Case_DF, Full_Flag_DF)
 ```
 
 
@@ -224,7 +175,10 @@ patchwork::wrap_plots(A,B, ncol = 1)
 #how well does the case flags/waste flags work
 #for madison for state
 #how well do they do, at predicting own goals, each other
-
+colorScheme <- scale_color_manual(values = c("Case flag" = "red",
+                                "Waste flag" = "blue",
+                                "Both" = "green",
+                                "7 day average" = "deeppink")) 
 
 library(shiny)
 windows <- c(14, 30, 60 , 90)
@@ -238,7 +192,11 @@ ui <- fluidPage(
               label = "choose Wastewater quants", 
               choices = quants,
               selected = .8),
-    dateRangeInput("daterange", "Select date range:", start = min(Full_Flag_DF$date), end = max(Full_Flag_DF$date), min = min(Full_Flag_DF$date), max = max(Full_Flag_DF$date), startview = "year"),
+    dateRangeInput("daterange", "Select date range:", start = min(Full_Flag_DF$date), end = max(Full_Flag_DF$date),
+                   min = min(Full_Flag_DF$date),
+                   max = max(Full_Flag_DF$date),
+                   startview = "year"),
+    checkboxInput("isLogCase", "log case data", value = FALSE),
   plotOutput(outputId = "Flag_Compare_plot", width="100%")#, height="")
 
 )
@@ -246,45 +204,49 @@ ui <- fluidPage(
 server <- function(input, output, session) {
   
   output$Flag_Compare_plot <- renderPlot({
+    
+    FlagDF <- Full_Flag_DF%>%
+      filter(quant == input$quants, window == input$Window)
+    
     A <- Case_DF%>%
       filter(date >= input$daterange[1] & date <= input$daterange[2])%>% #filter using date range
   ggplot(aes(x = date))+
   geom_point(aes(y=FirstConfirmed.Per100K), size = .5) +
+  geom_line(aes(y=pastwk.sum.casesperday.Per100K/7, color = "7 day average"))+
+
   geom_vline(aes(xintercept = date, color = "Case flag"),
-             data = filter(Full_Flag_DF, slope_switch_flag==1, 
-                           quant == input$quants, window == input$Window, flag_ntile == 0))+
+             data = filter(FlagDF, slope_switch_flag==1, 
+                           flag_ntile == 0))+
   geom_vline(aes(xintercept = date, color = "Waste flag"),
-             data = filter(Full_Flag_DF, slope_switch_flag==0, 
-                           quant == input$quants, window == input$Window, flag_ntile == 1))+
+             data = filter(FlagDF, slope_switch_flag==0, 
+                           flag_ntile == 1))+
   geom_vline(aes(xintercept = date, color = "Both"),
-             data = filter(Full_Flag_DF, slope_switch_flag==1, 
-                           quant == input$quants, window == input$Window, flag_ntile == 1))+
+             data = filter(FlagDF, slope_switch_flag==1, 
+                           flag_ntile == 1))+
   ylab("Case data") +
   ggtitle("Case data with slope_switch flags")+
-  scale_y_continuous(limits = c(0, 700))+
-  scale_y_log10() +
-  scale_color_manual(values = c("Case flag" = "red",
-                                "Waste flag" = "blue",
-                                "Both" = "purple")) 
+  colorScheme
+    
+    if(input$isLogCase){
+      A <- A+scale_y_log10()
+    }
 
 B <- baseWaste_data%>%
   filter(date >= input$daterange[1] & date <= input$daterange[2])%>% #filter using date range
   ggplot(aes(x = date))+
   geom_point(aes(y=sars_cov2_adj_load_log10), size = .5) +
   geom_vline(aes(xintercept = date, color = "Case flag"),
-             data = filter(Full_Flag_DF, slope_switch_flag==1, 
-                           quant == input$quants, window == input$Window, flag_ntile == 0))+
+             data = filter(FlagDF, slope_switch_flag==1, 
+                           flag_ntile == 0))+
   geom_vline(aes(xintercept = date, color = "Waste flag"),
-             data = filter(Full_Flag_DF, slope_switch_flag==0, 
-                           quant == input$quants, window == input$Window, flag_ntile == 1))+
+             data = filter(FlagDF, slope_switch_flag==0, 
+                           flag_ntile == 1))+
   geom_vline(aes(xintercept = date, color = "Both"),
-             data = filter(Full_Flag_DF, slope_switch_flag==1, 
-                           quant == input$quants, window == input$Window, flag_ntile == 1))+
-  ylab("WasteData")+
-  #scale_y_log10() +
-  scale_color_manual(values = c("Case flag" = "red",
-                                "Waste flag" = "blue",
-                                "Both" = "purple")) 
+             data = filter(FlagDF, slope_switch_flag==1, 
+                           flag_ntile == 1))+
+  ylab("Waste Data")+
+  colorScheme
+
 patchwork::wrap_plots(A,B, ncol = 1)
   })
 }

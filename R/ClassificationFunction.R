@@ -60,3 +60,25 @@ ClassifyCaseRegression <- function(DF){
                                     TRUE ~ 0))
   return(RetDF)
 }
+
+#' Title
+#'
+#' @param DF 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+ClassifyQuantileFlagRegression <- function(DF){
+  RetDF <- DF%>%
+    mutate(cdc_flag = case_when(Catagory == "major increase"~ 1,
+                                TRUE ~ 0),
+           flag_ntile = case_when(
+             pastKavg.wwlog10 > ntile & cdc_flag ~ 1,
+             TRUE ~ 0),
+           flag_ntile_pval = case_when(
+             flag_ntile & lmreg_sig < pval ~ 1,
+             TRUE ~ 0))%>%
+    mutate(across(where(is.numeric), ~ ifelse(is.na(.x), 0, .x)))
+  return(RetDF)
+}
