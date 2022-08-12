@@ -302,3 +302,49 @@ createMethodCompareBar_Plot <- function(DF,Method = "Method",Cat="Catagory"){
     geom_col(aes(fill=!!sym(Method)),position = "dodge", na.rm=TRUE)+ 
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 }
+
+
+
+#' Create graphics showing flags as vertical lines
+#'
+#' @param MainDF 
+#' @param FlagDF 
+#' @param Flag1 
+#' @param Flag2 
+#' @param xVal 
+#' @param PointVal 
+#' @param LineVal 
+#' @param facetFormula 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+createFlagGraph_plot <- function(MainDF, FlagDF, 
+                                 Flag1 = NULL, 
+                                 Flag2 = NULL, 
+                                 xVal = "date",
+                                 PointVal = NULL,
+                                 LineVal = NULL,
+                                 facetFormula = " ~ Site"){
+  
+  StartPlot <- createWasteGraph_Plot(MainDF, 
+                                     xVal = xVal,
+                                     PointVal = PointVal,
+                                     LineVal = LineVal,
+                                     facetFormula = facetFormula)
+  if(!is.null(Flag2)){
+    StartPlot <- StartPlot+
+      geom_vline(aes(xintercept = !!sym(xVal), color = Flag1),
+                 data = filter(FlagDF, !!sym(Flag1) == 1, !!sym(Flag2) == 0))+
+      geom_vline(aes(xintercept = !!sym(xVal), color = Flag2),
+                 data = filter(FlagDF, !!sym(Flag1) == 0, !!sym(Flag2) == 1))+
+      geom_vline(aes(xintercept = !!sym(xVal), color = "Both"),
+                 data = filter(FlagDF, !!sym(Flag1) == 1, !!sym(Flag2) == 1))
+  }else{
+    StartPlot <- StartPlot+
+      geom_vline(aes(xintercept = !!sym(xVal), color = Flag1),
+                 data = filter(FlagDF, !!sym(Flag1) == 1))
+  }
+  return(StartPlot)
+}

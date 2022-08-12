@@ -56,137 +56,88 @@ Full_Flag_DF <- dplyr::inner_join(Waste_reg_DF, CaseFlags,
 ```
 
 ```{r}
+#Get Wastewater data columns for ploting
+#Recombine DF now with loess column
 Waste_Smooth_DF <- do.call(rbind,
+                           #apply the loess method to each sub dataframe
                               lapply(
+                                #break the dataframe by the WWTP column
                                 split(
+                                  #get DF into normal shape
                                   buildWasteAnalysisDF(baseWaste_DF),
                                   ~WWTP),
                                 LoessSmoothMod))
 
+#rename WWTP column to Site for easier ploting
 names(Waste_Smooth_DF)[names(Waste_Smooth_DF) == 'WWTP'] <- 'Site'
 
+#rename madison rows for easier merging
 Waste_Smooth_DF$Site <- ifelse(Waste_Smooth_DF$Site == "Madison MSD WWTF",
                              "Madison",
                              Waste_Smooth_DF$Site)
-
+#get case in easy format
 Case_DF <- buildCaseAnalysisDF(Case_DF)
 
-
+#create DF that merges Case data and Wastewater data
 Raw_Plot_DF <- dplyr::full_join(Case_DF, Waste_Smooth_DF, by = c("date", "Site"))
 ```
 
 ```{r Single plot code}
 library(ggplot2)
 library(dplyr)
-Add_Flags <- function(ggobj){
-  retPlot <- ggobj +
-    geom_vline(aes(xintercept = date, color = "Case flag"),
-             data = filter(Flag_80_90_DF, slope_switch_flag == 1, flag_ntile == 0))+
-    geom_vline(aes(xintercept = date, color = "Waste flag"),
-             data = filter(Flag_80_90_DF, slope_switch_flag == 0, flag_ntile == 1))+
-    geom_vline(aes(xintercept = date, color = "Both"),
-             data = filter(Flag_80_90_DF, slope_switch_flag == 1, flag_ntile == 1))
-  return(retPlot)
-}
+#takes a ggplot object and add the vertical flags
 
-colorScheme <- scale_color_manual(values = c("Case flag" = "red",
-                                "Waste flag" = "blue",
+
+#define color scheme for the plots to have
+colorScheme <- scale_color_manual(values = 
+                                c("Cslope_switch_flag" = "red",
+                                "flag_ntile" = "blue",
                                 "Both" = "green",
                                 "log.sum.casesperday.Per100K" = "deeppink",
                                 "Loess" = "black",
-                                "log.FirstConfirmed.Per100K" = "red",
-                                "sars_cov2_adj_load_log10" = "red"))
+                                "log.FirstConfirmed.Per100K" = "brown",
+                                "sars_cov2_adj_load_log10" = "grey"))
 
+#filter Wastewater DF tp only be the 80th quantile of the last 90 days flags
 Flag_80_90_DF <- Full_Flag_DF[Full_Flag_DF$quant == .8,]
 Flag_80_90_DF <- Flag_80_90_DF[Flag_80_90_DF$window == 90,]
 
+#add love version of Case data for easier comparison
+Raw_Plot_DF$log.FirstConfirmed.Per100K <- log(Raw_Plot_DF$FirstConfirmed.Per100K)
+#also divide log.sum.casesperday.Per100K by 7 to make is a daily average instead of a sum
 Raw_Plot_DF$log.sum.casesperday.Per100K <- log(Raw_Plot_DF$pastwk.sum.casesperday.Per100K / 7)
 
-Main_Plot <- DSIWastewater:::createWasteGraph_Plot(Raw_Plot_DF, 
-                                      xVal = "date",
+#use old graphing code to 
+createFlagGraph_plot(Raw_Plot_DF, Flag_80_90_DF,
+                                  Flag1 = "slope_switch_flag",
+                                  Flag2 = "flag_ntile",
                                       PointVal = NULL,
                                       LineVal = c("log.sum.casesperday.Per100K", "Loess"),
-                                      facetFormula = " ~ Site")
-Add_Flags(Main_Plot) + colorScheme
+                                      facetFormula = " ~ Site") + 
+              colorScheme
 #sars_cov2_adj_load_log10#FirstConfirmed.Per100K#log.sum.casesperday.Per100K#Loess
 ```
 
 ```{r stacked plot}
 
 
-Raw_Plot_DF$log.FirstConfirmed.Per100K <- log(Raw_Plot_DF$FirstConfirmed.Per100K)
-A <- DSIWastewater:::createWasteGraph_Plot(Raw_Plot_DF, 
-                                      xVal = "date",
-                                      PointVal = c("log.FirstConfirmed.Per100K"),
-                                      LineVal = c("log.sum.casesperday.Per100K"),
-                                      facetFormula = " ~ Site") +
-    geom_vline(aes(xintercept = date, color = "Case flag"),
-             data = filter(Flag_80_90_DF, slope_switch_flag == 1)) + colorScheme
+A <- createFlagGraph_plot(Raw_Plot_DF, Flag_80_90_DF,
+                          Flag1 = "slope_switch_flag",
+                          PointVal = c("log.FirstConfirmed.Per100K"),
+                          LineVal = c("log.sum.casesperday.Per100K"),
+                          facetFormula = " ~ Site") + 
+        colorScheme
 
-B <- DSIWastewater:::createWasteGraph_Plot(Raw_Plot_DF, 
-                                      xVal = "date",
-                                      PointVal = c("sars_cov2_adj_load_log10"),
-                                      LineVal = c("Loess"),
-                                      facetFormula = " ~ Site") +
-    geom_vline(aes(xintercept = date, color = "Case flag"),
-             data = filter(Flag_80_90_DF, flag_ntile == 1)) + colorScheme
+B <- createFlagGraph_plot(Raw_Plot_DF, Flag_80_90_DF,
+                          Flag1 = "flag_ntile",
+                          PointVal = c("sars_cov2_adj_load_log10"),
+                          LineVal = c("Loess"),
+                          facetFormula = " ~ Site") + 
+        colorScheme
 
 patchwork::wrap_plots(A,B, ncol = 1, guides = 'collect')
 ```
 
-
-```{r plot case and waste flags}
-library(ggplot2)
-library(dplyr)
-#Two plot functions
-#stacked plot
-#single plot 
-#have the ability to run on multiple sites
-colorScheme <- scale_color_manual(values = c("Case flag" = "red",
-                                "Waste flag" = "blue",
-                                "Both" = "green",
-                                "7 day average" = "deeppink")) 
-
-A <- Case_DF%>%
-  ggplot(aes(x = date))+
-  geom_point(aes(y=FirstConfirmed.Per100K), size = .5) +
-  geom_vline(aes(xintercept = date, color = "Case flag"),
-             data = filter(Full_Flag_DF, slope_switch_flag==1, 
-                           quant == .8, window == 90, flag_ntile == 0))+
-  geom_vline(aes(xintercept = date, color = "Waste flag"),
-             data = filter(Full_Flag_DF, slope_switch_flag==0, 
-                           quant == .8, window == 90, flag_ntile == 1))+
-  geom_vline(aes(xintercept = date, color = "Both"),
-             data = filter(Full_Flag_DF, slope_switch_flag==1, 
-                           quant == .8, window == 90, flag_ntile == 1))+
-  ylab("Case data") +
-  ggtitle("Case data with slope_switch flags")+
-  scale_y_continuous(limits = c(0, 700))+
-  colorScheme
-
-B <- Waste_Smooth_DF%>%
-  ggplot(aes(x = date))+
-  geom_point(aes(y=sars_cov2_adj_load_log10), size = .5) +
-  geom_vline(aes(xintercept = date, color = "Case flag"),
-             data = filter(Full_Flag_DF, slope_switch_flag==1, 
-                           quant == .8, window == 90, flag_ntile == 0))+
-  geom_vline(aes(xintercept = date, color = "Waste flag"),
-             data = filter(Full_Flag_DF, slope_switch_flag==0, 
-                           quant == .8, window == 90, flag_ntile == 1))+
-  geom_vline(aes(xintercept = date, color = "Both"),
-             data = filter(Full_Flag_DF, slope_switch_flag==1, 
-                           quant == .8, window == 90, flag_ntile == 1))+
-  ylab("WasteData")+
-  colorScheme
-
-patchwork::wrap_plots(A,B, ncol = 1)
-
-#give case data, waste data, flag data - output stacked scatter plot
-#Stacked_plot_flag(baseWaste_DF, Case_DF, Full_Flag_DF)
-
-#give case data, waste data, flag data - output single scatter plot
-#Combo_plot_flag(baseWaste_DF, Case_DF, Full_Flag_DF)
-```
 
 
 ```{r shiny view of the problem, eval = FALSE}
@@ -198,10 +149,6 @@ patchwork::wrap_plots(A,B, ncol = 1)
 #how well does the case flags/waste flags work
 #for madison for state
 #how well do they do, at predicting own goals, each other
-colorScheme <- scale_color_manual(values = c("Case flag" = "red",
-                                "Waste flag" = "blue",
-                                "Both" = "green",
-                                "7 day average" = "deeppink")) 
 
 library(shiny)
 windows <- c(14, 30, 60 , 90)
