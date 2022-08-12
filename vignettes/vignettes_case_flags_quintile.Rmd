@@ -76,14 +76,16 @@ Raw_Plot_DF <- dplyr::full_join(Case_DF, Waste_Smooth_DF, by = c("date", "Site")
 ```
 
 ```{r Single plot code}
+library(ggplot2)
+library(dplyr)
 Add_Flags <- function(ggobj){
   retPlot <- ggobj +
-  geom_vline(aes(xintercept = date, color = "Case flag"),
-             data = filter(Flag_80_90_DF, slope_switch_flag==1, flag_ntile == 0))+
-  geom_vline(aes(xintercept = date, color = "Waste flag"),
-             data = filter(Flag_80_90_DF, slope_switch_flag==0, flag_ntile == 1))+
-  geom_vline(aes(xintercept = date, color = "Both"),
-             data = filter(Flag_80_90_DF, slope_switch_flag==1, flag_ntile == 1))
+    geom_vline(aes(xintercept = date, color = "Case flag"),
+             data = filter(Flag_80_90_DF, slope_switch_flag == 1, flag_ntile == 0))+
+    geom_vline(aes(xintercept = date, color = "Waste flag"),
+             data = filter(Flag_80_90_DF, slope_switch_flag == 0, flag_ntile == 1))+
+    geom_vline(aes(xintercept = date, color = "Both"),
+             data = filter(Flag_80_90_DF, slope_switch_flag == 1, flag_ntile == 1))
   return(retPlot)
 }
 
@@ -91,24 +93,45 @@ colorScheme <- scale_color_manual(values = c("Case flag" = "red",
                                 "Waste flag" = "blue",
                                 "Both" = "green",
                                 "log.sum.casesperday.Per100K" = "deeppink",
-                                "Loess" = "black"))
+                                "Loess" = "black",
+                                "log.FirstConfirmed.Per100K" = "red",
+                                "sars_cov2_adj_load_log10" = "red"))
 
 Flag_80_90_DF <- Full_Flag_DF[Full_Flag_DF$quant == .8,]
 Flag_80_90_DF <- Flag_80_90_DF[Flag_80_90_DF$window == 90,]
 
-Raw_Plot_DF$log.sum.casesperday.Per100K <- log(Raw_Plot_DF$pastwk.sum.casesperday.Per100K )
+Raw_Plot_DF$log.sum.casesperday.Per100K <- log(Raw_Plot_DF$pastwk.sum.casesperday.Per100K / 7)
 
-Add_Flags(DSIWastewater:::createWasteGraph_Plot(Raw_Plot_DF, 
+Main_Plot <- DSIWastewater:::createWasteGraph_Plot(Raw_Plot_DF, 
                                       xVal = "date",
                                       PointVal = NULL,
                                       LineVal = c("log.sum.casesperday.Per100K", "Loess"),
-                                      facetFormula = " ~ Site")+
-  colorScheme)
+                                      facetFormula = " ~ Site")
+Add_Flags(Main_Plot) + colorScheme
+#sars_cov2_adj_load_log10#FirstConfirmed.Per100K#log.sum.casesperday.Per100K#Loess
 ```
 
 ```{r stacked plot}
-A <- NULL
-B <- NULL
+
+
+Raw_Plot_DF$log.FirstConfirmed.Per100K <- log(Raw_Plot_DF$FirstConfirmed.Per100K)
+A <- DSIWastewater:::createWasteGraph_Plot(Raw_Plot_DF, 
+                                      xVal = "date",
+                                      PointVal = c("log.FirstConfirmed.Per100K"),
+                                      LineVal = c("log.sum.casesperday.Per100K"),
+                                      facetFormula = " ~ Site") +
+    geom_vline(aes(xintercept = date, color = "Case flag"),
+             data = filter(Flag_80_90_DF, slope_switch_flag == 1)) + colorScheme
+
+B <- DSIWastewater:::createWasteGraph_Plot(Raw_Plot_DF, 
+                                      xVal = "date",
+                                      PointVal = c("sars_cov2_adj_load_log10"),
+                                      LineVal = c("Loess"),
+                                      facetFormula = " ~ Site") +
+    geom_vline(aes(xintercept = date, color = "Case flag"),
+             data = filter(Flag_80_90_DF, flag_ntile == 1)) + colorScheme
+
+patchwork::wrap_plots(A,B, ncol = 1, guides = 'collect')
 ```
 
 
