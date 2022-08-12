@@ -218,7 +218,7 @@ Abstract_PlotAdd <- function(GGObj, GGfunc, YVal, YcolorName = NULL){
   
   
   RetObj <- GGObj+
-    GGfunc(aes(y = !!sym(YVal), color = !!YcolorName), na.rm = TRUE)
+    GGfunc(aes(y = !!sym(YVal), color = !!YcolorName), na.rm = TRUE, size = .5)
   return(RetObj)
 }
 
