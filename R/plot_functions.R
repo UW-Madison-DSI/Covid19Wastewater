@@ -307,19 +307,17 @@ createMethodCompareBar_Plot <- function(DF,Method = "Method",Cat="Catagory"){
 
 #' Create graphics showing flags as vertical lines
 #'
-#' @param MainDF 
-#' @param FlagDF 
-#' @param Flag1 
-#' @param Flag2 
-#' @param xVal 
-#' @param PointVal 
-#' @param LineVal 
-#' @param facetFormula 
+#' @param MainDF DF used for the non geom_vline calls
+#' @param FlagDF DF used for ploting the flag vertical lines
+#' @param Flag1 name of first flag
+#' @param Flag2 name of second flag, if only one flag leave NULL
+#' @param xVal column to use as x var
+#' @param PointVal list of columns to be shown as points
+#' @param LineVal list of columns to be shown as lines
+#' @param facetFormula formula object to be fed into geom_facet
 #'
-#' @return
+#' @return ggplot object of scatter, line and vertical lines
 #' @export
-#'
-#' @examples
 createFlagGraph_plot <- function(MainDF, FlagDF, 
                                  Flag1 = NULL, 
                                  Flag2 = NULL, 
@@ -327,21 +325,27 @@ createFlagGraph_plot <- function(MainDF, FlagDF,
                                  PointVal = NULL,
                                  LineVal = NULL,
                                  facetFormula = " ~ Site"){
-  
+  #use already existing plot code to get points and lines
   StartPlot <- createWasteGraph_Plot(MainDF, 
                                      xVal = xVal,
                                      PointVal = PointVal,
                                      LineVal = LineVal,
                                      facetFormula = facetFormula)
+  #if flag2 is not null then we need a both line
   if(!is.null(Flag2)){
+    #adding to the ggplot obj we created in last step
     StartPlot <- StartPlot+
+      #add line where there is a flag1 but not a flag2
       geom_vline(aes(xintercept = !!sym(xVal), color = Flag1),
                  data = filter(FlagDF, !!sym(Flag1) == 1, !!sym(Flag2) == 0))+
+      #add line where there is a flag2 but not a flag2
       geom_vline(aes(xintercept = !!sym(xVal), color = Flag2),
                  data = filter(FlagDF, !!sym(Flag1) == 0, !!sym(Flag2) == 1))+
+      #add line where there is both a flag1 and a flag2
       geom_vline(aes(xintercept = !!sym(xVal), color = "Both"),
                  data = filter(FlagDF, !!sym(Flag1) == 1, !!sym(Flag2) == 1))
   }else{
+    #othwewise just add flags where Flag1 is 1
     StartPlot <- StartPlot+
       geom_vline(aes(xintercept = !!sym(xVal), color = Flag1),
                  data = filter(FlagDF, !!sym(Flag1) == 1))

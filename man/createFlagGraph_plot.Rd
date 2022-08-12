@@ -16,21 +16,24 @@ createFlagGraph_plot(
 )
 }
 \arguments{
-\item{MainDF}{}
+\item{MainDF}{DF used for the non geom_vline calls}
 
-\item{FlagDF}{}
+\item{FlagDF}{DF used for ploting the flag vertical lines}
 
-\item{Flag1}{}
+\item{Flag1}{name of first flag}
 
-\item{Flag2}{}
+\item{Flag2}{name of second flag, if only one flag leave NULL}
 
-\item{xVal}{}
+\item{xVal}{column to use as x var}
 
-\item{PointVal}{}
+\item{PointVal}{list of columns to be shown as points}
 
-\item{LineVal}{}
+\item{LineVal}{list of columns to be shown as lines}
 
-\item{facetFormula}{}
+\item{facetFormula}{formula object to be fed into geom_facet}
+}
+\value{
+ggplot object of scatter, line and vertical lines
 }
 \description{
 Create graphics showing flags as vertical lines

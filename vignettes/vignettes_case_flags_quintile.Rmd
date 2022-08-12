@@ -90,7 +90,7 @@ library(dplyr)
 
 #define color scheme for the plots to have
 colorScheme <- scale_color_manual(values = 
-                                c("Cslope_switch_flag" = "red",
+                                c("slope_switch_flag" = "red",
                                 "flag_ntile" = "blue",
                                 "Both" = "green",
                                 "log.sum.casesperday.Per100K" = "deeppink",
