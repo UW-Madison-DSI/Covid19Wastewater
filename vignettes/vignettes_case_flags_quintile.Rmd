@@ -120,7 +120,7 @@ createFlagGraph_plot(Raw_Plot_DF, Flag_80_90_DF,
 
 ```{r stacked plot}
 
-
+#create Case data and flags
 A <- createFlagGraph_plot(Raw_Plot_DF, Flag_80_90_DF,
                           Flag1 = "slope_switch_flag",
                           PointVal = c("log.FirstConfirmed.Per100K"),
@@ -128,6 +128,7 @@ A <- createFlagGraph_plot(Raw_Plot_DF, Flag_80_90_DF,
                           facetFormula = " ~ Site") + 
         colorScheme
 
+#create waste data and flags
 B <- createFlagGraph_plot(Raw_Plot_DF, Flag_80_90_DF,
                           Flag1 = "flag_ntile",
                           PointVal = c("sars_cov2_adj_load_log10"),
@@ -178,44 +179,27 @@ server <- function(input, output, session) {
     FlagDF <- Full_Flag_DF%>%
       filter(quant == input$quants, window == input$Window)
     
-    A <- Case_DF%>%
+    A <- Raw_Plot_DF%>%
       filter(date >= input$daterange[1] & date <= input$daterange[2])%>% #filter using date range
-  ggplot(aes(x = date))+
-  geom_point(aes(y=FirstConfirmed.Per100K), size = .5) +
-  geom_line(aes(y=pastwk.sum.casesperday.Per100K/7, color = "7 day average"))+
-
-  geom_vline(aes(xintercept = date, color = "Case flag"),
-             data = filter(FlagDF, slope_switch_flag==1, 
-                           flag_ntile == 0))+
-  geom_vline(aes(xintercept = date, color = "Waste flag"),
-             data = filter(FlagDF, slope_switch_flag==0, 
-                           flag_ntile == 1))+
-  geom_vline(aes(xintercept = date, color = "Both"),
-             data = filter(FlagDF, slope_switch_flag==1, 
-                           flag_ntile == 1))+
-  ylab("Case data") +
-  ggtitle("Case data with slope_switch flags")+
-  colorScheme
+      createFlagGraph_plot(Flag_80_90_DF,
+                          Flag1 = "slope_switch_flag",
+                          PointVal = c("log.FirstConfirmed.Per100K"),
+                          LineVal = c("log.sum.casesperday.Per100K"),
+                          facetFormula = " ~ Site") + 
+        colorScheme
     
     if(input$isLogCase){
       A <- A+scale_y_log10()
     }
 
-B <- baseWaste_data%>%
+B <- Raw_Plot_DF%>%
   filter(date >= input$daterange[1] & date <= input$daterange[2])%>% #filter using date range
-  ggplot(aes(x = date))+
-  geom_point(aes(y=sars_cov2_adj_load_log10), size = .5) +
-  geom_vline(aes(xintercept = date, color = "Case flag"),
-             data = filter(FlagDF, slope_switch_flag==1, 
-                           flag_ntile == 0))+
-  geom_vline(aes(xintercept = date, color = "Waste flag"),
-             data = filter(FlagDF, slope_switch_flag==0, 
-                           flag_ntile == 1))+
-  geom_vline(aes(xintercept = date, color = "Both"),
-             data = filter(FlagDF, slope_switch_flag==1, 
-                           flag_ntile == 1))+
-  ylab("Waste Data")+
-  colorScheme
+  createFlagGraph_plot( Flag_80_90_DF,
+                          Flag1 = "flag_ntile",
+                          PointVal = c("sars_cov2_adj_load_log10"),
+                          LineVal = c("Loess"),
+                          facetFormula = " ~ Site") + 
+        colorScheme
 
 patchwork::wrap_plots(A,B, ncol = 1)
   })
