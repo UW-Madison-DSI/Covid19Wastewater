@@ -39,11 +39,11 @@ CaseFlags <- CreateCaseFlag(Case_DF)
 data(WasteWater_data, package = "DSIWastewater")
 
 #restrict Waste data to only Madison data
-baseWaste_DF <- baseWaste_DF[baseWaste_DF$wwtp_name == "Madison MSD WWTF",]
+baseWaste_DF <- WasteWater_data[WasteWater_data$wwtp_name == "Madison MSD WWTF",]
 
 #restrict Waste data to dates after 2021-02-01
-baseWaste_DF <- WasteWater_data[
-  as.Date(WasteWater_data$sample_collect_date, format = "%m/%d/%Y") >= as.Date("2021-02-01"),]
+baseWaste_DF <- baseWaste_DF[
+  as.Date(baseWaste_DF$sample_collect_date, format = "%m/%d/%Y") >= as.Date("2021-02-01"),]
 
 #get the waste flags
 Waste_reg_DF <- CreateWasteFlags(baseWaste_DF)
@@ -54,6 +54,63 @@ Waste_reg_DF <- CreateWasteFlags(baseWaste_DF)
 Full_Flag_DF <- dplyr::inner_join(Waste_reg_DF, CaseFlags,
                            by = c("Site", "date"))
 ```
+
+```{r}
+Waste_Smooth_DF <- do.call(rbind,
+                              lapply(
+                                split(
+                                  buildWasteAnalysisDF(baseWaste_DF),
+                                  ~WWTP),
+                                LoessSmoothMod))
+
+names(Waste_Smooth_DF)[names(Waste_Smooth_DF) == 'WWTP'] <- 'Site'
+
+Waste_Smooth_DF$Site <- ifelse(Waste_Smooth_DF$Site == "Madison MSD WWTF",
+                             "Madison",
+                             Waste_Smooth_DF$Site)
+
+Case_DF <- buildCaseAnalysisDF(Case_DF)
+
+
+Raw_Plot_DF <- dplyr::full_join(Case_DF, Waste_Smooth_DF, by = c("date", "Site"))
+```
+
+```{r Single plot code}
+Add_Flags <- function(ggobj){
+  retPlot <- ggobj +
+  geom_vline(aes(xintercept = date, color = "Case flag"),
+             data = filter(Flag_80_90_DF, slope_switch_flag==1, flag_ntile == 0))+
+  geom_vline(aes(xintercept = date, color = "Waste flag"),
+             data = filter(Flag_80_90_DF, slope_switch_flag==0, flag_ntile == 1))+
+  geom_vline(aes(xintercept = date, color = "Both"),
+             data = filter(Flag_80_90_DF, slope_switch_flag==1, flag_ntile == 1))
+  return(retPlot)
+}
+
+colorScheme <- scale_color_manual(values = c("Case flag" = "red",
+                                "Waste flag" = "blue",
+                                "Both" = "green",
+                                "log.sum.casesperday.Per100K" = "deeppink",
+                                "Loess" = "black"))
+
+Flag_80_90_DF <- Full_Flag_DF[Full_Flag_DF$quant == .8,]
+Flag_80_90_DF <- Flag_80_90_DF[Flag_80_90_DF$window == 90,]
+
+Raw_Plot_DF$log.sum.casesperday.Per100K <- log(Raw_Plot_DF$pastwk.sum.casesperday.Per100K )
+
+Add_Flags(DSIWastewater:::createWasteGraph_Plot(Raw_Plot_DF, 
+                                      xVal = "date",
+                                      PointVal = NULL,
+                                      LineVal = c("log.sum.casesperday.Per100K", "Loess"),
+                                      facetFormula = " ~ Site")+
+  colorScheme)
+```
+
+```{r stacked plot}
+A <- NULL
+B <- NULL
+```
+
 
 ```{r plot case and waste flags}
 library(ggplot2)
@@ -84,7 +141,7 @@ A <- Case_DF%>%
   scale_y_continuous(limits = c(0, 700))+
   colorScheme
 
-B <- baseWaste_data%>%
+B <- Waste_Smooth_DF%>%
   ggplot(aes(x = date))+
   geom_point(aes(y=sars_cov2_adj_load_log10), size = .5) +
   geom_vline(aes(xintercept = date, color = "Case flag"),
