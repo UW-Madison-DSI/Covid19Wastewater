@@ -83,17 +83,14 @@ Raw_Plot_DF <- dplyr::full_join(Case_DF, Waste_Smooth_DF, by = c("date", "Site")
 ```
 
 ```{r Single plot code}
-library(ggplot2)
-library(dplyr)
-#takes a ggplot object and add the vertical flags
 
 
 #define color scheme for the plots to have
-colorScheme <- scale_color_manual(values = 
+colorScheme <- ggplot2::scale_color_manual(values = 
                                 c("slope_switch_flag" = "red",
                                 "flag_ntile" = "blue",
                                 "Both" = "green",
-                                "log.sum.casesperday.Per100K" = "deeppink",
+                                "log.avg.casesperday.Per100K" = "deeppink",
                                 "Loess" = "black",
                                 "log.FirstConfirmed.Per100K" = "brown",
                                 "sars_cov2_adj_load_log10" = "grey"))
@@ -102,20 +99,23 @@ colorScheme <- scale_color_manual(values =
 Flag_80_90_DF <- Full_Flag_DF[Full_Flag_DF$quant == .8,]
 Flag_80_90_DF <- Flag_80_90_DF[Flag_80_90_DF$window == 90,]
 
-#add love version of Case data for easier comparison
+#add log version of Case data for easier comparison
 Raw_Plot_DF$log.FirstConfirmed.Per100K <- log(Raw_Plot_DF$FirstConfirmed.Per100K)
-#also divide log.sum.casesperday.Per100K by 7 to make is a daily average instead of a sum
-Raw_Plot_DF$log.sum.casesperday.Per100K <- log(Raw_Plot_DF$pastwk.sum.casesperday.Per100K / 7)
+
+#divide by 7 to make it an average instead of a sum
+Raw_Plot_DF$pastwk.avg.casesperday.Per100K <- Raw_Plot_DF$pastwk.sum.casesperday.Per100K/7
+
+#add log version of pastwk.avg.casesperday.Per100K
+Raw_Plot_DF$log.avg.casesperday.Per100K <- log(Raw_Plot_DF$pastwk.avg.casesperday.Per100K)
 
 #use old graphing code to 
 createFlagGraph_plot(Raw_Plot_DF, Flag_80_90_DF,
                                   Flag1 = "slope_switch_flag",
                                   Flag2 = "flag_ntile",
                                       PointVal = NULL,
-                                      LineVal = c("log.sum.casesperday.Per100K", "Loess"),
+                                      LineVal = c("log.avg.casesperday.Per100K", "Loess"),
                                       facetFormula = " ~ Site") + 
               colorScheme
-#sars_cov2_adj_load_log10#FirstConfirmed.Per100K#log.sum.casesperday.Per100K#Loess
 ```
 
 ```{r stacked plot}
@@ -124,7 +124,7 @@ createFlagGraph_plot(Raw_Plot_DF, Flag_80_90_DF,
 A <- createFlagGraph_plot(Raw_Plot_DF, Flag_80_90_DF,
                           Flag1 = "slope_switch_flag",
                           PointVal = c("log.FirstConfirmed.Per100K"),
-                          LineVal = c("log.sum.casesperday.Per100K"),
+                          LineVal = c("log.avg.casesperday.Per100K"),
                           facetFormula = " ~ Site") + 
         colorScheme
 
@@ -142,15 +142,7 @@ patchwork::wrap_plots(A,B, ncol = 1, guides = 'collect')
 
 
 ```{r shiny view of the problem, eval = FALSE}
-#in package
-#createCaseflag
-#createWasteflag
-#call common regression code
-#wastedata/some smoothing of waste data
-#how well does the case flags/waste flags work
-#for madison for state
-#how well do they do, at predicting own goals, each other
-
+library(dplyr)
 library(shiny)
 windows <- c(14, 30, 60 , 90)
 quants <- c(5:9)/10
@@ -171,7 +163,7 @@ ui <- fluidPage(
   plotOutput(outputId = "Flag_Compare_plot", width="100%")#, height="")
 
 )
-
+Raw_Plot_DF
 server <- function(input, output, session) {
   
   output$Flag_Compare_plot <- renderPlot({
@@ -183,8 +175,8 @@ server <- function(input, output, session) {
       filter(date >= input$daterange[1] & date <= input$daterange[2])%>% #filter using date range
       createFlagGraph_plot(Flag_80_90_DF,
                           Flag1 = "slope_switch_flag",
-                          PointVal = c("log.FirstConfirmed.Per100K"),
-                          LineVal = c("log.sum.casesperday.Per100K"),
+                          PointVal = c("FirstConfirmed.Per100K"),
+                          LineVal = c("pastwk.avg.casesperday.Per100K"),
                           facetFormula = " ~ Site") + 
         colorScheme
     

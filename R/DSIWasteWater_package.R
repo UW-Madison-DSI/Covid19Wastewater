@@ -4,6 +4,6 @@
 #' @importFrom zoo rollapply rollsumr rollmean
 #' @importFrom limma loessFit
 #' @importFrom rlang :=
-#' @importFrom ggplot2 ggplot aes geom_point geom_col element_text scale_x_date theme scale_fill_manual scale_fill_gradient element_blank facet_grid geom_line geom_rect geom_tile
+#' @importFrom ggplot2 ggplot aes geom_point geom_col geom_vline element_text scale_x_date theme scale_fill_manual scale_fill_gradient element_blank facet_grid geom_line geom_rect geom_tile
 #' @importFrom patchwork plot_layout wrap_plots
 NULL
