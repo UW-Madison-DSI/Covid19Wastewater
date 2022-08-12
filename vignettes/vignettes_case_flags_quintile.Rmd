@@ -44,7 +44,7 @@ Waste_reg_DF <- CreateWasteFlags(baseWaste_DF)
 
 ```{r Merge flag data frames}
 Full_Flag_DF <- dplyr::inner_join(Waste_reg_DF, CaseFlags,
-                           by = c("WWTP", "date"))
+                           by = c("Site", "date"))
 ```
 
 ```{r plot case and waste flags}

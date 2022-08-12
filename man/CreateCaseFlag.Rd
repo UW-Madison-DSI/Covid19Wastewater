@@ -2,13 +2,21 @@
 % Please edit documentation in R/flag_functions.R
 \name{CreateCaseFlag}
 \alias{CreateCaseFlag}
-\title{Title}
+\title{Create Case flags}
 \usage{
 CreateCaseFlag(DF)
 }
 \arguments{
-\item{DF}{}
+\item{DF}{Input data frame}
+}
+\value{
+data frame with columns:
+Site: Location of flag
+date: date of flag
+case_flag: when the 7 day slope is above 5
+case_flag_plus_comm.threshold: when case flag and more then 200 cases
+slope_switch_flag: the first case flags in consecutive case flags
 }
 \description{
-Title
+Create case flags created by the DHS to warn of increasing cases
 }

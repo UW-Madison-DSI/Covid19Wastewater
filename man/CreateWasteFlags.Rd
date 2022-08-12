@@ -2,17 +2,31 @@
 % Please edit documentation in R/flag_functions.R
 \name{CreateWasteFlags}
 \alias{CreateWasteFlags}
-\title{Title}
+\title{Create waste flags}
 \usage{
 CreateWasteFlags(DF, windows = c(14, 30, 60, 90), quants = c(5:9)/10)
 }
 \arguments{
-\item{DF}{}
+\item{DF}{Input data frame}
 
-\item{windows}{}
+\item{windows}{what windows for the rolling quantile to use}
 
-\item{quants}{}
+\item{quants}{what quantile for the rolling quantile to use}
+}
+\value{
+data frame with columns:
+Site: Location of flag
+date: date of flag
+window: what window the quantile is from
+quant: what quantile the quantile is from
+cdc_flag: flag if the linear regression of the last 5 days estimates a 
+     total percent change from the start of the period to the end of above
+     100
+flag_ntile: if there is a cdc flag and the measurement is above the last
+     window days quant quantile
+flag_ntile_pval: if there is a flag_ntile and the p value of the regression
+     is less then .3
 }
 \description{
-Title
+Create waste flags created by the DHS and the CDC to warn of increasing cases
 }
