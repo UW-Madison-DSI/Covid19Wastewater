@@ -3,6 +3,8 @@
 export(ClassifyCaseRegression)
 export(ClassifyQuantileFlagRegression)
 export(ClassifyRegressionAnalysis)
+export(CreateCaseFlag)
+export(CreateWasteFlags)
 export(LoessSmoothMod)
 export(MakeQuantileColumns)
 export(RemoveOutliers)

@@ -3,7 +3,7 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 document()
 build(path = ".", vignettes = FALSE)
 install(quick=FALSE)
-
+#----------------
 document()
 build_vignettes(quiet=FALSE)
 dir.create("inst/doc", recursive = TRUE)
