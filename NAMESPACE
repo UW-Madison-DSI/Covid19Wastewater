@@ -3,6 +3,7 @@
 export(ClassifyCaseRegression)
 export(ClassifyQuantileFlagRegression)
 export(ClassifyRegressionAnalysis)
+export(Count_Flag)
 export(CreateCaseFlag)
 export(CreateWasteFlags)
 export(LoessSmoothMod)

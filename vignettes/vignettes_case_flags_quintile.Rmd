@@ -55,6 +55,12 @@ Full_Flag_DF <- dplyr::inner_join(Waste_reg_DF, CaseFlags,
                            by = c("Site", "date"))
 ```
 
+```{r case number func}
+library(dplyr)
+
+Count_Flag(Full_Flag_DF)
+```
+
 ```{r}
 #Get Wastewater data columns for ploting
 #Recombine DF now with loess column
