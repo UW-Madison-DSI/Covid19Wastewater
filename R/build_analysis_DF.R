@@ -70,7 +70,8 @@ buildCaseAnalysisDF <- function(df){
     mutate(FirstConfirmed.Per100K = (FirstConfirmed * 100000) / population_served,
     #get rolling sum of the last 6 days filling missing data with NAs
             pastwk.sum.casesperday.Per100K = 
-             rollsumr(FirstConfirmed.Per100K, 7, fill=NA))
+             rollsumr(FirstConfirmed.Per100K, 7, fill=NA),
+            pastwk.avg.casesperday.Per100K = pastwk.sum.casesperday.Per100K / 7)
   
   return(CaseProcess)
 }

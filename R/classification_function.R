@@ -39,17 +39,20 @@ ClassifyRegressionAnalysis <- function(DF, PSigTest=TRUE){
 #' Create Case Flags based on regression slope
 #'
 #' @param DF dataframe that contains results of buildRegressionEstimateTable
+#' @param slopeThreshold number threshold for case_flag flagging
+#' @param minSize case threshold for case_flag_plus_comm.threshold flagging
 #'
 #' @return DF with an three extra column Category containing the case flags
-#' case_flag: when the 7 day slope is above 5
+#' case_flag: when the 7 day slope is above slopeThreshold
 #' case_flag_plus_comm.threshold: when case flag and more then 200 cases
 #' slope_switch_flag: the first case flags in consecutive case flags
 #' @export
-ClassifyCaseRegression <- function(DF){
+ClassifyCaseRegression <- function(DF, slopeThreshold = 5, minSize = 200){
   RetDF <- DF%>%
+    group_by(Site)%>%
     mutate(
-      #A flag when the slope for most recent week is greater than 5/100k/day
-      case_flag = case_when(lmreg_slope > 5 ~ 1,
+      #A flag when the slope for most recent week is greater than slopeThreshold/100k/day
+      case_flag = case_when(lmreg_slope > slopeThreshold ~ 1,
                             TRUE ~ 0),
       
       #A flag when the previous slope and the signal is above 200
@@ -58,8 +61,8 @@ ClassifyCaseRegression <- function(DF){
                                                 TRUE ~ 0),
       
       #What about a case flag where slope shifts from <5 to >5
-      slope_switch_flag = case_when(lag(lmreg_slope, 1) < 5 & 
-                                      lmreg_slope > 5 ~ 1,
+      slope_switch_flag = case_when(lag(case_flag, 1) == 0 & 
+                                      case_flag == 1 ~ 1,
                                     TRUE ~ 0))
   return(RetDF)
 }

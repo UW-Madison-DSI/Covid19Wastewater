@@ -4,14 +4,18 @@
 \alias{ClassifyCaseRegression}
 \title{Create Case Flags based on regression slope}
 \usage{
-ClassifyCaseRegression(DF)
+ClassifyCaseRegression(DF, slopeThreshold = 5, minSize = 200)
 }
 \arguments{
 \item{DF}{dataframe that contains results of buildRegressionEstimateTable}
+
+\item{slopeThreshold}{number threshold for case_flag flagging}
+
+\item{minSize}{case threshold for case_flag_plus_comm.threshold flagging}
 }
 \value{
 DF with an three extra column Category containing the case flags
-case_flag: when the 7 day slope is above 5
+case_flag: when the 7 day slope is above slopeThreshold
 case_flag_plus_comm.threshold: when case flag and more then 200 cases
 slope_switch_flag: the first case flags in consecutive case flags
 }
