@@ -66,7 +66,7 @@ runRegressionAnalysis <- function(DF,
                                   Formula,
                                   Keep = NULL,
                                   n = 5,
-                                  LMMethod=lm,
+                                  LMMethod = lm,
                                   verbose = FALSE){
   
   
@@ -74,10 +74,11 @@ runRegressionAnalysis <- function(DF,
   
   
   colnames(reg_estimates) = c(Keep, "date", "days_elapsed", "lmreg_n" , 
-                              "lmreg_slope", "lmreg_sig", "modeled_percentchange", "Method", "LMmethod")
+                              "lmreg_slope", "lmreg_sig", "modeled_percentchange",
+                              "Method", "LMmethod")
   if(verbose){
-    Keep%>%
-      lapply(uniqueVal,DF = DF)%>%
+    Keep[-length(Keep)]%>%
+      lapply(uniqueVal, DF = DF)%>%
       paste()%>%
       print()
   }

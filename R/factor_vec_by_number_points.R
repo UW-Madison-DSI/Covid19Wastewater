@@ -22,3 +22,31 @@ FactorVecByNumPoints <- function(DF,FacVar, FiltVar = NA){
   
   return(FacedDF)
 }
+
+#' Title
+#'
+#' @param FacVar 
+#' @param FactorDF 
+#' @param OrderDF 
+#' @param NumVar 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+FactorVecByVec <- function(FactorDF, OrderDF, FacVar, NumVar){
+
+  FactorOrder <- (OrderDF%>%
+                    filter(!is.na(!!sym(FacVar)), !is.na(!!sym(NumVar)))%>%
+                    group_by(!!sym(FacVar))%>%
+                    summarise(level = mean(!!sym(NumVar) ,na.rm = TRUE))%>%
+                    arrange(desc(level))
+                  )[[FacVar]]
+  
+  
+  FacedDF <- FactorDF%>%
+    mutate(!!FacVar := factor(!!sym(FacVar), FactorOrder))%>%
+    arrange(desc(!!sym(FacVar)))
+  
+  return(FacedDF)
+}

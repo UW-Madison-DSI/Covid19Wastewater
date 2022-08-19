@@ -15,7 +15,7 @@ Count_Flag <- function(DF,
     #grouping by the proup parameter
     group_by(across(group))%>%
     #return sum of each column that is of type numeric
-    summarise(across(where(is.numeric), sum), .groups = "keep")
+    summarise(across(where(is.numeric), sum), n = n(), .groups = "keep")
   
   return(Count_DF)
 }

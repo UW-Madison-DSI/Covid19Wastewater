@@ -30,11 +30,15 @@ createRegressionAnalysis_Plot <- function(RegDF, BaseDF,
                              ){
   if(IsLong){
     Mainbreak <- as.character(FacGridFormula)[3]
+    
     SubBreak <- as.character(FacGridFormula)[2]
+    
     facetFormula = paste("Data ~", Mainbreak)
   }else{
     Mainbreak <- as.character(FacGridFormula)[2]
+    
     SubBreak <- as.character(FacGridFormula)[3]
+    
     facetFormula = paste(Mainbreak, "~ Data")
   }
   
@@ -88,9 +92,11 @@ createRegressionAnalysis_Plot <- function(RegDF, BaseDF,
 #' @return a ggplot
 orderAndZipListsOfPlots_Plot <- function(top_plot_list, bot_plot_list, ratA=3,
                                          ratB=1, nbreak = 3, IsLong = TRUE){
+  
   stopifnot(length(top_plot_list) == length(bot_plot_list))
   
   EffectiveNbreak = min(nbreak, length(top_plot_list))
+  
   if(IsLong){
     Height = c(ratA, ratB)
     Width = NULL
@@ -103,10 +109,13 @@ orderAndZipListsOfPlots_Plot <- function(top_plot_list, bot_plot_list, ratA=3,
     ncol = NULL
   }
   TitleRemove<- theme(axis.title.y = element_blank())
+  
   topStripRemove <- theme(strip.background.x = element_blank(),
                           strip.text.x = element_blank())
+  
   sideRemove<- theme(strip.background.y = element_blank(),
                      strip.text.y = element_blank())
+  
   XAxisRemove <- theme(axis.title.x = element_blank(),
                        axis.text.x = element_blank(),
                        axis.ticks.x = element_blank())
