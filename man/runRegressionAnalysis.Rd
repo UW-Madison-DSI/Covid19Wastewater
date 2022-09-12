@@ -14,7 +14,7 @@ runRegressionAnalysis(
 )
 }
 \arguments{
-\item{DF}{Contains TS data should only contain one WWTP}
+\item{DF}{Contains TS data should only contain one site}
 
 \item{Formula}{LM model to be fit on a subsection of the data}
 
@@ -29,7 +29,7 @@ intended options are lm and FCVLM}
 }
 \value{
 a row of a DF containing the 
-WWTP, last date, timespan, number of rows, model slope and significance,
+site, last date, timespan, number of rows, model slope and significance,
 and predicted percent change, and what linear model was used
 }
 \description{

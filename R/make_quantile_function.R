@@ -62,7 +62,7 @@ WindowingQuantFunc <- function(DF, column){
 #' have info for each quant window combo 
 #'
 #' @param DF Dataframe containing columns:
-#' WWTP: what site the data is from
+#' site: what site the data is from
 #' date: date variable communicating the day the measurement is from
 #' *column: DF needs to contain a column with the same name as the string
 #' in the variable column
@@ -79,21 +79,21 @@ WindowingQuantFunc <- function(DF, column){
 #' @export
 MakeQuantileColumns <- function(DF, quants, windows,
                                 column = "sars_cov2_adj_load_log10"){
-  #create a DF with every combo of windows, quants, WWTP
+  #create a DF with every combo of windows, quants, site
   #Used to merge with DF to get a DF length(quants)*length(windows) times longer
   Method_DF <- expand.grid(windows, 
                            quants, 
-                           unique(DF$WWTP))
+                           unique(DF$site))
   
   #rename columns of merging DF to help the full joing function
-  colnames(Method_DF) <- c("window", "quant", "WWTP")
+  colnames(Method_DF) <- c("window", "quant", "site")
   
   
   Quantiles_DF <- DF%>%
     #merge with Method_DF to get the right number of rows for incoming split
-    full_join(Method_DF, by = c("WWTP"))%>%
-    #split the data by WWTP,Window,quant so each DF has one time series
-    split(~WWTP + window + quant)%>%
+    full_join(Method_DF, by = c("site"))%>%
+    #split the data by site,Window,quant so each DF has one time series
+    split(~site + window + quant)%>%
     #Feed each time series into the WindowingQuantFunc to get the actualy quant
     lapply(WindowingQuantFunc, column = column)%>%
     #append the DF back together to return

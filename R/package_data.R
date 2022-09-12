@@ -46,41 +46,6 @@
 #' @keywords datasets
 "Case_data"
 
-#' Case data set from the SLH on 2/7/22
-#'
-#' Data from the DHS of positive covid tests in selected Wisconsin cites where
-#' high frequency testing of covid data was done
-#' 
-#' Raw file 'HighFreq_CaseData_2021-05-07.csv'
-#' From Steve
-#' 
-#'
-#' @docType data
-#'
-#' @usage data("HFGCase_data")
-#'
-#' @format Rows: 788  Columns: 6
-#'
-#' @keywords datasets
-"HFGCase_data"
-
-#' High frequency Wastewater data set
-#'
-#' Data from the DHS of wastewater prevalence in selected Wisconsin cites where
-#' high frequency testing was done
-#' 
-#' Raw file 'HFG_data_corrected_w_HF183&CrP_011422.xlsx'
-#' From email Dagmara on Friday 2/25/2022
-#' 
-#'
-#' @docType data
-#'
-#' @usage data("HFGWaste_data")
-#'
-#' @format Rows: 3078  Columns: 20
-#'
-#' @keywords datasets
-"HFGWaste_data"
 
 
 #' Madison interceptor Case data set

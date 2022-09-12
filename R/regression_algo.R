@@ -23,7 +23,7 @@
 #' 
 buildRegressionEstimateTable <- function(DataMod, 
                                          RunOn = "sars_cov2_adj_load_log10",
-                                         SplitOn = "WWTP",
+                                         SplitOn = "site",
                                          DaysRegressed = 5,
                                          verbose=FALSE, 
                                          PSigTest=TRUE){
@@ -50,7 +50,7 @@ buildRegressionEstimateTable <- function(DataMod,
 #' and returns a summary of the information
 #'
 #'
-#' @param DF Contains TS data should only contain one WWTP
+#' @param DF Contains TS data should only contain one site
 #' @param Formula LM model to be fit on a subsection of the data
 #' @param n number of rows to be in each LM regression
 #' @param LMMethod Controls what Linear model is applied. 
@@ -60,7 +60,7 @@ buildRegressionEstimateTable <- function(DataMod,
 #'
 #' @export
 #' @return a row of a DF containing the 
-#' WWTP, last date, timespan, number of rows, model slope and significance,
+#' site, last date, timespan, number of rows, model slope and significance,
 #' and predicted percent change, and what linear model was used
 runRegressionAnalysis <- function(DF, 
                                   Formula,
@@ -115,7 +115,7 @@ runRegressionAnalysis <- function(DF,
 #' @param Keep The col in the original DF to keep besides Date
 #'
 #' @return a row of a DF containing the 
-#' WWTP, last date, timespan, number of rows, model slope and significance,
+#' site, last date, timespan, number of rows, model slope and significance,
 #' and predicted percent change, and what linear model was used
 regressionInnerLoop <- function(Formula, DF, Keep = NULL, LMMethod = lm){
   IndiVar <- as.character(Formula)[2]

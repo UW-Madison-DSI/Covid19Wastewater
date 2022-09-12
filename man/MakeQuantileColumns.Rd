@@ -9,7 +9,7 @@ MakeQuantileColumns(DF, quants, windows, column = "sars_cov2_adj_load_log10")
 }
 \arguments{
 \item{DF}{Dataframe containing columns:
-WWTP: what site the data is from
+site: what site the data is from
 date: date variable communicating the day the measurement is from
 *column: DF needs to contain a column with the same name as the string
 in the variable column}

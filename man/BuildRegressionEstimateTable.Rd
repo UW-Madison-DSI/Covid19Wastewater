@@ -7,7 +7,7 @@
 buildRegressionEstimateTable(
   DataMod,
   RunOn = "sars_cov2_adj_load_log10",
-  SplitOn = "WWTP",
+  SplitOn = "site",
   DaysRegressed = 5,
   verbose = FALSE,
   PSigTest = TRUE

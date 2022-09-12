@@ -18,7 +18,7 @@ intended options are lm and FCVLM}
 }
 \value{
 a row of a DF containing the 
-WWTP, last date, timespan, number of rows, model slope and significance,
+site, last date, timespan, number of rows, model slope and significance,
 and predicted percent change, and what linear model was used
 }
 \description{

@@ -30,7 +30,7 @@ buildWasteAnalysisDF <- function(df){
       n1_sars_cov2_conc, n2_sars_cov2_conc,             ## N1, N2 measurement
       average_flow_rate                                 ## sample covariates
     ) %>% 
-    rename(WWTP = wwtp_name, date = sample_collect_date) %>% 
+    rename(site = wwtp_name, date = sample_collect_date) %>% 
     mutate(date = as.Date(date,format="%m/%d/%Y"))
   
   ## dependent regression variable: log of normalized average SARS-COV-2 level
@@ -41,10 +41,9 @@ buildWasteAnalysisDF <- function(df){
       geoMean*average_flow_rate/population_served)
     )
 
-  ## filter out sites with too few measurements
-  ##  and sort by date;
+  ## add number of point info and sort
   workset4 <- workset4 %>% 
-    group_by(WWTP) %>% 
+    group_by(site) %>% 
     mutate(n = n()) %>% 
     arrange(date, .by_group = TRUE) %>% 
     ungroup()
@@ -63,14 +62,15 @@ buildWasteAnalysisDF <- function(df){
 #' buildCaseAnalysisDF(Case_data)
 buildCaseAnalysisDF <- function(df){
   CaseProcess <- df%>%
+    rename(site = Site)%>%
     #sort data to make sure the rolling sum func does not fail to sum correctly
-    arrange(Site, date)%>%
-    group_by(Site)%>%
+    arrange(site, date)%>%
+    group_by(site)%>%
     #Create case data norm by the population
     mutate(FirstConfirmed.Per100K = (FirstConfirmed * 100000) / population_served,
     #get rolling sum of the last 6 days filling missing data with NAs
             pastwk.sum.casesperday.Per100K = 
-             rollsumr(FirstConfirmed.Per100K, 7, fill=NA),
+                        rollsumr(FirstConfirmed.Per100K, 7, fill=NA),
             pastwk.avg.casesperday.Per100K = pastwk.sum.casesperday.Per100K / 7)
   
   return(CaseProcess)
