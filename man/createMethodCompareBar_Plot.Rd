@@ -19,3 +19,4 @@ ggplot object
 \description{
 createMethodCompareBar_Plot: Compare Regression analysis methods
 }
+\keyword{internal}

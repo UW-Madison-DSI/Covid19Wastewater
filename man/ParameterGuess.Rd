@@ -23,3 +23,4 @@ a number between 0 and max
 \description{
 Get a fitting parameter for the model
 }
+\keyword{internal}

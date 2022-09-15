@@ -28,3 +28,4 @@ DF with an extra col with a sgolayfilt smoothed version of InVar
 sgolaySmoothMod
 Add a column of the smoothed values using sgolayfilt
 }
+\keyword{internal}

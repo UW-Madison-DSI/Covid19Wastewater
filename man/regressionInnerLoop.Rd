@@ -25,3 +25,4 @@ and predicted percent change, and what linear model was used
 Runs a Linear regression on the data and returns it in a form to be merged
 in the runRegressionAnalysis function
 }
+\keyword{internal}

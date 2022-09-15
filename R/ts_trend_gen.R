@@ -9,6 +9,7 @@
 #' @param max The largest value returned
 #'
 #' @return a number between 0 and max
+#' @keywords internal
 ParameterGuess <- function(DF,InVar, Base, max){
   temp <- DF%>%
     filter(!is.na((!!sym(InVar))))%>%
@@ -80,6 +81,7 @@ LoessSmoothMod <- function(DF,InVar="sars_cov2_adj_load_log10",
 #' @param Filter Prefilter using the value of a Filter col
 #'
 #' @return A DF with an extra col with a exp smoothed version of InVar
+#' @keywords internal
 ExpSmoothMod <- function(DF,InVar, OutVar,alpha="guess",beta="guess", Filter = NULL ){
   
   if(alpha=="guess"){
@@ -128,6 +130,7 @@ ExpSmoothMod <- function(DF,InVar, OutVar,alpha="guess",beta="guess", Filter = N
 #' @param min The smallest value returned
 #'
 #' @return a number greater or equal to min
+#' @keywords internal
 NGuess <- function(DF,InVar, Base, min){
   temp <- DF%>%
     filter(!is.na((!!sym(InVar))))%>%
@@ -148,6 +151,7 @@ NGuess <- function(DF,InVar, Base, min){
 #' @param Filter Prefilter using the value of a Filter col
 #'
 #' @return DF with an extra col with a sgolayfilt smoothed version of InVar
+#' @keywords internal
 sgolaySmoothMod <- function(DF,InVar, OutVar,poly=5,n="guess", Filter = NULL){
   if(n=="guess"){
     n <- NGuess(DF,InVar,50/178, 7)

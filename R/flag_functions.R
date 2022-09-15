@@ -56,6 +56,7 @@ CreateCaseFlag <- function(DF){
 #' flag_ntile_pval: if there is a flag_ntile and the p value of the regression
 #'      is less then .3
 #' @export
+#' @keywords internal
 CreateWasteFlags <- function(DF,
                              windows = c(14, 30, 60 , 90),
                              quants = c(5:9)/10){

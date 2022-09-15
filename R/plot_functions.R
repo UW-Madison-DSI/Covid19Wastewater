@@ -90,6 +90,7 @@ createRegressionAnalysis_Plot <- function(RegDF, BaseDF,
 #' @param IsLong Controls whether the plot is wide or long
 #'
 #' @return a ggplot
+#' @keywords internal
 orderAndZipListsOfPlots_Plot <- function(top_plot_list, bot_plot_list, ratA=3,
                                          ratB=1, nbreak = 3, IsLong = TRUE){
   
@@ -196,6 +197,7 @@ orderAndZipListsOfPlots_Plot <- function(top_plot_list, bot_plot_list, ratA=3,
 #' @param CatagoryColors The color scheme used
 #'
 #' @return faceted ggplot heatmap
+#' @keywords internal
 CreateHeatMaps_Plot <- function(DF, FacGridFormula, FillFac, CatagoryColors){#, 
   BarGridSmoothRaw <- DF%>%
     ggplot()+
@@ -217,6 +219,7 @@ CreateHeatMaps_Plot <- function(DF, FacGridFormula, FillFac, CatagoryColors){#,
 #' @param YVal name of the y variable used
 #'
 #' @return GGObj with the appended graphic
+#' @keywords internal
 Abstract_PlotAdd <- function(GGObj, GGfunc, YVal, YcolorName = NULL){
   
   if(is.null(YcolorName)){
@@ -241,6 +244,7 @@ Abstract_PlotAdd <- function(GGObj, GGfunc, YVal, YcolorName = NULL){
 #' @param facetFormula formula of how to facet the plot
 #'
 #' @return a ggplot object with points with lables for each PointVal and a lines for each LineVal
+#'@keywords internal
 createWasteGraph_Plot <- function(DF, xVal, PointVal = NULL,
                                   LineVal = NULL,
                                   facetFormula = "Data ~ WWTP"){
@@ -278,6 +282,7 @@ createWasteGraph_Plot <- function(DF, xVal, PointVal = NULL,
 #' @param x The first method to compare
 #' @param y The second method to compare
 #' @return a ggplot object of the confusion matrix
+#' @keywords internal
 createConfMatrix_Plot <- function(DF,x,y, Cat="Catagory"){
   RetPlt <- DF%>%
     filter(Method %in% c(x,y))%>%
@@ -303,6 +308,7 @@ createConfMatrix_Plot <- function(DF,x,y, Cat="Catagory"){
 #' @param Cat Category column that the regression analysis is store
 #'
 #' @return ggplot object
+#' @keywords internal
 createMethodCompareBar_Plot <- function(DF,Method = "Method",Cat="Catagory"){
   DF%>%
     group_by(!!sym(Method),!!sym(Cat))%>%

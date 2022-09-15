@@ -21,3 +21,4 @@ a ggplot object of the confusion matrix
 \description{
 creates a confusion matrix from data long format
 }
+\keyword{internal}

@@ -30,3 +30,4 @@ flag_ntile_pval: if there is a flag_ntile and the p value of the regression
 \description{
 Create waste flags created by the DHS and the CDC to warn of increasing cases
 }
+\keyword{internal}

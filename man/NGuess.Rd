@@ -23,3 +23,4 @@ a number greater or equal to min
 \description{
 NGuess for sgolaySmoothMod number of points per polynomial
 }
+\keyword{internal}

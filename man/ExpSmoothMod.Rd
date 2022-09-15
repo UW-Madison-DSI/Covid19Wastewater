@@ -29,3 +29,4 @@ A DF with an extra col with a exp smoothed version of InVar
 ExpSmoothMod
 Add a column of the smoothed values using exponential smoothing
 }
+\keyword{internal}

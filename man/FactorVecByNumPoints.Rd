@@ -20,3 +20,4 @@ DF with the FacVar column a factor
 \description{
 convert column to factor based on amount of entries
 }
+\keyword{internal}

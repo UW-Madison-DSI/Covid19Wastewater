@@ -26,3 +26,4 @@ pastKavg.wwlog10: a mean of the last K days
 Takes 1 time series dataframe and adds a some columns specifying the 
 rolling quantile and rolling mean of the selected column.
 }
+\keyword{internal}

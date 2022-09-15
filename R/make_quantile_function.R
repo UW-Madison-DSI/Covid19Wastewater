@@ -16,6 +16,7 @@
 #' @return DF with added columns
 #' ntile: a rolling quantile of the data
 #' pastKavg.wwlog10: a mean of the last K days
+#' @keywords internal
 WindowingQuantFunc <- function(DF, column){
   #get the start of the time series
   mindate <- min(DF$date, na.rm = TRUE)

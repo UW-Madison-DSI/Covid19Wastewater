@@ -117,6 +117,7 @@ runRegressionAnalysis <- function(DF,
 #' @return a row of a DF containing the 
 #' site, last date, timespan, number of rows, model slope and significance,
 #' and predicted percent change, and what linear model was used
+#' @keywords internal
 regressionInnerLoop <- function(Formula, DF, Keep = NULL, LMMethod = lm){
   IndiVar <- as.character(Formula)[2]
   DepVar <- as.character(Formula)[3]
@@ -165,6 +166,7 @@ regressionInnerLoop <- function(Formula, DF, Keep = NULL, LMMethod = lm){
 #' @param DF the DF containing Col
 #'
 #' @return a list of each unique col value
+#' @keywords internal
 uniqueVal <- function(Col,DF){
   return(unique(DF[[Col]]))
 }

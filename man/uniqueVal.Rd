@@ -17,3 +17,4 @@ a list of each unique col value
 \description{
 Find all unique values in the column selected
 }
+\keyword{internal}

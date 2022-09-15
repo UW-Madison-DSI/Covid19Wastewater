@@ -29,3 +29,4 @@ a ggplot object with points with lables for each PointVal and a lines for each L
 \description{
 Wastewater graphic
 }
+\keyword{internal}

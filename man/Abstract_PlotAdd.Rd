@@ -21,3 +21,4 @@ GGObj with the appended graphic
 \description{
 adds a ggplot component
 }
+\keyword{internal}

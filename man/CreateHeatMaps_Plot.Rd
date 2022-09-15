@@ -21,3 +21,4 @@ faceted ggplot heatmap
 \description{
 Creates graphic of model prediction for each method
 }
+\keyword{internal}
