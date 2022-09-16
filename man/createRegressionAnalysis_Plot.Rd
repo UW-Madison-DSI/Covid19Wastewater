@@ -7,7 +7,7 @@
 createRegressionAnalysis_Plot(
   RegDF,
   BaseDF,
-  FacGridFormula = Method ~ WWTP,
+  FacGridFormula = Method ~ site,
   PointVal = "sars_cov2_adj_load_log10",
   LineVal = NULL,
   nbreak = 3,

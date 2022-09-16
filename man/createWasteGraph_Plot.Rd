@@ -9,7 +9,7 @@ createWasteGraph_Plot(
   xVal,
   PointVal = NULL,
   LineVal = NULL,
-  facetFormula = "Data ~ WWTP"
+  facetFormula = "Data ~ site"
 )
 }
 \arguments{

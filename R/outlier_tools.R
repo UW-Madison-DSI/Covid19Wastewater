@@ -1,6 +1,6 @@
 #' compute first difference Jumps for N1 and N2
 #'
-#' @param df DataFrame. needs Column n1_sars_cov2_conc, n2_sars_cov2_conc, WWTP
+#' @param df DataFrame. needs Column n1_sars_cov2_conc, n2_sars_cov2_conc, site
 #'
 #' @return dataframe with 4 columns appended: delta(n1), delta(n2) from left and right
 #' @export
@@ -10,12 +10,12 @@
 #' computeJumps(example_data)
 computeJumps <- function(df) {
   df <- df %>% 
-    group_by(WWTP) %>% 
+    group_by(site) %>% 
     mutate(
-      n1.before = lag(n1_sars_cov2_conc, order_by = WWTP),
-      n1.after  = lead(n1_sars_cov2_conc, order_by = WWTP),
-      n2.before = lag(n2_sars_cov2_conc, order_by = WWTP),
-      n2.after  = lead(n2_sars_cov2_conc, order_by = WWTP)
+      n1.before = lag(n1_sars_cov2_conc, order_by = site),
+      n1.after  = lead(n1_sars_cov2_conc, order_by = site),
+      n2.before = lag(n2_sars_cov2_conc, order_by = site),
+      n2.after  = lead(n2_sars_cov2_conc, order_by = site)
     ) %>% 
     mutate(
       n1.jumpFromLeft  = n1_sars_cov2_conc - n1.before,
@@ -32,7 +32,7 @@ computeJumps <- function(df) {
 #' Convert jumps from last step into a ordering
 #'
 #' @param df DataFrame. needs Column n1.jumpFromLeft, n1.jumpFromRight, 
-#'           n2.jumpFromLeft, n2.jumpFromRight, WWTP
+#'           n2.jumpFromLeft, n2.jumpFromRight, site
 #'           
 #' First 4 gen from computeJumps
 #' 
@@ -45,7 +45,7 @@ computeJumps <- function(df) {
 #' rankJumps(df_data)
 rankJumps <- function(df) {
   df <- df %>% 
-    group_by(WWTP)   %>% 
+    group_by(site)   %>% 
     mutate(rank.n1.jumpFromLeft = rank(-n1.jumpFromLeft),
       rank.n1.jumpFromRight = rank(-n1.jumpFromRight),
       rank.n2.jumpFromLeft = rank(-n2.jumpFromLeft), 
@@ -54,7 +54,7 @@ rankJumps <- function(df) {
       ) %>% 
 
     ## sort by first jump ranks just to be definitive
-    arrange(WWTP,rank.n1.jumpFromLeft) 
+    arrange(site,rank.n1.jumpFromLeft) 
   return(df)
 }
 
@@ -63,7 +63,7 @@ rankJumps <- function(df) {
 #' Convert jumps from last step into a ordering quintile 
 #'
 #' @param df dataframe. needs Column n1.jumpFromLeft, n1.jumpFromRight, 
-#'           n2.jumpFromLeft, n2.jumpFromRight, WWTP
+#'           n2.jumpFromLeft, n2.jumpFromRight, site
 #'           
 #' First 4 gen from computeJumps
 #' 
@@ -78,7 +78,7 @@ rankJumps <- function(df) {
 #' computeRankQuantiles(ranked_data)
 computeRankQuantiles <- function(df) {
   df <- df %>% 
-    group_by(WWTP) %>% 
+    group_by(site) %>% 
     mutate(numValues = n()) %>% 
     mutate(
       n1.jumpFromLeft.quantile  = rank.n1.jumpFromLeft/numValues,
@@ -91,7 +91,7 @@ computeRankQuantiles <- function(df) {
     select(-numValues) %>%
     
     ## sort by first jump ranks just to be definitive
-    arrange(WWTP,n1.jumpFromLeft.quantile)   
+    arrange(site,n1.jumpFromLeft.quantile)   
 }
 
 #' Create column with Boolean based on a threashold

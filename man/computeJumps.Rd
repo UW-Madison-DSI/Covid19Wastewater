@@ -7,7 +7,7 @@
 computeJumps(df)
 }
 \arguments{
-\item{df}{DataFrame. needs Column n1_sars_cov2_conc, n2_sars_cov2_conc, WWTP}
+\item{df}{DataFrame. needs Column n1_sars_cov2_conc, n2_sars_cov2_conc, site}
 }
 \value{
 dataframe with 4 columns appended: delta(n1), delta(n2) from left and right

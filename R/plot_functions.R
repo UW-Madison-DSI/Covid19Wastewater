@@ -22,7 +22,7 @@
 #' example_reg_table <- buildRegressionEstimateTable(example_data)
 #' createRegressionAnalysis_Plot(example_reg_table, example_data)
 createRegressionAnalysis_Plot <- function(RegDF, BaseDF, 
-                             FacGridFormula = Method ~ WWTP,
+                             FacGridFormula = Method ~ site,
                              PointVal = "sars_cov2_adj_load_log10", 
                              LineVal = NULL, 
                              nbreak = 3,
@@ -247,7 +247,7 @@ abstract_PlotAdd <- function(GGObj, GGfunc, YVal, YcolorName = NULL){
 #'@keywords internal
 createWasteGraph_Plot <- function(DF, xVal, PointVal = NULL,
                                   LineVal = NULL,
-                                  facetFormula = "Data ~ WWTP"){
+                                  facetFormula = "Data ~ site"){
   RetPlot <- DF%>%
     ggplot( aes(x = !!sym(xVal)))
   
@@ -286,9 +286,9 @@ createWasteGraph_Plot <- function(DF, xVal, PointVal = NULL,
 createConfMatrix_Plot <- function(DF,x,y, Cat="Catagory"){
   RetPlt <- DF%>%
     filter(Method %in% c(x,y))%>%
-    select(WWTP,date,Method,Catagory)%>%
-    filter(WWTP != "Portage WWTF"  & WWTP != "Cedarburg WWTF")%>%
-    pivot_wider(id_cols=c(WWTP, date),names_from = Method, values_from = !!sym(Cat))%>%
+    select(site,date,Method,Catagory)%>%
+    filter(site != "Portage WWTF"  & site != "Cedarburg WWTF")%>%
+    pivot_wider(id_cols=c(site, date),names_from = Method, values_from = !!sym(Cat))%>%
     group_by(!!sym(x),!!sym(y))%>%
     summarise(n = n())%>%
     filter(!is.na(!!sym(y)), !is.na(!!sym(x)))%>%
