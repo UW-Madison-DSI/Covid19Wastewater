@@ -7,7 +7,11 @@
 #'
 #' @return DF with the FacVar column a factor
 #' @keywords internal
-FactorVecByNumPoints <- function(DF,FacVar, FiltVar = NA){
+#' 
+#' @examples
+#' data(WasteWater_data, package = "DSIWastewater")
+#' factorVecByVec(WasteWater_data, "wwtp_name")
+factorVecByNumPoints <- function(DF,FacVar, FiltVar = NA){
   if(is.na(FiltVar)){
     FiltVar <- FacVar
   }
@@ -24,17 +28,19 @@ FactorVecByNumPoints <- function(DF,FacVar, FiltVar = NA){
   return(FacedDF)
 }
 
-#' Title
+#' Get ordering for ploting based on factoring vector
 #'
-#' @param FacVar 
-#' @param FactorDF 
-#' @param OrderDF 
-#' @param NumVar 
+#' @param FacVar Column given ordering
+#' @param FactorDF DF containing FacVar
+#' @param OrderDF DF containing NumVar
+#' @param NumVar Column used to find ordering
 #'
-#' @return
+#' @return FactorDF with FacVar being a factor ordered by NumVar
 #' @export
 #'
 #' @examples
+#' data(WasteWater_data, package = "DSIWastewater")
+#' factorVecByVec(WasteWater_data, WasteWater_data, "wwtp_name", "n1_sars_cov2_conc")
 factorVecByVec <- function(FactorDF, OrderDF, FacVar, NumVar){
 
   FactorOrder <- (OrderDF%>%

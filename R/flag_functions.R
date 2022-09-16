@@ -57,7 +57,7 @@ createCaseFlag <- function(DF){
 #'      is less then .3
 #' @export
 #' @keywords internal
-CreateWasteFlags <- function(DF,
+createWasteFlags <- function(DF,
                              windows = c(14, 30, 60 , 90),
                              quants = c(5:9)/10){
   #get DF into format for buildRegressionEstimateTable

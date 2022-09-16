@@ -17,7 +17,7 @@ sgolaySmoothMod(DF, InVar, OutVar, poly = 5, n = "guess", Filter = NULL)
 \item{poly}{The degree of the polynomial fit}
 
 \item{n}{The number of points per polynomial fed into sgolayfilt. 
-if it equals "guess" then it is found using ParameterGuess}
+if it equals "guess" then it is found using parameterGuess}
 
 \item{Filter}{Prefilter using the value of a Filter col}
 }

@@ -17,7 +17,7 @@
 #' ntile: a rolling quantile of the data
 #' pastKavg.wwlog10: a mean of the last K days
 #' @keywords internal
-WindowingQuantFunc <- function(DF, column){
+windowingQuantFunc <- function(DF, column){
   #get the start of the time series
   mindate <- min(DF$date, na.rm = TRUE)
   #get the end of the time series
@@ -95,8 +95,8 @@ makeQuantileColumns <- function(DF, quants, windows,
     full_join(Method_DF, by = c("site"))%>%
     #split the data by site,Window,quant so each DF has one time series
     split(~site + window + quant)%>%
-    #Feed each time series into the WindowingQuantFunc to get the actualy quant
-    lapply(WindowingQuantFunc, column = column)%>%
+    #Feed each time series into the windowingQuantFunc to get the actualy quant
+    lapply(windowingQuantFunc, column = column)%>%
     #append the DF back together to return
     bind_rows()
   return(Quantiles_DF)

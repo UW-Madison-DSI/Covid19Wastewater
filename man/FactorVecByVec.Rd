@@ -2,19 +2,26 @@
 % Please edit documentation in R/factor_vec_by_number_points.R
 \name{factorVecByVec}
 \alias{factorVecByVec}
-\title{Title}
+\title{Get ordering for ploting based on factoring vector}
 \usage{
 factorVecByVec(FactorDF, OrderDF, FacVar, NumVar)
 }
 \arguments{
-\item{FactorDF}{}
+\item{FactorDF}{DF containing FacVar}
 
-\item{OrderDF}{}
+\item{OrderDF}{DF containing NumVar}
 
-\item{FacVar}{}
+\item{FacVar}{Column given ordering}
 
-\item{NumVar}{}
+\item{NumVar}{Column used to find ordering}
+}
+\value{
+FactorDF with FacVar being a factor ordered by NumVar
 }
 \description{
-Title
+Get ordering for ploting based on factoring vector
+}
+\examples{
+data(WasteWater_data, package = "DSIWastewater")
+factorVecByVec(WasteWater_data, WasteWater_data, "wwtp_name", "n1_sars_cov2_conc")
 }

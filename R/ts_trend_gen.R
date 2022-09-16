@@ -10,7 +10,7 @@
 #'
 #' @return a number between 0 and max
 #' @keywords internal
-ParameterGuess <- function(DF,InVar, Base, max){
+parameterGuess <- function(DF,InVar, Base, max){
   temp <- DF%>%
     filter(!is.na((!!sym(InVar))))%>%
     summarise(n=n())
@@ -26,7 +26,7 @@ ParameterGuess <- function(DF,InVar, Base, max){
 #' @param InVar The column to be smoothed
 #' @param OutVar The name of the new column
 #' @param span The span fed into loess smoothing. if it equals "guess" then it
-#' if found using ParameterGuess 
+#' if found using parameterGuess 
 #' @param Filter Prefilter using the value of a Filter col
 #'
 #' @return A DF with an extra col with a loesss smoothed version of InVar
@@ -38,7 +38,7 @@ ParameterGuess <- function(DF,InVar, Base, max){
 loessSmoothMod <- function(DF,InVar="sars_cov2_adj_load_log10",
                            OutVar="Loess", span="guess", Filter = NULL){
   if(span=="guess"){
-    span <- ParameterGuess(DF,InVar, 17.8, .6)
+    span <- parameterGuess(DF,InVar, 17.8, .6)
   }
   if(!is.null(Filter)){
     OutDF <- DF%>%
@@ -67,28 +67,28 @@ loessSmoothMod <- function(DF,InVar="sars_cov2_adj_load_log10",
 
 
 
-#' ExpSmoothMod
+#' expSmoothMod
 #' Add a column of the smoothed values using exponential smoothing
 #'
 #' @param DF The DF we are to add a exponential smoothing column to
 #' @param InVar The column to be smoothed
 #' @param OutVar The name of the new column
 #' @param alpha The alpha fed into robets exponential smoothing. if it equals "guess" then it
-#' if found using ParameterGuess
+#' if found using parameterGuess
 #' @param beta  The beta fed into robets exponential smoothing. if it equals "guess" then it
-#' if found using ParameterGuess
+#' if found using parameterGuess
 #' 
 #' @param Filter Prefilter using the value of a Filter col
 #'
 #' @return A DF with an extra col with a exp smoothed version of InVar
 #' @keywords internal
-ExpSmoothMod <- function(DF,InVar, OutVar,alpha="guess",beta="guess", Filter = NULL ){
+expSmoothMod <- function(DF,InVar, OutVar,alpha="guess",beta="guess", Filter = NULL ){
   
   if(alpha=="guess"){
-    alpha <- ParameterGuess(DF,InVar, 35.6, .4)
+    alpha <- parameterGuess(DF,InVar, 35.6, .4)
   }
   if(beta=="guess"){
-    beta <- ParameterGuess(DF,InVar, 8.9, .4)
+    beta <- parameterGuess(DF,InVar, 8.9, .4)
   }
   if(!is.null(Filter)){
     OutDF <- DF%>%
@@ -120,7 +120,7 @@ ExpSmoothMod <- function(DF,InVar, OutVar,alpha="guess",beta="guess", Filter = N
 }
 
 
-#' NGuess for sgolaySmoothMod number of points per polynomial
+#' nGuess for sgolaySmoothMod number of points per polynomial
 #'
 #' @param DF The DF to fit the sgolayfilt curve on. should only
 #' be from one TS
@@ -131,7 +131,7 @@ ExpSmoothMod <- function(DF,InVar, OutVar,alpha="guess",beta="guess", Filter = N
 #'
 #' @return a number greater or equal to min
 #' @keywords internal
-NGuess <- function(DF,InVar, Base, min){
+nGuess <- function(DF,InVar, Base, min){
   temp <- DF%>%
     filter(!is.na((!!sym(InVar))))%>%
     summarise(n=n())
@@ -147,14 +147,14 @@ NGuess <- function(DF,InVar, Base, min){
 #' @param OutVar The name of the new column
 #' @param poly The degree of the polynomial fit
 #' @param n The number of points per polynomial fed into sgolayfilt. 
-#' if it equals "guess" then it is found using ParameterGuess
+#' if it equals "guess" then it is found using parameterGuess
 #' @param Filter Prefilter using the value of a Filter col
 #'
 #' @return DF with an extra col with a sgolayfilt smoothed version of InVar
 #' @keywords internal
 sgolaySmoothMod <- function(DF,InVar, OutVar,poly=5,n="guess", Filter = NULL){
   if(n=="guess"){
-    n <- NGuess(DF,InVar,50/178, 7)
+    n <- nGuess(DF,InVar,50/178, 7)
   }
   if(!is.null(Filter)){
     OutDF <- DF%>%

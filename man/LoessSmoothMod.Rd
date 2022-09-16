@@ -21,7 +21,7 @@ loessSmoothMod(
 \item{OutVar}{The name of the new column}
 
 \item{span}{The span fed into loess smoothing. if it equals "guess" then it
-if found using ParameterGuess}
+if found using parameterGuess}
 
 \item{Filter}{Prefilter using the value of a Filter col}
 }

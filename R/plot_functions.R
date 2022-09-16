@@ -220,7 +220,7 @@ CreateHeatMaps_Plot <- function(DF, FacGridFormula, FillFac, CatagoryColors){#,
 #'
 #' @return GGObj with the appended graphic
 #' @keywords internal
-Abstract_PlotAdd <- function(GGObj, GGfunc, YVal, YcolorName = NULL){
+abstract_PlotAdd <- function(GGObj, GGfunc, YVal, YcolorName = NULL){
   
   if(is.null(YcolorName)){
     YcolorName <- YVal
@@ -254,14 +254,14 @@ createWasteGraph_Plot <- function(DF, xVal, PointVal = NULL,
   if(!is.null(PointVal)){
     for (ele in PointVal) {
       RetPlot <- RetPlot%>%
-        Abstract_PlotAdd(geom_point, ele)
+        abstract_PlotAdd(geom_point, ele)
     }
   }
   
   if(!is.null(LineVal)){
     for (ele in LineVal) {
       RetPlot <- RetPlot%>%
-        Abstract_PlotAdd(geom_line, ele)
+        abstract_PlotAdd(geom_line, ele)
     }
   }
   
