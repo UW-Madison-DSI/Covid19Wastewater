@@ -78,7 +78,10 @@ install.packages("DSIWastewater_0.2.01.tar.gz", repos = NULL, type="source")
 Alternatively, if you are using RStudio, you can install the tar file [using the user interface](./docs/r-studio/installing-packages.md).
 
 
-## Viewing
+## Documentation
+
+- View the [API Reference](./docs/api/api.md).
+
  
 - View the package vignettes with:
 
