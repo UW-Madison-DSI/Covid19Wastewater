@@ -78,7 +78,7 @@ WindowingQuantFunc <- function(DF, column){
 #' ntile: a rolling quantile of the data
 #' pastKavg.wwlog10: a mean of the last K days
 #' @export
-MakeQuantileColumns <- function(DF, quants, windows,
+makeQuantileColumns <- function(DF, quants, windows,
                                 column = "sars_cov2_adj_load_log10"){
   #create a DF with every combo of windows, quants, site
   #Used to merge with DF to get a DF length(quants)*length(windows) times longer

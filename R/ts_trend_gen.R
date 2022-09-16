@@ -19,7 +19,7 @@ ParameterGuess <- function(DF,InVar, Base, max){
 }
 
 
-#' LoessSmoothMod
+#' loessSmoothMod
 #' Add a column of the smoothed values using Loess
 #'
 #' @param DF DF we are adding the loess smooth col to
@@ -34,8 +34,8 @@ ParameterGuess <- function(DF,InVar, Base, max){
 #'
 #' @examples
 #' data(example_data, package = "DSIWastewater")
-#' LoessSmoothMod(example_data)
-LoessSmoothMod <- function(DF,InVar="sars_cov2_adj_load_log10",
+#' loessSmoothMod(example_data)
+loessSmoothMod <- function(DF,InVar="sars_cov2_adj_load_log10",
                            OutVar="Loess", span="guess", Filter = NULL){
   if(span=="guess"){
     span <- ParameterGuess(DF,InVar, 17.8, .6)

@@ -11,7 +11,7 @@
 #' case_flag_plus_comm.threshold: when case flag and more then 200 cases
 #' slope_switch_flag: the first case flags in consecutive case flags
 #' @export
-CreateCaseFlag <- function(DF){
+createCaseFlag <- function(DF){
   
   #Prep case data into form for buildRegressionEstimateTable
   Case_DF <- buildCaseAnalysisDF(DF)
@@ -24,7 +24,7 @@ CreateCaseFlag <- function(DF){
                                                        PSigTest = FALSE)
   
   #Classify slope to create 3 flags described in @return
-  CaseFlagOutput <- ClassifyCaseRegression(CaseRegressionOutput)
+  CaseFlagOutput <- classifyCaseRegression(CaseRegressionOutput)
   
   #return only flags and type columns
   CaseFlags <- CaseFlagOutput[,c("Site", "date", "case_flag",
@@ -64,7 +64,7 @@ CreateWasteFlags <- function(DF,
   baseWaste_DF <-  buildWasteAnalysisDF(DF)
   
   #add quantile data to merge with the regression results
-  Quantiles_DF <- MakeQuantileColumns(baseWaste_DF,
+  Quantiles_DF <- makeQuantileColumns(baseWaste_DF,
                                       quants, windows,
                                       "sars_cov2_adj_load_log10")
   
@@ -72,12 +72,12 @@ CreateWasteFlags <- function(DF,
   CDCMethod <- buildRegressionEstimateTable(baseWaste_DF, 
                                             PSigTest=FALSE)
   #merge the regression DF and the quantile DF to get info for 
-  #ClassifyQuantileFlagRegression
+  #classifyQuantileFlagRegression
   FULL_reg_DF <- dplyr::full_join(Quantiles_DF, CDCMethod,
                                   by = c("WWTP", "date"))
   
   #create flags described in @return
-  FULL_reg_DF <- ClassifyQuantileFlagRegression(FULL_reg_DF)
+  FULL_reg_DF <- classifyQuantileFlagRegression(FULL_reg_DF)
   
   #rename Madison name to make merging it with cases easier
   FULL_reg_DF$WWTP <- ifelse(FULL_reg_DF$WWTP == "Madison MSD WWTF",

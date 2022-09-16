@@ -13,7 +13,7 @@ baseWaste_data <- baseWaste_data[baseWaste_data$n >= 180,]
 workset4_Smooth_data <- do.call(rbind,
                               lapply(
                                 split(baseWaste_data, ~WWTP),
-                                LoessSmoothMod))
+                                loessSmoothMod))
 
 ## ----flag outlier-------------------------------------------------------------
 filter_outliers <- function(df, n){
@@ -21,7 +21,7 @@ filter_outliers <- function(df, n){
   ranked_data <- rankJumps(df_data)
   ranked_quantile_data <- computeRankQuantiles(ranked_data)
   classied_data <- flagOutliers(ranked_quantile_data, n)
-  created_data <- RemoveOutliers(classied_data)
+  created_data <- removeOutliers(classied_data)
   return(created_data)
 }
 

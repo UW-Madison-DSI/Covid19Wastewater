@@ -10,7 +10,7 @@ test_that("Test vignettes vignettes_DHSTopLevelAnalysis_Outlier produces expecte
   workset4_Smooth_data <- baseWaste_data%>%
     group_by(WWTP)%>%
     group_split()%>%
-    lapply(LoessSmoothMod)%>%
+    lapply(loessSmoothMod)%>%
     bind_rows()
   
   expect_identical(digest::digest(workset4_Smooth_data),"cffbd30f8cc27d81f4f79f29647770ef")
@@ -31,7 +31,7 @@ test_that("Test vignettes vignettes_DHSTopLevelAnalysis_Outlier produces expecte
   
   expect_identical(digest::digest(classied_data),"3b7616b4ed1ee0a6e812edbe1cbe732c")
   
-  created_data <- RemoveOutliers(classied_data)
+  created_data <- removeOutliers(classied_data)
   
   expect_identical(digest::digest(created_data),"ab4dc565f5feb7803e491693c8bd0ad6")
   

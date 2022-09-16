@@ -38,7 +38,7 @@ buildRegressionEstimateTable <- function(DataMod,
            n = DaysRegressed,
            verbose = verbose)%>%
     bind_rows()%>%
-    ClassifyRegressionAnalysis(PSigTest=PSigTest)%>%
+    classifyRegressionAnalysis(PSigTest=PSigTest)%>%
     filter(!is.na(Catagory))
   
   return(reg_estimates)

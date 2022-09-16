@@ -1,4 +1,4 @@
-#' ClassifyRegressionAnalysis
+#' classifyRegressionAnalysis
 #' 
 #' Adds the DHS Classification scheme to data created by runRegressionAnalysis
 #'
@@ -7,7 +7,7 @@
 #'
 #' @export
 #' @return DF with an extra column Catagory containing the results of the DHS binning
-ClassifyRegressionAnalysis <- function(DF, PSigTest=TRUE){
+classifyRegressionAnalysis <- function(DF, PSigTest=TRUE){
   
   
   RetDF <- DF%>%
@@ -47,7 +47,7 @@ ClassifyRegressionAnalysis <- function(DF, PSigTest=TRUE){
 #' case_flag_plus_comm.threshold: when case flag and more then 200 cases
 #' slope_switch_flag: the first case flags in consecutive case flags
 #' @export
-ClassifyCaseRegression <- function(DF, slopeThreshold = 5, minSize = 200){
+classifyCaseRegression <- function(DF, slopeThreshold = 5, minSize = 200){
   RetDF <- DF%>%
     group_by(Site)%>%
     mutate(
@@ -70,10 +70,10 @@ ClassifyCaseRegression <- function(DF, slopeThreshold = 5, minSize = 200){
 #' Classify FlagRegression  with rolling Quantile info 
 #' 
 #' Create wastewater flags based on the CDC classification defined in 
-#' ClassifyRegressionAnalysis and the quantile rank of the date.
+#' classifyRegressionAnalysis and the quantile rank of the date.
 #'
 #' @param DF dataframe that contains results of buildRegressionEstimateTable and
-#' MakeQuantileColumns
+#' makeQuantileColumns
 #' @param Pval threashold needed for flag_ntile_pval to flag 
 #'
 #' @export
@@ -82,9 +82,9 @@ ClassifyCaseRegression <- function(DF, slopeThreshold = 5, minSize = 200){
 #' flag_ntile: when the cdc flag and its in the top quantile
 #' flag_ntile_pval: when the flag ntile and the regression slope is less
 #' than pval
-ClassifyQuantileFlagRegression <- function(DF, pval = .3){
+classifyQuantileFlagRegression <- function(DF, pval = .3){
   #Get the DHS Classification scheme of wastewater concentration
-  Classification_DF <- ClassifyRegressionAnalysis(DF, PSigTest = FALSE)
+  Classification_DF <- classifyRegressionAnalysis(DF, PSigTest = FALSE)
   #returned DF piped into four mutate calls to add three columns
   Ret_DF <- Classification_DF%>%
     #Convert the classification scheme from the cdc into a flag

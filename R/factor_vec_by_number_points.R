@@ -35,7 +35,7 @@ FactorVecByNumPoints <- function(DF,FacVar, FiltVar = NA){
 #' @export
 #'
 #' @examples
-FactorVecByVec <- function(FactorDF, OrderDF, FacVar, NumVar){
+factorVecByVec <- function(FactorDF, OrderDF, FacVar, NumVar){
 
   FactorOrder <- (OrderDF%>%
                     filter(!is.na(!!sym(FacVar)), !is.na(!!sym(NumVar)))%>%

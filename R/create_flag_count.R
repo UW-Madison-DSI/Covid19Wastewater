@@ -8,7 +8,7 @@
 #'
 #' @return DF with the number of flags of each type with in groups
 #' @export
-Count_Flag <- function(DF, 
+countFlags <- function(DF, 
                        group = c("Site", "window", "quant")){
   
   Count_DF <- DF%>%

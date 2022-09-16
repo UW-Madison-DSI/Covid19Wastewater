@@ -133,8 +133,8 @@ flagOutliers <- function(DF, threshold, col = MessureRank, outputColName = Flagg
 #' ranked_data <- rankJumps(df_data)
 #' ranked_quantile_data <- computeRankQuantiles(ranked_data)
 #' classied_data <- flagOutliers(ranked_quantile_data, 9)
-#' RemoveOutliers(classied_data)
-RemoveOutliers <- function(DF, Messure = sars_cov2_adj_load_log10, Filtcol = FlaggedOutlier, outputColName = sars_adj_log10_Filtered){
+#' removeOutliers(classied_data)
+removeOutliers <- function(DF, Messure = sars_cov2_adj_load_log10, Filtcol = FlaggedOutlier, outputColName = sars_adj_log10_Filtered){
   RetDF <- DF%>%
     mutate({{outputColName}} := ifelse({{Filtcol}}, NA, {{Messure}}))
   return(RetDF)

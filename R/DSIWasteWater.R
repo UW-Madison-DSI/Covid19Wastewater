@@ -10,7 +10,7 @@
 #' 
 #' runRegressionAnalysis
 #' 
-#' ClassifyRegressionAnalysis
+#' classifyRegressionAnalysis
 #' 
 #' @section DataMod functions:
 #' buildWasteAnalysisDF

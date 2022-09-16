@@ -16,7 +16,7 @@ buildRegressionEstimateTable - This function is the composition of the next two
 
 runRegressionAnalysis
 
-ClassifyRegressionAnalysis
+classifyRegressionAnalysis
 }
 
 \section{DataMod functions}{
