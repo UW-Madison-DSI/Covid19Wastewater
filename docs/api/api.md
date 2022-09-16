@@ -1,5 +1,7 @@
 # Wastewater API Reference
 
+In order to view more detail about each of these API methods, you can [view the API in the R Studio Help](../r-studio/viewing-api.md).
+
 ## Smoothing Functions
 
 - ### LoessSmoothMod
