@@ -1,7 +1,7 @@
 <p align="center">
-  <div align="center">
-    <img src="./images/covid-droplet.svg" alt="Logo" style="width:33%">
-  </div>
+	<div align="center">
+		<img src="./images/covid-droplet.svg" alt="Logo" style="width:33%">
+	</div>
 </p>
 
 # AFIDSI Wastewater Analysis Package
@@ -35,8 +35,8 @@ If you have a GitHub account, then you can install the package by running the De
 
 ```
 devtools::install_github(
-    "AFIDSI/DSIWastewater",
-    auth_token = "REPLACEWITHYOURAUTHTOKEN"
+		"AFIDSI/DSIWastewater",
+		auth_token = "REPLACEWITHYOURAUTHTOKEN"
 )
 ```
 
@@ -82,6 +82,15 @@ Alternatively, if you are using RStudio, you can install the tar file [using the
 
 - View the [API Reference](./docs/api/api.md).
 
+<p>
+    <div align="center">
+        <img src="./images/architecture.svg" alt="API" style="width:200px">
+        <div>
+            <label>API Architecture Overview</label>
+        </div>
+    </div>
+    <br />
+</p>
  
 - View the package vignettes with:
 
