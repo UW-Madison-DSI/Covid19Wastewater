@@ -1,10 +1,10 @@
 Package: DSIWastewater
-Version: 0.2.01
-Date: 2022-06-01
+Version: 0.5.1
+Date: 2022-09-23
 Title: DSI Waste water Analysis code
 Description: Code created to analyse wastewater covid signals.
-Author: Marlin R Lee <mrlee6@wisc.edu>, Kyllan Wunder <kwunder@wisc.edu>
-Maintainer: Marlin R Lee <mrlee6@wisc.edu>,  Kyllan Wunder <kwunder@wisc.edu>
+Author: Marlin R Lee <mrlee6@wisc.edu>, Kyllan Wunder <kwunder@wisc.edu>, Abe Megahed <amegahed@wisc.edu>
+Maintainer: Marlin R Lee <mrlee6@wisc.edu>,  Kyllan Wunder <kwunder@wisc.edu>, Abe Megahed <amegahed@wisc.edu>
 Encoding: UTF-8
 RoxygenNote: 7.2.1
 License: Sustainable Use License

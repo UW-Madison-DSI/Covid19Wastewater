@@ -24,12 +24,15 @@ DF_date_vector <- function(DF, date_vec, flag_vecs){
 #' @keywords internal
 #' 
 #' @examples
-lookup <- function(DFCol, base_date_vec){
+diffLookup <- function(DFCol, base_date_vec, edge = NA){
   sorted_base_vec <- sort(base_date_vec)
   sorted_base_Lookup <- stepfun(sorted_base_vec, 0:length(sorted_base_vec))
   indices <- pmin(pmax(1, sorted_base_Lookup(DFCol)), length(sorted_base_vec) - 1)
   mindist <- pmin(abs(DFCol - sorted_base_vec[indices]), 
                   abs(DFCol - sorted_base_vec[indices + 1]))
+  if(!is.na(edge)){
+    mindist <- ifelse(mindist>edge, edge, mindist)
+  }
   return(mindist)
 }
 
@@ -43,8 +46,9 @@ lookup <- function(DFCol, base_date_vec){
 #' @export
 #'
 #' @examples
-date_distance_calc <- function(DF, base_date_vec, vecNames){
+date_distance_calc <- function(DF, base_date_vec, vecNames, edge = NA){
   RetDF <- DF%>%
-    mutate(across(all_of(vecNames), ~as.numeric(lookup(.x, DF[[base_date_vec]]))))
+    mutate(across(all_of(vecNames), 
+                  ~as.numeric(diffLookup(.x, DF[[base_date_vec]], edge = edge))))
   return(RetDF)
 }

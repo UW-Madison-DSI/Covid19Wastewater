@@ -4,7 +4,7 @@
 \alias{date_distance_calc}
 \title{date_distance_calc}
 \usage{
-date_distance_calc(DF, base_date_vec, vecNames)
+date_distance_calc(DF, base_date_vec, vecNames, edge = NA)
 }
 \arguments{
 \item{DF}{DF to extract vector from}
