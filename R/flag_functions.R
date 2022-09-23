@@ -5,7 +5,7 @@
 #' @param DF Input data frame
 #'
 #' @return data frame with columns:
-#' Site: Location of flag
+#' site: Location of flag
 #' date: date of flag
 #' case_flag: when the 7 day slope is above 5
 #' case_flag_plus_comm.threshold: when case flag and more then 200 cases
@@ -19,15 +19,15 @@ createCaseFlag <- function(DF){
   #run 7 day rolling regression on FirstConfirmed.Per100K column  
   CaseRegressionOutput <- buildRegressionEstimateTable(DataMod = Case_DF,
                                                        RunOn = "FirstConfirmed.Per100K",
-                                                       SplitOn = "Site",
+                                                       SplitOn = "site",
                                                        DaysRegressed = 7,
                                                        PSigTest = FALSE)
   
-  #Classify slope to create 3 flags described in @return
+  #Classify slope to create 3 flags described in @return  
   CaseFlagOutput <- classifyCaseRegression(CaseRegressionOutput)
   
   #return only flags and type columns
-  CaseFlags <- CaseFlagOutput[,c("Site", "date", "case_flag",
+  CaseFlags <- CaseFlagOutput[,c("site", "date", "case_flag",
                                  "case_flag_plus_comm.threshold",
                                  "slope_switch_flag")]
   return(CaseFlags)
@@ -44,7 +44,7 @@ createCaseFlag <- function(DF){
 #' @param quants what quantile for the rolling quantile to use 
 #'
 #' @return data frame with columns:
-#' Site: Location of flag
+#' site: Location of flag
 #' date: date of flag
 #' window: what window the quantile is from
 #' quant: what quantile the quantile is from
@@ -74,21 +74,18 @@ createWasteFlags <- function(DF,
   #merge the regression DF and the quantile DF to get info for 
   #classifyQuantileFlagRegression
   FULL_reg_DF <- dplyr::full_join(Quantiles_DF, CDCMethod,
-                                  by = c("WWTP", "date"))
+                                  by = c("site", "date"))
   
   #create flags described in @return
   FULL_reg_DF <- classifyQuantileFlagRegression(FULL_reg_DF)
   
   #rename Madison name to make merging it with cases easier
-  FULL_reg_DF$WWTP <- ifelse(FULL_reg_DF$WWTP == "Madison MSD WWTF",
+  FULL_reg_DF$WWTP <- ifelse(FULL_reg_DF$site == "Madison MSD WWTF",
                              "Madison",
-                             FULL_reg_DF$WWTP)
-  
-  #Rename WWTP to Site so it matches the case flag DF label
-  names(FULL_reg_DF)[names(FULL_reg_DF) == 'WWTP'] <- 'Site'
+                             FULL_reg_DF$site)
   
   #return only flags and type columns 
-  Full_wasteFlags <- FULL_reg_DF[,c("Site", "date", "window",
+  Full_wasteFlags <- FULL_reg_DF[,c("site", "date", "window",
                                     "quant", "cdc_flag", "flag_ntile",
                                     "flag_ntile_pval")]
   return(Full_wasteFlags)

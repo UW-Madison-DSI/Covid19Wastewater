@@ -57,8 +57,7 @@ buildRegressionEstimateTable <- function(DataMod,
 #' intended options are lm and FCVLM
 #' @param Keep The col in the original DF to keep besides Date
 #' @param verbose prints what site we are in
-#'
-#' @export
+#' @keywords internal
 #' @return a row of a DF containing the 
 #' site, last date, timespan, number of rows, model slope and significance,
 #' and predicted percent change, and what linear model was used

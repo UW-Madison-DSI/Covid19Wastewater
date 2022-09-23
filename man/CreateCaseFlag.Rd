@@ -11,7 +11,7 @@ createCaseFlag(DF)
 }
 \value{
 data frame with columns:
-Site: Location of flag
+site: Location of flag
 date: date of flag
 case_flag: when the 7 day slope is above 5
 case_flag_plus_comm.threshold: when case flag and more then 200 cases

@@ -36,3 +36,4 @@ and predicted percent change, and what linear model was used
 The DHS model system. runs a LM on each each set of n consecutive measurements
 and returns a summary of the information
 }
+\keyword{internal}
