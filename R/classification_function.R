@@ -7,6 +7,8 @@
 #'
 #' @export
 #' @return DF with an extra column Catagory containing the results of the DHS binning
+#' @example 
+#' 
 classifyRegressionAnalysis <- function(DF, PSigTest=TRUE){
   
   
@@ -49,7 +51,7 @@ classifyRegressionAnalysis <- function(DF, PSigTest=TRUE){
 #' @export
 classifyCaseRegression <- function(DF, slopeThreshold = 5, minSize = 200){
   RetDF <- DF%>%
-    group_by(Site)%>%
+    group_by(site)%>%
     mutate(
       #A flag when the slope for most recent week is greater than slopeThreshold/100k/day
       case_flag = case_when(lmreg_slope > slopeThreshold ~ 1,

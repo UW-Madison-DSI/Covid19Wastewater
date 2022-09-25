@@ -8,6 +8,9 @@
 #'
 #' @return DF with the number of flags of each type with in groups
 #' @export
+#' @return 
+#' data(example_data, package = "DSIWastewater")
+#' countFlags(example_data, group = c("WWTP"))
 countFlags <- function(DF, 
                        group = c("Site", "window", "quant")){
   

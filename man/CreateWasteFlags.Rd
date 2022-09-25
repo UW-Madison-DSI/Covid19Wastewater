@@ -15,7 +15,7 @@ createWasteFlags(DF, windows = c(14, 30, 60, 90), quants = c(5:9)/10)
 }
 \value{
 data frame with columns:
-Site: Location of flag
+site: Location of flag
 date: date of flag
 window: what window the quantile is from
 quant: what quantile the quantile is from

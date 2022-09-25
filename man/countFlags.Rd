@@ -13,6 +13,9 @@ countFlags(DF, group = c("Site", "window", "quant"))
 }
 \value{
 DF with the number of flags of each type with in groups
+
+data(example_data, package = "DSIWastewater")
+countFlags(example_data, group = c("WWTP"))
 }
 \description{
 Takes a data frame with grouping columns and numeric flag DF where 1 means 
