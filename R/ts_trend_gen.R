@@ -10,6 +10,9 @@
 #'
 #' @return a number between 0 and max
 #' @keywords internal
+#' @example
+#' data(example_data, package = "DSIWastewater")
+#' parameterGuess(example_data,"geoMean", 17.8, .6)
 parameterGuess <- function(DF,InVar, Base, max){
   temp <- DF%>%
     filter(!is.na((!!sym(InVar))))%>%
@@ -82,6 +85,10 @@ loessSmoothMod <- function(DF,InVar="sars_cov2_adj_load_log10",
 #'
 #' @return A DF with an extra col with a exp smoothed version of InVar
 #' @keywords internal
+#' data("WasteWater_data", package = "DSIWastewater")
+#' examp_DF <- buildWasteAnalysisDF(WasteWater_data)
+#' examp_DF <- examp_DF[examp_DF$site == 'Algoma WWTF",]
+#' expSmoothMod(examp_DF,"n1_sars_cov2_conc","expN1"'
 expSmoothMod <- function(DF,InVar, OutVar,alpha="guess",beta="guess", Filter = NULL ){
   
   if(alpha=="guess"){
@@ -111,8 +118,8 @@ expSmoothMod <- function(DF,InVar, OutVar,alpha="guess",beta="guess", Filter = N
   
   DF[[OutVar]] <- robets::robets(y=DF[[InVar]],
                           model = "AAN",
-                          beta  = beta,
-                          alpha=alpha)$fitted#2 iterations remove some bad patterns
+                          alpha = alpha,
+                          beta  = beta)$fitted
   DF <- DF%>%
     bind_rows(OutDF)
   
@@ -131,6 +138,9 @@ expSmoothMod <- function(DF,InVar, OutVar,alpha="guess",beta="guess", Filter = N
 #'
 #' @return a number greater or equal to min
 #' @keywords internal
+#' @example
+#' data(example_data, package = "DSIWastewater")
+#' nGuess(example_data, "geoMean", 50/178, 7)
 nGuess <- function(DF,InVar, Base, min){
   temp <- DF%>%
     filter(!is.na((!!sym(InVar))))%>%
@@ -152,6 +162,10 @@ nGuess <- function(DF,InVar, Base, min){
 #'
 #' @return DF with an extra col with a sgolayfilt smoothed version of InVar
 #' @keywords internal
+#' data(example_data, package = "DSIWastewater")
+#' examp_DF <- buildWasteAnalysisDF(WasteWater_data)
+#' examp_DF <- examp_DF[examp_DF$site == `Algoma WWTF`,]
+#' DSIWastewater:::sgolaySmoothMod(examp_DF,"n1_sars_cov2_conc","sgolayN1")
 sgolaySmoothMod <- function(DF,InVar, OutVar,poly=5,n="guess", Filter = NULL){
   if(n=="guess"){
     n <- nGuess(DF,InVar,50/178, 7)

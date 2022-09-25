@@ -8,6 +8,10 @@
 #' @export
 #'
 #' @examples
+#' @example 
+#' data("example_data", package = "DSIWastewater")
+#' example_data$flag = 1
+#' DF_date_vector(example_data, "date", "flag")
 DF_date_vector <- function(DF, date_vec, flag_vecs){
   retDF <- DF%>%
     mutate(across(all_of(flag_vecs), ~ifelse(.x==1, !!sym(date_vec), NA)))%>%
@@ -23,7 +27,9 @@ DF_date_vector <- function(DF, date_vec, flag_vecs){
 #' @return diffrence between DFCol and the closest entry of base_date_vec
 #' @keywords internal
 #' 
-#' @examples
+#' @example
+#' data("example_data", package = "DSIWastewater")
+#' diffLookup(example_data$geoMean, example_data$n)
 diffLookup <- function(DFCol, base_date_vec, edge = NA){
   sorted_base_vec <- sort(base_date_vec)
   sorted_base_Lookup <- stepfun(sorted_base_vec, 0:length(sorted_base_vec))
@@ -46,6 +52,8 @@ diffLookup <- function(DFCol, base_date_vec, edge = NA){
 #' @export
 #'
 #' @examples
+#' data("example_data", package = "DSIWastewater")
+#' date_distance_calc(example_data, "geoMean", "n")
 date_distance_calc <- function(DF, base_date_vec, vecNames, edge = NA){
   RetDF <- DF%>%
     mutate(across(all_of(vecNames), 

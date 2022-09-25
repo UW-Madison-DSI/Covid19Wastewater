@@ -72,7 +72,6 @@ rankJumps <- function(df) {
 #'
 #' @examples
 #' data(example_data, package = "DSIWastewater")
-
 #' df_data <- computeJumps(example_data)
 #' ranked_data <- rankJumps(df_data)
 #' computeRankQuantiles(ranked_data)

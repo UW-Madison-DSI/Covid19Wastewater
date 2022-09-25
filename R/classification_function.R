@@ -8,9 +8,12 @@
 #' @export
 #' @return DF with an extra column Catagory containing the results of the DHS binning
 #' @example 
-#' 
+#' data(example_data, package = "DSIWastewater")
+#' example_data$modeled_percentchange = 0
+#' example_data$lmreg_sig = .01
+#' classifyRegressionAnalysis(example_data)
 classifyRegressionAnalysis <- function(DF, PSigTest=TRUE){
-  
+#magic variables: modeled_percentchange, lmreg_sig
   
   RetDF <- DF%>%
     mutate(Catagory = cut(modeled_percentchange, c(-Inf,-100,-10,10,100,Inf),
@@ -49,6 +52,10 @@ classifyRegressionAnalysis <- function(DF, PSigTest=TRUE){
 #' case_flag_plus_comm.threshold: when case flag and more then 200 cases
 #' slope_switch_flag: the first case flags in consecutive case flags
 #' @export
+#' @example 
+#' example_DF <- data.frame(site = "madison", lmreg_slope = 5, value = 300)
+#' classifyCaseRegression(example_DF)
+classifyCaseRegression(example_DF)
 classifyCaseRegression <- function(DF, slopeThreshold = 5, minSize = 200){
   RetDF <- DF%>%
     group_by(site)%>%
@@ -84,6 +91,13 @@ classifyCaseRegression <- function(DF, slopeThreshold = 5, minSize = 200){
 #' flag_ntile: when the cdc flag and its in the top quantile
 #' flag_ntile_pval: when the flag ntile and the regression slope is less
 #' than pval
+#' @example 
+#' data(example_data, package = "DSIWastewater")
+#' example_data$modeled_percentchange = 0
+#' example_data$lmreg_sig = .01
+#' example_data$pastKavg.wwlog10 = 5
+#' example_data$ntile = 8
+#' classifyQuantileFlagRegression(example_data)
 classifyQuantileFlagRegression <- function(DF, pval = .3){
   #Get the DHS Classification scheme of wastewater concentration
   Classification_DF <- classifyRegressionAnalysis(DF, PSigTest = FALSE)

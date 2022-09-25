@@ -19,8 +19,7 @@
 #'
 #' @examples
 #' data(example_data, package = "DSIWastewater")
-#' buildRegressionEstimateTable(example_data)
-#' 
+#' buildRegressionEstimateTable(example_data, SplitOn = "WWTP")
 buildRegressionEstimateTable <- function(DataMod, 
                                          RunOn = "sars_cov2_adj_load_log10",
                                          SplitOn = "site",
@@ -53,28 +52,28 @@ buildRegressionEstimateTable <- function(DataMod,
 #' @param DF Contains TS data should only contain one site
 #' @param Formula LM model to be fit on a subsection of the data
 #' @param n number of rows to be in each LM regression
-#' @param LMMethod Controls what Linear model is applied. 
-#' intended options are lm and FCVLM
 #' @param Keep The col in the original DF to keep besides Date
 #' @param verbose prints what site we are in
 #' @keywords internal
 #' @return a row of a DF containing the 
 #' site, last date, timespan, number of rows, model slope and significance,
 #' and predicted percent change, and what linear model was used
+#' @example
+#' data(example_data, package = "DSIWastewater")
+#' runRegressionAnalysis(example_data, Formula = geoMean~date)
 runRegressionAnalysis <- function(DF, 
                                   Formula,
                                   Keep = NULL,
                                   n = 5,
-                                  LMMethod = lm,
                                   verbose = FALSE){
   
   
-  reg_estimates = as.data.frame(matrix(ncol=8+length(Keep), nrow=0))
+  reg_estimates = as.data.frame(matrix(ncol=7+length(Keep), nrow=0))
   
   
   colnames(reg_estimates) = c(Keep, "date", "days_elapsed", "lmreg_n" , 
-                              "lmreg_slope", "lmreg_sig", "modeled_percentchange",
-                              "Method", "LMmethod")
+                              "lmreg_slope", "lmreg_sig", 
+                              "modeled_percentchange", "Method")
   if(verbose){
     Keep[-length(Keep)]%>%
       lapply(uniqueVal, DF = DF)%>%
@@ -88,15 +87,14 @@ runRegressionAnalysis <- function(DF,
   
   for (k in 1:(nrow(ModDF) - (n - 1))){
     
-    ww.x.subset = ModDF[k:(k+(n - 1)),]
+    ww_x_subset = ModDF[k:(k+(n - 1)),]
     
-    ww.x.tobind = regressionInnerLoop(
+    ww_x_tobind = regressionInnerLoop(
       Formula,
-      DF = ww.x.subset,
-      Keep = Keep,
-      LMMethod = LMMethod)
+      DF = ww_x_subset,
+      Keep = Keep)
     
-    reg_estimates <- rbind(reg_estimates, ww.x.tobind)
+    reg_estimates <- rbind(reg_estimates, ww_x_tobind)
   }
   
   return(reg_estimates)
@@ -109,15 +107,15 @@ runRegressionAnalysis <- function(DF,
 #'
 #' @param Formula LM model to be fit on DF
 #' @param DF Contains the data needed for Formula to work
-#' @param LMMethod Controls what Linear model is applied. 
-#' intended options are lm and FCVLM
 #' @param Keep The col in the original DF to keep besides Date
 #'
 #' @return a row of a DF containing the 
 #' site, last date, timespan, number of rows, model slope and significance,
 #' and predicted percent change, and what linear model was used
 #' @keywords internal
-regressionInnerLoop <- function(Formula, DF, Keep = NULL, LMMethod = lm){
+#' @example
+#' 
+regressionInnerLoop <- function(Formula, DF, Keep = NULL){
   IndiVar <- as.character(Formula)[2]
   DepVar <- as.character(Formula)[3]
   
@@ -139,24 +137,24 @@ regressionInnerLoop <- function(Formula, DF, Keep = NULL, LMMethod = lm){
     return(reg_estimates)
   }
   
-  lm.subset.sum <- suppressWarnings(#data is sometimes functionary linear.
-    summary(LMMethod(Formula, data = DF))
+  lm_subset_sum <- suppressWarnings(#data is sometimes functionary linear.
+    summary(lm(Formula, data = DF))
   )
   
   # Extract row to bind with workset
-  ww.x.tobind <- reg_estimates%>%
+  ww_x_tobind <- reg_estimates%>%
     
     mutate(days_elapsed = as.numeric(max(DF$date) - min(DF$date)),
            
            lmreg_n = nrow(DF),
            
-           lmreg_slope = lm.subset.sum$coefficients[2,1],
+           lmreg_slope = lm_subset_sum$coefficients[2,1],
            
-           lmreg_sig = lm.subset.sum$coefficients[2,4],
+           lmreg_sig = lm_subset_sum$coefficients[2,4],
            
            modeled_percentchange = ((10^(lmreg_slope*days_elapsed))-1)*100)
   
-  return(ww.x.tobind)
+  return(ww_x_tobind)
 }
 
 #' Find all unique values in the column selected
@@ -166,6 +164,9 @@ regressionInnerLoop <- function(Formula, DF, Keep = NULL, LMMethod = lm){
 #'
 #' @return a list of each unique col value
 #' @keywords internal
+#' @example 
+#' data(example_data, package = "DSIWastewater")
+#' uniqueVal("WWTP",example_data)
 uniqueVal <- function(Col,DF){
   return(unique(DF[[Col]]))
 }

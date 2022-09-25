@@ -11,6 +11,9 @@
 #' case_flag_plus_comm.threshold: when case flag and more then 200 cases
 #' slope_switch_flag: the first case flags in consecutive case flags
 #' @export
+#' @example
+#' data(Case_data, package = "DSIWastewater")
+#' createCaseFlag(Case_data)
 createCaseFlag <- function(DF){
   
   #Prep case data into form for buildRegressionEstimateTable
@@ -55,8 +58,10 @@ createCaseFlag <- function(DF){
 #'      window days quant quantile
 #' flag_ntile_pval: if there is a flag_ntile and the p value of the regression
 #'      is less then .3
-#' @export
 #' @keywords internal
+#' @example 
+#' data(example_data, package = "DSIWastewater")
+#' createCaseFlag(example_data)
 createWasteFlags <- function(DF,
                              windows = c(14, 30, 60 , 90),
                              quants = c(5:9)/10){
