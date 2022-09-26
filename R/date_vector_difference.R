@@ -37,7 +37,7 @@ diffLookup <- function(DFCol, base_date_vec, edge = NA){
   mindist <- pmin(abs(DFCol - sorted_base_vec[indices]), 
                   abs(DFCol - sorted_base_vec[indices + 1]))
   if(!is.na(edge)){
-    mindist <- ifelse(mindist>edge, edge, mindist)
+    mindist <- ifelse(abs(mindist)>edge, edge*sign(mindist), mindist)
   }
   return(mindist)
 }
