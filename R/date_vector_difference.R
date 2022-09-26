@@ -8,7 +8,6 @@
 #' @export
 #'
 #' @examples
-#' @example 
 #' data("example_data", package = "DSIWastewater")
 #' example_data$flag = 1
 #' DF_date_vector(example_data, "date", "flag")
@@ -23,13 +22,14 @@ DF_date_vector <- function(DF, date_vec, flag_vecs){
 #'
 #' @param DFCol date flag vector used to find min distance
 #' @param base_date_vec date flag vector used to find baseline min distance
+#' @param edge threshold to prevent extreme differences from effect results
 #'
-#' @return diffrence between DFCol and the closest entry of base_date_vec
+#' @return difference between DFCol and the closest entry of base_date_vec
 #' @keywords internal
 #' 
-#' @example
+#' @examples
 #' data("example_data", package = "DSIWastewater")
-#' diffLookup(example_data$geoMean, example_data$n)
+#' DSIWastewater:::diffLookup(example_data$geoMean, example_data$n)
 diffLookup <- function(DFCol, base_date_vec, edge = NA){
   sorted_base_vec <- sort(base_date_vec)
   sorted_base_Lookup <- stepfun(sorted_base_vec, 0:length(sorted_base_vec))

@@ -17,4 +17,8 @@ a list of each unique col value
 \description{
 Find all unique values in the column selected
 }
+\examples{
+data(example_data, package = "DSIWastewater")
+DSIWastewater:::uniqueVal("WWTP",example_data)
+}
 \keyword{internal}

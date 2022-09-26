@@ -17,10 +17,6 @@
 #' @export
 #'
 #' @examples
-#' 
-#' data(example_data, package = "DSIWastewater")
-#' example_reg_table <- buildRegressionEstimateTable(example_data)
-#' createRegressionAnalysis_Plot(example_reg_table, example_data)
 createRegressionAnalysis_Plot <- function(RegDF, BaseDF, 
                              FacGridFormula = Method ~ site,
                              PointVal = "sars_cov2_adj_load_log10", 

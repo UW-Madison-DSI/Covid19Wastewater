@@ -20,3 +20,8 @@ slope_switch_flag: the first case flags in consecutive case flags
 \description{
 Create case flags created by the DHS to warn of increasing cases
 }
+\examples{
+data(Case_data, package = "DSIWastewater")
+Case_data <- Case_data[Case_data$Site == 'Ashland Sewage Utility',]
+createCaseFlag(Case_data)
+}

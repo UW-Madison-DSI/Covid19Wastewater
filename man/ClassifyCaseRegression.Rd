@@ -22,3 +22,7 @@ slope_switch_flag: the first case flags in consecutive case flags
 \description{
 Create Case Flags based on regression slope
 }
+\examples{
+example_DF <- data.frame(site = "madison", lmreg_slope = 5, value = 300)
+classifyCaseRegression(example_DF)
+}

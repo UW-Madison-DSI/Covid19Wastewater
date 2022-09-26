@@ -10,11 +10,17 @@ diffLookup(DFCol, base_date_vec, edge = NA)
 \item{DFCol}{date flag vector used to find min distance}
 
 \item{base_date_vec}{date flag vector used to find baseline min distance}
+
+\item{edge}{threshold to prevent extreme differences from effect results}
 }
 \value{
-diffrence between DFCol and the closest entry of base_date_vec
+difference between DFCol and the closest entry of base_date_vec
 }
 \description{
 lookup
+}
+\examples{
+data("example_data", package = "DSIWastewater")
+DSIWastewater:::diffLookup(example_data$geoMean, example_data$n)
 }
 \keyword{internal}

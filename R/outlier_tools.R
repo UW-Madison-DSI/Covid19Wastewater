@@ -7,10 +7,11 @@
 #'
 #' @examples
 #' data(example_data, package = "DSIWastewater")
+#' example_data$site = "Madison"
 #' computeJumps(example_data)
 computeJumps <- function(df) {
   df <- df %>% 
-    group_by(site) %>% 
+    group_by(site)%>% 
     mutate(
       n1.before = lag(n1_sars_cov2_conc, order_by = site),
       n1.after  = lead(n1_sars_cov2_conc, order_by = site),
@@ -41,6 +42,7 @@ computeJumps <- function(df) {
 #'
 #' @examples
 #' data(example_data, package = "DSIWastewater")
+#' example_data$site = "Madison"
 #' df_data <- computeJumps(example_data)
 #' rankJumps(df_data)
 rankJumps <- function(df) {
@@ -72,6 +74,7 @@ rankJumps <- function(df) {
 #'
 #' @examples
 #' data(example_data, package = "DSIWastewater")
+#' example_data$site = "Madison"
 #' df_data <- computeJumps(example_data)
 #' ranked_data <- rankJumps(df_data)
 #' computeRankQuantiles(ranked_data)
@@ -105,6 +108,7 @@ computeRankQuantiles <- function(df) {
 #'
 #' @examples
 #' data(example_data, package = "DSIWastewater")
+#' example_data$site = "Madison"
 #' df_data <- computeJumps(example_data)
 #' ranked_data <- rankJumps(df_data)
 #' ranked_quantile_data <- computeRankQuantiles(ranked_data)
@@ -128,6 +132,7 @@ flagOutliers <- function(DF, threshold, col = MessureRank, outputColName = Flagg
 #'
 #' @examples
 #' data(example_data, package = "DSIWastewater")
+#' example_data$site = "Madison"
 #' df_data <- computeJumps(example_data)
 #' ranked_data <- rankJumps(df_data)
 #' ranked_quantile_data <- computeRankQuantiles(ranked_data)

@@ -7,7 +7,7 @@
 #'
 #' @export
 #' @return DF with an extra column Catagory containing the results of the DHS binning
-#' @example 
+#' @examples
 #' data(example_data, package = "DSIWastewater")
 #' example_data$modeled_percentchange = 0
 #' example_data$lmreg_sig = .01
@@ -52,10 +52,10 @@ classifyRegressionAnalysis <- function(DF, PSigTest=TRUE){
 #' case_flag_plus_comm.threshold: when case flag and more then 200 cases
 #' slope_switch_flag: the first case flags in consecutive case flags
 #' @export
-#' @example 
+#' @examples 
 #' example_DF <- data.frame(site = "madison", lmreg_slope = 5, value = 300)
 #' classifyCaseRegression(example_DF)
-classifyCaseRegression(example_DF)
+#classifyCaseRegression(example_DF)
 classifyCaseRegression <- function(DF, slopeThreshold = 5, minSize = 200){
   RetDF <- DF%>%
     group_by(site)%>%
@@ -81,24 +81,23 @@ classifyCaseRegression <- function(DF, slopeThreshold = 5, minSize = 200){
 #' Create wastewater flags based on the CDC classification defined in 
 #' classifyRegressionAnalysis and the quantile rank of the date.
 #'
-#' @param DF dataframe that contains results of buildRegressionEstimateTable and
-#' makeQuantileColumns
-#' @param Pval threashold needed for flag_ntile_pval to flag 
+#' @param DF dataframe that contains results of buildRegressionEstimateTable and makeQuantileColumns
+#' @param Pval threashold needed for flag_ntile_Pval to flag 
 #'
 #' @export
 #' @return DF with three extra columns 
 #' cdc_flag: when the CDC method labels as 'major increase'
 #' flag_ntile: when the cdc flag and its in the top quantile
-#' flag_ntile_pval: when the flag ntile and the regression slope is less
-#' than pval
-#' @example 
+#' flag_ntile_Pval: when the flag ntile and the regression slope is less
+#' than Pval
+#' @examples 
 #' data(example_data, package = "DSIWastewater")
 #' example_data$modeled_percentchange = 0
 #' example_data$lmreg_sig = .01
 #' example_data$pastKavg.wwlog10 = 5
 #' example_data$ntile = 8
 #' classifyQuantileFlagRegression(example_data)
-classifyQuantileFlagRegression <- function(DF, pval = .3){
+classifyQuantileFlagRegression <- function(DF, Pval = .3){
   #Get the DHS Classification scheme of wastewater concentration
   Classification_DF <- classifyRegressionAnalysis(DF, PSigTest = FALSE)
   #returned DF piped into four mutate calls to add three columns
@@ -110,9 +109,9 @@ classifyQuantileFlagRegression <- function(DF, pval = .3){
     mutate(flag_ntile = case_when(
              pastKavg.wwlog10 > ntile & cdc_flag ~ 1,
              TRUE ~ 0))%>%
-    #further select so that the slope of the regression is less then pval
-    mutate(flag_ntile_pval = case_when(
-             flag_ntile & lmreg_sig < pval ~ 1,
+    #further select so that the slope of the regression is less then Pval
+    mutate(flag_ntile_Pval = case_when(
+             flag_ntile & lmreg_sig < Pval ~ 1,
              TRUE ~ 0))%>%
     #make NA into 0 or FALSE
     mutate(across(where(is.numeric), ~ ifelse(is.na(.x), 0, .x)))

@@ -4,22 +4,29 @@
 \alias{classifyQuantileFlagRegression}
 \title{Classify FlagRegression  with rolling Quantile info}
 \usage{
-classifyQuantileFlagRegression(DF, pval = 0.3)
+classifyQuantileFlagRegression(DF, Pval = 0.3)
 }
 \arguments{
-\item{DF}{dataframe that contains results of buildRegressionEstimateTable and
-makeQuantileColumns}
+\item{DF}{dataframe that contains results of buildRegressionEstimateTable and makeQuantileColumns}
 
-\item{Pval}{threashold needed for flag_ntile_pval to flag}
+\item{Pval}{threashold needed for flag_ntile_Pval to flag}
 }
 \value{
 DF with three extra columns 
 cdc_flag: when the CDC method labels as 'major increase'
 flag_ntile: when the cdc flag and its in the top quantile
-flag_ntile_pval: when the flag ntile and the regression slope is less
-than pval
+flag_ntile_Pval: when the flag ntile and the regression slope is less
+than Pval
 }
 \description{
 Create wastewater flags based on the CDC classification defined in 
 classifyRegressionAnalysis and the quantile rank of the date.
+}
+\examples{
+data(example_data, package = "DSIWastewater")
+example_data$modeled_percentchange = 0
+example_data$lmreg_sig = .01
+example_data$pastKavg.wwlog10 = 5
+example_data$ntile = 8
+classifyQuantileFlagRegression(example_data)
 }

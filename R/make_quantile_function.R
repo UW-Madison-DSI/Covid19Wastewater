@@ -17,11 +17,11 @@
 #' ntile: a rolling quantile of the data
 #' pastKavg.wwlog10: a mean of the last K days
 #' @keywords internal
-#' @example 
+#' @examples 
 #' data("example_data", package = "DSIWastewater")
 #' example_data$window = 7
 #' example_data$quant = .8
-#' windowingQuantFunc(example_data, "geoMean")
+#' DSIWastewater:::windowingQuantFunc(example_data, "geoMean")
 windowingQuantFunc <- function(DF, column){
   #get the start of the time series
   mindate <- min(DF$date, na.rm = TRUE)
@@ -83,7 +83,7 @@ windowingQuantFunc <- function(DF, column){
 #' ntile: a rolling quantile of the data
 #' pastKavg.wwlog10: a mean of the last K days
 #' @export
-#' @example
+#' @examples
 #' data("example_data", package = "DSIWastewater")
 #' example_data$site = "madison"
 #' makeQuantileColumns(example_data, .5, 6, column = "geoMean")

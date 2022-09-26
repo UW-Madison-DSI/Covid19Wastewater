@@ -39,6 +39,5 @@ If the model P-value if over .3 the category is replaced with "no change"
 }
 \examples{
 data(example_data, package = "DSIWastewater")
-buildRegressionEstimateTable(example_data)
-
+buildRegressionEstimateTable(example_data, SplitOn = "WWTP")
 }

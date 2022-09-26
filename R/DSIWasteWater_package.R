@@ -1,4 +1,4 @@
-#' @importFrom stats as.formula ccf dgamma lm na.omit na.pass quantile sd weighted.mean
+#' @importFrom stats as.formula stepfun ccf dgamma lm na.omit na.pass quantile sd weighted.mean
 #' @importFrom dplyr left_join full_join case_when %>% ungroup group_split n arrange desc bind_rows group_by sym summarise select mutate rename pull filter lead lag across
 #' @importFrom tidyr pivot_wider pivot_longer all_of
 #' @importFrom zoo rollapply rollsumr rollmean

@@ -38,9 +38,3 @@ predictions at each time period.
 It uses BaseDF to create the lower plot that shows what the regressed data
 looks like
 }
-\examples{
-
-data(example_data, package = "DSIWastewater")
-example_reg_table <- buildRegressionEstimateTable(example_data)
-createRegressionAnalysis_Plot(example_reg_table, example_data)
-}

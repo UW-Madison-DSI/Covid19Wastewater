@@ -4,7 +4,7 @@
 \alias{regressionInnerLoop}
 \title{regressionInnerLoop}
 \usage{
-regressionInnerLoop(Formula, DF, Keep = NULL, LMMethod = lm)
+regressionInnerLoop(Formula, DF, Keep = NULL)
 }
 \arguments{
 \item{Formula}{LM model to be fit on DF}
@@ -12,9 +12,6 @@ regressionInnerLoop(Formula, DF, Keep = NULL, LMMethod = lm)
 \item{DF}{Contains the data needed for Formula to work}
 
 \item{Keep}{The col in the original DF to keep besides Date}
-
-\item{LMMethod}{Controls what Linear model is applied. 
-intended options are lm and FCVLM}
 }
 \value{
 a row of a DF containing the 

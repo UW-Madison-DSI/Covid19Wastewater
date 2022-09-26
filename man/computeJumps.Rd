@@ -17,5 +17,6 @@ compute first difference Jumps for N1 and N2
 }
 \examples{
 data(example_data, package = "DSIWastewater")
+example_data$site = "Madison"
 computeJumps(example_data)
 }

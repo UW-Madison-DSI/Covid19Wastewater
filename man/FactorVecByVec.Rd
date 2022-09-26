@@ -22,6 +22,6 @@ FactorDF with FacVar being a factor ordered by NumVar
 Get ordering for ploting based on factoring vector
 }
 \examples{
-data(WasteWater_data, package = "DSIWastewater")
-factorVecByVec(WasteWater_data, WasteWater_data, "wwtp_name", "n1_sars_cov2_conc")
+data("example_data", package = "DSIWastewater")
+factorVecByVec(example_data, example_data, "WWTP", "n1_sars_cov2_conc")
 }

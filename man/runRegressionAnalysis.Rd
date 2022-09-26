@@ -4,14 +4,7 @@
 \alias{runRegressionAnalysis}
 \title{runRegressionAnalysis}
 \usage{
-runRegressionAnalysis(
-  DF,
-  Formula,
-  Keep = NULL,
-  n = 5,
-  LMMethod = lm,
-  verbose = FALSE
-)
+runRegressionAnalysis(DF, Formula, Keep = NULL, n = 5, verbose = FALSE)
 }
 \arguments{
 \item{DF}{Contains TS data should only contain one site}
@@ -21,9 +14,6 @@ runRegressionAnalysis(
 \item{Keep}{The col in the original DF to keep besides Date}
 
 \item{n}{number of rows to be in each LM regression}
-
-\item{LMMethod}{Controls what Linear model is applied. 
-intended options are lm and FCVLM}
 
 \item{verbose}{prints what site we are in}
 }
@@ -35,5 +25,9 @@ and predicted percent change, and what linear model was used
 \description{
 The DHS model system. runs a LM on each each set of n consecutive measurements
 and returns a summary of the information
+}
+\examples{
+data(example_data, package = "DSIWastewater")
+DSIWastewater:::runRegressionAnalysis(example_data, Formula = geoMean~date)
 }
 \keyword{internal}

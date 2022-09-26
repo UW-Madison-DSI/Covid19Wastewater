@@ -31,3 +31,9 @@ pastKavg.wwlog10: a mean of the last K days
 Add many combo of rolling quantile columns to dataframe
 have info for each quant window combo
 }
+\examples{
+data("example_data", package = "DSIWastewater")
+example_data$site = "madison"
+makeQuantileColumns(example_data, .5, 6, column = "geoMean")
+makeQuantileColumns(example_data, c(.5, .75), c(2,5), column = "geoMean")
+}

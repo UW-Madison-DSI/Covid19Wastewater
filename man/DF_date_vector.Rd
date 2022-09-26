@@ -19,3 +19,8 @@ an equivilent DF where the 1 in the flag info is replaced with the date
 \description{
 DF_date_vector
 }
+\examples{
+data("example_data", package = "DSIWastewater")
+example_data$flag = 1
+DF_date_vector(example_data, "date", "flag")
+}

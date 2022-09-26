@@ -23,4 +23,8 @@ a number between 0 and max
 \description{
 Get a fitting parameter for the model
 }
+\examples{
+data(example_data, package = "DSIWastewater")
+DSIWastewater:::parameterGuess(example_data,"geoMean", 17.8, .6)
+}
 \keyword{internal}

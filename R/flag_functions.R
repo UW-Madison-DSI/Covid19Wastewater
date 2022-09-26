@@ -11,8 +11,9 @@
 #' case_flag_plus_comm.threshold: when case flag and more then 200 cases
 #' slope_switch_flag: the first case flags in consecutive case flags
 #' @export
-#' @example
+#' @examples
 #' data(Case_data, package = "DSIWastewater")
+#' Case_data <- Case_data[Case_data$Site == 'Ashland Sewage Utility',]
 #' createCaseFlag(Case_data)
 createCaseFlag <- function(DF){
   
@@ -59,9 +60,10 @@ createCaseFlag <- function(DF){
 #' flag_ntile_pval: if there is a flag_ntile and the p value of the regression
 #'      is less then .3
 #' @keywords internal
-#' @example 
-#' data(example_data, package = "DSIWastewater")
-#' createCaseFlag(example_data)
+#' @examples 
+#' data("WasteWater_data", package = "DSIWastewater")
+#' WasteWater_data <- WasteWater_data[WasteWater_data$wwtp_name == "Waukesha WWTP",]
+#' DSIWastewater:::createWasteFlags(WasteWater_data)
 createWasteFlags <- function(DF,
                              windows = c(14, 30, 60 , 90),
                              quants = c(5:9)/10){
@@ -92,6 +94,6 @@ createWasteFlags <- function(DF,
   #return only flags and type columns 
   Full_wasteFlags <- FULL_reg_DF[,c("site", "date", "window",
                                     "quant", "cdc_flag", "flag_ntile",
-                                    "flag_ntile_pval")]
+                                    "flag_ntile_Pval")]
   return(Full_wasteFlags)
 }

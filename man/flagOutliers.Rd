@@ -23,6 +23,7 @@ Create column with Boolean based on a threashold
 }
 \examples{
 data(example_data, package = "DSIWastewater")
+example_data$site = "Madison"
 df_data <- computeJumps(example_data)
 ranked_data <- rankJumps(df_data)
 ranked_quantile_data <- computeRankQuantiles(ranked_data)

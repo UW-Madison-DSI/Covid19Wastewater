@@ -20,6 +20,7 @@ Convert jumps from last step into a ordering
 }
 \examples{
 data(example_data, package = "DSIWastewater")
+example_data$site = "Madison"
 df_data <- computeJumps(example_data)
 rankJumps(df_data)
 }
