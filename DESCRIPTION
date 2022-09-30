@@ -8,6 +8,7 @@ Maintainer: Marlin R Lee <mrlee6@wisc.edu>,  Kyllan Wunder <kwunder@wisc.edu>, A
 Encoding: UTF-8
 RoxygenNote: 7.2.1
 License: Sustainable Use License
+biocViews:
 Imports:
   stats,
   rlang,

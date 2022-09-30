@@ -33,4 +33,12 @@ a ggplot
 \description{
 Take two list of plots and combine them into one 3 col long plot
 }
+\keyword{Used}
+\keyword{createRegressionAnalysis_Plot.}
+\keyword{for}
+\keyword{in}
 \keyword{internal}
+\keyword{normal}
+\keyword{not}
+\keyword{recommended}
+\keyword{use.}

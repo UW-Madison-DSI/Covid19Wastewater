@@ -21,4 +21,16 @@ faceted ggplot heatmap
 \description{
 Creates graphic of model prediction for each method
 }
+\examples{
+plotDF <- data.frame(
+   date = seq(as.Date("2000/10/17"), as.Date("2001/10/17"), 1),
+   days_elapsed = 1,
+   Method = sample(c("RandomMethod1", "RandomMethod2"), 366, replace = TRUE),
+   site = sample(c("Site1", "Site2"), 366, replace = TRUE),
+   Catagory = sample(c("major decrease","no change", "major increase"), 366, replace = TRUE)
+)
+CatagoryColors <- c("major decrease" = "#0571b0", 
+                    "no change" = "WHITE", "major increase" = "#ca0020")
+DSIWastewater:::CreateHeatMaps_Plot(plotDF, Method ~ site, "Catagory", CatagoryColors)
+}
 \keyword{internal}

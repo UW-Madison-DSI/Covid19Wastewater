@@ -21,4 +21,15 @@ a ggplot object of the confusion matrix
 \description{
 creates a confusion matrix from data long format
 }
+\examples{
+data("example_data", package = "DSIWastewater")
+example_data_A <- example_data
+example_data_A$Method <- "MethodA"
+example_data_B <- example_data
+example_data_B$Method <- "MethodB"
+example_data <- rbind(example_data_A,example_data_B)
+names(example_data)[names(example_data) == 'WWTP'] <- 'site'
+example_data$Catagory <- sample(c("major decrease", "major increase"), 14, replace = TRUE)
+DSIWastewater:::createConfMatrix_Plot(example_data, "MethodA", "MethodB")
+}
 \keyword{internal}

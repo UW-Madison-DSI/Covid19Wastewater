@@ -21,4 +21,10 @@ GGObj with the appended graphic
 \description{
 adds a ggplot component
 }
+\examples{
+data("example_data", package = "DSIWastewater")
+library(ggplot2)
+GGObj <- ggplot(example_data, aes(x=date))
+DSIWastewater:::abstract_PlotAdd(GGObj, geom_line, "geoMean")
+}
 \keyword{internal}

@@ -19,4 +19,10 @@ ggplot object
 \description{
 createMethodCompareBar_Plot: Compare Regression analysis methods
 }
+\examples{
+data("example_data", package = "DSIWastewater")
+example_data$Method <- sample(c("MethodA", "MethodB"), 7, replace = TRUE)
+example_data$Catagory <- sample(c("major decrease", "major increase"), 7, replace = TRUE)
+DSIWastewater:::createMethodCompareBar_Plot(example_data)
+}
 \keyword{internal}

@@ -38,3 +38,14 @@ predictions at each time period.
 It uses BaseDF to create the lower plot that shows what the regressed data
 looks like
 }
+\examples{
+plotDF <- data.frame(
+date = seq(as.Date("2000/10/17"), as.Date("2001/10/17"), 1),
+days_elapsed = 1,
+Method = sample(c("RandomMethod1", "RandomMethod2"), 366, replace = TRUE),
+site = "Appleton WWTF",
+Catagory = sample(c("major decrease","no change", "major increase"), 366, replace = TRUE))
+names(example_data)[names(example_data) == 'WWTP'] <- 'site'
+example_data$Method <- sample(c("RandomMethod1", "RandomMethod2"), 7, replace = TRUE)
+createRegressionAnalysis_Plot(plotDF, example_data)
+}

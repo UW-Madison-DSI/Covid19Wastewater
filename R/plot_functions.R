@@ -17,6 +17,15 @@
 #' @export
 #'
 #' @examples
+#' plotDF <- data.frame(
+#' date = seq(as.Date("2000/10/17"), as.Date("2001/10/17"), 1),
+#' days_elapsed = 1,
+#' Method = sample(c("RandomMethod1", "RandomMethod2"), 366, replace = TRUE),
+#' site = "Appleton WWTF",
+#' Catagory = sample(c("major decrease","no change", "major increase"), 366, replace = TRUE))
+#' names(example_data)[names(example_data) == 'WWTP'] <- 'site'
+#' example_data$Method <- sample(c("RandomMethod1", "RandomMethod2"), 7, replace = TRUE)
+#' createRegressionAnalysis_Plot(plotDF, example_data)
 createRegressionAnalysis_Plot <- function(RegDF, BaseDF, 
                              FacGridFormula = Method ~ site,
                              PointVal = "sars_cov2_adj_load_log10", 
@@ -42,6 +51,7 @@ createRegressionAnalysis_Plot <- function(RegDF, BaseDF,
                       "fluctuating" = "#979797", "no change" = "WHITE", 
                       "moderate increase" = "#f4a582", "major increase" = "#ca0020")
   
+  #create heat maps
   BarGridSmoothRaw <- RegDF%>%
     
     split(.,.[[Mainbreak]])%>%
@@ -50,7 +60,7 @@ createRegressionAnalysis_Plot <- function(RegDF, BaseDF,
   
   
   
-  
+  #create line/scatter plot
   Gplt <- BaseDF%>%
     
     mutate(Data = "Base Data")%>%
@@ -87,6 +97,7 @@ createRegressionAnalysis_Plot <- function(RegDF, BaseDF,
 #'
 #' @return a ggplot
 #' @keywords internal
+#' Used in createRegressionAnalysis_Plot. not recommended for normal use.
 orderAndZipListsOfPlots_Plot <- function(top_plot_list, bot_plot_list, ratA=3,
                                          ratB=1, nbreak = 3, IsLong = TRUE){
   
@@ -194,6 +205,17 @@ orderAndZipListsOfPlots_Plot <- function(top_plot_list, bot_plot_list, ratA=3,
 #'
 #' @return faceted ggplot heatmap
 #' @keywords internal
+#' @examples
+#' plotDF <- data.frame(
+#'    date = seq(as.Date("2000/10/17"), as.Date("2001/10/17"), 1),
+#'    days_elapsed = 1,
+#'    Method = sample(c("RandomMethod1", "RandomMethod2"), 366, replace = TRUE),
+#'    site = sample(c("Site1", "Site2"), 366, replace = TRUE),
+#'    Catagory = sample(c("major decrease","no change", "major increase"), 366, replace = TRUE)
+#' )
+#' CatagoryColors <- c("major decrease" = "#0571b0", 
+#'                     "no change" = "WHITE", "major increase" = "#ca0020")
+#'DSIWastewater:::CreateHeatMaps_Plot(plotDF, Method ~ site, "Catagory", CatagoryColors)
 CreateHeatMaps_Plot <- function(DF, FacGridFormula, FillFac, CatagoryColors){#, 
   BarGridSmoothRaw <- DF%>%
     ggplot()+
@@ -216,6 +238,11 @@ CreateHeatMaps_Plot <- function(DF, FacGridFormula, FillFac, CatagoryColors){#,
 #'
 #' @return GGObj with the appended graphic
 #' @keywords internal
+#' @examples
+#' data("example_data", package = "DSIWastewater")
+#' library(ggplot2)
+#' GGObj <- ggplot(example_data, aes(x=date))
+#' DSIWastewater:::abstract_PlotAdd(GGObj, geom_line, "geoMean")
 abstract_PlotAdd <- function(GGObj, GGfunc, YVal, YcolorName = NULL){
   
   if(is.null(YcolorName)){
@@ -241,6 +268,10 @@ abstract_PlotAdd <- function(GGObj, GGfunc, YVal, YcolorName = NULL){
 #'
 #' @return a ggplot object with points with lables for each PointVal and a lines for each LineVal
 #'@keywords internal
+#'@examples
+#'data("example_data", package = "DSIWastewater")
+#'DSIWastewater:::createWasteGraph_Plot(example_data, "date", LineVal = "geoMean",
+#'                                      facetFormula  = "~WWTP")
 createWasteGraph_Plot <- function(DF, xVal, PointVal = NULL,
                                   LineVal = NULL,
                                   facetFormula = "Data ~ site"){
@@ -279,13 +310,23 @@ createWasteGraph_Plot <- function(DF, xVal, PointVal = NULL,
 #' @param y The second method to compare
 #' @return a ggplot object of the confusion matrix
 #' @keywords internal
+#' @examples 
+#' data("example_data", package = "DSIWastewater")
+#' example_data_A <- example_data
+#' example_data_A$Method <- "MethodA"
+#' example_data_B <- example_data
+#' example_data_B$Method <- "MethodB"
+#' example_data <- rbind(example_data_A,example_data_B)
+#' names(example_data)[names(example_data) == 'WWTP'] <- 'site'
+#' example_data$Catagory <- sample(c("major decrease", "major increase"), 14, replace = TRUE)
+#' DSIWastewater:::createConfMatrix_Plot(example_data, "MethodA", "MethodB")
 createConfMatrix_Plot <- function(DF,x,y, Cat="Catagory"){
   RetPlt <- DF%>%
     filter(Method %in% c(x,y))%>%
     select(site,date,Method,Catagory)%>%
     filter(site != "Portage WWTF"  & site != "Cedarburg WWTF")%>%
-    pivot_wider(id_cols=c(site, date),names_from = Method, values_from = !!sym(Cat))%>%
-    group_by(!!sym(x),!!sym(y))%>%
+    pivot_wider(id_cols=c(site, date), names_from = Method, values_from = !!sym(Cat))%>%
+    group_by(!!sym(x), !!sym(y))%>%
     summarise(n = n())%>%
     filter(!is.na(!!sym(y)), !is.na(!!sym(x)))%>%
     ggplot(aes(x=!!sym(x),y=!!sym(y)))+
@@ -305,6 +346,11 @@ createConfMatrix_Plot <- function(DF,x,y, Cat="Catagory"){
 #'
 #' @return ggplot object
 #' @keywords internal
+#' @examples 
+#' data("example_data", package = "DSIWastewater")
+#' example_data$Method <- sample(c("MethodA", "MethodB"), 7, replace = TRUE)
+#' example_data$Catagory <- sample(c("major decrease", "major increase"), 7, replace = TRUE)
+#' DSIWastewater:::createMethodCompareBar_Plot(example_data)
 createMethodCompareBar_Plot <- function(DF,Method = "Method",Cat="Catagory"){
   DF%>%
     group_by(!!sym(Method),!!sym(Cat))%>%
@@ -329,13 +375,22 @@ createMethodCompareBar_Plot <- function(DF,Method = "Method",Cat="Catagory"){
 #'
 #' @return ggplot object of scatter, line and vertical lines
 #' @export
+#' @examples 
+#' data("example_data", package = "DSIWastewater")
+#' plotDF <- data.frame(
+#'     date = seq(as.Date("2020/9/15"), as.Date("2020/10/6"), 1),
+#'     ExampleFlag = sample(c(1,0,0,0, 0), 22, replace = TRUE),
+#'     site = "Appleton WWTF"
+#'     )
+#'     createFlagGraph_plot(example_data, plotDF, "ExampleFlag", 
+#'                          LineVal = "geoMean")
 createFlagGraph_plot <- function(MainDF, FlagDF, 
                                  Flag1 = NULL, 
                                  Flag2 = NULL, 
                                  xVal = "date",
                                  PointVal = NULL,
                                  LineVal = NULL,
-                                 facetFormula = " ~ Site"){
+                                 facetFormula = " ~ site"){
   #use already existing plot code to get points and lines
   StartPlot <- createWasteGraph_Plot(MainDF, 
                                      xVal = xVal,

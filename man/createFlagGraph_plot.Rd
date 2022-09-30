@@ -12,7 +12,7 @@ createFlagGraph_plot(
   xVal = "date",
   PointVal = NULL,
   LineVal = NULL,
-  facetFormula = " ~ Site"
+  facetFormula = " ~ site"
 )
 }
 \arguments{
@@ -37,4 +37,14 @@ ggplot object of scatter, line and vertical lines
 }
 \description{
 Create graphics showing flags as vertical lines
+}
+\examples{
+data("example_data", package = "DSIWastewater")
+plotDF <- data.frame(
+    date = seq(as.Date("2020/9/15"), as.Date("2020/10/6"), 1),
+    ExampleFlag = sample(c(1,0,0,0, 0), 22, replace = TRUE),
+    site = "Appleton WWTF"
+    )
+    createFlagGraph_plot(example_data, plotDF, "ExampleFlag", 
+                         LineVal = "geoMean")
 }

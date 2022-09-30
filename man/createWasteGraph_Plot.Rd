@@ -29,4 +29,9 @@ a ggplot object with points with lables for each PointVal and a lines for each L
 \description{
 Wastewater graphic
 }
+\examples{
+data("example_data", package = "DSIWastewater")
+DSIWastewater:::createWasteGraph_Plot(example_data, "date", LineVal = "geoMean",
+                                     facetFormula  = "~WWTP")
+}
 \keyword{internal}
