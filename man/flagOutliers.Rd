@@ -7,9 +7,8 @@
 flagOutliers(DF, threshold, col = MessureRank, outputColName = FlaggedOutlier)
 }
 \arguments{
-\item{DF}{Dataframe containing Column column}
-
-\item{threshold}{a numeric used to flag if its an outlier}
+\item{DF}{Dataframe containing Column column
+ranked_quantile_data @param threshold a numeric used to flag if its an outlier}
 
 \item{col}{column being flagged based on threshold}
 
@@ -26,6 +25,6 @@ data(example_data, package = "DSIWastewater")
 example_data$site = "Madison"
 df_data <- computeJumps(example_data)
 ranked_data <- rankJumps(df_data)
-ranked_quantile_data <- computeRankQuantiles(ranked_data)
+ <- computeRankQuantiles(ranked_data)
 flagOutliers(ranked_quantile_data, 9)
 }

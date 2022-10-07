@@ -99,7 +99,7 @@ computeRankQuantiles <- function(df) {
 #' Create column with Boolean based on a threashold
 #'
 #' @param DF Dataframe containing Column column
-#' @param threshold a numeric used to flag if its an outlier
+#'ranked_quantile_data @param threshold a numeric used to flag if its an outlier
 #' @param col column being flagged based on threshold 
 #' @param outputColName name of flag column
 #'
@@ -111,7 +111,7 @@ computeRankQuantiles <- function(df) {
 #' example_data$site = "Madison"
 #' df_data <- computeJumps(example_data)
 #' ranked_data <- rankJumps(df_data)
-#' ranked_quantile_data <- computeRankQuantiles(ranked_data)
+#'  <- computeRankQuantiles(ranked_data)
 #' flagOutliers(ranked_quantile_data, 9)
 flagOutliers <- function(DF, threshold, col = MessureRank, outputColName = FlaggedOutlier){
   RetDF <- DF%>%

@@ -7,7 +7,7 @@ Add a column of the smoothed values using Loess}
 \usage{
 loessSmoothMod(
   DF,
-  InVar = "sars_cov2_adj_load_log10",
+  InVar = "`sars_cov2_adj_load_log10`",
   OutVar = "Loess",
   span = "guess",
   Filter = NULL

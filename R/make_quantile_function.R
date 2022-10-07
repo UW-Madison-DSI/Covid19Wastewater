@@ -39,7 +39,8 @@ windowingQuantFunc <- function(DF, column){
   K = 3
   
   #Merge DF to add rows for each date 
-  RetDF <- full_join(DF, dateTOMERGEVec, by = c("date"))%>%
+  RetDF <- DF%>%
+    left_join(dateTOMERGEVec, . , by = c("date"))%>%
     #sort by date so the rolling functions work correctly
     arrange(date)%>%
     #add ntile column that is the window day Quant quantile of the column column
@@ -53,14 +54,10 @@ windowingQuantFunc <- function(DF, column){
                      #so it does not return NA
                      na.rm=TRUE, fill=NA,
                      #returns as a vector instead of a list
-                     names = FALSE),
-           #create K day mean of the same column to use later
-           pastKavg.wwlog10 = rollmean(!!sym(column),
-                                       K, align = "right",
-                                       fill=NA))%>%
+                     names = FALSE))%>%
     #removes all extra rows created that were used in rolling process
     filter(!is.na(population_served))
-  
+    
   return(RetDF)
 }
 

@@ -34,8 +34,10 @@ diffLookup <- function(DFCol, base_date_vec, edge = NA){
   sorted_base_vec <- sort(base_date_vec)
   sorted_base_Lookup <- stepfun(sorted_base_vec, 0:length(sorted_base_vec))
   indices <- pmin(pmax(1, sorted_base_Lookup(DFCol)), length(sorted_base_vec) - 1)
-  mindist <- pmin(abs(DFCol - sorted_base_vec[indices]), 
-                  abs(DFCol - sorted_base_vec[indices + 1]))
+  mindistA <- DFCol - sorted_base_vec[indices]
+  mindistB <- DFCol - sorted_base_vec[indices + 1]
+  mindist <- pmin(abs(mindistA), abs(mindistB))
+  mindist <- ifelse(mindist == abs(mindistA), mindistA, mindistB)
   if(!is.na(edge)){
     mindist <- ifelse(abs(mindist)>edge, edge*sign(mindist), mindist)
   }
@@ -56,6 +58,7 @@ diffLookup <- function(DFCol, base_date_vec, edge = NA){
 #' date_distance_calc(example_data, "geoMean", "n")
 date_distance_calc <- function(DF, base_date_vec, vecNames, edge = NA){
   RetDF <- DF%>%
+    group_by(site)%>%
     mutate(across(all_of(vecNames), 
                   ~as.numeric(diffLookup(.x, DF[[base_date_vec]], edge = edge))))
   return(RetDF)
