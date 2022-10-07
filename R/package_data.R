@@ -66,3 +66,41 @@
 "InterceptorCase_data"
 
 
+
+#' High frequency Waste data
+#'
+#' Data from the DHS of  HFG covid wastewater concentration
+#' 
+#' Raw file 'HFG_data_corrected_w_HF183&CrP_011422.xlsx'
+#' Dagmara email Fri 2/25/2022 6:15 PM
+#' 
+#'
+#' @docType data
+#'
+#' @usage data("HFGWaste_data")
+#'
+#' @format Rows: 3078   Columns: 18
+#'
+#' @keywords datasets
+"HFGWaste_data"
+
+
+
+#' High frequency case data
+#'
+#' Data from the DHS of positive covid tests for HFG data
+#' 
+#' Raw file 'HighFreq_CaseData_2021-05-07.csv'
+#' From Nathan on 5/26/2021
+#' 
+#'
+#' @docType data
+#'
+#' @usage data("HFGCase_data")
+#'
+#' @format Rows: 788   Columns: 6
+#'
+#' @keywords datasets
+"HFGCase_data"
+
+
