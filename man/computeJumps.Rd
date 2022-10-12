@@ -4,10 +4,21 @@
 \alias{computeJumps}
 \title{compute first difference Jumps for N1 and N2}
 \usage{
-computeJumps(df)
+computeJumps(
+  df,
+  N1Quant = "n1_sars_cov2_conc",
+  N2Quant = "n2_sars_cov2_conc",
+  TSGrouping = "site"
+)
 }
 \arguments{
 \item{df}{DataFrame. needs Column n1_sars_cov2_conc, n2_sars_cov2_conc, site}
+
+\item{N1Quant}{N1 metric used in finding difference}
+
+\item{N2Quant}{N2 metric used in finding difference}
+
+\item{TSGrouping}{Grouping that makes each group a time series}
 }
 \value{
 dataframe with 4 columns appended: delta(n1), delta(n2) from left and right

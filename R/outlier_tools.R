@@ -1,6 +1,9 @@
 #' compute first difference Jumps for N1 and N2
 #'
 #' @param df DataFrame. needs Column n1_sars_cov2_conc, n2_sars_cov2_conc, site
+#' @param N1Quant N1 metric used in finding difference
+#' @param N2Quant N2 metric used in finding difference
+#' @param TSGrouping Grouping that makes each group a time series
 #'
 #' @return dataframe with 4 columns appended: delta(n1), delta(n2) from left and right
 #' @export
@@ -9,20 +12,21 @@
 #' data(example_data, package = "DSIWastewater")
 #' example_data$site = "Madison"
 #' computeJumps(example_data)
-computeJumps <- function(df) {
+computeJumps <- function(df, N1Quant = "n1_sars_cov2_conc",
+                         N2Quant = "n2_sars_cov2_conc", TSGrouping = "site") {
   df <- df %>% 
-    group_by(site)%>% 
+    group_by(!!sym("site"))%>% 
     mutate(
-      n1.before = lag(n1_sars_cov2_conc, order_by = site),
-      n1.after  = lead(n1_sars_cov2_conc, order_by = site),
-      n2.before = lag(n2_sars_cov2_conc, order_by = site),
-      n2.after  = lead(n2_sars_cov2_conc, order_by = site)
+      n1.before = lag(!!sym(N1Quant), order_by = site),
+      n1.after  = lead(!!sym(N1Quant), order_by = site),
+      n2.before = lag(!!sym(N2Quant), order_by = site),
+      n2.after  = lead(!!sym(N2Quant), order_by = site)
     ) %>% 
     mutate(
-      n1.jumpFromLeft  = n1_sars_cov2_conc - n1.before,
-      n1.jumpFromRight = n1_sars_cov2_conc - n1.after,
-      n2.jumpFromLeft  = n2_sars_cov2_conc - n2.before,
-      n2.jumpFromRight = n2_sars_cov2_conc - n2.after
+      n1.jumpFromLeft  = !!sym(N1Quant) - n1.before,
+      n1.jumpFromRight = !!sym(N1Quant) - n1.after,
+      n2.jumpFromLeft  = !!sym(N2Quant) - n2.before,
+      n2.jumpFromRight = !!sym(N2Quant) - n2.after
     ) %>% 
     select(-c(n1.before,n1.after,n2.before,n2.after))
   return(df)
@@ -52,7 +56,8 @@ rankJumps <- function(df) {
       rank.n1.jumpFromRight = rank(-n1.jumpFromRight),
       rank.n2.jumpFromLeft = rank(-n2.jumpFromLeft), 
       rank.n2.jumpFromRight = rank(-n2.jumpFromRight),
-      MessureRank = pmin(rank.n1.jumpFromLeft, rank.n1.jumpFromRight, rank.n2.jumpFromLeft, rank.n2.jumpFromRight)
+      MessureRank = pmin(rank.n1.jumpFromLeft, rank.n1.jumpFromRight,
+                         rank.n2.jumpFromLeft, rank.n2.jumpFromRight)
       ) %>% 
 
     ## sort by first jump ranks just to be definitive
