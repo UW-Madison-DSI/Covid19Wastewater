@@ -4,7 +4,7 @@
 \alias{diffLookup}
 \title{lookup}
 \usage{
-diffLookup(DFCol, base_date_vec, edge = NA)
+diffLookup(DFCol, base_date_vec, edge = NA, Method = "Remove")
 }
 \arguments{
 \item{DFCol}{date flag vector used to find min distance}
@@ -12,6 +12,9 @@ diffLookup(DFCol, base_date_vec, edge = NA)
 \item{base_date_vec}{date flag vector used to find baseline min distance}
 
 \item{edge}{threshold to prevent extreme differences from effect results}
+
+\item{Method}{How to deal with var outside of the edge. Clamp if we want to 
+make them the edge and Remove if we want to remove them.}
 }
 \value{
 difference between DFCol and the closest entry of base_date_vec

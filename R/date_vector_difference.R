@@ -23,6 +23,8 @@ DF_date_vector <- function(DF, date_vec, flag_vecs){
 #' @param DFCol date flag vector used to find min distance
 #' @param base_date_vec date flag vector used to find baseline min distance
 #' @param edge threshold to prevent extreme differences from effect results
+#' @param Method How to deal with var outside of the edge. Clamp if we want to 
+#' make them the edge and Remove if we want to remove them.
 #'
 #' @return difference between DFCol and the closest entry of base_date_vec
 #' @keywords internal
@@ -30,7 +32,7 @@ DF_date_vector <- function(DF, date_vec, flag_vecs){
 #' @examples
 #' data("example_data", package = "DSIWastewater")
 #' DSIWastewater:::diffLookup(example_data$geoMean, example_data$n)
-diffLookup <- function(DFCol, base_date_vec, edge = NA){
+diffLookup <- function(DFCol, base_date_vec, edge = NA, Method = "Remove"){
   sorted_base_vec <- sort(base_date_vec)
   sorted_base_Lookup <- stepfun(sorted_base_vec, 0:length(sorted_base_vec))
   indices <- pmin(pmax(1, sorted_base_Lookup(DFCol)), length(sorted_base_vec) - 1)
@@ -39,7 +41,13 @@ diffLookup <- function(DFCol, base_date_vec, edge = NA){
   mindist <- pmin(abs(mindistA), abs(mindistB))
   mindist <- ifelse(mindist == abs(mindistA), mindistA, mindistB)
   if(!is.na(edge)){
-    mindist <- ifelse(abs(mindist)>edge, edge*sign(mindist), mindist)
+    if(Method == "Remove"){
+      mindist <- ifelse(abs(mindist)>edge, NA, mindist)
+    }else if(Method == "Clamp"){
+      mindist <- ifelse(abs(mindist)>edge, edge*sign(mindist), mindist)
+    }else{
+      stop("wrong method name. Method must be Remove or Clamp")
+    }
   }
   return(mindist)
 }

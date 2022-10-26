@@ -103,7 +103,8 @@ classifyQuantileFlagRegression <- function(DF, Pval = .3){
   #returned DF piped into four mutate calls to add three columns
   Ret_DF <- Classification_DF%>%
     #Convert the classification scheme from the cdc into a flag
-    mutate(cdc_flag = case_when(Catagory == "major increase"~ 1,
+    mutate(cdc_flag = case_when(Catagory %in% c("major increase",
+                                                "moderate increase")~1,
                                 TRUE ~ 0))%>%
     #select only the flags that are on days that are larger then quantile
     mutate(flag_ntile = case_when(
