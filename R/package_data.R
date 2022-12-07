@@ -9,7 +9,7 @@
 #'
 #' @usage data("WasteWater_data")
 #'
-#' @format Rows: 8386 Columns: 30
+#' @format Rows: 11,084 Columns: 62
 #'
 #' @keywords datasets
 "WasteWater_data"

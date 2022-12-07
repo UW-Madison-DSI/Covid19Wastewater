@@ -5,7 +5,7 @@
 \alias{WasteWater_data}
 \title{Wastewater data set cleaned from the surveillance branch}
 \format{
-Rows: 8386 Columns: 30
+Rows: 11,084 Columns: 62
 }
 \usage{
 data("WasteWater_data")
