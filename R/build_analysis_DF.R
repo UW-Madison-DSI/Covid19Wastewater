@@ -27,14 +27,14 @@ buildWasteAnalysisDF <- function(df){
       N1, N2,             ## N1, N2 measurement
       flow                                 ## sample covariates
     ) %>% 
-    filter(average_flow_rate != "NA")%>% 
+    filter(!is.na(flow))%>% 
     mutate (geoMean = sqrt(N1*N2),
             sars_cov2_adj_load_log10 = log10(geoMean*flow/pop))%>% 
     group_by(site)%>% 
     mutate(n = n())%>% 
     arrange(date, .by_group = TRUE) %>% 
     ungroup()
-  return(workset4)
+  return(df)
 }
 
 #' Prep case data into right format
