@@ -22,9 +22,6 @@ DF_date_vector <- function(DF, date_vec, flag_vecs){
 #'
 #' @param DFCol date flag vector used to find min distance
 #' @param base_date_vec date flag vector used to find baseline min distance
-#' @param edge threshold to prevent extreme differences from effect results
-#' @param Method How to deal with var outside of the edge. Clamp if we want to 
-#' make them the edge and Remove if we want to remove them.
 #'
 #' @return difference between DFCol and the closest entry of base_date_vec
 #' @keywords internal
@@ -32,7 +29,7 @@ DF_date_vector <- function(DF, date_vec, flag_vecs){
 #' @examples
 #' data("example_data", package = "DSIWastewater")
 #' DSIWastewater:::diffLookup(example_data$geoMean, example_data$n)
-diffLookup <- function(DFCol, base_date_vec, edge = NA, Method = "Remove"){
+diffLookup <- function(DFCol, base_date_vec){
   sorted_base_vec <- sort(base_date_vec)
   sorted_base_Lookup <- stepfun(sorted_base_vec, 0:length(sorted_base_vec))
   indices <- pmin(pmax(1, sorted_base_Lookup(DFCol)), length(sorted_base_vec) - 1)
@@ -40,15 +37,6 @@ diffLookup <- function(DFCol, base_date_vec, edge = NA, Method = "Remove"){
   mindistB <- DFCol - sorted_base_vec[indices + 1]
   mindist <- pmin(abs(mindistA), abs(mindistB))
   mindist <- ifelse(mindist == abs(mindistA), mindistA, mindistB)
-  if(!is.na(edge)){
-    if(Method == "Remove"){
-      mindist <- ifelse(abs(mindist)>edge, NA, mindist)
-    }else if(Method == "Clamp"){
-      mindist <- ifelse(abs(mindist)>edge, edge*sign(mindist), mindist)
-    }else{
-      stop("wrong method name. Method must be Remove or Clamp")
-    }
-  }
   return(mindist)
 }
 
@@ -64,10 +52,52 @@ diffLookup <- function(DFCol, base_date_vec, edge = NA, Method = "Remove"){
 #' @examples
 #' data("example_data", package = "DSIWastewater")
 #' date_distance_calc(example_data, "geoMean", "n")
-date_distance_calc <- function(DF, base_date_vec, vecNames, edge = NA){
+date_distance_calc <- function(DF, base_date_vec, vecNames){
   RetDF <- DF%>%
     group_by(site)%>%
     mutate(across(all_of(vecNames), 
-                  ~as.numeric(diffLookup(.x, DF[[base_date_vec]], edge = edge))))
+                  ~diffLookup(.x, DF[[base_date_vec]])))
   return(RetDF)
 }
+
+
+#' remove distances above threshold
+#'
+#' @param thresh max distance not reduced to thresh from data
+#' @param DF source dataframe
+#' @param vecNames column names in DF to be modified
+#'
+#' @return DF with distances above threshold clamped to threshold
+#' @export
+#'
+#' @examples
+#' data("example_data", package = "DSIWastewater")
+#' df <- date_distance_calc(example_data, "geoMean", "n")
+#' date_distance_remove(df, "geoMean", 21)
+date_distance_clamp <- function(DF, vecNames, thresh){
+  RetDF <- DF%>%
+    mutate(across(all_of(vecNames), 
+                  ~ifelse(abs(.x) > thresh, thresh*sign(.x), .x)))
+  return(RetDF)
+}
+
+#' remove distances above threshold
+#'
+#' @param thresh max distance not removed from data
+#' @param DF source dataframe
+#' @param vecNames column names in DF to be modified
+#'
+#' @return DF with distances above threshold removed
+#' @export
+#'
+#' @examples
+#' data("example_data", package = "DSIWastewater")
+#' df <- date_distance_calc(example_data, "geoMean", "n")
+#' date_distance_remove(df, "geoMean", 21)
+date_distance_remove <- function(DF, vecNames, thresh){
+  RetDF <- DF%>%
+    mutate(across(all_of(vecNames), 
+                  ~ifelse(abs(.x) > thresh, NA, .x)))
+  return(RetDF)
+}
+
