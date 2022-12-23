@@ -49,16 +49,16 @@ buildWasteAnalysisDF <- function(df){
 #' buildCaseAnalysisDF(Case_data)
 buildCaseAnalysisDF <- function(df){
   CaseProcess <- df%>%
-    rename(site = Site)%>%
     #sort data to make sure the rolling sum func does not fail to sum correctly
     arrange(site, date)%>%
     group_by(site)%>%
     #Create case data norm by the population
-    mutate(FirstConfirmed.Per100K = (FirstConfirmed * 100000) / population_served,
+    mutate(FirstConfirmed.Per100K = (conf_case * 100000) / population_served,
     #get rolling sum of the last 7 days filling missing data with NAs
             pastwk.sum.casesperday.Per100K = 
-                        rollsumr(FirstConfirmed.Per100K, 7, fill=NA),
-            pastwk.avg.casesperday.Per100K = pastwk.sum.casesperday.Per100K / 7)
+                        rollsumr(conf_case, 7, fill=NA),
+            pastwk.avg.casesperday.Per100K = pastwk.sum.casesperday.Per100K / 7)%>%
+    ungroup()
   
   return(CaseProcess)
 }

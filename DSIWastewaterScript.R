@@ -5,6 +5,7 @@ QuickUpdate <- function(){
   build(path = ".", vignettes = FALSE)
   install(quick=FALSE)
 }
+
 LongUpdate <- function(){
   setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
   build_vignettes(quiet=FALSE)
@@ -15,6 +16,7 @@ LongUpdate <- function(){
   check(args = c("--no-tests"), vignettes = FALSE)
   test()
 }
+
 QuickUpdate()
 #vignette(package = "DSIWastewater")
 #vignette("vignettes_DHSTopLevelAnalysis_Outlier")
