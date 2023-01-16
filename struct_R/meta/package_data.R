@@ -118,3 +118,19 @@
 #'
 #' @keywords datasets
 "pop_data"
+
+
+#' Covariants data
+#'
+#' dataframe containing info about the proportion of each COVID-19 variant
+#' every 2 weeks
+#' 
+#'
+#' @docType data
+#'
+#' @usage data("Covariants")
+#'
+#' @format Rows: 69   Columns: 33
+#'
+#' @keywords datasets
+"Covariants"
