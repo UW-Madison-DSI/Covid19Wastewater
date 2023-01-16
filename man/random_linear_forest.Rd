@@ -4,7 +4,14 @@
 \alias{random_linear_forest}
 \title{Fitting linear random forest}
 \usage{
-random_linear_forest(data, num_tree, model_formula, num_features = NULL)
+random_linear_forest(
+  data,
+  num_tree,
+  model_formula,
+  num_features = NULL,
+  max_depth = 5,
+  verbose = FALSE
+)
 }
 \arguments{
 \item{data}{a dataframe containing the variables in the model}
@@ -14,6 +21,8 @@ random_linear_forest(data, num_tree, model_formula, num_features = NULL)
 \item{model_formula}{an object of class "formula": a symbolic description of the model to be fitted.}
 
 \item{num_features}{number of tree features in each tree. if left NULL rounded up square of the number of columns}
+
+\item{max_depth}{the max depth of each tree in the forest}
 }
 \value{
 random_linear_forest object trained using given data

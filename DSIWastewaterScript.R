@@ -1,7 +1,8 @@
 library(devtools)
 
 Move_struct_R <- function(start){
-  unlink("R/*", recursive = T, force = T)
+  unlink("R", recursive = T, force = T)
+  dir.create("R")
   to_move_files <- list.files(path = start, recursive = TRUE)
   for(file in to_move_files){
     file_type = strsplit(file, "/")[[1]]
@@ -20,6 +21,7 @@ QuickUpdate <- function(){
   document()
   build(path = ".", vignettes = FALSE)
   install(quick=FALSE)
+  unlink("R", recursive = T, force = T)
 }
 
 LongUpdate <- function(){
@@ -32,6 +34,7 @@ LongUpdate <- function(){
   QuickUpdate()
   check(args = c("--no-tests"), vignettes = FALSE)
   test()
+  unlink("R/*", recursive = T, force = T)
 }
 
 QuickUpdate()

@@ -18,5 +18,5 @@ get OOB MSE vs number of forest in trees
 \examples{
 data("example_data", package = "DSIWastewater")
 model <- random_linear_forest(example_data, 2, PMMoV ~ N1 + N2 | date + site)
-gen_OOB_pred(model)
+OOB_MSE_num_trees(model)
 }

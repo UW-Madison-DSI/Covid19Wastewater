@@ -16,9 +16,7 @@ bagging <- function(data, num_bags, num_features = NULL, include_first = 0){
   
   #if num_features not specified use default of sqrt(num cols)
   if(is.null(num_features)){
-    num_features = (length(data) - include_first)%>%
-      sqrt()%>%
-      ceiling()
+    num_features = ceiling(sqrt(length(data) - include_first))
   }
   #####
   data_list <- bootstraps(data, times = num_bags)$splits
@@ -30,14 +28,10 @@ bagging <- function(data, num_bags, num_features = NULL, include_first = 0){
   for(i in 1:length(data_list)){
     selected_columns <- c(ign_cols, 
                           sample(x = col_options, size = num_features))
+
+    ret_IB[[i]] <- select(analysis(data_list[[i]]), any_of(selected_columns))
     
-    ret_IB[[i]] <- (data_list[[i]])%>%
-      analysis()%>%
-      select(any_of(selected_columns))
-    
-    ret_OOB[[i]] <- (data_list[[i]])%>%
-      assessment()%>%
-      select(any_of(selected_columns))
+    ret_OOB[[i]] <- select(assessment(data_list[[i]]), any_of(selected_columns))
   }
   return(list(ret_IB, ret_OOB))
 }
@@ -72,17 +66,13 @@ gen_OOB_pred <- function(tree_model,
       assessment_DF[incMSE] <- sample(pull(assessment_DF,incMSE))
     }
     
-    pred_output <- assessment_DF%>%
-      mutate(!!pred_name := predict(model_list[[i]], newdata = .))
+    pred_output <- mutate(assessment_DF, !!pred_name := predict(model_list[[i]], newdata = assessment_DF))
     
-    temp_pred[[i]] <- pred_output%>%
-      select(index, conf_case, !!pred_name)
+    temp_pred[[i]] <- select(pred_output, index, conf_case, !!pred_name)
   }
   ret <- plyr::join_all(temp_pred, by = "index", type='full')
   if(resid){
-    ret_pred <- ret%>%
-      select(-index, -conf_case)%>%
-      rowMeans(na.rm = TRUE)
+    ret_pred <- rowMeans(select(ret, -index, -conf_case), na.rm = TRUE)
     return(ret$conf_case - ret_pred)
   }else{
     return(ret)
@@ -107,14 +97,15 @@ gen_INCMSE <- function(tree_model){
   oob_data_list <- tree_model@oob_data
   col_names <- names(tree_model@data)
   ret_DF_list <- list()
-  base_MSE <- (gen_OOB_pred(tree_model,
-                            resid = TRUE)**2)%>%
-    mean(na.rm = TRUE)
+  base_MSE <- mean(gen_OOB_pred(tree_model,
+                            resid = TRUE)**2, na.rm = TRUE)
+  
   for(i in 4:(length(col_names))){
-    I_MSE <- (gen_OOB_pred(tree_model,
+    I_MSE <- mean(gen_OOB_pred(tree_model,
                            incMSE = col_names[i],
-                           resid = TRUE)**2)%>%
-      mean(na.rm = TRUE)
+                           resid = TRUE)**2,
+                  na.rm = TRUE)
+    
     ret_DF_list[[i - 3]] <- data.frame(
       incMSE = 100*(I_MSE - base_MSE)/base_MSE,
       var = col_names[i])
@@ -134,19 +125,20 @@ gen_INCMSE <- function(tree_model){
 #' @examples
 #' data("example_data", package = "DSIWastewater")
 #' model <- random_linear_forest(example_data, 2, PMMoV ~ N1 + N2 | date + site)
-#' gen_OOB_pred(model)
+#' OOB_MSE_num_trees(model)
 OOB_MSE_num_trees <- function(tree_model){
   pred_DF = gen_OOB_pred(tree_model)
   OOB_MSE_TREE <- list()
   for(i in 1:length(tree_model@models)){
-    OOB_MSE_TREE[[i]] <- pred_DF%>%
-      mutate(mean_pred = rowMeans(select(pred_DF,
-                                         pred_1:paste0("pred_",i)),
-                                  na.rm = TRUE))%>%
+    OOB_MSE_TREE[[i]] <-
+      mutate(
       summarise(
-        model_MSE = MSE(conf_case, mean_pred)
-      )%>%
-      mutate(num_tree = i)
+      mutate(pred_DF, 
+             mean_pred = rowMeans(select(pred_DF,
+                                         pred_1:paste0("pred_",i)),
+                                  na.rm = TRUE)),
+      model_MSE = MSE(conf_case, mean_pred)),
+      num_tree = i)
   }
   return(bind_rows(OOB_MSE_TREE))
 }

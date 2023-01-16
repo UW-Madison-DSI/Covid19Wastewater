@@ -104,3 +104,17 @@
 "HFGCase_data"
 
 
+#' City Population data
+#'
+#' dataframe containing info about each Wisconsin population info
+#'
+#' 
+#'
+#' @docType data
+#'
+#' @usage data("HFGCase_data")
+#'
+#' @format Rows: 89   Columns: 2
+#'
+#' @keywords datasets
+"pop_data"

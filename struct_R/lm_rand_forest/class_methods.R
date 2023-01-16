@@ -27,45 +27,6 @@ setClass(
                oob_resid = "numeric")
 )
 
-#' display form for random_linear_forest class
-#'
-#' @param random_linear_forest object with class random_linear_forest
-#'
-#' @return NULL
-#' @export
-#'
-#' @examples
-#' data("example_data", package = "DSIWastewater")
-#' random_linear_forest(PMMoV ~ N1 + N2 | date + site)
-setMethod(f = "show",
-          signature = "random_linear_forest",
-          function(object){
-            print(object@formula)
-            print(paste("size of data:", nrow(object@data)))
-            print(paste("MSE:", mean(object@resid**2, na.rm = TRUE)))
-          })
-
-#' predict new data from random_linear_forest models
-#'
-#' @param random_linear_forest 
-#'
-#' @return vector of predictions for each row
-#' @export
-#'
-#' @examples
-#' data("example_data", package = "DSIWastewater")
-#' model <- random_linear_forest(PMMoV ~ N1 + N2 | date + site)
-#' predict(model, example_data)
-setMethod(f = "predict",
-          signature = "random_linear_forest",
-          function(object, new_data){
-            lapply(object@models, predict, newdata = new_data)%>% 
-              transpose()%>%
-              lapply(unlist)%>%
-              lapply(mean)%>%
-              unlist()
-          })
-
 
 #' Fitting linear random forest
 #' 
@@ -77,6 +38,7 @@ setMethod(f = "predict",
 #' @param num_tree numeric, the number of trees in the random forest.
 #' @param model_formula an object of class "formula": a symbolic description of the model to be fitted. 
 #' @param num_features number of tree features in each tree. if left NULL rounded up square of the number of columns
+#' @param max_depth the max depth of each tree in the forest
 #'
 #' @return random_linear_forest object trained using given data
 #' @export
@@ -87,18 +49,19 @@ setMethod(f = "predict",
 random_linear_forest <- function(data,
                                  num_tree,
                                  model_formula,
-                                 num_features = NULL){
+                                 num_features = NULL,
+                                 max_depth = 5,
+                                 verbose = FALSE){
   #move formula columns to front
   dep_term <- as.character(model_formula[[2]])
   lm_pred_term <- all.vars(model_formula[[3]][[2]])
   tree_pred_term <- all.vars(model_formula[[3]][[3]])
-  data <- data%>%
-    select(all_of(c(dep_term, 
+  data <- select(data, all_of(c(dep_term, 
            lm_pred_term)),
            everything())
   ####
   
-  #create random_linear_forest class object we will return
+  #create random_linear_forest class object the function returns
   linear_forest <- new("random_linear_forest",
                        formula = model_formula,
                        data = data)
@@ -106,34 +69,39 @@ random_linear_forest <- function(data,
   
   #create index for linking bagged data back together
   data$index <- 1:nrow(data)
-  data <- data%>%
-    select(index, everything())
+  data <- select(data, index, everything())
   
+  #do the Bootstrap aggregating do improve error
   Boot_list_DF <- bagging(data, 
                           num_bags = num_tree,
                           num_features = num_features,
                           include_first = 2 + length(lm_pred_term))
   
+  #add data to return object
   linear_forest@inbag_data <- Boot_list_DF[[1]]
   linear_forest@oob_data <- Boot_list_DF[[2]]
   
-  
-  glmtree_func <- function(data) {
-    data%>%
-      select(-index)%>%
-      glmtree(
-        formula = model_formula,
-        data = ., family = gaussian,
-        na.action = na.pass,
-        maxdepth = 5)
+  #function used for each tree
+  lmtree_func <- function(data) {#glmtree
+    mod_tree <- lmtree(formula = model_formula,
+                       data = select(data, -index),# family = gaussian,
+                       na.action = na.pass,
+                       maxdepth = max_depth)
+    if(verbose){
+      print("tree fitted")
+    }
+    return(mod_tree)
   }
-  linear_forest@models <- linear_forest@inbag_data%>%
-    lapply(glmtree_func)
   
+  #train the models
+  linear_forest@models <- lapply(linear_forest@inbag_data, lmtree_func)
+  
+  #save residuals
   linear_forest@resid <- data$conf_case - predict(linear_forest, data)
   
-  linear_forest@oob_resid <- gen_OOB_pred(linear_forest,
-                                          resid = TRUE)
+  #save out of bag residuals
+  #linear_forest@oob_resid <- gen_OOB_pred(linear_forest,
+  #                                        resid = TRUE)
   
   return(linear_forest)
 }
