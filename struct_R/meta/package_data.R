@@ -128,9 +128,9 @@
 #'
 #' @docType data
 #'
-#' @usage data("Covariants")
+#' @usage data("Covariants_data")
 #'
 #' @format Rows: 69   Columns: 33
 #'
 #' @keywords datasets
-"Covariants"
+"Covariants_data"
