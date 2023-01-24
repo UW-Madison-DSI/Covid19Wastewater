@@ -20,46 +20,56 @@ DHS:
 SLH:
 - <http://www.slh.wisc.edu/environmental/covid-19-wastewater/>
 
-## Sample results
+## Continuous results
 
-- [Top Level Analysis](inst/doc/vignettes_DHSTopLevelAnalysis_Base.pdf)
-
-- [Top Level Outlier Analysis](inst/doc/vignettes_DHSTopLevelAnalysis_Outlier.pdf)
+- View our analysis repo [here](https://github.com/AFIDSI/Covid19-Wastewater-Analysis)
 
 ## Installation
 There are two ways to install the AFIDSI Wastewater Analysis package:
 
 ### 1. Using Devtools
 
-If you have a GitHub account, then you can install the package by running the Devtools command below:
+If you do not have the [Devtools](https://www.r-project.org/nosvn/pandoc/devtools.html) R package install it by run this command:
 
 ```
-devtools::install_github(
-		"AFIDSI/DSIWastewater",
-		auth_token = "REPLACEWITHYOURAUTHTOKEN"
-)
+install.packages("devtools")
 ```
 
-To get a AUTHTOKEN you need to go to https://github.com/settings/tokens and create one with at least [repo level access](./docs/github/repo-level-access.md).
+Once Devtools is installed anyone can install the package by running the command:
 
-When running this command, you will be prompted to select which packages you want updated/installed.  We strongly suggest you select '1: ALL' so that you don't need to install any dependencies later.  To install the dependencies later, you can run the following R command:
+```
+devtools::install_github("AFIDSI/DSIWastewater")
+```
+
+When running this command, you will be prompted to select which packages you want updated/installed.  We strongly suggest you select '1: ALL' so that you don't need to install any dependencies later.  
+
+To install the dependencies later, you can run the following command:
 
 ```
 devtools::install_dev_deps(pkg = "DSIWastewater")
 ```
 
+If you would ever like to recive an update of our package simply remove the package using this command:
+
+```
+remove.packages("DSIWastewater")
+```
+
+Then reinstall the package using the above commands.
+
+
 ### 2. Using a TAR (.tgz) file
 
-If you do not have a GitHub account or would rather not use GitHub, you can also install the package using a tar file.
+You can also install the package using a tar file.
 
 1. Download the tar file
 
-You can download the AFIDSI wastewater package tar file from the following location:
-https://github.com/AFIDSI/DSIWastewater/blob/main/DSIWastewater_0.2.01.tar.gz
+You can download the AFIDSI wastewater package tar file from the following location(in this current repo):
+https://github.com/AFIDSI/DSIWastewater/blob/main/DSIWastewater_0.5.1.tar.gz
 
 ---
 **Tip:** 
-When you download it, make sure that it remains zipped.  It should be a .tar.gz file rather than a .tar file.   If the file has been unzipped, then you can re-zip it using the following command:
+When you download it, make sure that it remains zipped.  It should be a .tar.gz file rather than a .tar file.   If the file has been unzipped, then you can re-zip it using the following linux command:
 
 ```
 gzip DSIWastewater_0.2.01.tar
@@ -104,10 +114,6 @@ vignette(package = "DSIWastewater")
 help(package = "DSIWastewater")
 ```
  
-- Release notes are stored here:
- 
-https://docs.google.com/document/d/1-Rbd0YTyPZ2slbW9ksvF36n_nhhEBNi0vJZAmhwNHsg/edit
-
 
 <!-- LICENSE -->
 ## License
@@ -117,13 +123,12 @@ Distributed under the Sustainable Use License. See `LICENSE.md` for more informa
 <!-- CONTACT -->
 ## Contact
 
-Steve Goldstein - (mailto:sgoldstein@wisc.edu) - email
+Marlin Lee - (mailto:mrlee6@wisc.edu) - email
+Abe Megahed - (mailto:amegahed@wisc.edu) - email
+Kyllan Wunder - (mailto:kwunder@wisc.edu) - email
 
-Project Link: [https://github.com/AFIDSI/DSIWastewater](https://github.com/AFIDSI/DSIWastewater)
-
-## Organization practice
- 
-Thursday at 5 PM - freeze code. Have package ready for friday meeting and make no changes between then and friday meeting
+Package Link: [https://github.com/AFIDSI/DSIWastewater](https://github.com/AFIDSI/DSIWastewater)
+Analysis Link: [https://github.com/AFIDSI/Covid19-Wastewater-Analysis](https://github.com/AFIDSI/Covid19-Wastewater-Analysis)
 
 ## Code style
  
