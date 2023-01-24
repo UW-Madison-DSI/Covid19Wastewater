@@ -122,15 +122,17 @@ Distributed under the Sustainable Use License. See `LICENSE.md` for more informa
 
 <!-- CONTACT -->
 ## Contact
+Email:
+- Marlin Lee - (mailto:mrlee6@wisc.edu)
 
-- Marlin Lee - (mailto:mrlee6@wisc.edu) - email
+- Abe Megahed - (mailto:amegahed@wisc.edu)
 
-- Abe Megahed - (mailto:amegahed@wisc.edu) - email
+- Kyllan Wunder - (mailto:kwunder@wisc.edu)
 
-- Kyllan Wunder - (mailto:kwunder@wisc.edu) - email
+Repos:
+- Package Link: [https://github.com/AFIDSI/DSIWastewater](https://github.com/AFIDSI/DSIWastewater)
 
-Package Link: [https://github.com/AFIDSI/DSIWastewater](https://github.com/AFIDSI/DSIWastewater)
-Analysis Link: [https://github.com/AFIDSI/Covid19-Wastewater-Analysis](https://github.com/AFIDSI/Covid19-Wastewater-Analysis)
+- Analysis Link: [https://github.com/AFIDSI/Covid19-Wastewater-Analysis](https://github.com/AFIDSI/Covid19-Wastewater-Analysis)
 
 ## Code style
  
