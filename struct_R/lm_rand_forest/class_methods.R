@@ -81,6 +81,7 @@ random_linear_forest <- function(data,
   linear_forest@inbag_data <- Boot_list_DF[[1]]
   linear_forest@oob_data <- Boot_list_DF[[2]]
   
+  i = 1
   #function used for each tree
   lmtree_func <- function(data) {#glmtree
     mod_tree <- lmtree(formula = model_formula,
@@ -88,7 +89,8 @@ random_linear_forest <- function(data,
                        na.action = na.pass,
                        maxdepth = max_depth)
     if(verbose){
-      print("tree fitted")
+      print(paste(i, "tree fitted"))
+      i <<- i + 1
     }
     return(mod_tree)
   }

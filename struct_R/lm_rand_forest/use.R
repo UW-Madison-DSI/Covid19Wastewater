@@ -11,9 +11,7 @@
 setMethod(f = "show",
           signature = "random_linear_forest",
           function(object){
-            print(object@formula)
-            print(paste("size of data:", nrow(object@data)))
-            print(paste("MSE:", mean(object@resid**2, na.rm = TRUE)))
+            print(summary(object))
           })
 
 #' summary method for linear forest class
@@ -32,10 +30,15 @@ setMethod(f = "summary",
           #currently just a list version of the show method
           #can be expanded to have more info in the future
           function(object){
+            dep_var <- forest_model@data[[forest_model@formula[[2]]]]
+            MSE <- mean((object@resid)**2, na.rm = TRUE)
             ans <- list()
-            ans[1] <- object@formula
-            ans[2] <- paste("size of data:", nrow(object@data))
-            ans[3] <- paste("MSE:", mean(object@resid**2, na.rm = TRUE))
+            ans[[1]] <- object@formula
+            ans[[2]] <- paste("size of data:", nrow(object@data))
+            ans[[3]] <- paste("Number of trees:", length(object@models))
+            ans[[4]] <- paste("Mean of squared residuals:", MSE)
+            ans[[5]] <- paste("% Var explained:", 
+                            100 * (1 - (MSE/var(dep_var, na.rm = TRUE))))
             class(ans) <- "summary.random_linear_forest"
             return(ans)
           })

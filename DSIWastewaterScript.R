@@ -20,8 +20,8 @@ QuickUpdate <- function(){
   Move_struct_R("struct_R")
   document()
   build(path = ".", vignettes = FALSE)
-  devtools::install_github("AFIDSI/DSIWastewater")
-  #install(quick=FALSE)
+  #devtools::install_github("AFIDSI/DSIWastewater")
+  install(quick=FALSE)
 }
 
 LongUpdate <- function(){

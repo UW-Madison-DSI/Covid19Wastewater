@@ -137,7 +137,7 @@ OOB_MSE_num_trees <- function(tree_model){
              mean_pred = rowMeans(select(pred_DF,
                                          pred_1:paste0("pred_",i)),
                                   na.rm = TRUE)),
-      model_MSE = MSE(conf_case, mean_pred)),
+      model_MSE = mean((conf_case - mean_pred)**2, na.rm = TRUE)),
       num_tree = i)
   }
   return(bind_rows(OOB_MSE_TREE))
