@@ -120,8 +120,8 @@ help(package = "DSIWastewater")
 
 Distributed under the Sustainable Use License. See `LICENSE.md` for more information.
 
-<!-- TEAM -->
-## Contact
+<!-- Contact -->
+## TEAM
 Email:
 - Marlin Lee - (mailto:mrlee6@wisc.edu)
 
