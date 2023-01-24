@@ -72,7 +72,7 @@ https://github.com/AFIDSI/DSIWastewater/blob/main/DSIWastewater_0.5.1.tar.gz
 When you download it, make sure that it remains zipped.  It should be a .tar.gz file rather than a .tar file.   If the file has been unzipped, then you can re-zip it using the following linux command:
 
 ```
-gzip DSIWastewater_0.2.01.tar
+gzip DSIWastewater_0.5.1.tar.gz
 ```
 
 ---
@@ -82,7 +82,7 @@ gzip DSIWastewater_0.2.01.tar
 To install the tar file, you can use the following command:
 
 ```
-install.packages("DSIWastewater_0.2.01.tar.gz", repos = NULL, type="source") 
+install.packages("DSIWastewater_0.5.1.tar.gz", repos = NULL, type="source") 
 ```
 
 Alternatively, if you are using RStudio, you can install the tar file [using the user interface](./docs/r-studio/installing-packages.md).
@@ -123,9 +123,11 @@ Distributed under the Sustainable Use License. See `LICENSE.md` for more informa
 <!-- CONTACT -->
 ## Contact
 
-Marlin Lee - (mailto:mrlee6@wisc.edu) - email
-Abe Megahed - (mailto:amegahed@wisc.edu) - email
-Kyllan Wunder - (mailto:kwunder@wisc.edu) - email
+- Marlin Lee - (mailto:mrlee6@wisc.edu) - email
+
+- Abe Megahed - (mailto:amegahed@wisc.edu) - email
+
+- Kyllan Wunder - (mailto:kwunder@wisc.edu) - email
 
 Package Link: [https://github.com/AFIDSI/DSIWastewater](https://github.com/AFIDSI/DSIWastewater)
 Analysis Link: [https://github.com/AFIDSI/Covid19-Wastewater-Analysis](https://github.com/AFIDSI/Covid19-Wastewater-Analysis)
