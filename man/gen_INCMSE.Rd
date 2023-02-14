@@ -18,5 +18,5 @@ get increased mean square error for each column
 \examples{
 data("example_data", package = "DSIWastewater")
 model <- random_linear_forest(example_data, 2, PMMoV ~ N1 + N2 | date + site)
-gen_OOB_pred(model)
+gen_INCMSE(model)
 }

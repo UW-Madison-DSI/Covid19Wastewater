@@ -9,7 +9,9 @@ random_linear_forest(
   num_tree,
   model_formula,
   num_features = NULL,
+  na.action = na.pass,
   max_depth = 5,
+  importance = FALSE,
   verbose = FALSE
 )
 }

@@ -24,7 +24,8 @@ setClass(
                resid = "numeric",
                inbag_data = "list",
                oob_data = "list",
-               oob_resid = "numeric")
+               oob_resid = "numeric",
+               inc_mse = "data.frame")
 )
 
 
@@ -50,20 +51,21 @@ random_linear_forest <- function(data,
                                  num_tree,
                                  model_formula,
                                  num_features = NULL,
+                                 na.action = na.pass,
                                  max_depth = 5,
+                                 importance = FALSE,
                                  verbose = FALSE){
+  exp_formula <- expand_formula(model_formula, data)
   #move formula columns to front
-  dep_term <- as.character(model_formula[[2]])
-  lm_pred_term <- all.vars(model_formula[[3]][[2]])
-  tree_pred_term <- all.vars(model_formula[[3]][[3]])
-  data <- select(data, all_of(c(dep_term, 
-           lm_pred_term)),
-           everything())
+  dep_term <- as.character(exp_formula[[2]])
+  lm_pred_term <- all.vars(exp_formula[[3]][[2]])
+  tree_pred_term <- all.vars(exp_formula[[3]][[3]])
+  data <- select(data, all_of(c(dep_term, lm_pred_term, tree_pred_term)))
   ####
   
   #create random_linear_forest class object the function returns
   linear_forest <- new("random_linear_forest",
-                       formula = model_formula,
+                       formula = exp_formula,
                        data = data)
   
   
@@ -83,10 +85,10 @@ random_linear_forest <- function(data,
   
   i = 1
   #function used for each tree
-  lmtree_func <- function(data) {#glmtree
+  lmtree_func <- function(bag) {#glmtree
     mod_tree <- lmtree(formula = model_formula,
                        data = select(data, -index),# family = gaussian,
-                       na.action = na.pass,
+                       na.action = na.action,
                        maxdepth = max_depth)
     if(verbose){
       print(paste(i, "tree fitted"))
@@ -96,10 +98,13 @@ random_linear_forest <- function(data,
   }
   
   #train the models
-  linear_forest@models <- lapply(linear_forest@inbag_data, lmtree_func)
+  linear_forest@models <- lapply(linear_forest@inbag_data,
+                                 lmtree_func)
+  
+  
   
   #save residuals
-  linear_forest@resid <- data$conf_case - predict(linear_forest, data)
+  linear_forest@resid <- data[[dep_term]] - predict(linear_forest, data)
   
   #save out of bag residuals
   #linear_forest@oob_resid <- gen_OOB_pred(linear_forest,
@@ -107,3 +112,15 @@ random_linear_forest <- function(data,
   
   return(linear_forest)
 }
+
+#downsample and down column
+#fit data
+#calc OOBMSE
+#calc incMSE
+#get MSE vs number of tree
+# gen_tree <- function(){
+#   mod_tree <- lmtree(formula = model_formula,
+#                      data = select(data, -index),# family = gaussian,
+#                      na.action = na.action,
+#                      maxdepth = max_depth)
+# }

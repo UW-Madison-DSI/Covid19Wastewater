@@ -91,23 +91,30 @@ gen_OOB_pred <- function(tree_model,
 #' @examples
 #' data("example_data", package = "DSIWastewater")
 #' model <- random_linear_forest(example_data, 2, PMMoV ~ N1 + N2 | date + site)
-#' gen_OOB_pred(model)
+#' gen_INCMSE(model)
 gen_INCMSE <- function(tree_model){
+  num_ignore = length(all.vars(tree_model@formula[[3]][[2]])) + 1
   model_list <- tree_model@models
   oob_data_list <- tree_model@oob_data
   col_names <- names(tree_model@data)
   ret_DF_list <- list()
-  base_MSE <- mean(gen_OOB_pred(tree_model,
-                            resid = TRUE)**2, na.rm = TRUE)
+  base_MSE <- gen_OOB_pred(tree_model)%>%
+                    mutate(across(starts_with("pred_"), ~ (conf_case - .x)**2))%>%
+                    summarise(across(starts_with("pred_"), ~ mean(.x, na.rm = TRUE)))
   
-  for(i in 4:(length(col_names))){
-    I_MSE <- mean(gen_OOB_pred(tree_model,
-                           incMSE = col_names[i],
-                           resid = TRUE)**2,
-                  na.rm = TRUE)
+  for(i in (num_ignore+1):(length(col_names))){
+    I_MSE <- gen_OOB_pred(tree_model,
+                           incMSE = col_names[i])%>%
+      mutate(across(starts_with("pred_"), ~ (conf_case - .x)**2))%>%
+      summarise(across(starts_with("pred_"), ~ mean(.x, na.rm = TRUE)))
     
-    ret_DF_list[[i - 3]] <- data.frame(
-      incMSE = 100*(I_MSE - base_MSE)/base_MSE,
+    diff_vector = as.numeric(I_MSE[1,]) - as.numeric(base_MSE[1,])
+    
+    ret_DF_list[[i - num_ignore]] <- data.frame(
+      incMSE = 100*mean(diff_vector, na.rm = TRUE)/sd(diff_vector, na.rm = TRUE),
+      old_incMSE = 100*mean(diff_vector, na.rm = TRUE)/mean(as.numeric(base_MSE[1,])),
+      men = mean(diff_vector, na.rm = TRUE),
+      sd = sd(diff_vector, na.rm = TRUE),
       var = col_names[i])
   }
   ret <- bind_rows(ret_DF_list)

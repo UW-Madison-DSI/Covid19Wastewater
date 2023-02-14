@@ -38,8 +38,3 @@ LongUpdate <- function(){
 }
 
 QuickUpdate()
-
-#Move_struct_R(struct_R)
-#vignette(package = "DSIWastewater")
-#vignette("vignettes_DHSTopLevelAnalysis_Outlier")
-
