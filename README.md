@@ -20,6 +20,19 @@ DHS:
 SLH:
 - <http://www.slh.wisc.edu/environmental/covid-19-wastewater/>
 
+
+## Code sections
+There are three parts of the package; Data, Data Prep, Analysis tools.
+
+### Data
+This package includes Traditional and Wastewater based data about wisconsin comunitys. This includes a high frequency data done in 2021 and all reported data until 2023.
+
+### Data Preparation
+This includes functions to create calculated columns, smoothings and filtering.
+
+### Analysis Tools
+This includes tools to genearte DHS flags for both case and wastewater data. It also includes tools to run random linear forests.
+
 ## Continuous results
 
 - View our analysis repo [here](https://github.com/AFIDSI/Covid19-Wastewater-Analysis)
