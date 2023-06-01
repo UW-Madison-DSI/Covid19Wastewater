@@ -73,7 +73,7 @@ load("Covariants_data.RData")
 This includes functions to create calculated columns, smoothings and filtering.
 
 ### Analysis Tools
-This includes tools to genearte DHS flags for both case and wastewater data. It also includes tools to run random linear forests.
+This includes tools to generate DHS flags for both case and wastewater data. It also includes tools to run random linear forests.
 
 ## Continuous results
 
