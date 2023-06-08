@@ -85,7 +85,7 @@ If you already have devtools installed you can install the package with
 ```
 devtools::install_github("AFIDSI/DSIWastewater")
 ```
-otherwise we have a comprehensive instructions [here](./Install.md)
+otherwise we have a comprehensive instructions [here](./Install.md).
 
 ## Documentation
 
