@@ -1,23 +1,30 @@
 library(devtools)
 
-Move_struct_R <- function(start){
-  unlink("R", recursive = T, force = T)
-  dir.create("R")
+Move_struct_R <- function(start, add_context = TRUE){
   to_move_files <- list.files(path = start, recursive = TRUE)
   for(file in to_move_files){
     file_type = strsplit(file, "/")[[1]]
-    if(file_type[1] == "meta"){
-      file.copy(from = paste0(start,"/",file), "R")
-    }else{
+    if(add_context){
+      location = paste0("R/", start)
+      for(sub_folder in file_type){
+        location = paste0(location, "--", sub_folder)
+      }
       file.copy(from = paste0(start,"/",file), 
-                to = paste0("R/",file_type[1],"--",file_type[2]))
+                to = location)
+    }else{
+      file.copy(from = paste0(start,"/",file), "R")
     }
   }
 }
 
 QuickUpdate <- function(){
+  unlink("R", recursive = T, force = T)
+  dir.create("R")
   setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
-  Move_struct_R("struct_R")
+  Move_struct_R("Analysis_tools")
+  Move_struct_R("Data_Prep")
+  Move_struct_R("Meta", add_context = FALSE)
+  
   document()
   build(path = ".", vignettes = FALSE)
   #devtools::install_github("AFIDSI/DSIWastewater")
@@ -25,8 +32,13 @@ QuickUpdate <- function(){
 }
 
 LongUpdate <- function(){
+  unlink("R", recursive = T, force = T)
+  dir.create("R")
   setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
-  Move_struct_R("struct_R")
+  Move_struct_R("Analysis_tools")
+  Move_struct_R("Data_Prep")
+  Move_struct_R("Meta", add_context = FALSE)
+  
   build_vignettes(quiet=FALSE)
   dir.create("inst/doc", recursive = TRUE)
   file.copy(dir("doc", full.names=TRUE), "inst/doc", overwrite=TRUE)
