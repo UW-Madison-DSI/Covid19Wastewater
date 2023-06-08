@@ -117,7 +117,7 @@ help(package = "DSIWastewater")
 <!-- LICENSE -->
 ## License
 
-Distributed under the Sustainable Use License. See `LICENSE.md` for more information.
+Distributed under the Sustainable Use License. See the [license](./LICENSE.md) for more information.
 
 <!-- Contact -->
 ## Team
