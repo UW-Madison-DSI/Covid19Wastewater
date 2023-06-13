@@ -1,6 +1,6 @@
 <p align="center">
 	<div align="center">
-		<img src="./images/covid-droplet.svg" alt="Logo" style="width:33%">
+		<img src="./docs/images/covid-droplet.svg" alt="Logo" style="width:33%">
 	</div>
 </p>
 
@@ -100,7 +100,7 @@ otherwise we have a comprehensive instructions [here](./Install.md).
 
 <p>
     <div align="center">
-        <img src="./images/architecture.svg" alt="API" style="width:200px">
+        <img src="./docs/images/architecture.svg" alt="API" style="width:200px">
         <div>
             <label>API Architecture Overview</label>
         </div>
