@@ -21,8 +21,7 @@ QuickUpdate <- function(){
   unlink("R", recursive = T, force = T)
   dir.create("R")
   setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
-  Move_struct_R("Analysis_tools")
-  Move_struct_R("Data_Prep")
+  Move_struct_R("src")
   Move_struct_R("Meta", add_context = FALSE)
   
   document()
