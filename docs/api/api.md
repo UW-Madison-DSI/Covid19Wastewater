@@ -3,7 +3,7 @@
 In order to view more detail about each of these API methods, you can [view the API in the R Studio Help](../r-studio/viewing-api.md).
 
 <div align="center">
-    <img src="../../images/api.svg" alt="API" style="width:600px">
+    <img src="../../docs/images/api.svg" alt="API" style="width:600px">
     <div>
         <label>API Architecture</label>
     </div>

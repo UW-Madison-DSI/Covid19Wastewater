@@ -5,13 +5,13 @@ To install a package using R Studio, follow these steps:
 - Step 1: Under the "Tools" menu, click "Install Packages":
 
 <div align="center">
-<img src="../../images/r-studio/tools-menu.png" style="width:300px">
+<img src="../../docs/images/r-studio/tools-menu.png" style="width:300px">
 </div>
 
 - Step 2: On the install package dialog, click "Browse" to select the tar file:
 
 <div align="center">
-<img src="../../images/r-studio/install-packages-dialog.png" style="width:400px">
+<img src="../../docs/images/r-studio/install-packages-dialog.png" style="width:400px">
 </div>
 
 - Step 3: Click the "Install" button:
