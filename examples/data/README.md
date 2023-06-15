@@ -1,5 +1,5 @@
 # Data
-This package includes Traditional and Wastewater based data about Wisconsin communities.
+This package includes traditional (case based) and wastewater based data about Wisconsin communities.
 
 ## Longitudinal Data
 This dataset includes longitudinal wastewater data collected 1-6 times per week from 2019 to 2023. It is accompanied by case data. The dataset files are:  
