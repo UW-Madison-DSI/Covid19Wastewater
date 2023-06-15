@@ -1,0 +1,23 @@
+#' DSIWastewater: A package for running Covid wastewater concentration analysis
+#'
+#' The DSIWastewater package provides three categories of important functions:
+#' DataTableGen, DataMod and Viz
+#' 
+#' @section DataTableGen functions:
+#' This section list the functions used for running the DHS analysis
+#' 
+#' buildRegressionEstimateTable - This function is the composition of the next two
+#' 
+#' runRegressionAnalysis
+#' 
+#' classifyRegressionAnalysis
+#' 
+#' @section DataMod functions:
+#' buildWasteAnalysisDF
+#' 
+#' @section Viz functions:
+#' createRegressionAnalysis_Plot
+#'
+#' @docType package
+#' @name DSIWastewater
+NULL

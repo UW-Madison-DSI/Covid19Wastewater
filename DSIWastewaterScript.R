@@ -33,7 +33,7 @@ package_update <- function(path = ".", update_examples = F, update_test = F){
   unlink("R", recursive = T, force = T)
   dir.create("R")
   Move_struct_R("src", "R")
-  Move_struct_R("Meta", "R", add_context = FALSE)
+  Move_struct_R("meta", "R", add_context = FALSE)
   
   if(update_examples){
     unlink("vignettes", recursive = T, force = T)
