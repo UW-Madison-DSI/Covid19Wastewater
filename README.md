@@ -22,13 +22,13 @@ This project is a collaboration between the University of Wiscosin's [Data Scien
 This package includes the following three main sections:
 
 ### 1. Data
-This package includes [Traditional and Wastewater based data](examples/data/README.md) about Wisconsin communities.
+This package includes [traditional (case based) and wastewater based data](examples/data/README.md) about Wisconsin communities.
 
 ### 2. Data Preparation
-This [includes functions](examples/data_prep/README.md) to create calculated columns, smoothings and filtering.
+This package includes [functions](examples/data_prep/README.md) to create calculated columns, smoothings and filtering.
 
 ### 3. Analysis Tools
-This [includes tools](examples/analysis_tools/README.md) to generate DHS flags for both case and wastewater data. It also includes tools to run random linear forests.
+This package includes [tools](examples/analysis_tools/README.md) to generate DHS flags for both case and wastewater data. It also includes tools to run random linear forests.
 
 ## Package Application 
 
