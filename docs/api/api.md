@@ -2,8 +2,18 @@
 
 In order to view more detail about each of these API methods, you can [view the API in the R Studio Help](../r-studio/viewing-api.md).
 
+<p>
+    <div align="center">
+        <img src="../../../docs/images/architecture.svg" alt="API" style="width:200px">
+        <div>
+            <label>API Architecture Overview</label>
+        </div>
+    </div>
+    <br />
+</p>
+
 <div align="center">
-    <img src="../../docs/images/api.svg" alt="API" style="width:600px">
+    <img src="../../../docs/images/api.svg" alt="API" style="width:600px">
     <div>
         <label>API Architecture</label>
     </div>

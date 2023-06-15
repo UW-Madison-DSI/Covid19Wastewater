@@ -19,20 +19,20 @@ This project is a collaboration between the University of Wiscosin's [Data Scien
 
 
 ## Repository Sections
-There are three parts of the package; Data, Data Prep, Analysis tools.
+There are three parts of the package:
 
-### Data
+### 1. Data
 This package includes [Traditional and Wastewater based data](examples/data/README.md) about Wisconsin communities.
 
-### Data Preparation
+### 2. Data Preparation
 This [includes functions](examples/data_prep/README.md) to create calculated columns, smoothings and filtering.
 
-### Analysis Tools
+### 3. Analysis Tools
 This [includes tools](examples/analysis_tools/README.md) to generate DHS flags for both case and wastewater data. It also includes tools to run random linear forests.
 
 ## Package Application 
 
-- We applied this package to Covid-19 data from Wisconsin in our analysis repository [here.](https://github.com/AFIDSI/Covid19-Wastewater-Analysis)
+We applied this package to Covid-19 data from Wisconsin in our analysis repository [here.](https://github.com/AFIDSI/Covid19-Wastewater-Analysis)
 
 ## Installation
 
@@ -44,17 +44,7 @@ Otherwise we have comprehensive instructions [here](./docs/Install.md).
 
 ## Documentation
 
-- View the [API Reference](./docs/api/api.md).
-
-<p>
-    <div align="center">
-        <img src="./docs/images/architecture.svg" alt="API" style="width:200px">
-        <div>
-            <label>API Architecture Overview</label>
-        </div>
-    </div>
-    <br />
-</p>
+View the [API Reference](./docs/api/api.md).
  
 - View the package vignettes with:
 
