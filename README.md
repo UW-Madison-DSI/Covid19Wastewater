@@ -28,7 +28,7 @@ SLH:
 - <http://www.slh.wisc.edu/environmental/covid-19-wastewater/>
 
 
-## Code sections
+## Repository Sections
 There are three parts of the package; Data, Data Prep, Analysis tools.
 
 ### Data
@@ -82,9 +82,9 @@ This includes functions to create calculated columns, smoothings and filtering.
 ### Analysis Tools
 This includes tools to generate DHS flags for both case and wastewater data. It also includes tools to run random linear forests.
 
-## Continuous results
+## Package Application 
 
-- View our analysis repo [here](https://github.com/AFIDSI/Covid19-Wastewater-Analysis)
+- We applied this package to Covid-19 data from Wisconsin in our analysis repository [here.](https://github.com/AFIDSI/Covid19-Wastewater-Analysis)
 
 ## Installation
 
