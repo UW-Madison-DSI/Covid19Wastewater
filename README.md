@@ -32,13 +32,13 @@ SLH:
 There are three parts of the package; Data, Data Prep, Analysis tools.
 
 ### Data
-This package includes [Traditional and Wastewater based data](data/README.md) about Wisconsin communities.
+This package includes [Traditional and Wastewater based data](examples/data/README.md) about Wisconsin communities.
 
 ### Data Preparation
-This includes functions to create calculated columns, smoothings and filtering.
+This [includes functions](examples/data_prep/README.md) to create calculated columns, smoothings and filtering.
 
 ### Analysis Tools
-This includes tools to generate DHS flags for both case and wastewater data. It also includes tools to run random linear forests.
+This [includes tools](examples/analysis_tools/README.md) to generate DHS flags for both case and wastewater data. It also includes tools to run random linear forests.
 
 ## Package Application 
 
