@@ -34,21 +34,6 @@ There are three parts of the package; Data, Data Prep, Analysis tools.
 ### Data
 This package includes [Traditional and Wastewater based data](data/README.md) about Wisconsin communities.
 
-#### Extra Information
-The package also provides additional information in the form of dataframes. The extra info datasets are as follows:  
-
-pop_data.RData: Contains the population of each community in the dataset  
-Covariants_data.RData: Contains the percentage contribution of each variant in Wisconsin  
-To load the extra info datasets, use the following code:  
-
-```
-# Load the population data
-load("pop_data.RData")
-
-# Load the covariants data
-load("Covariants_data.RData")
-```
-
 ### Data Preparation
 This includes functions to create calculated columns, smoothings and filtering.
 
