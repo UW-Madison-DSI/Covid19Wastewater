@@ -1,0 +1,26 @@
+---
+title: "Time series outliers for wastewater surveillance"
+author: "Marlin"
+date: "2023-06-15"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## placeholder
+
+This vignette seeks to cover diffrent methods for dhs analysis
+
+```{r load and show data}
+
+```
+
+```{r explain all / most relavent functions}
+
+```
+
+
+```{r explain / show use case and link to other vignettes}
+```

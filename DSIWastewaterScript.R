@@ -47,7 +47,7 @@ package_update <- function(path = ".", update_examples = F, update_test = F){
   build(path = ".", vignettes = FALSE)
   #devtools::install_github("AFIDSI/DSIWastewater")
   if(update_examples){
-    unlink("inst/doc", recursive = T, force = T)
+    unlink("inst", recursive = T, force = T)
   }
   if(update_test){
     check(args = c("--no-tests"), vignettes = FALSE)
