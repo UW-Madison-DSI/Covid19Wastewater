@@ -4,7 +4,7 @@ In order to view more detail about each of these API methods, you can [view the 
 
 <p>
     <div align="center">
-        <img src="../../../docs/images/architecture.svg" alt="API" style="width:200px">
+        <img src="../../docs/images/architecture.svg" alt="API" style="width:200px">
         <div>
             <label>API Architecture Overview</label>
         </div>
@@ -13,7 +13,7 @@ In order to view more detail about each of these API methods, you can [view the 
 </p>
 
 <div align="center">
-    <img src="../../../docs/images/api.svg" alt="API" style="width:600px">
+    <img src="../../docs/images/api.svg" alt="API" style="width:600px">
     <div>
         <label>API Architecture</label>
     </div>
