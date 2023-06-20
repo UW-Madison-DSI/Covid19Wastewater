@@ -93,18 +93,20 @@ Exponential smoothing is a technique used to smooth time series data by assignin
 
 ```{r expsmoothMod, include = FALSE}
 # Example code demonstrating expSmoothMod() function
-exp_smooth <- expSmoothMod(loess_smooth, "N1", "N1_exp", Filter = NULL)
+exp_smooth <- DSIWastewater:::expSmoothMod(loess_smooth, "N1", "N1_exp", Filter = NULL)
 
-all_smooth_plot <- all_smooth_plot + geom_line(aes(y = N1_exp, color = "default exp"), data = exp_smooth, size = 1.25)
+all_smooth_plot <- all_smooth_plot + 
+  geom_line(aes(y = N1_exp, color = "default exp"), data = exp_smooth, size = 1.25)
 
-exp_plot <- base_plot + geom_line(aes(y = N1_exp, color = "default exp"), data = exp_smooth, size = 1.25)
+exp_plot <- base_plot + 
+  geom_line(aes(y = N1_exp, color = "default exp"), data = exp_smooth, size = 1.25)
 
-param_exp_smooth <- expSmoothMod(exp_smooth, "N1", "N1_exp_2", alpha = .3, Filter = NULL)
+param_exp_smooth <- DSIWastewater:::expSmoothMod(exp_smooth, "N1", "N1_exp_2", alpha = .3, Filter = NULL)
 
 alt_plot <- exp_plot + geom_line(aes(y = N1_exp_2, color = "exp alpha .01"), data = param_exp_smooth, size = 1.25)
 
 
-param_exp_smooth_2 <- expSmoothMod(exp_smooth, "N1", "N1_exp_3", beta = .05, Filter = NULL)
+param_exp_smooth_2 <- DSIWastewater:::expSmoothMod(exp_smooth, "N1", "N1_exp_3", beta = .05, Filter = NULL)
 
 
 show_plot <- alt_plot + geom_line(aes(y = N1_exp_3, color = "exp beta .005"), data = param_exp_smooth_2, size = 1.25)
