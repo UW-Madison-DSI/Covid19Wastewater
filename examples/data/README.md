@@ -5,10 +5,10 @@ This package includes traditional (case based) and wastewater based data about W
 This dataset includes longitudinal wastewater data collected 1-6 times per week from 2019 to 2023. It is accompanied by case data. The dataset files are:  
 
 1) Longitudinal wastewater data:
-[WasteWater_data.RData](LIMS_data.html)
+[WasteWater_data.RData](LIMS_data.pdf)
 
 2) Corresponding case data:
-[Case_data.RData](Case_data.html) 
+[Case_data.RData](Case_data.pdf)
 
 To access the longitudinal data, load the datasets using the following code:
 ```
@@ -35,10 +35,10 @@ load("Case_data.RData")
 This dataset contains high-frequency testing data collected over a 7-day testing period. It includes 9 samples reported per day and is accompanied by corresponding case data. The dataset files are:  
 
 1) High-frequency wastewater data:
-[HFG_data.RData](HFG_data.html)
+[HFG_data.RData](HFG_data.pdf)
 
 2) Corresponding case data:
-[HFGCase_data.RData](HFGCase_data.html)
+[HFGCase_data.RData](HFGCase_data.pdf)
 
 To access the high-frequency data, load the datasets using the following code:  
 ```
@@ -53,10 +53,10 @@ load("HFGCase_data.RData")
 The package also provides additional information in the form of dataframes. The extra info datasets are as follows:  
 
 1) Population of each community in the dataset:
-[pop_data.RData](pop_data.html)
+[pop_data.RData](pop_data.pdf)
 
 2) The percentage contribution of each variant in Wisconsin: 
-[Covariants_data.RData](Covariants_data.html)
+[Covariants_data.RData](Covariants_data.pdf)
 
 To load the extra info datasets, use the following code:  
 
