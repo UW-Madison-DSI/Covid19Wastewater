@@ -5,6 +5,11 @@ date: "2023-06-15"
 output: html_document
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, Warning = FALSE, message = FALSE)
+options(warn=-1)
+```
+
 # Introduction ---------------------------------------------------------------
 
 ## Overview of Smoothing

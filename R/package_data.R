@@ -15,18 +15,17 @@
 "WasteWater_data"
 
 
-#' Toy example of worksheet 4 to be used in package examples
+#' Toy example of full data contains 3 sites and roughly 500 entries (waste and case merged together)
 #' 
 #'
 #' @docType data
 #'
 #' @usage data("example_data")
 #'
-#' @format Rows: 7 Columns: 3
+#' @format Rows: 500 Columns: 69
 #'
 #' @keywords datasets
 "example_data"
-
 
 
 #' Case data set from the DHS on 4/21/2022
