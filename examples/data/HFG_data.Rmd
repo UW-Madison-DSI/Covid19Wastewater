@@ -14,7 +14,23 @@ knitr::opts_chunk$set(echo = TRUE)
 This vignette seeks to cover the columns and usability of the relevant data set
 
 ```{r load and show data}
+library(DSIWastewater)
+library(dplyr)
+library(ggplot2)
 
+data(WasteWater_data, package = "DSIWastewater")
+
+smoothing_df <- WasteWater_data%>%
+  filter(site == "Madison")%>%
+  select(date, N1, N2)%>%
+  filter(N1 != 0, N2 != 0)%>%
+  mutate(N1 = log(N1), N2 = log(N2))
+
+base_plot <- smoothing_df%>%
+  ggplot(aes(x = date))+
+  geom_point(aes(y = N1, color = "N1"))
+
+base_plot
 ```
 
 ```{r explain all / most relavent columns}
