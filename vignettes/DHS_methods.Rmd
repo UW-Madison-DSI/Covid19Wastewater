@@ -1,8 +1,10 @@
 ---
-title: "DHS methods for wastewater surveillance"
+title: "DHS Methods"
 author: "Marlin"
 date: "2023-06-15"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
