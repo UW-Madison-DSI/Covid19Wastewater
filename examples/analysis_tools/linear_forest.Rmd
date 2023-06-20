@@ -1,5 +1,5 @@
 ---
-title: "Linear forest for wastewater surveillance"
+title: "Linear Forest"
 author: "Marlin"
 date: "2023-06-15"
 output: html_document

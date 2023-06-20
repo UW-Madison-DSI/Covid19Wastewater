@@ -1,5 +1,5 @@
 ---
-title: "Time series Smoothing for wastewater surveillance"
+title: "Smoothing"
 author: "Marlin Lee"
 date: "2023-06-15"
 output: html_document
