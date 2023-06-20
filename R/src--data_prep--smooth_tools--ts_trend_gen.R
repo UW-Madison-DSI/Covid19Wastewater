@@ -84,7 +84,8 @@ loessSmoothMod <- function(DF,InVar="`sars_cov2_adj_load_log10`",
 #' @param Filter Prefilter using the value of a Filter col
 #'
 #' @return A DF with an extra col with a exp smoothed version of InVar
-#' @keywords internal
+#' @export
+#' @examples
 #' data("WasteWater_data", package = "DSIWastewater")
 #' examp_DF <- buildWasteAnalysisDF(WasteWater_data)
 #' examp_DF <- examp_DF[examp_DF$site == 'Algoma WWTF",]
@@ -161,15 +162,14 @@ nGuess <- function(DF,InVar, Base, min){
 #' @param Filter Prefilter using the value of a Filter col
 #'
 #' @return DF with an extra col with a sgolayfilt smoothed version of InVar
-#' @keywords internal
-#' @examples 
+#' @export
+#' @examples
 #' data(WasteWater_data, package = "DSIWastewater")
 #' WasteWater_data <- buildWasteAnalysisDF(WasteWater_data)
-#' WasteWater_data <- WasteWater_data[WasteWater_data$site == "Algoma WWTF",]
 #' DSIWastewater:::sgolaySmoothMod(WasteWater_data,"n1_sars_cov2_conc","sgolayN1")
 sgolaySmoothMod <- function(DF,InVar, OutVar,poly=5,n="guess", Filter = NULL){
   if(n=="guess"){
-    n <- nGuess(DF,InVar,50/178, 7)
+    n <- nGuess(DF, InVar,50/178, 7)
   }
   if(!is.null(Filter)){
     OutDF <- DF%>%
@@ -200,3 +200,5 @@ sgolaySmoothMod <- function(DF,InVar, OutVar,poly=5,n="guess", Filter = NULL){
   
   return(RetDF)
 }
+
+

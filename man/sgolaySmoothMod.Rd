@@ -31,7 +31,5 @@ Add a column of the smoothed values using sgolayfilt
 \examples{
 data(WasteWater_data, package = "DSIWastewater")
 WasteWater_data <- buildWasteAnalysisDF(WasteWater_data)
-WasteWater_data <- WasteWater_data[WasteWater_data$site == "Algoma WWTF",]
 DSIWastewater:::sgolaySmoothMod(WasteWater_data,"n1_sars_cov2_conc","sgolayN1")
 }
-\keyword{internal}

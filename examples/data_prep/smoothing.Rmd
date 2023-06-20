@@ -1,26 +1,112 @@
 ---
 title: "Time series Smoothing for wastewater surveillance"
-author: "Marlin"
+author: "Marlin Lee"
 date: "2023-06-15"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+# Introduction ---------------------------------------------------------------
+
+## Overview of Smoothing
+In this vignette, we will explore the smoothing techniques supported in the DSIWastewater package. Smoothing is a widely used technique in data analysis and visualization that helps reduce noise, reveal underlying trends, and highlight important patterns in the data. DSIWastewater provides several powerful functions to perform smoothing operations, and this vignette will guide you through their usage and showcase their capabilities.
+
+## Data
+We will be using the long range Madison Covid data in the vignettes with the occasional use of other data to show a more complete picture of the different smoothing options.This data set has a clear trend but a ton of noise.
+
+```{r load data}
+library(DSIWastewater)
+library(dplyr)
+library(ggplot2)
+
+data(WasteWater_data, package = "DSIWastewater")
+
+smoothing_df <- WasteWater_data%>%
+  filter(site == "Madison")%>%
+  select(date, N1, N2)%>%
+  filter(N1 != 0, N2 != 0)%>%
+  mutate(N1 = log(N1), N2 = log(N2))
+
+base_plot <- smoothing_df%>%
+  ggplot(aes(x = date))+
+  geom_point(aes(y = N1, color = "N1"))
+
+base_plot
 ```
 
-## placeholder
+# Smoothing Techniques --------------------------------------------------------
+Each smoothing function shares the same framework. The first three arguments are the dataframe, the name of the column to be smoothed, and the name of the column the smoothing is placed. The last argument "Filter" control if some data points should be removed before the filtering happening. Other arguments are parameters for how the smoothing should be done.
 
-This vignette seeks to cover diffrent methods for dhs analysis
 
-```{r load and show data}
 
+
+## Savitzky-Golay Filter
+The Savitzky-Golay filter is a widely used smoothing technique that performs local polynomial regression on the data. It provides excellent noise reduction while preserving important features such as peaks and valleys. The DSIWastewater package includes the sgolaySmoothMod() function, which allows you to apply this filter to your data. sgolaySmoothMod() has 2 parameters. "poly" controls the degree of the polynomial fit on the local data whereas "n" control the number of points considered "local". by default its set to "guess" which uses the density of the data to make guesses about the ideal n.
+```{r sgolaySmoothMod}
+# Example code demonstrating sgolaySmoothMod() function
+sgolay_smooth <- DSIWastewater:::sgolaySmoothMod(smoothing_df, "N1", "N1_sgolay", poly=5,n="guess", Filter = NULL)
+
+sgolay_plot <- base_plot + geom_line(aes(y = N1_sgolay, color = "default sgolay"), data = sgolay_smooth, linewidth = 1.25)
+
+param_sgolay_smooth <- DSIWastewater:::sgolaySmoothMod(sgolay_smooth, "N1", "N1_sgolay_2", poly=2, n = "guess", Filter = NULL)
+
+alt_plot <- sgolay_plot + geom_line(aes(y = N1_sgolay_2, color = "poly 1 sgolay"), data = param_sgolay_smooth, linewidth = 1.25)
+
+
+param_sgolay_smooth_2 <- DSIWastewater:::sgolaySmoothMod(sgolay_smooth, "N1", "N1_sgolay_3", poly = 5, n = 31, Filter = NULL)
+
+
+show_plot <- alt_plot + geom_line(aes(y = N1_sgolay_3, color = "n 20 sgolay"), data = param_sgolay_smooth_2, linewidth = 1.25)
+
+show_plot+
+  ggtitle("Savitzky-Golay smoothing with diffrent parameters")
 ```
 
-```{r explain all / most relavent functions}
+## Loess Smoothing
+Loess (locally estimated scatterplot smoothing) is a non-parametric regression technique that fits a smooth curve to the data by locally weighted polynomial regression. It is particularly useful when dealing with complex or nonlinear relationships. The DSIWastewater package provides the loessSmoothMod() function to perform loess smoothing on your data. The only parameter is "span" which controls what portion of the data is looked at. This is set to "guess" by default where the package picks what it thinks is optimal based on data density.
 
+```{r loessSmoothMod}
+# Example code demonstrating loessSmoothMod() function
+loess_smooth <- loessSmoothMod(sgolay_smooth, "N1", "N1_loess", span="guess", Filter = NULL)
+
+all_smooth_plot <- sgolay_plot + geom_line(aes(y = N1_loess, color = "default loess"), data = loess_smooth, size = 1.25)
+
+loess_plot <- base_plot + geom_line(aes(y = N1_loess, color = "default loess"), data = loess_smooth, size = 1.25)
+
+param_loess_smooth <- loessSmoothMod(loess_smooth, "N1", "N1_loess_2", span = .1, Filter = NULL)
+
+alt_plot <- loess_plot + geom_line(aes(y = N1_loess_2, color = "poly 1 loess"), data = param_loess_smooth, size = 1.25)
+
+
+param_loess_smooth_2 <- loessSmoothMod(loess_smooth, "N1", "N1_loess_3", span= .2, Filter = NULL)
+
+
+show_plot <- alt_plot + geom_line(aes(y = N1_loess_3, color = "n 20 loess"), data = param_loess_smooth_2, size = 1.25)
+
+show_plot+
+  ggtitle("loess smoothing with diffrent parameters")
 ```
 
+## Loess Smoothing
+Loess (locally estimated scatterplot smoothing) is a non-parametric regression technique that fits a smooth curve to the data by locally weighted polynomial regression. It is particularly useful when dealing with complex or nonlinear relationships. The DSIWastewater package provides the loessSmoothMod() function to perform loess smoothing on your data. The only parameter is "span" which controls what portion of the data is looked at. This is set to "guess" by default where the package picks what it thinks is optimal based on data density.
 
-```{r explain / show use case and link to other vignettes}
+```{r expsmoothMod}
+# Example code demonstrating loessSmoothMod() function
+loess_smooth <- loessSmoothMod(sgolay_smooth, "N1", "N1_loess", span="guess", Filter = NULL)
+
+all_smooth_plot <- sgolay_plot + geom_line(aes(y = N1_loess, color = "default loess"), data = loess_smooth, size = 1.25)
+
+loess_plot <- base_plot + geom_line(aes(y = N1_loess, color = "default loess"), data = loess_smooth, size = 1.25)
+
+param_loess_smooth <- loessSmoothMod(loess_smooth, "N1", "N1_loess_2", span = .1, Filter = NULL)
+
+alt_plot <- loess_plot + geom_line(aes(y = N1_loess_2, color = "poly 1 loess"), data = param_loess_smooth, size = 1.25)
+
+
+param_loess_smooth_2 <- loessSmoothMod(loess_smooth, "N1", "N1_loess_3", span= .2, Filter = NULL)
+
+
+show_plot <- alt_plot + geom_line(aes(y = N1_loess_3, color = "n 20 loess"), data = param_loess_smooth_2, size = 1.25)
+
+show_plot+
+  ggtitle("loess smoothing with diffrent parameters")
 ```
