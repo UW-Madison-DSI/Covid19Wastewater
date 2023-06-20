@@ -13,7 +13,7 @@
 #' data("Case_data", package = "DSIWastewater")
 #' #Will output a df from -10 to +10 days using all of the data from 2020-08-01 to 2023-01-01
 #' OffsetDFMaker(10,as.Date("2020-08-01"), as.Date("2023-01-01"), Case_data, WasteWater_data)
-OffsetDFMaker <-function(length, startdate, enddate, casesdf, wastedf){
+OffsetDFMaker <- function(length, startdate, enddate, casesdf, wastedf){
   #Subset data based on given dates
   wastedf <- subset(wastedf, anydate(date)> anydate(startdate) & anydate(date) < anydate(enddate))
   casesdf <- subset(casesdf, anydate(date)> anydate(startdate) & anydate(date) < anydate(enddate))
@@ -21,7 +21,7 @@ OffsetDFMaker <-function(length, startdate, enddate, casesdf, wastedf){
   wastedf <- wastedf%>% 
     group_by(date)%>% 
     summarise(N1 = mean(N1),
-              N2 = mean(N2),
+              N2 = mean(N2))%>%
     mutate(geo_mean = exp((log(N1) + log(N2))/2)) %>% 
     drop_na(geo_mean)
   
@@ -63,14 +63,15 @@ OffsetDFMaker <-function(length, startdate, enddate, casesdf, wastedf){
     }
     offsetresults[nrow(offsetresults) + 1, ] <- new  
   }
-  offsetresults <- offsetresults %>% rename(wdateoffset=X1,
-                                            wcratio=X2,
-                                            wcratiorolling=X3,
-                                            meanMSErolling=X4,
-                                            corilationPearson=X5,
-                                            corilationKendall=X6,
-                                            corilationSpearman=X7,
-                                            rcor=X8)
+  offsetresults <- offsetresults %>% 
+    rename(wdateoffset=X1,
+           wcratio=X2,
+           wcratiorolling=X3,
+           meanMSErolling=X4,
+           corilationPearson=X5,
+           corilationKendall=X6,
+           corilationSpearman=X7,
+           rcor=X8)
   return(offsetresults)
 }
 
