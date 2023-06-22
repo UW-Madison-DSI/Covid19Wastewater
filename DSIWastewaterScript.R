@@ -40,11 +40,12 @@ package_update <- function(path = ".", update_examples = F, update_test = F){
     dir.create("vignettes")
     Move_struct_R("examples", "vignettes", add_context = FALSE)
     #build_vignettes(quiet=FALSE)
+    unlink("inst", recursive = T, force = T)
     dir.create("inst/doc", recursive = TRUE)
     file.copy(dir("doc", full.names=TRUE), "inst/doc", overwrite=TRUE)
   }
   document()
-  build(path = ".", vignettes = TRUE)
+  #build(path = ".", vignettes = TRUE)
   #devtools::install_github("AFIDSI/DSIWastewater")
   if(update_examples){
     unlink("inst", recursive = T, force = T)

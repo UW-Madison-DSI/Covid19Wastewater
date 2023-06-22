@@ -92,6 +92,7 @@ ggplot() +
   scale_y_log10()
 head(InterceptorCase_data)
 ```
+
 ```{r Example Data}
 data(example_data, package = "DSIWastewater")
 head(example_data)

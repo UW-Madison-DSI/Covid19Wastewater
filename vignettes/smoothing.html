@@ -383,19 +383,10 @@ with the occasional use of other data to show a more complete picture of
 the different smoothing options.This data set has a clear trend but a
 ton of noise.</p>
 <pre class="r"><code>library(DSIWastewater)
-library(dplyr)</code></pre>
-<pre><code>## Warning: package &#39;dplyr&#39; was built under R version 4.2.3</code></pre>
-<pre><code>## 
-## Attaching package: &#39;dplyr&#39;</code></pre>
-<pre><code>## The following objects are masked from &#39;package:stats&#39;:
-## 
-##     filter, lag</code></pre>
-<pre><code>## The following objects are masked from &#39;package:base&#39;:
-## 
-##     intersect, setdiff, setequal, union</code></pre>
-<pre class="r"><code>library(ggplot2)</code></pre>
-<pre><code>## Warning: package &#39;ggplot2&#39; was built under R version 4.2.3</code></pre>
-<pre class="r"><code>data(WasteWater_data, package = &quot;DSIWastewater&quot;)
+library(dplyr)
+library(ggplot2)
+
+data(WasteWater_data, package = &quot;DSIWastewater&quot;)
 
 smoothing_df &lt;- WasteWater_data%&gt;%
   filter(site == &quot;Madison&quot;)%&gt;%
@@ -462,13 +453,9 @@ package picks what it thinks is optimal based on data density.</p>
 <pre class="r"><code># Example code demonstrating loessSmoothMod() function
 loess_smooth &lt;- loessSmoothMod(sgolay_smooth, &quot;N1&quot;, &quot;N1_loess&quot;, span=&quot;guess&quot;, Filter = NULL)
 
-all_smooth_plot &lt;- sgolay_plot + geom_line(aes(y = N1_loess, color = &quot;default loess&quot;), data = loess_smooth, size = 1.25)</code></pre>
-<pre><code>## Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
-## ℹ Please use `linewidth` instead.
-## This warning is displayed once every 8 hours.
-## Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
-## generated.</code></pre>
-<pre class="r"><code>loess_plot &lt;- base_plot + geom_line(aes(y = N1_loess, color = &quot;default loess&quot;), data = loess_smooth, size = 1.25)
+all_smooth_plot &lt;- sgolay_plot + geom_line(aes(y = N1_loess, color = &quot;default loess&quot;), data = loess_smooth, size = 1.25)
+
+loess_plot &lt;- base_plot + geom_line(aes(y = N1_loess, color = &quot;default loess&quot;), data = loess_smooth, size = 1.25)
 
 param_loess_smooth &lt;- loessSmoothMod(loess_smooth, &quot;N1&quot;, &quot;N1_loess_2&quot;, span = .1, Filter = NULL)
 

@@ -20,12 +20,12 @@
 #'
 #' @docType data
 #'
-#' @usage data("example_data")
+#' @usage data("Example_data")
 #'
 #' @format Rows: 500 Columns: 69
 #'
 #' @keywords datasets
-"example_data"
+"Example_data"
 
 
 #' Case data set from the DHS on 4/21/2022
