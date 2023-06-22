@@ -1,8 +1,10 @@
 ---
-title: "Time series outliers for wastewater surveillance"
+title: "Outliers"
 author: "Marlin"
 date: "2023-06-15"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -11,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## placeholder
 
-This vignette seeks to cover different methods for dhs analysis
+This vignette seeks to cover different methods for finding time series outliers.
 
 ```{r load and show data}
 

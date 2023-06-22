@@ -17,23 +17,6 @@ This is an R package of utilities to perform wastewater data analysis for pathog
 
 This project is a collaboration between the University of Wiscosin's [Data Science Institute (DSI)](https://datascience.wisc.edu), the [Wisconsin Department of Health Services (DHS)](https://www.dhs.wisconsin.gov/covid-19/wastewater.htm), and the [State Lab of Hygiene (SLH)](http://www.slh.wisc.edu/environmental/covid-19-wastewater).
 
-
-## Package Sections
-This package includes the following three main sections:
-
-### 1. Data
-This package includes [traditional (case based) and wastewater based data](examples/data/README.md) about Wisconsin communities.
-
-### 2. Data Preparation
-This package includes [functions](examples/data_prep/README.md) to create calculated columns, smoothings and filtering.
-
-### 3. Analysis Tools
-This package includes [tools](examples/analysis_tools/README.md) to generate DHS flags for both case and wastewater data. It also includes tools to run random linear forests.
-
-## Package Application 
-
-We applied this package to Covid-19 data from Wisconsin in our analysis repository [here.](https://github.com/AFIDSI/Covid19-Wastewater-Analysis)
-
 ## Installation
 
 If you already have devtools installed you can install the package with
@@ -41,6 +24,9 @@ If you already have devtools installed you can install the package with
 devtools::install_github("AFIDSI/DSIWastewater")
 ```
 Otherwise we have comprehensive instructions [here](./docs/Install.md).
+
+## Examples
+In order to make this package as easy as possible to learn and understand, we've included a set of [instructional examples](examples/README.md).
 
 ## Documentation
 
@@ -57,7 +43,9 @@ vignette(package = "DSIWastewater")
 ```
 help(package = "DSIWastewater")
 ```
- 
+## Package Application 
+
+We applied this package to Covid-19 data from Wisconsin in our analysis repository [here.](https://github.com/AFIDSI/Covid19-Wastewater-Analysis)
 
 <!-- LICENSE -->
 ## License
