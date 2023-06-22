@@ -1,8 +1,10 @@
 ---
-title: "Time series Smoothing for wastewater surveillance"
+title: "Smoothing"
 author: "Marlin Lee"
 date: "2023-06-15"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -23,17 +25,17 @@ library(DSIWastewater)
 library(dplyr)
 library(ggplot2)
 
-data(WasteWater_data, package = "DSIWastewater")
+data("Example_data", package = "DSIWastewater")
 
-smoothing_df <- WasteWater_data%>%
-  filter(site == "Madison")%>%
-  select(date, N1, N2)%>%
+smoothing_df <- Example_data%>%
+  select(site, date, N1, N2)%>%
   filter(N1 != 0, N2 != 0)%>%
   mutate(N1 = log(N1), N2 = log(N2))
 
 base_plot <- smoothing_df%>%
   ggplot(aes(x = date))+
-  geom_point(aes(y = N1, color = "N1"))
+  geom_point(aes(y = N1, color = "N1"))+
+  facet_wrap(~site)
 
 base_plot
 ```
@@ -50,17 +52,20 @@ The Savitzky-Golay filter is a widely used smoothing technique that performs loc
 # Example code demonstrating sgolaySmoothMod() function
 sgolay_smooth <- DSIWastewater:::sgolaySmoothMod(smoothing_df, "N1", "N1_sgolay", poly=5,n="guess", Filter = NULL)
 
-sgolay_plot <- base_plot + geom_line(aes(y = N1_sgolay, color = "default sgolay"), data = sgolay_smooth, linewidth = 1.25)
+sgolay_plot <- base_plot + 
+  geom_line(aes(y = N1_sgolay, color = "default sgolay"), data = sgolay_smooth, linewidth = 1.25)
 
 param_sgolay_smooth <- DSIWastewater:::sgolaySmoothMod(sgolay_smooth, "N1", "N1_sgolay_2", poly=2, n = "guess", Filter = NULL)
 
-alt_plot <- sgolay_plot + geom_line(aes(y = N1_sgolay_2, color = "poly 1 sgolay"), data = param_sgolay_smooth, linewidth = 1.25)
+alt_plot <- sgolay_plot + 
+  geom_line(aes(y = N1_sgolay_2, color = "poly 1 sgolay"), data = param_sgolay_smooth, linewidth = 1.25)
 
 
 param_sgolay_smooth_2 <- DSIWastewater:::sgolaySmoothMod(sgolay_smooth, "N1", "N1_sgolay_3", poly = 5, n = 31, Filter = NULL)
 
 
-show_plot <- alt_plot + geom_line(aes(y = N1_sgolay_3, color = "n 20 sgolay"), data = param_sgolay_smooth_2, linewidth = 1.25)
+show_plot <- alt_plot + 
+  geom_line(aes(y = N1_sgolay_3, color = "n 20 sgolay"), data = param_sgolay_smooth_2, linewidth = 1.25)
 
 show_plot+
   ggtitle("Savitzky-Golay smoothing with diffrent parameters")
@@ -93,7 +98,7 @@ show_plot+
 
 
 
-## Loess Smoothing
+## Exponential Smoothing
 Exponential smoothing is a technique used to smooth time series data by assigning exponentially decreasing weights to observations. It is particularly useful for capturing trends and seasonality in time series data.It has two parameters alpha and beta which control the change of the weights.
 
 ```{r expsmoothMod, include = FALSE}

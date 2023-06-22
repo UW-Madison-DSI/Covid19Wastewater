@@ -45,7 +45,7 @@ package_update <- function(path = ".", update_examples = F, update_test = F){
     file.copy(dir("doc", full.names=TRUE), "inst/doc", overwrite=TRUE)
   }
   document()
-  #build(path = ".", vignettes = TRUE)
+  build(path = ".", vignettes = TRUE)
   #devtools::install_github("AFIDSI/DSIWastewater")
   if(update_examples){
     unlink("inst", recursive = T, force = T)

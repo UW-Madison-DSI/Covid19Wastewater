@@ -25,7 +25,7 @@ library(DSIWastewater)
 library(dplyr)
 library(ggplot2)
 
-data(Example_data, package = "DSIWastewater")
+data("Example_data", package = "DSIWastewater")
 
 smoothing_df <- Example_data%>%
   select(site, date, N1, N2)%>%
