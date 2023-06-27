@@ -2,7 +2,13 @@
 title: "LIMS_data"
 author: "Marlin"
 date: "2023-06-15"
-output: html_document
+vignette: >
+  %\VignetteIndexEntry{HFG data}
+  \usepackage[utf8]{inputenc}
+  %\VignetteEngine{knitr::rmarkdown}
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}

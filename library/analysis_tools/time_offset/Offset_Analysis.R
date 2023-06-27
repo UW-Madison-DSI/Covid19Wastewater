@@ -7,7 +7,7 @@
 #' @param wastedf DF with wastewater data columns needed(date,N1,N2)
 #'
 #' @return DF with the columns: number of days wastewater is offset, geo mean of(n1,n2) / confirmed cases,previous with rolling case average, MSE rolling average,Pearson correlation, Kendall correlation, Spearman correlation, R squared. 
-#' 
+#' @export
 #' @examples
 #' data(WasteWater_data, package = "DSIWastewater")
 #' data("Case_data", package = "DSIWastewater")
@@ -81,7 +81,7 @@ OffsetDFMaker <- function(length, startdate, enddate, casesdf, wastedf){
 #' @param title Title you want (appears at bottom)
 #'
 #' @return ggplot plot object
-#' 
+#' @export
 #' @examples
 #' data(WasteWater_data, package = "DSIWastewater")
 #' data("Case_data", package = "DSIWastewater")
@@ -145,7 +145,7 @@ OffsetDF_Plot <- function(data,title){
 #' @param title Title you want (appears at bottom)
 #'
 #' @return ggplot plot object
-#' 
+#' @export
 #' @examples
 #' data(WasteWater_data, package = "DSIWastewater")
 #' data("Case_data", package = "DSIWastewater")
@@ -160,6 +160,7 @@ OffsetDF_Plot <- function(data,title){
 #' @param cordata DF with geo_mean and conf_case columns 
 #'
 #' @return ggplot plot object (heatmap)
+#' @export
 #' 
 #' @examples
 #'  
@@ -206,7 +207,7 @@ heatmapcorfunc <- function(cordata){
 #' @param week if true applies 7-day smoothing to case data 
 #' 
 #' @return ggplot plot object 
-#' 
+#' @export
 #' @examples
 #' data(WasteWater_data, package = "DSIWastewater")
 #' data("Case_data", package = "DSIWastewater")

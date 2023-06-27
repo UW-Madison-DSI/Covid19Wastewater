@@ -1,8 +1,14 @@
 ---
-title: "LIMS_data"
+title: "HFG data"
 author: "Marlin"
 date: "2023-06-15"
-output: html_document
+vignette: >
+  %\VignetteIndexEntry{HFG data}
+  \usepackage[utf8]{inputenc}
+  %\VignetteEngine{knitr::rmarkdown}
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -19,6 +25,7 @@ library(dplyr)
 library(ggplot2)
 
 data(HFGWaste_data, package = "DSIWastewater")
+
 ```
 The data is broken down by site, date, Filter and well. Site is where is was collected from a range of 10 locations. Filter and Well are what level of replicates it is. Filter is the High level category representing the different collections. Well contains the info about what technique batch it was. The numbering of the category are arbitrary from day to day.
 

@@ -2,6 +2,10 @@
 title: "misc_data"
 author: "Marlin"
 date: "2023-06-15"
+vignette: >
+  %\VignetteIndexEntry{misc data}
+  \usepackage[utf8]{inputenc}
+  %\VignetteEngine{knitr::rmarkdown}
 output: html_document
 ---
 

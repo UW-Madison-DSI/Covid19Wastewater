@@ -38,7 +38,7 @@ parameterGuess <- function(DF,InVar, Base, max){
 #' @examples
 #' data(example_data, package = "DSIWastewater")
 #' loessSmoothMod(example_data)
-loessSmoothMod <- function(DF,InVar="`sars_cov2_adj_load_log10`",
+loessSmoothMod <- function(DF,InVar="sars_cov2_adj_load_log10",
                            OutVar="Loess", span="guess", Filter = NULL){
   if(span=="guess"){
     span <- parameterGuess(DF,InVar, 17.8, .6)
@@ -72,13 +72,12 @@ loessSmoothMod <- function(DF,InVar="`sars_cov2_adj_load_log10`",
 
 #' expSmoothMod
 #' Add a column of the smoothed values using exponential smoothing
-#'
 #' @param DF The DF we are to add a exponential smoothing column to
 #' @param InVar The column to be smoothed
 #' @param OutVar The name of the new column
-#' @param alpha The alpha fed into robets exponential smoothing. if it equals "guess" then it
+#' @param alpha The alpha fed into forecast exponential smoothing. if it equals "guess" then it
 #' if found using parameterGuess
-#' @param beta  The beta fed into robets exponential smoothing. if it equals "guess" then it
+#' @param beta  The beta fed into forecast exponential smoothing. if it equals "guess" then it
 #' if found using parameterGuess
 #' 
 #' @param Filter Prefilter using the value of a Filter col
@@ -117,7 +116,7 @@ expSmoothMod <- function(DF,InVar, OutVar,alpha="guess",beta="guess", Filter = N
   DF <- DF%>%
     arrange(date)
   
-  DF[[OutVar]] <- robets::robets(y=DF[[InVar]],
+  DF[[OutVar]] <- forecast::ets(y=DF[[InVar]],
                           model = "AAN",
                           alpha = alpha,
                           beta  = beta)$fitted

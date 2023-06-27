@@ -8,5 +8,6 @@
 #' @importFrom patchwork plot_layout wrap_plots
 #' @importFrom rsample bootstraps
 #' @importFrom partykit lmtree
-#' @importFrom data.table transpose	
+#' @importFrom data.table transpose
+#' @importFrom forecast ets
 NULL

@@ -17,9 +17,12 @@ Imports:
   tidyr, 
   zoo,
   patchwork,
-  robets,
   signal,
-  limma
+  limma,
+  rsample,
+  partykit,
+  data.table,
+  forecast
 Suggests: knitr, rmarkdown, testthat, digest, vdiffr
 VignetteBuilder: knitr
 Depends: 
