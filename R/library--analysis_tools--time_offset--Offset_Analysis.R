@@ -139,20 +139,28 @@ OffsetDF_Plot <- function(data,title){
   return(gridOffsetPlots)
 }
 ###### Variant plots?
-#' Given output from OffsetDFMaker returns a 2x3 grid of all the plots with highlighted values
+#' Shows each variant in proportion to the others in 2 week time periods
 #'
-#' @param data Output from OffsetDFMaker
-#' @param title Title you want (appears at bottom)
+#' @param covar Covariant data frame
 #'
-#' @return ggplot plot object
+#' @return ggplotly object
 #' @export
 #' @examples
-#' data(WasteWater_data, package = "DSIWastewater")
-#' data("Case_data", package = "DSIWastewater")
-#' OffsetDFMaker_Output <- OffsetDFMaker(10,as.Date("2020-08-01"), as.Date("2023-01-01"), Case_data, WasteWater_data)
-#' OffsetDF_Plot(OffsetDFMaker_Output,"All Wisconsin data over all time")
+#' data(Covariants_data, package = "DSIWastewater")
+#' VariantPlot(Covariants_data)
+VariantPlot <- function(covar){
+covar$category <- row.names(covar)
+onlycovar <- covar[-c(1,2)]
+mdfr <- melt(onlycovar, id.vars = "category")
 
+p <- ggplot(mdfr, aes(factor(category,levels = c(1:69)), value, fill = variable)) +
+  geom_bar(position = "fill", stat = "identity") +
+  scale_y_continuous(labels = percent) +
+  xlab("Week") +
+  ylab("Covariant Percent")
 
+return(ggplotly(p))
+}
 
 ###### Correlation Offset Heatmap
 #' Outputs a heatmap where the color is the r squared of wastewater data and center day + x many future days and y many past days
@@ -196,7 +204,7 @@ heatmapcorfunc <- function(cordata){
 
 ###### Offset Heatmap
 #' Outputs a heatmap of the offset for variant / time windows and population size / region
-#' Must have pop_data, covarstarts, covarends loaded
+#' Must have pop_data, covarstarts, covarends, covarnames loaded
 #'
 #' @param method Which analysis definds the offset (r squared, pearson, r squared offset, pearson offset, kendall offset, spearman offset)
 #' @param timePeriods Size of time windows in months (if 0 uses variants)
@@ -212,8 +220,8 @@ heatmapcorfunc <- function(cordata){
 #' data(WasteWater_data, package = "DSIWastewater")
 #' data("Case_data", package = "DSIWastewater")
 #' data(pop_data, package = "DSIWastewater")
-#' OffsetHeatmap("kendall_offset",0,waste,cases,"pop",TRUE,"Both tests",TRUE)
-#' OffsetHeatmap("kendall_offset",0,waste,cases,"pop",TRUE,"qPCR",TRUE)
+#' OffsetHeatmap("kendall_offset",0,waste,cases,"pop",TRUE,TRUE)
+#' OffsetHeatmap("kendall_offset",0,waste,cases,"pop",TRUE,TRUE)
 #' 
 OffsetHeatmap <- function(method, timePeriods,wasterv,caserv,list,lod=FALSE,week){
   
@@ -303,19 +311,19 @@ OffsetHeatmap <- function(method, timePeriods,wasterv,caserv,list,lod=FALSE,week
         tempcor <- cor(regionvstimetemp$rollingaverage,regionvstimetemp$geo_mean,method = "pearson")
         new <- c(i,j,tempcor)
       } else if(method == "pearson_offset"){
-        offsetOutput <- Offset(10, start[i], end[i], caservtemp, wastervtemp)
+        offsetOutput <- OffsetDFMaker(10, start[i], end[i], caservtemp, wastervtemp)
         offsetOutput <- offsetOutput[order(-offsetOutput$corilationPearson),]
         new <- c(i,j,offsetOutput[1, "wdateoffset"])
       } else if(method == "offset_rcor"){
-        offsetOutput <- Offset(10, start[i], end[i], caservtemp, wastervtemp)
+        offsetOutput <- OffsetDFMaker(10, start[i], end[i], caservtemp, wastervtemp)
         offsetOutput <- offsetOutput[order(-offsetOutput$rcor),]
         new <- c(i,j,offsetOutput[1, "wdateoffset"])
       } else if(method == "spearman_offset") {
-        offsetOutput <- Offset(10, start[i], end[i], caservtemp, wastervtemp)
+        offsetOutput <- OffsetDFMaker(10, start[i], end[i], caservtemp, wastervtemp)
         offsetOutput <- offsetOutput[order(-offsetOutput$corilationSpearman),]  
         new <- c(i,j,offsetOutput[1, "wdateoffset"])
       } else if(method == "kendall_offset"){
-        offsetOutput <- Offset(12, start[i], end[i], caservtemp, wastervtemp)
+        offsetOutput <- OffsetDFMaker(12, start[i], end[i], caservtemp, wastervtemp)
         offsetOutput <- offsetOutput[order(-offsetOutput$corilationKendall),]
         new <- c(i,j,offsetOutput[1, "wdateoffset"],offsetOutput[1, "corilationKendall"])
       }
