@@ -42,6 +42,11 @@ base_plot <- smoothing_df%>%
   facet_wrap(~site)
 
 base_plot
+
+
+
+
+OffsetDFMaker(10,as.Date(“2020-08-01”), as.Date(“2023-01-01"), Case_data, WasteWater_data)
 ```
 
 # Smoothing Techniques --------------------------------------------------------
