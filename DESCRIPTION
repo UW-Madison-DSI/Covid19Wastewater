@@ -22,7 +22,8 @@ Imports:
   rsample,
   partykit,
   data.table,
-  forecast
+  forecast,
+  anytime
 Suggests: knitr, rmarkdown, testthat, digest, vdiffr
 VignetteBuilder: knitr
 Depends: 
