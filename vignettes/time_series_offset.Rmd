@@ -2,6 +2,10 @@
 title: "Time Series Offset"
 author: "Marlin"
 date: "2023-06-15"
+vignette: >
+  %\VignetteIndexEntry{Time Series Offset}
+  \usepackage[utf8]{inputenc}
+  %\VignetteEngine{knitr::rmarkdown}
 output:
   pdf_document: default
   html_document: default

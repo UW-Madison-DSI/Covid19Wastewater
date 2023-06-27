@@ -54,10 +54,10 @@ head(HFGCase_data)
 data(pop_data, package = "DSIWastewater")
 head(pop_data)
 ```
-```{r Variant data}
+```{r Variant data, eval = FALSE}
 data(Covariants_data, package = "DSIWastewater")
-covar$category <- row.names(Covariants_data)
-onlycovar <- covar[-c(1,2)]
+Covariants_data$category <- row.names(Covariants_data)
+onlycovar <- Covariants_data[-c(1,2)]
 mdfr <- melt(onlycovar, id.vars = "category")
 
 p <- ggplot(mdfr, aes(factor(category,levels = c(1:69)), value, fill = variable)) +
@@ -94,7 +94,7 @@ head(InterceptorCase_data)
 ```
 
 ```{r Example Data}
-data(example_data, package = "DSIWastewater")
-head(example_data)
+data(Example_data, package = "DSIWastewater")
+head(Example_data)
 ```
 

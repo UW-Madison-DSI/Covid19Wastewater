@@ -38,7 +38,7 @@ parameterGuess <- function(DF,InVar, Base, max){
 #' @examples
 #' data(example_data, package = "DSIWastewater")
 #' loessSmoothMod(example_data)
-loessSmoothMod <- function(DF,InVar="`sars_cov2_adj_load_log10`",
+loessSmoothMod <- function(DF,InVar="sars_cov2_adj_load_log10",
                            OutVar="Loess", span="guess", Filter = NULL){
   if(span=="guess"){
     span <- parameterGuess(DF,InVar, 17.8, .6)
@@ -116,7 +116,7 @@ expSmoothMod <- function(DF,InVar, OutVar,alpha="guess",beta="guess", Filter = N
   DF <- DF%>%
     arrange(date)
   
-  DF[[OutVar]] <- ets(y=DF[[InVar]],
+  DF[[OutVar]] <- forecast::ets(y=DF[[InVar]],
                           model = "AAN",
                           alpha = alpha,
                           beta  = beta)$fitted
