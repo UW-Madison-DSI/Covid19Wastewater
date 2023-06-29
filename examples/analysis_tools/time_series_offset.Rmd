@@ -53,4 +53,6 @@ OffsetHeatmap("kendall_offset",2,WasteWater_data,Case_data,"pop",TRUE,TRUE)
 
 
 ```{r explain / show use case and link to other vignettes}
+
+
 ```

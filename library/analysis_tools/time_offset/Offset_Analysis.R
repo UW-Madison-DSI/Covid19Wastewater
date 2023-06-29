@@ -363,7 +363,7 @@ OffsetHeatmap <- function(method, timePeriods,wasterv,caserv,list,lod=FALSE,week
                   y = case_when(regionsizemax < 5 ~ (regionsizemin + (regionsizemax - regionsizemin) / 2)+1,
                                 .default = (regionsizemin + (regionsizemax - regionsizemin) / 2)-1), 
                   label = case_when(is.na(rcor) ~ paste(NA),
-                                    .default = paste(rd(as.numeric(rcor), digits=2)))),
+                                    .default = paste(round(as.numeric(rcor), digits=2)))),
               size = 3) +
     scale_fill_gradient2(low = "#D16BA5", mid = "#86A8E7", high = "#5FFBF1", na.value = "white" ) + 
     xlab(case_when(timePeriods == 0 ~ paste("Variants (over 50% of population)"),
