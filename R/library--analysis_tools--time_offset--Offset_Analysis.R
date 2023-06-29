@@ -149,17 +149,17 @@ OffsetDF_Plot <- function(data,title){
 #' data(Covariants_data, package = "DSIWastewater")
 #' VariantPlot(Covariants_data)
 VariantPlot <- function(covar){
-covar$category <- row.names(covar)
-onlycovar <- covar[-c(1,2)]
-mdfr <- melt(onlycovar, id.vars = "category")
-
-p <- ggplot(mdfr, aes(factor(category,levels = c(1:69)), value, fill = variable)) +
-  geom_bar(position = "fill", stat = "identity") +
-  scale_y_continuous(labels = percent) +
-  xlab("Week") +
-  ylab("Covariant Percent")
-
-return(ggplotly(p))
+  covar$category <- row.names(covar)
+  onlycovar <- covar[-c(1,2)]
+  mdfr <- melt(onlycovar, id.vars = "category")
+  
+  p <- ggplot(mdfr, aes(factor(category,levels = c(1:69)), value, fill = variable)) +
+    geom_bar(position = "fill", stat = "identity") +
+    scale_y_continuous(labels = percent) +
+    xlab("Week") +
+    ylab("Covariant Percent")
+  
+  return(ggplotly(p))
 }
 
 ###### Correlation Offset Heatmap
@@ -174,31 +174,31 @@ return(ggplotly(p))
 #'  
 heatmapcorfunc <- function(cordata){
   
-    rsquareddf <- data.frame(matrix(ncol = 1, nrow = 0))
-    for(j in 0:14){
-      for(i in 0:14){
-        wctemplm <- cordata %>% 
-          mutate(tempsum = roll_sum(conf_case,i,align = "left",fill = NA) + 
-                   roll_sum(conf_case,j,align = "right",fill = NA) + 
-                   roll_sum(conf_case,1,align = "center",fill = NA)) 
-        
-        templm <- lm(log(tempsum+1)~log(geo_mean+1), data=wctemplm)
-        new <- c(i,j,summary(templm)$r.squared)
-        rsquareddf = rbind(rsquareddf,new)
-      }
+  rsquareddf <- data.frame(matrix(ncol = 1, nrow = 0))
+  for(j in 0:14){
+    for(i in 0:14){
+      wctemplm <- cordata %>% 
+        mutate(tempsum = roll_sum(conf_case,i,align = "left",fill = NA) + 
+                 roll_sum(conf_case,j,align = "right",fill = NA) + 
+                 roll_sum(conf_case,1,align = "center",fill = NA)) 
+      
+      templm <- lm(log(tempsum+1)~log(geo_mean+1), data=wctemplm)
+      new <- c(i,j,summary(templm)$r.squared)
+      rsquareddf = rbind(rsquareddf,new)
     }
-    
-    names(rsquareddf)[1]="left" #(future)
-    names(rsquareddf)[2]="right" #(past)
-    names(rsquareddf)[3]="rsquared"
-    heatmapcor <- rsquareddf %>% ggplot(aes(x = left, y = right, fill = rsquared))+
-      geom_tile() + 
-      scale_fill_gradientn(colours=rainbow(7)) + 
-      xlab("Future Days") + 
-      ylab("Past Days") + 
-      ggtitle("Correlation of past and future days of N1 and N2 to current day cases")
-    
-    return(heatmapcor)
+  }
+  
+  names(rsquareddf)[1]="left" #(future)
+  names(rsquareddf)[2]="right" #(past)
+  names(rsquareddf)[3]="rsquared"
+  heatmapcor <- rsquareddf %>% ggplot(aes(x = left, y = right, fill = rsquared))+
+    geom_tile() + 
+    scale_fill_gradientn(colours=rainbow(7)) + 
+    xlab("Future Days") + 
+    ylab("Past Days") + 
+    ggtitle("Correlation of past and future days of N1 and N2 to current day cases")
+  
+  return(heatmapcor)
 }
 
 
@@ -232,8 +232,8 @@ OffsetHeatmap <- function(method, timePeriods,wasterv,caserv,list,lod=FALSE,week
     regionslist <- c("all", unique(wasterv$regions))
   } else {#pop
     populationtemp <- pop_data %>% mutate(popgroup = case_when(pop >= 100000 ~ "Large",
-                                                                 pop >= 10000  ~ "Medium",
-                                                                 .default = "Small")) %>% subset(select = c(site,popgroup))
+                                                               pop >= 10000  ~ "Medium",
+                                                               .default = "Small")) %>% subset(select = c(site,popgroup))
     
     wasterv <- merge(wasterv,populationtemp, by.x = "site") %>% mutate(regions = popgroup)
     
@@ -363,8 +363,8 @@ OffsetHeatmap <- function(method, timePeriods,wasterv,caserv,list,lod=FALSE,week
                   y = case_when(regionsizemax < 5 ~ (regionsizemin + (regionsizemax - regionsizemin) / 2)+1,
                                 .default = (regionsizemin + (regionsizemax - regionsizemin) / 2)-1), 
                   label = case_when(is.na(rcor) ~ paste(NA),
-                                    .default = paste(rd(as.numeric(rcor), digits=2)))),
-                                    size = 3) +
+                                    .default = paste(round(as.numeric(rcor), digits=2)))),
+              size = 3) +
     scale_fill_gradient2(low = "#D16BA5", mid = "#86A8E7", high = "#5FFBF1", na.value = "white" ) + 
     xlab(case_when(timePeriods == 0 ~ paste("Variants (over 50% of population)"),
                    .default = paste(timePeriods, " Month Periods (Since August 1st 2020)"))) + 
@@ -374,10 +374,10 @@ OffsetHeatmap <- function(method, timePeriods,wasterv,caserv,list,lod=FALSE,week
     ggtitle(case_when(lod == TRUE ~ paste(method, "values above LOD"),
                       .default = paste(method, "using all N1/N2") ) )  +
     labs(fill="") #Days wastewater is offset from cases 
-    geom_text(aes(x = (as.Date(start + firstday) + (as.Date(end + firstday) - as.Date(start + firstday)) / 2),
-                        y = .75, 
-                        label = paste(covarnames[time]), angle = 30), size = 2)
-    
-    return(heatmaprvt)
+  geom_text(aes(x = (as.Date(start + firstday) + (as.Date(end + firstday) - as.Date(start + firstday)) / 2),
+                y = .75, 
+                label = paste(covarnames[time]), angle = 30), size = 2)
+  
+  return(heatmaprvt)
 }
 

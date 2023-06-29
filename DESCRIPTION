@@ -28,4 +28,4 @@ Suggests: knitr, rmarkdown, testthat, digest, vdiffr
 VignetteBuilder: knitr
 Depends: 
     R (>= 3.50)
-LazyData: false
+LazyData: true
