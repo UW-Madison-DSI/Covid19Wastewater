@@ -42,6 +42,7 @@ package_update <- function(path = ".", update_examples = F, update_test = F){
   setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
   #setwd(path)
   #file.remove("DSIWastewater_0.5.1.tar.gz")
+  #Delete R folder and all .R folders in it
   unlink("R", recursive = T, force = T)
   dir.create("R")
   Move_struct_R("library", "R")
