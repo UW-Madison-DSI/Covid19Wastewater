@@ -23,7 +23,8 @@ Imports:
   partykit,
   data.table,
   forecast,
-  anytime
+  anytime,
+  gridExtra
 Suggests: knitr, rmarkdown, testthat, digest, vdiffr
 VignetteBuilder: knitr
 Depends: 
