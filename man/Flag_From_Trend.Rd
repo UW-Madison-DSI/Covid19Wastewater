@@ -24,3 +24,15 @@ DF with a new column 'flagged_outlier' that contains if the column is an outlier
 Flag values as outliers based on error from estimated trend
 This function can be done within group if the data fed into it was grouped
 }
+\examples{
+data("Example_data", package = "DSIWastewater")
+smoothing_df <- Example_data\%>\%
+select(site, date, N1, N2)\%>\%
+filter(N1 != 0, N2 != 0)\%>\%
+mutate(N1 = log(N1), N2 = log(N2), N12_avg = (N1 + N2) / 2)
+df_data <- loessSmoothMod(smoothing_df, "N12_avg", "N12_avg_loess", Filter = NULL)
+classied_data_trend <- df_data\%>\%
+ group_by(site)\%>\%
+ Flag_From_Trend( N12_avg, N12_avg_loess)\%>\%
+ select(site, date, N12_avg, flagged_outlier)
+}

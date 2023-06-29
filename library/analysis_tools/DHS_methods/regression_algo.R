@@ -113,8 +113,6 @@ runRegressionAnalysis <- function(DF,
 #' site, last date, timespan, number of rows, model slope and significance,
 #' and predicted percent change, and what linear model was used
 #' @keywords internal
-#' @examples 
-#' 
 regressionInnerLoop <- function(Formula, DF, Keep = NULL){
   IndiVar <- as.character(Formula)[2]
   DepVar <- as.character(Formula)[3]

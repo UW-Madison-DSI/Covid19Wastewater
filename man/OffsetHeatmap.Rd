@@ -4,7 +4,7 @@
 \name{OffsetHeatmap}
 \alias{OffsetHeatmap}
 \title{Outputs a heatmap of the offset for variant / time windows and population size / region
-Must have pop_data, covarstarts, covarends loaded}
+Must have pop_data, covarstarts, covarends, covarnames loaded}
 \usage{
 OffsetHeatmap(method, timePeriods, wasterv, caserv, list, lod = FALSE, week)
 }
@@ -28,13 +28,13 @@ ggplot plot object
 }
 \description{
 Outputs a heatmap of the offset for variant / time windows and population size / region
-Must have pop_data, covarstarts, covarends loaded
+Must have pop_data, covarstarts, covarends, covarnames loaded
 }
 \examples{
 data(WasteWater_data, package = "DSIWastewater")
 data("Case_data", package = "DSIWastewater")
 data(pop_data, package = "DSIWastewater")
-OffsetHeatmap("kendall_offset",0,waste,cases,"pop",TRUE,"Both tests",TRUE)
-OffsetHeatmap("kendall_offset",0,waste,cases,"pop",TRUE,"qPCR",TRUE)
+OffsetHeatmap("kendall_offset",0,waste,cases,"pop",TRUE,TRUE)
+OffsetHeatmap("kendall_offset",0,waste,cases,"pop",TRUE,TRUE)
 
 }
