@@ -15,8 +15,8 @@
 #' OffsetDFMaker(10,as.Date("2020-08-01"), as.Date("2023-01-01"), Case_data, WasteWater_data)
 OffsetDFMaker <- function(length, startdate, enddate, casesdf, wastedf){
   #Subset data based on given dates
-  wastedf <- subset(wastedf, anydate(date)> anydate(startdate) & anydate(date) < anydate(enddate))
-  casesdf <- subset(casesdf, anydate(date)> anydate(startdate) & anydate(date) < anydate(enddate))
+  wastedf <- subset(wastedf, as.Date(date)> as.Date(startdate) & as.Date(date) < as.Date(enddate))
+  casesdf <- subset(casesdf, as.Date(date)> as.Date(startdate) & as.Date(date) < as.Date(enddate))
   #Make columns needed
   wastedf <- wastedf%>% 
     group_by(date)%>% 
@@ -262,8 +262,8 @@ OffsetHeatmap <- function(method, timePeriods,wasterv,caserv,list,lod=FALSE,week
   
   for(j in regionslist){
     for(i in 1:length(start)){
-      wastervtemp <- subset(wasterv, anydate(date)> anydate(start[i]) & anydate(date) < anydate(end[i]))
-      caservtemp <- subset(caserv, anydate(date)> anydate(start[i]) & anydate(date) < anydate(end[i]))
+      wastervtemp <- subset(wasterv, as.Date(date)> as.Date(start[i]) & as.Date(date) < as.Date(end[i]))
+      caservtemp <- subset(caserv, as.Date(date)> as.Date(start[i]) & as.Date(date) < as.Date(end[i]))
       
       if(lod){
         wastervtemp <- wastervtemp %>% filter(N1 > n1_lod)
