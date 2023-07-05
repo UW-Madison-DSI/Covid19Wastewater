@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Example Data Vignette</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+
+
+<style type="text/css">
+  code {
+    white-space: pre;
+  }
+  .sourceCode {
+    overflow: visible;
+  }
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Example Data Vignette</h1>
+
+
+
+<p>#Example data This data comes from our wastewater and case data
+merged together by site and date. Then filtered with by 3 sites; Green
+Bay, Janesville, and Mauston. Then a new column is added; geo_mean which
+is the geometric mean of N1 and N2. This gives roughly 500 rows to work
+with for examples across different sized sites over a large time
+frame.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(DSIWastewater)</span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(Example_data, <span class="at">package =</span> <span class="st">&quot;DSIWastewater&quot;</span>)</span></code></pre></div>
+<pre><code>## Warning in data(Example_data, package = &quot;DSIWastewater&quot;): data set
+## &#39;Example_data&#39; not found</code></pre>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(Example_data)</span></code></pre></div>
+<pre><code>##         date      site tests prob_case conf_case prob_death conf_death
+## 1 2020-08-23 Green Bay   365         0         2          0          0
+## 2 2020-08-24 Green Bay   142         0        18          0          0
+## 3 2020-08-30 Green Bay   290         0         0          0          0
+## 4 2020-08-31 Green Bay   194         2        37          0          0
+## 5 2020-09-06 Green Bay   187         0        13          0          0
+## 6 2020-09-07 Green Bay   318         0         0          0          0
+##        regions    county    pop      N1     N2 PMMoV hf183   flow tss  ph
+## 1 Northeastern Green Bay 189000  7449.6 4464.0    NA    NA 18.363 300 7.6
+## 2 Northeastern Green Bay 189000  7891.2 4732.8    NA    NA 22.004 398 7.1
+## 3 Northeastern Green Bay 189000  5023.2 4586.4    NA    NA 19.903 272 7.3
+## 4 Northeastern Green Bay 189000  8743.2 4524.0    NA    NA 22.663 186 7.4
+## 5 Northeastern Green Bay 189000  8409.6 2736.0    NA    NA 16.496 408 7.1
+## 6 Northeastern Green Bay 189000 12072.0 6146.4    NA    NA 17.660 534 7.5
+##   conductivity temperature     epaid sample_id            pcr_type
+## 1           NA          NA WI0065251       260 droplet digital PCR
+## 2           NA          NA WI0065251       261 droplet digital PCR
+## 3           NA          NA WI0065251       276 droplet digital PCR
+## 4           NA          NA WI0065251       277 droplet digital PCR
+## 5           NA          NA WI0065251       284 droplet digital PCR
+## 6           NA          NA WI0065251       285 droplet digital PCR
+##    n1_sars_cov2_units n1_sars_cov2_lod  n2_sars_cov2_units n2_sars_cov2_lod bod
+## 1 copies/L wastewater            FALSE copies/L wastewater            FALSE 210
+## 2 copies/L wastewater            FALSE copies/L wastewater            FALSE 310
+## 3 copies/L wastewater            FALSE copies/L wastewater            FALSE 230
+## 4 copies/L wastewater            FALSE copies/L wastewater            FALSE 210
+## 5 copies/L wastewater            FALSE copies/L wastewater            FALSE 210
+## 6 copies/L wastewater            FALSE copies/L wastewater            FALSE 240
+##   do      created_on last_modified_on lab_submitter n1_lod n1_loq n2_lod n2_loq
+## 1 NA 12/4/2020 17:38   1/7/2022 13:55           UWM 2236.8 7449.6 3724.8 6700.8
+## 2 NA 12/4/2020 17:38   1/7/2022 13:55           UWM 2371.2 7891.2 3945.6 7104.0
+## 3 NA 12/4/2020 17:38   1/7/2022 13:55           UWM 2337.6 7792.8 3895.2 7015.2
+## 4 NA 12/4/2020 17:38   1/7/2022 13:55           UWM 2325.6 7764.0 3878.4 6986.4
+## 5 NA 12/4/2020 17:38   1/7/2022 13:55           UWM 2068.8 6897.6 3448.8 6208.8
+## 6 NA 12/4/2020 17:38   1/7/2022 13:55           UWM 2128.8 7089.6 3547.2 6384.0
+##   bcov_rec_rate bcov_spike_conc zipcode state capacity_mgd sample_type
+## 1            NA              NA      NA  &lt;NA&gt;           NA        &lt;NA&gt;
+## 2            NA              NA      NA  &lt;NA&gt;           NA        &lt;NA&gt;
+## 3            NA              NA      NA  &lt;NA&gt;           NA        &lt;NA&gt;
+## 4            NA              NA      NA  &lt;NA&gt;           NA        &lt;NA&gt;
+## 5            NA              NA      NA  &lt;NA&gt;           NA        &lt;NA&gt;
+## 6            NA              NA      NA  &lt;NA&gt;           NA        &lt;NA&gt;
+##   composite_freq sample_matrix sample_location sample_location_specify
+## 1           &lt;NA&gt;          &lt;NA&gt;            &lt;NA&gt;                    &lt;NA&gt;
+## 2           &lt;NA&gt;          &lt;NA&gt;            &lt;NA&gt;                    &lt;NA&gt;
+## 3           &lt;NA&gt;          &lt;NA&gt;            &lt;NA&gt;                    &lt;NA&gt;
+## 4           &lt;NA&gt;          &lt;NA&gt;            &lt;NA&gt;                    &lt;NA&gt;
+## 5           &lt;NA&gt;          &lt;NA&gt;            &lt;NA&gt;                    &lt;NA&gt;
+## 6           &lt;NA&gt;          &lt;NA&gt;            &lt;NA&gt;                    &lt;NA&gt;
+##   wwtp_comments concentration_method extraction_method lod_ref quant_stan_type
+## 1          &lt;NA&gt;                 &lt;NA&gt;              &lt;NA&gt;    &lt;NA&gt;            &lt;NA&gt;
+## 2          &lt;NA&gt;                 &lt;NA&gt;              &lt;NA&gt;    &lt;NA&gt;            &lt;NA&gt;
+## 3          &lt;NA&gt;                 &lt;NA&gt;              &lt;NA&gt;    &lt;NA&gt;            &lt;NA&gt;
+## 4          &lt;NA&gt;                 &lt;NA&gt;              &lt;NA&gt;    &lt;NA&gt;            &lt;NA&gt;
+## 5          &lt;NA&gt;                 &lt;NA&gt;              &lt;NA&gt;    &lt;NA&gt;            &lt;NA&gt;
+## 6          &lt;NA&gt;                 &lt;NA&gt;              &lt;NA&gt;    &lt;NA&gt;            &lt;NA&gt;
+##   quant_stan_ref inhibition_method n1_sars_cov2_error n1_ntc_amplify
+## 1           &lt;NA&gt;              &lt;NA&gt;                 NA           &lt;NA&gt;
+## 2           &lt;NA&gt;              &lt;NA&gt;                 NA           &lt;NA&gt;
+## 3           &lt;NA&gt;              &lt;NA&gt;                 NA           &lt;NA&gt;
+## 4           &lt;NA&gt;              &lt;NA&gt;                 NA           &lt;NA&gt;
+## 5           &lt;NA&gt;              &lt;NA&gt;                 NA           &lt;NA&gt;
+## 6           &lt;NA&gt;              &lt;NA&gt;                 NA           &lt;NA&gt;
+##   n1_num_ntc_amplify n1_num_no_target_control n2_sars_cov2_error n2_ntc_amplify
+## 1                 NA                       NA                 NA           &lt;NA&gt;
+## 2                 NA                       NA                 NA           &lt;NA&gt;
+## 3                 NA                       NA                 NA           &lt;NA&gt;
+## 4                 NA                       NA                 NA           &lt;NA&gt;
+## 5                 NA                       NA                 NA           &lt;NA&gt;
+## 6                 NA                       NA                 NA           &lt;NA&gt;
+##   n2_num_ntc_amplify n2_num_no_target_control avg_sars_cov2_conc
+## 1                 NA                       NA                 NA
+## 2                 NA                       NA                 NA
+## 3                 NA                       NA                 NA
+## 4                 NA                       NA                 NA
+## 5                 NA                       NA                 NA
+## 6                 NA                       NA                 NA
+##   avg_sars_cov2_below_lod inhibition_detect inhibition_adjust
+## 1                      NA              &lt;NA&gt;              &lt;NA&gt;
+## 2                      NA              &lt;NA&gt;              &lt;NA&gt;
+## 3                      NA              &lt;NA&gt;              &lt;NA&gt;
+## 4                      NA              &lt;NA&gt;              &lt;NA&gt;
+## 5                      NA              &lt;NA&gt;              &lt;NA&gt;
+## 6                      NA              &lt;NA&gt;              &lt;NA&gt;
+##   analytical_comments sample_collect_time test_result_date equiv_sewage_amt
+## 1                &lt;NA&gt;             NA secs             &lt;NA&gt;               NA
+## 2                &lt;NA&gt;             NA secs             &lt;NA&gt;               NA
+## 3                &lt;NA&gt;             NA secs             &lt;NA&gt;               NA
+## 4                &lt;NA&gt;             NA secs             &lt;NA&gt;               NA
+## 5                &lt;NA&gt;             NA secs             &lt;NA&gt;               NA
+## 6                &lt;NA&gt;             NA secs             &lt;NA&gt;               NA
+##   geo_mean
+## 1 5766.716
+## 2 6111.258
+## 3 4799.834
+## 4 6289.216
+## 5 4796.735
+## 6 8613.904</code></pre>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(Example_data, <span class="fu">aes</span>(<span class="at">x=</span>date, <span class="at">y=</span>geo_mean, <span class="at">color =</span> site)) <span class="sc">+</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>()</span></code></pre></div>
+<pre><code>## Warning: Removed 24 rows containing missing values (`geom_point()`).</code></pre>
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASAAAAEgCAMAAAAjXV6yAAACHFBMVEUAAAAAADoAAGYAOmYAOpAAZrYAujgzMzM6AAA6ADo6AGY6OmY6OpA6ZpA6ZrY6kJA6kNtNTU1NTVlNTWNNTWRNTW5NTW9NTY5NXE1NXoNNZH9NaatNbqtNechNg45NjqJNjrVNjshQTU1TTU1TTYNZTU1ZTVlZTWlZTY5ZXk1eTU1eTW5eTY5eaatenc1eneRhnP9jTU1kTU1kTV5kTW5kTY5kWU1knZ1kov9kq+RmAABmADpmAGZmOgBmOjpmOpBmZjpmZmZmZrZmtv9pTWluTU1uTVluTWNuTW5uTXluTY5ubo5ubqtujoNunZ1uq+Rutf9vTU1vTVlvTW55TU15TV55TWR5TY55ck15eU15tat5yP9/aU2DTU2Djm6OTU2OTVmOTV6OTWOOTWSOTWmOTW6OTY6Obk2ObquOeU2Ooo6OtZ2OtauOyMiOyP+O5P+QOgCQOjqQOmaQZgCQZpCQkGaQtpCQ27aQ2/+dnW6ieU2ijk2rY1mraU2rbk2rbm6rjk2rtY6ryKurzaur5Mir5OSr5P+1jk22ZgC2Zjq2tma225C22/+2/9u2///IeU3Ijk3IyI7I5KvI/8jI/+TI///Nq27bkDrbkGbb25Db/7bb/9vb///knV7kq2Pkq2Tkq27k///r6+vy8vL4dm3/tmb/yI7/25D/27b/29v/5I7/5J3/5Kv//6L//7X//7b//8j//9v//+T///9HW9SJAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAOfklEQVR4nO2di38cVRXHt5WMaa2YrVRQUImgVnwwvjWCiDGSxkrwicijKhYV7ZKiQBSp0pYYBGsIxFWMGuIki7qabOYf9J77mLnzPDuzs/M8v0+zjzszzc43555z7z1zdlo2KVatoj9A2UWAEBEgRAQIEQFCRIAQZQFoW8kOvAh7lXxjkSJAiAgQIgKEiAAhIkCICBAiAoSIACEqAJBpmgQoBpBpOoQIEAHiIkCIkgGqkw86uNDxN+2fad/wGmxpn1hRbQkB1SiKbbX9gADZ1rRtr3XsXQDF1VhA/a/8qMNt5toN9m7/kQ3x0F/Y4K8dNRXQwW+egy62tshtRgDqn37N3j+70j/9W9nF3siU00ctRjGAthahQzEcwGa3DVqEfgWA5jqclVBDLYgB4IDOMDBgLV4L4k9yz4YC2hI247gbjw/6MQECHUgf5AasgwuLKoo1vovZEhDrY+6QR42DVGjjai6gIUWAEBEgRAQIEQFCRIAQESBEBAgRAUJEgBARIEQECBEBQkSAEBEgRAQIEQFCRIAQESBEBAgRAWqyyIIQESBEBAgRAUJEgBARIEQECBEBQkSAEBEgRAQIEQFCRIAQESBEBAgRAUJEgBARIEQECBEBQkSAEBEgRDGAdttaPYYS1aw66i9siFJDXVSz6hVAoprVGHFjoZrVKPXnGASqWY0TY0E1q7Fa61DNapRkb6Ka1Uhtya5FNaujigAhKhhQ78iy/fqLGZxHqGoAyBaMxiQChKjKgHqTrVZrltF5kr2YsgdLrdbhKxmcj0cVBsTNpjc5y57h5WBpwra7V21mcEK6qgzoqDAXCWgHrGdvZjaDE9JVYUD2aqvFjEYB6ra4pjI4IV1VBgQGw7yOApR57+KqNiDep1QXOzSWSOYBxMNC8lBQECDudAQdcD2DJWZC2VPSAfE4kEIFAbJ32B+TAQHzWWXeCMJ89lakA0obAooClIu8FkSAAvL4oJ10A9HGAGJBs0pOOh9VPcyPXQQIUYXHQfnIG8WmWCBLHuzTMjAMYxRA/wxXShBR8o+DVqfsnfFMagIyQCMcXwyg7kTyYJ/SgjigSlmQvcrpJJ4WNwcQc0JsVpN4PpMSUPV8UFqlBTRiFCNAJQTUbbVmk6/MNQfQ6lWvzswmXxVqDCAW5iHS5xXmxw0I1tOQv7WYOsQOjGsByLKsICA4DQjLceKZo/i0rKeLdaGL7c0kzZwUDciydEJyq1j96x3b7L3p9sNXePpDZkFY48+l2XBAg/PL3JTYNGIWDogBxK0yeWaplIBUWhFyrzbMoNgcQT71JtV8SljQsc29zy3D6x3W7j/7OoT5cEDKFAACANi77Yp8ghbBT/ggEbZh+x2bz/u7Wx0AhfogTmGSTQs4oBmeAJFPGiDexaAzrsIqz+D8U3f4xzgVXg+Kj2LCBzGb4YBu46ckn3yAmOuB2ASvu3cG/EuF82JImOc5xB1hL2oVRzz5AEmIEMxCAlpheTG4T914x0HQHw5LFKxzAS/x5PdBs3wK8YbbZ+3B44HOU1RejN/psHQj6d7Vgaai8mKlBNQNWekpykmXElCYfIv2qf6PNIBy8EHZqMIXLxRhQQQoIK8POqp7n/5cO3Ab0TLVrBbRxfSLF6DSpz+/4t29TDWrBViQR7tQh7nWKW/NapGA5KRF1YuVs2a1BICgfK68NavFA9o/s2iX+D6rhQMCM5FcbLuENatFAxJ8Snyf1aIBiTv1dspbs4oC8g7rwsX2Ef+SAxpehQMyDCMtIFsxitpaB0D8OpoIQCKfoxI9MvuzA4NhWNUfnH/SsSC5bThAyVRiQDKfoxI9Iu0Df/7uBE+HHfuLA0hmhuIBdSuZF4uzINvWEj1a9gdOlhGZcnyQ3BYPqCuyj1XLrMb6IJ7PUYBmZPnLJH889tfzyy4guS0OkFwPql5uPjqKyXyOAuRaCOtwzAEd23QBRbjdugKCHqMyPEecVKFI+4A3gp8u8yY93QeFXd9biy4WZkE7osOIfI4CJLM/q2JJh2fC9CgWdnVmHZx0VBfLRHUI8wQoXEUAoos4A6KLOBHV4hrFugKqXilCvhdxVrCYJd+LOKsIKJ0IEKKUgKrng1TqGb2C36e0gCoXxZzJatqrOfNVERakljuSRfrGWFCtAPUmoResRpzIkAkPO2o9KNl8rHBApmkGAR1586a99/kIECkBiXHQbOjVnjFKyyCrKMYvCA0AOvqFZbt3p5v5kWtmPOXDUzz+0p9hAKVTSkCZjYMiAP1+1v7zk27mx12WhoIfZ43VLf1pHKAXrh48/kJY5se2FSpVhRDT4eoAKNwHHf3DL179YiDzo1I+wqQG58sMaLwjaXbSzz8xFcj8wCaR7Si/BY05zB+9Ikp9ZOYH+haL0jLlo/mgBgOSdGQlD3t6CzMakfIZLDlRrKmAslJBgKBSQ3NBBMi3EeKyHsQIEAEiQDFKDmjbx4cABTeODigfFQXIIEBDABptHJSPCBCi7AFBzxnOB404ks5HmQOKMo3spxr5KBYQ3CTTJ7RmtUmAdoM3osVrVocEBJOxqgNaO3ERLChpzepQPoivklYdkOxiY6lZFd9MUQWhgMZTs1ojCxpPzaoBs9WaAEpes8odcDygmkw1lA9KVrMqug8CyEeoyoAS16wOA8gwagFoSCUHJOiE7dYEQEP4IMlntMxqPipmNi8AaZ2MAAV90Lap9TICFLaR8xGECFDoRgIUD8iyCFA8IPJBmA+iKJYEEH9DgCIBiXd1ByTPGAfEd/SMpBsBSNnEMANFPw0C5Ifhp9EEHzQkICMUUNT+dQIUbhoRgJBhdi0BqeuihrOg5uXmzSEBbcvlMstZOWoOoEjT8DOQfJo11VB8hhkoMj6NAeRKdjBMsI8DKNMPkL3GEcViw7yTz2CAGuqDok7Twwe8NBAK6X/B6UqRyhKQ7lLUNCsckHBW4WkfZ7DpzmSL1JgAORP1UEBOtNM2OvurDe4OGXzE9MoWkIMlEpDIZ7A9fVfau5OUGgPSHHAUIDEGMIOlCHrHEs31BaROfzsISDmeaEBu16uhD9p2+QTjtwQkNgXckDOB1QC5jr5IZQnIGBaQCmFaL3LxhvixIpUhIGkCHj4BH+RYjs8PewcARn0BOUE8DJDrv8W564DUweq/kICMGgJyLcQHSCPAX1mWuFRRAwThX5qgtq5WpDL2QaYGwD8e9hH0TOdt1wOZyk2ZNQQkzi26F8EWSDhbwoBMDZBwXobrxk3n8pgMPmJ6jQGQGQWI+x8LOhb7gZmqx4I8YKQBycupi1R2gAxD6x4h7sgBJObxHJBz/Yvtxjd1eN0ACRL8LL2OSJvhS0Cw2ioBKUK2u1xrapRqB8h1s4apvIjjal1klpTpehwvIMcKeZTL4COmV9aADAeQr7NxQMxmLGU/IEN5ZstvdJoZ1QSQZ63QHc14AIFvdu2HAxIwLAeHtECjxoD4aQf4ACAzAMjSaAjnpazPcI6uTZjncHgYtyzbUufr8HEAGV5Abq/SrU6jW15AsiwjtNGzTQISZ+z6X93ZCgOBwOVVPCAV4opUNCBVnhrW6N22DRes+iRDvROaLG5QlqlD2haELMezmz5C5QYkS8Mia1bdkugQPj47EZZlWJ4QJg8zLOF09IUknVBpAamqwvCaVVVQJ2pWhwPELcsBZMvDJCAl8csNnp/VGgpTzJ16RXlqaM2qfJJ7ClMwgmBCADnWwwfXEpqatZr+W9DLeUiRQi1ouJpVS7iTMG/kI8T3cBlohIILbOpVkUJ9UHjNqs8H+c9piKs7kmwsUnFRTJanhtSsqm1CDQWkDXlCa1b946DmARpaBAgRAUJEgBARIEQEKLHCvjEnpG24ptC23ESAEBEgRAQI0XgA1UgECBEBQkSAEBEgRKMC6s+12x1n+UO8g8eTG6KNL0i2O9D03YUNsRtv6/yNL+J+Rm/iR7In7ciH+F7q68CcVZaQL1Edk0YEBOuu/fkVmQYS7y6fXdltH3+Mt9144dzZX07375p/tn28fe0rfLeDC59Y2XrXXWy/S19+x5cecJvmLz/89fbbPv7B57Qj51f6Cy/d8CexOOdkm0K+RHVcGhHQLnzctY5cghXvHp1eO3Hxo/fztlP3vjTNNvzxuhM/OX7fyZf5bi8/PM0ef/XO3en9b96z9km36elHr3vrxYWn7zunHbnW4WvgwmDUSq/8EtVclIEP8i7ii6d/v+8x3vb9D8OGy2BZp771oXW+2yV4/ME82+3v11wWO7hN/VPf/sYl75HMZuTyrvtrKtPFbLFM7aaB4B17fObmDd72vevZww8fYG3/ueXTrK/Abs+yx/997VabPXzkwle9TWy3Dyx6j2T45uSar/trKgRo/8yi9qfl79jj3Qsb/U+12+8GO/jvx26FppvXF9ZP/67dvoYZyP6Z96+wprc/uNj3NLG293zW9h4pqay129NVtCD42lvXOYh37FGlhk7du9GfOwkbfrawviB90CPr7B1r/85NHXmkbGK7vfek+HZU50jIqvBv/tR+TYUACSIqDeTwgRPgbTdeuHvuoWmBbH3hFb7bwTM3dbam+3M/veUedaRoAj6AST/SPvj19Y5/c7NNlQG0xYcpcuQi34mhy/1yNPNg29FJOQ76R1vTOa1JHNnu6EeyYN928k7VGwfVXwQIEQFCRIAQESBEBAhRjoD0e7S//mJ+v3c0FQOodyTR7ciLFAFClBOgvZnWoScOi3u/t6bgccoeLPGb5pZc+QDam5liP4f5janhjstgQYOlCfY65k7v5VA+gHjvYmD+BTgYHQDE2zixUisfQNxQ+C2nd1gXO8QBdVtcU7l8gPTKF9DezKFlZUHl711cOXaxHXG3d3tHWBB7yuV3j6i8nPQEd9IApTd5aBlcz2CJ0So/pZzD/CrzQE8xOqutCR7mS8+H5mKYCBAiAoSIACEiQIgIECIChIgAISJAiAgQov8DMayeOPtXNo4AAAAASUVORK5CYII=" /><!-- --></p>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

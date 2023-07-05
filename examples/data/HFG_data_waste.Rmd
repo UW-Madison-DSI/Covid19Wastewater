@@ -27,9 +27,11 @@ library(ggplot2)
 data(HFGWaste_data, package = "DSIWastewater")
 ```
 
-The data is broken down by site, date, Filter and well. Site is where is was collected from a range of 10 locations. Filter and Well are what level of replicates it is. Filter is the High level category representing the different collections. Well contains the info about what technique batch it was. The numbering of the category are arbitrary from day to day.
+The data is broken down by site, date, filter and well. Site is where is was collected from a range of 10 locations. Filter and well are what level of replicates it is. Filter is the high level category representing the different collections. Well contains the info about what technique batch it was. The numbering of the categories is arbitrary from day to day.
 ```{r catagorical variables}
-
+#fix titles
+#fix overploting points and axis
+#drop well category in plot
 HFGWaste_data%>%
   ggplot(aes(x = date, y = N1, color = as.factor(Filter), shape = as.factor(Well)), size = .5)+
   geom_point()+
@@ -39,6 +41,9 @@ HFGWaste_data%>%
 
 Otherwise the signals measured were N1 and N2, different genes of Covid-19, PMMOV, BCoV, HF183, and CrP, which are suppose to functions as normalizes. These signals can have a couple of different companion columns. The Ct version is what the machine measured which was the number of spins to detect the genes. This is an exponential decay transformation to the Base column. The other extra column is the LOD which says if the measurement was bellow the Labs level of detection. This might mean the exact number is less reliable.
 ```{r explain / show use case and link to other vignettes}
+#change to table form
+#over explain is better then under explain
+#have explanation as an appendix
 head(HFGWaste_data)
 ```
 

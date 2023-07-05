@@ -1,32 +1,58 @@
 ---
-title: "Time Series Offset"
-author: "Marlin"
+title: "Time Series"
+author: "Kyllan"
 date: "2023-06-15"
-vignette: >
-  %\VignetteIndexEntry{Time Series Offset}
-  \usepackage[utf8]{inputenc}
-  %\VignetteEngine{knitr::rmarkdown}
-output:
-  pdf_document: default
-  html_document: default
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(DSIWastewater)
+library(dplyr)
+library(RcppRoll)
+library(tidyverse)
 ```
 
-## placeholder
+## Time Series and Offset Analysis
 
-This vignette seeks to cover diffrent methods for dhs analysis
+How to find the offset between waste and case data
 
+
+Pre merged waste and case data:
 ```{r load and show data}
+data(Case_data, package = "DSIWastewater")
+totalcases <- Case_data %>% 
+  group_by(date) %>% 
+  summarise(sum_case = sum(conf_case)) %>% 
+  mutate(conf_case = roll_sum(sum_case,10,align = "right", fill = NA))
 
+data(WasteWater_data, package = "DSIWastewater")
+
+data(Covariants_data, package = "DSIWastewater")
+
+data(pop_data, package = "DSIWastewater")
+
+data(Example_data, package = "DSIWastewater")
 ```
 
 ```{r explain all / most relavent functions}
+offsetDF <- OffsetDFMaker(10,as.Date("2020-08-01"), as.Date("2023-01-01"), Case_data, WasteWater_data)
 
+OffsetDF_Plot(offsetDF, "All Wisconsin data over all time")
+
+
+heatmapcorfunc(example_data)
+
+covarstarts <- c(as.Date("2020-08-17"),as.Date("2021-03-29"),as.Date("2021-07-05"),as.Date("2021-12-20"),as.Date("2022-03-28"),as.Date("2022-05-23"),as.Date("2022-07-04"))
+covarends <- c(as.Date("2021-01-18"),as.Date("2021-05-24"),as.Date("2021-12-06"),as.Date("2022-03-14"),as.Date("2022-05-09"),as.Date("2022-06-06"),as.Date("2022-11-07"))
+covarnames <- c("Robin1","Alpha.V1","Delta","Omicron.21K","Omicron.21L","Omicron.22C","Omicron.22B")
+
+
+OffsetHeatmap("kendall_offset",2,WasteWater_data,Case_data,"pop",TRUE,TRUE)
 ```
 
 
 ```{r explain / show use case and link to other vignettes}
+
+
 ```

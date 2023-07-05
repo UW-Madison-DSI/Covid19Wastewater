@@ -2,7 +2,7 @@
 title: "Variant Data Vignette"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Data Vignette}
+  %\VignetteIndexEntry{Data Covariants Vignette}
   \usepackage[utf8]{inputenc}
   %\VignetteEngine{knitr::rmarkdown}
 editor_options: 
@@ -25,7 +25,7 @@ head(Covariants_data)
 
 
 
-```{r Variant data, eval = FALSE}
+```{r Variant data 2, eval = FALSE}
 data(Covariants_data, package = "DSIWastewater")
 
 Covariants_data$category <- row.names(Covariants_data)
@@ -42,7 +42,7 @@ ggplotly(VariantPercentage)
 ```
 
 
-```{r Variant data, eval = FALSE}
+```{r Variant data 3, eval = FALSE}
 percentages <- mdfr %>%
   group_by(category) %>%
   mutate(sum = sum(value), percent = value/sum, majority = case_when(percent > .5 ~ paste(variable)))

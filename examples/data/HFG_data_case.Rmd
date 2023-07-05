@@ -18,14 +18,13 @@ options(warn=-1)
 
 ## Data placeholder
 
-This vignette covers the traditionaly colletected case data during the high frequency period. This case data has four diffrent metrics of cases over a [week period].
+This vignette covers the traditionally collected case data during the high frequency period. This case data has four different metrics of cases over a period of 55 weeks.
 ```{r load and show data}
 library(DSIWastewater)
 library(dplyr)
 library(ggplot2)
 
 data(HFGCase_data, package = "DSIWastewater")
-
 ```
 The data is broken down by site and date. Site is where is was collected from a range of 10 locations. For each date and site there is four metrics of case data. These generally agree but have some slight variation. In this data a case number of less then 5 is repersented with -999.
 

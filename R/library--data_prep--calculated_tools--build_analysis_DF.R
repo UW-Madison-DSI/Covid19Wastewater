@@ -18,9 +18,9 @@ buildWasteAnalysisDF <- function(df){
   
   ### Note: Replacement small values with LOD/2 (as per 5/20/2022 discussion w/DHS)
   df <- df %>% 
-    mutate(n1_sars_cov2_conc = ifelse(N1, 
+    mutate(N1 = ifelse(N1, 
                                       as.numeric(n1_lod)/2, N1),
-           n2_sars_cov2_conc = ifelse(N2, 
+           N2 = ifelse(N2, 
                                       as.numeric(n2_lod)/2, N2))%>%
     select(
       site,date,pop,  ## site data

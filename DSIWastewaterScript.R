@@ -48,8 +48,7 @@ package_update <- function(path = ".", update_examples = F, update_test = F){
   Move_struct_R("library", "R")
   Move_struct_R("meta_info", "R", add_context = FALSE)
   
-  if(update_examples){
-    print("update vignette")
+  if(update_examples){#build vignette
     unlink("vignettes", recursive = T, force = T)
     dir.create("vignettes")
     Move_struct_R("examples", "vignettes", add_context = FALSE, end_in = "Rmd")
@@ -74,4 +73,4 @@ package_update <- function(path = ".", update_examples = F, update_test = F){
   }
   install(quick=T, build = T, build_vignettes = update_examples, force = T)
 }
-package_update(update_examples = F, update_test = F)
+package_update(update_examples = T, update_test = F)

@@ -11,4 +11,5 @@
 #' @importFrom data.table transpose
 #' @importFrom forecast ets
 #' @importFrom anytime anytime
+#' @importFrom gridExtra grid.arrange
 NULL

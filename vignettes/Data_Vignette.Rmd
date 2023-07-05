@@ -54,6 +54,7 @@ head(HFGCase_data)
 data(pop_data, package = "DSIWastewater")
 head(pop_data)
 ```
+
 ```{r Variant data, eval = FALSE}
 data(Covariants_data, package = "DSIWastewater")
 Covariants_data$category <- row.names(Covariants_data)

@@ -1,0 +1,291 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{lmodern}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same} % disable monospaced font for URLs
+\hypersetup{
+  pdftitle={Longitudinal data},
+  pdfauthor={Marlin},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{Longitudinal data}
+\author{Marlin}
+\date{2023-06-15}
+
+\begin{document}
+\maketitle
+
+\hypertarget{longitudinal-data-source}{%
+\subsection{Longitudinal data source}\label{longitudinal-data-source}}
+
+This vignette covers the wastewater data collected by the Wisconsin
+State Lab of Hygiene. This wastewater data covers 118 weeks of 1-5
+measurements a week from 82 locations. This has 63 columns where 5 are
+categorical variables, 9 are measurement columns and the remaining are
+extra info about the measurements.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#add start and end date?}
+\FunctionTok{library}\NormalTok{(DSIWastewater)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Registered S3 method overwritten by 'quantmod':
+##   method            from
+##   as.zoo.data.frame zoo
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(dplyr)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+## Attaching package: 'dplyr'
+\end{verbatim}
+
+\begin{verbatim}
+## The following objects are masked from 'package:stats':
+## 
+##     filter, lag
+\end{verbatim}
+
+\begin{verbatim}
+## The following objects are masked from 'package:base':
+## 
+##     intersect, setdiff, setequal, union
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(ggplot2)}
+
+\FunctionTok{data}\NormalTok{(WasteWater\_data, }\AttributeTok{package =} \StringTok{"DSIWastewater"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+The data is broken down by site and data. Site is where it was collected
+from. The primary column's are N1 and N2 which are two different genes
+of Covid-19.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#could put in the work to explain all 62 columns but it should be fine for now}
+\NormalTok{WasteWater\_data}\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(site }\SpecialCharTok{==} \StringTok{"Madison"}\NormalTok{)}\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ date), }\AttributeTok{size =}\NormalTok{ .}\DecValTok{3}\NormalTok{)}\SpecialCharTok{+}
+  \FunctionTok{geom\_point}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{y =}\NormalTok{ N1, }\AttributeTok{color =} \StringTok{"N1"}\NormalTok{))}\SpecialCharTok{+}
+  \FunctionTok{geom\_point}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{y =}\NormalTok{ N2, }\AttributeTok{color =} \StringTok{"N2"}\NormalTok{))}\SpecialCharTok{+}
+  \FunctionTok{scale\_y\_log10}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{Longitudinal_data_waste_files/figure-latex/explain all most relavent columns-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{head}\NormalTok{(WasteWater\_data)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##        regions          county            site       date    pop        N1
+## 1 Southeastern Port Washington Port Washington 2021-01-18  12000  8865.376
+## 2 Southeastern Port Washington Port Washington 2021-01-25  12000 11827.504
+## 3 Southeastern          Racine          Racine 2021-01-24 139000  8333.173
+## 4     Northern        Washburn        Washburn 2021-01-25   2200 15421.000
+## 5 Northeastern        Peshtigo        Peshtigo 2021-01-25   4000 23272.000
+## 6 Southeastern South Milwaukee South Milwaukee 2021-01-24  21156 14383.477
+##          N2    PMMoV hf183   flow  tss   ph conductivity temperature     epaid
+## 1  6652.533 18829610    NA  1.000 <NA>   NA         2930          NA WI0020460
+## 2  7268.768 10190701    NA  1.000 <NA>   NA         2360          NA WI0020460
+## 3  6484.469  6165848    NA 15.890   68 7.16         1244        12.3 WI0025194
+## 4 30958.000 14401613    NA  0.149 <NA> 7.70          880        10.8 WI0022675
+## 5 35748.000  4397675    NA  0.444 <NA> 7.60          887        11.7 WI0030651
+## 6  8851.371  7323669    NA  2.588 <NA>   NA         1172          NA WI0028819
+##   sample_id            pcr_type  n1_sars_cov2_units n1_sars_cov2_lod
+## 1       802 droplet digital PCR copies/L wastewater            FALSE
+## 2       827 droplet digital PCR copies/L wastewater            FALSE
+## 3       819 droplet digital PCR copies/L wastewater            FALSE
+## 4 544867001                qPCR       Gene copies/L             TRUE
+## 5 544887001                qPCR       Gene copies/L             TRUE
+## 6       813 droplet digital PCR copies/L wastewater            FALSE
+##    n2_sars_cov2_units n2_sars_cov2_lod  bod  do      created_on
+## 1 copies/L wastewater            FALSE <NA>  NA 1/28/2021 20:15
+## 2 copies/L wastewater            FALSE <NA>  NA 1/28/2021 20:15
+## 3 copies/L wastewater            FALSE  101  NA 1/28/2021 20:15
+## 4       Gene copies/L             TRUE <NA>  NA  2/3/2021 18:15
+## 5       Gene copies/L             TRUE <NA> 3.8  2/3/2021 18:15
+## 6 copies/L wastewater            FALSE <NA>  NA 1/28/2021 20:15
+##   last_modified_on lab_submitter    n1_lod     n1_loq    n2_lod     n2_loq
+## 1   1/7/2022 13:56           UWM  3319.264  11078.219  3319.264  11078.219
+## 2   1/7/2022 13:56           UWM  3102.181  10342.939  3102.181  10342.939
+## 3   1/7/2022 13:56           UWM  2773.056   9257.525  2773.056   9257.525
+## 4  2/15/2021 15:41           SLH 40000.000 130000.000 66000.000 140000.000
+## 5  2/15/2021 15:41           SLH 40000.000 130000.000 66000.000 140000.000
+## 6   1/7/2022 13:57           UWM  3319.264  11064.213  3319.264  11064.213
+##   bcov_rec_rate bcov_spike_conc zipcode state capacity_mgd sample_type
+## 1            NA              NA      NA  <NA>           NA        <NA>
+## 2            NA              NA      NA  <NA>           NA        <NA>
+## 3            NA              NA      NA  <NA>           NA        <NA>
+## 4            NA              NA      NA  <NA>           NA        <NA>
+## 5            NA              NA      NA  <NA>           NA        <NA>
+## 6            NA              NA      NA  <NA>           NA        <NA>
+##   composite_freq sample_matrix sample_location sample_location_specify
+## 1           <NA>          <NA>            <NA>                    <NA>
+## 2           <NA>          <NA>            <NA>                    <NA>
+## 3           <NA>          <NA>            <NA>                    <NA>
+## 4           <NA>          <NA>            <NA>                    <NA>
+## 5           <NA>          <NA>            <NA>                    <NA>
+## 6           <NA>          <NA>            <NA>                    <NA>
+##   wwtp_comments concentration_method extraction_method lod_ref quant_stan_type
+## 1          <NA>                 <NA>              <NA>    <NA>            <NA>
+## 2          <NA>                 <NA>              <NA>    <NA>            <NA>
+## 3          <NA>                 <NA>              <NA>    <NA>            <NA>
+## 4          <NA>                 <NA>              <NA>    <NA>            <NA>
+## 5          <NA>                 <NA>              <NA>    <NA>            <NA>
+## 6          <NA>                 <NA>              <NA>    <NA>            <NA>
+##   quant_stan_ref inhibition_method n1_sars_cov2_error n1_ntc_amplify
+## 1           <NA>              <NA>                 NA           <NA>
+## 2           <NA>              <NA>                 NA           <NA>
+## 3           <NA>              <NA>                 NA           <NA>
+## 4           <NA>              <NA>                 NA           <NA>
+## 5           <NA>              <NA>                 NA           <NA>
+## 6           <NA>              <NA>                 NA           <NA>
+##   n1_num_ntc_amplify n1_num_no_target_control n2_sars_cov2_error n2_ntc_amplify
+## 1                 NA                       NA                 NA           <NA>
+## 2                 NA                       NA                 NA           <NA>
+## 3                 NA                       NA                 NA           <NA>
+## 4                 NA                       NA                 NA           <NA>
+## 5                 NA                       NA                 NA           <NA>
+## 6                 NA                       NA                 NA           <NA>
+##   n2_num_ntc_amplify n2_num_no_target_control avg_sars_cov2_conc
+## 1                 NA                       NA                 NA
+## 2                 NA                       NA                 NA
+## 3                 NA                       NA                 NA
+## 4                 NA                       NA                 NA
+## 5                 NA                       NA                 NA
+## 6                 NA                       NA                 NA
+##   avg_sars_cov2_below_lod inhibition_detect inhibition_adjust
+## 1                      NA              <NA>              <NA>
+## 2                      NA              <NA>              <NA>
+## 3                      NA              <NA>              <NA>
+## 4                      NA              <NA>              <NA>
+## 5                      NA              <NA>              <NA>
+## 6                      NA              <NA>              <NA>
+##   analytical_comments sample_collect_time test_result_date equiv_sewage_amt
+## 1                <NA>             NA secs             <NA>               NA
+## 2                <NA>             NA secs             <NA>               NA
+## 3                <NA>             NA secs             <NA>               NA
+## 4                <NA>             NA secs             <NA>               NA
+## 5                <NA>             NA secs             <NA>               NA
+## 6                <NA>             NA secs             <NA>               NA
+\end{verbatim}
+
+This data is our most used data that is used in multiple analyses. A
+couple of examples are below.
+\href{https://github.com/AFIDSI/Covid19-Wastewater-Analysis/blob/main/conclusions/WPHA-Poster/WPHA-Poster.pdf}{WPHA
+Poster}
+\href{https://github.com/AFIDSI/Covid19-Wastewater-Analysis/blob/main/conclusions/SETAC-Poster/SETAC-Poster.pdf}{SETAC
+Poster}
+
+\end{document}

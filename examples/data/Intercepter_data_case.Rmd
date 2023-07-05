@@ -15,12 +15,16 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Data placeholder
+## Interceptor data
 
-This vignette seeks to cover the columns and usability of the relevant data set
-
+This vignette covers the traditionally collected case data for the Madison interceptors. This case data has three different metrics of cases over a period of 55 weeks. This dataframe is sufficently out of date it is recommended it is not used.
 ```{r load and show data}
+library(DSIWastewater)
+library(dplyr)
+library(ggplot2)
 
+data(InterceptorCase_data, package = "DSIWastewater")
+head(InterceptorCase_data)
 ```
 
 ```{r explain all / most relavent columns}
