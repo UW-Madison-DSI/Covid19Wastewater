@@ -1,38 +1,35 @@
 
 library(devtools)
 
-Move_struct_R <- function(start, end = "R", add_context = TRUE, end_in = NA){
+mach_reg <- function(file_path, match, split){
+  file_break = strsplit(file_path, split)[[1]][2]
+  return(file_break == match)
+}
+
+move_struct_R <- function(start, end = "R", add_context = TRUE, end_in = NA){
   to_move_files <- list.files(path = start, recursive = TRUE)
+  
   for(file in to_move_files){
     is_dead = FALSE
+    
+    if(!is.na(end_in)){
+      is_dead = !mach_reg(file, end_in, "\\.")
+    }
+    
     file_type = strsplit(file, "/")[[1]]
     if(add_context){
       location = paste0(end, "/", start)
       for(sub_folder in file_type){
         location = paste0(location, "--", sub_folder)
-        if(sub_folder == "README"){
-          #print(location)
-          is_dead = TRUE
-        }
+        is_dead = sub_folder == "README"
         
       }
       if(!is_dead){
         file.copy(from = paste0(start,"/",file), to = location)
-      }else{
-        #print(location)
       }
     }else{
-      if(!is.na(end_in)){
-        file_break = strsplit(file, "\\.")[[1]][2]
-        if(file_break != end_in){
-          is_dead = TRUE
-        }
-      }
-      
       if(!is_dead){
         file.copy(from = paste0(start,"/",file), end)
-      }else{
-        #print(file)
       }
     }
   }
@@ -45,13 +42,13 @@ package_update <- function(path = ".", update_examples = F, update_test = F){
   #Delete R folder and all .R folders in it
   unlink("R", recursive = T, force = T)
   dir.create("R")
-  Move_struct_R("library", "R")
-  Move_struct_R("meta_info", "R", add_context = FALSE)
+  move_struct_R("library", "R")
+  move_struct_R("meta_info", "R", add_context = FALSE)
   
   if(update_examples){#build vignette
     unlink("vignettes", recursive = T, force = T)
     dir.create("vignettes")
-    Move_struct_R("examples", "vignettes", add_context = FALSE, end_in = "Rmd")
+    move_struct_R("examples", "vignettes", add_context = FALSE, end_in = "Rmd")
     build_vignettes(quiet = T)
     unlink("docs/vignettes", recursive = T, force = T)
     dir.create("docs/vignettes")
@@ -73,6 +70,6 @@ package_update <- function(path = ".", update_examples = F, update_test = F){
     check(args = c("--no-tests"), vignettes = FALSE)
     test()
   }
-  install(quick=T, build = T, build_vignettes = update_examples, force = T)
+  install(quick=T, build = T, build_vignettes = F, force = T)
 }
 package_update(update_examples = T, update_test = F)

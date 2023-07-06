@@ -14,10 +14,13 @@ library(DSIWastewater)
 #  VariantPercentage <- ggplot(mdfr, aes(factor(category,levels = c(1:69)), value, fill = variable)) +
 #      geom_bar(position = "fill", stat = "identity") +
 #      scale_y_continuous(labels = percent) +
-#      xlab("Week") +
+#      xlab("bi-weekly (2020-08-17 to 2022-12-05)") +
 #      ylab("Covariant Percent")
 #  
-#  ggplotly(VariantPercentage)
+#  VariantPercentage
+#  
+#  #Run this for interactive graph
+#  #ggplotly(VariantPercentage)
 
 ## ----Variant data 3, eval = FALSE---------------------------------------------
 #  percentages <- mdfr %>%
@@ -32,8 +35,8 @@ library(DSIWastewater)
 #  
 #  ggplot(perDates, aes(x=week, y=percent,color=majority)) +
 #    geom_point() +
-#    xlab("Time") +
-#    ylab("Percent of total cases") +
+#    xlab("bi-weekly") +
+#    ylab("Percent of total cases (above 50%)") +
 #    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 #  
 #  

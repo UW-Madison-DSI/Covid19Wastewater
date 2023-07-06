@@ -19,7 +19,7 @@ data(Covariants_data, package = "DSIWastewater")
 
 data(pop_data, package = "DSIWastewater")
 
-data(Example_data, package = "DSIWastewater")
+data(example_data, package = "DSIWastewater")
 
 ## ----explain most relavent functions------------------------------------------
 offsetDF <- OffsetDFMaker(10,as.Date("2020-08-01"), as.Date("2023-01-01"), Case_data, WasteWater_data)
