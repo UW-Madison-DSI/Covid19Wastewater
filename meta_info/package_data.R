@@ -122,7 +122,8 @@
 #' Covariants data
 #'
 #' dataframe containing info about the proportion of each COVID-19 variant
-#' every 2 weeks
+#' every 2 weeks. This data is from 
+#' https://github.com/hodcroftlab/covariants/tree/master
 #' 
 #'
 #' @docType data
