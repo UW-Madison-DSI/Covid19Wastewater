@@ -1,18 +1,19 @@
 ---
-title: "Longitudinal data"
+title: "Longitudinal Waste data"
 author: "Marlin"
 date: "2023-06-15"
 vignette: >
+  %\VignetteEngine{knitr::knitr}
   %\VignetteIndexEntry{Longitudinal Waste Data}
-  \usepackage[utf8]{inputenc}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\usepackage[utf8]{inputenc}
 output:
   pdf_document: default
   html_document: default
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, Warning = FALSE, message = FALSE)
+options(warn=-1)
 ```
 
 ## Longitudinal data source

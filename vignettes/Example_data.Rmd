@@ -14,6 +14,7 @@ This data comes from our wastewater and case data merged together by site and da
 
 ```{r load packages}
 library(DSIWastewater)
+library(ggplot2)
 ```
 
 ```{r Example Data}

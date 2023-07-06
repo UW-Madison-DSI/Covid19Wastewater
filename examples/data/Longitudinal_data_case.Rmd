@@ -1,16 +1,19 @@
 ---
-title: "Full Case data"
+title: "Longitudinal Case data"
 author: "Marlin"
 date: "2023-06-15"
 vignette: >
-  %\VignetteIndexEntry{LIMS Case Data}
-  \usepackage[utf8]{inputenc}
-  %\VignetteEngine{knitr::rmarkdown}
-output: rmarkdown::html_vignette
+  %\VignetteEngine{knitr::knitr}
+  %\VignetteIndexEntry{Longitudinal Case Data}
+  %\usepackage[utf8]{inputenc}
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, Warning = FALSE, message = FALSE)
+options(warn=-1)
 ```
 
 ## Case data
@@ -26,13 +29,16 @@ library(ggplot2)
 data(Case_data, package = "DSIWastewater")
 ```
 
-```{r explain all / most relavent columns}
-Case_data%>%
+```{r explain most relavent columns}
+main_plot <- Case_data%>%
   filter(site == "Madison")%>%
   ggplot(aes(x = date), size = .3)+
-  geom_point(aes(y = tests, color = "tests"))+
-  geom_point(aes(y = conf_case, color = "confirmed case"))+
+  geom_point(aes(y = tests + 1, color = "tests"))+
+  geom_point(aes(y = conf_case + 1, color = "confirmed case"))+
   scale_y_log10()
+
+main_plot
+
 ```
 
 

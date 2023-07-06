@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>Longitudinal Waste data</title>
+<style type="text/css">
+/**
+ * Prism.s theme ported from highlight.js's xcode style
+ */
+pre code {
+  padding: 1em;
+}
+.token.comment {
+  color: #007400;
+}
+.token.punctuation {
+  color: #999;
+}
+.token.tag,
+.token.selector {
+  color: #aa0d91;
+}
+.token.boolean,
+.token.number,
+.token.constant,
+.token.symbol {
+  color: #1c00cf;
+}
+.token.property,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin {
+  color: #c41a16;
+}
+.token.inserted {
+  background-color: #ccffd8;
+}
+.token.deleted {
+  background-color: #ffebe9;
+}
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string {
+  color: #9a6e3a;
+}
+.token.atrule,
+.token.attr-value,
+.token.keyword {
+  color: #836c28;
+}
+.token.function,
+.token.class-name {
+  color: #DD4A68;
+}
+.token.regex,
+.token.important,
+.token.variable {
+  color: #5c2699;
+}
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+.token.italic {
+  font-style: italic;
+}
+</style>
+<style type="text/css">
+body {
+  font-family: sans-serif;
+  max-width: 800px;
+  margin: auto;
+  padding: 1em;
+  line-height: 1.5;
+  box-sizing: border-box;
+}
+body, .footnotes, code { font-size: .9em; }
+li li { font-size: .95em; }
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+pre, img { max-width: 100%; }
+pre, pre:hover {
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+pre code {
+  display: block;
+  overflow-x: auto;
+}
+code { font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, monospace; }
+:not(pre) > code, code[class] { background-color: #F8F8F8; }
+code.language-undefined, pre > code:not([class]) {
+  background-color: inherit;
+  border: 1px solid #eee;
+}
+table {
+  margin: auto;
+  border-top: 1px solid #666;
+}
+table thead th { border-bottom: 1px solid #ddd; }
+th, td { padding: 5px; }
+thead, tfoot, tr:nth-child(even) { background: #eee; }
+blockquote {
+  color: #666;
+  margin: 0;
+  padding-left: 1em;
+  border-left: 0.5em solid #eee;
+}
+hr, .footnotes::before { border: 1px dashed #ddd; }
+.frontmatter { text-align: center; }
+#TOC .numbered li { list-style: none; }
+#TOC .numbered { padding-left: 0; }
+#TOC .numbered ul { padding-left: 1em; }
+table, .body h2 { border-bottom: 1px solid #666; }
+.body .appendix, .appendix ~ h2 { border-bottom-style: dashed; }
+.footnote-ref a::before { content: "["; }
+.footnote-ref a::after { content: "]"; }
+.footnotes::before {
+  content: "";
+  display: block;
+  max-width: 20em;
+}
+
+@media print {
+  body {
+    font-size: 12pt;
+    max-width: 100%;
+  }
+  tr, img { page-break-inside: avoid; }
+}
+@media only screen and (min-width: 992px) {
+  pre { white-space: pre; }
+}
+</style>
+</head>
+<body>
+<div class="include-before">
+</div>
+<div class="frontmatter">
+<div class="title"><h1>Longitudinal Waste data</h1></div>
+<div class="author"><h2>Marlin</h2></div>
+<div class="date"><h3>2023-06-15</h3></div>
+</div>
+<div class="body">
+<h2 id="longitudinal-data-source">Longitudinal data source</h2>
+<p>This vignette covers the wastewater data collected by the Wisconsin State Lab of Hygiene. This wastewater data covers 118 weeks of 1-5 measurements a week from 82 locations. This has 63 columns where 5 are categorical variables, 9 are measurement columns and the remaining are extra info about the measurements.</p>
+<pre><code class="language-r">#add start and end date?
+library(DSIWastewater)
+library(dplyr)
+library(ggplot2)
+
+data(WasteWater_data, package = &quot;DSIWastewater&quot;)
+</code></pre>
+<p>The data is broken down by site and data. Site is where it was collected from. The primary column’s are N1 and N2 which are two different genes of Covid-19.</p>
+<pre><code class="language-r">#could put in the work to explain all 62 columns but it should be fine for now
+WasteWater_data%&gt;%
+  filter(site == &quot;Madison&quot;)%&gt;%
+  ggplot(aes(x = date), size = .3)+
+  geom_point(aes(y = N1, color = &quot;N1&quot;))+
+  geom_point(aes(y = N2, color = &quot;N2&quot;))+
+  scale_y_log10()
+</code></pre>
+<p>![plot of chunk explain all  most relavent columns](figure/explain all  most relavent columns-1.png)</p>
+<pre><code class="language-r">head(WasteWater_data)
+</code></pre>
+<pre><code>##        regions          county            site       date    pop        N1
+## 1 Southeastern Port Washington Port Washington 2021-01-18  12000  8865.376
+## 2 Southeastern Port Washington Port Washington 2021-01-25  12000 11827.504
+## 3 Southeastern          Racine          Racine 2021-01-24 139000  8333.173
+## 4     Northern        Washburn        Washburn 2021-01-25   2200 15421.000
+## 5 Northeastern        Peshtigo        Peshtigo 2021-01-25   4000 23272.000
+## 6 Southeastern South Milwaukee South Milwaukee 2021-01-24  21156 14383.477
+##          N2    PMMoV hf183   flow  tss   ph conductivity temperature     epaid
+## 1  6652.533 18829610    NA  1.000 &lt;NA&gt;   NA         2930          NA WI0020460
+## 2  7268.768 10190701    NA  1.000 &lt;NA&gt;   NA         2360          NA WI0020460
+## 3  6484.469  6165848    NA 15.890   68 7.16         1244        12.3 WI0025194
+## 4 30958.000 14401613    NA  0.149 &lt;NA&gt; 7.70          880        10.8 WI0022675
+## 5 35748.000  4397675    NA  0.444 &lt;NA&gt; 7.60          887        11.7 WI0030651
+## 6  8851.371  7323669    NA  2.588 &lt;NA&gt;   NA         1172          NA WI0028819
+##   sample_id            pcr_type  n1_sars_cov2_units n1_sars_cov2_lod
+## 1       802 droplet digital PCR copies/L wastewater            FALSE
+## 2       827 droplet digital PCR copies/L wastewater            FALSE
+## 3       819 droplet digital PCR copies/L wastewater            FALSE
+## 4 544867001                qPCR       Gene copies/L             TRUE
+## 5 544887001                qPCR       Gene copies/L             TRUE
+## 6       813 droplet digital PCR copies/L wastewater            FALSE
+##    n2_sars_cov2_units n2_sars_cov2_lod  bod  do      created_on
+## 1 copies/L wastewater            FALSE &lt;NA&gt;  NA 1/28/2021 20:15
+## 2 copies/L wastewater            FALSE &lt;NA&gt;  NA 1/28/2021 20:15
+## 3 copies/L wastewater            FALSE  101  NA 1/28/2021 20:15
+## 4       Gene copies/L             TRUE &lt;NA&gt;  NA  2/3/2021 18:15
+## 5       Gene copies/L             TRUE &lt;NA&gt; 3.8  2/3/2021 18:15
+## 6 copies/L wastewater            FALSE &lt;NA&gt;  NA 1/28/2021 20:15
+##   last_modified_on lab_submitter    n1_lod     n1_loq    n2_lod     n2_loq
+## 1   1/7/2022 13:56           UWM  3319.264  11078.219  3319.264  11078.219
+## 2   1/7/2022 13:56           UWM  3102.181  10342.939  3102.181  10342.939
+## 3   1/7/2022 13:56           UWM  2773.056   9257.525  2773.056   9257.525
+## 4  2/15/2021 15:41           SLH 40000.000 130000.000 66000.000 140000.000
+## 5  2/15/2021 15:41           SLH 40000.000 130000.000 66000.000 140000.000
+## 6   1/7/2022 13:57           UWM  3319.264  11064.213  3319.264  11064.213
+##   bcov_rec_rate bcov_spike_conc zipcode state capacity_mgd sample_type
+## 1            NA              NA      NA  &lt;NA&gt;           NA        &lt;NA&gt;
+## 2            NA              NA      NA  &lt;NA&gt;           NA        &lt;NA&gt;
+## 3            NA              NA      NA  &lt;NA&gt;           NA        &lt;NA&gt;
+## 4            NA              NA      NA  &lt;NA&gt;           NA        &lt;NA&gt;
+## 5            NA              NA      NA  &lt;NA&gt;           NA        &lt;NA&gt;
+## 6            NA              NA      NA  &lt;NA&gt;           NA        &lt;NA&gt;
+##   composite_freq sample_matrix sample_location sample_location_specify
+## 1           &lt;NA&gt;          &lt;NA&gt;            &lt;NA&gt;                    &lt;NA&gt;
+## 2           &lt;NA&gt;          &lt;NA&gt;            &lt;NA&gt;                    &lt;NA&gt;
+## 3           &lt;NA&gt;          &lt;NA&gt;            &lt;NA&gt;                    &lt;NA&gt;
+## 4           &lt;NA&gt;          &lt;NA&gt;            &lt;NA&gt;                    &lt;NA&gt;
+## 5           &lt;NA&gt;          &lt;NA&gt;            &lt;NA&gt;                    &lt;NA&gt;
+## 6           &lt;NA&gt;          &lt;NA&gt;            &lt;NA&gt;                    &lt;NA&gt;
+##   wwtp_comments concentration_method extraction_method lod_ref quant_stan_type
+## 1          &lt;NA&gt;                 &lt;NA&gt;              &lt;NA&gt;    &lt;NA&gt;            &lt;NA&gt;
+## 2          &lt;NA&gt;                 &lt;NA&gt;              &lt;NA&gt;    &lt;NA&gt;            &lt;NA&gt;
+## 3          &lt;NA&gt;                 &lt;NA&gt;              &lt;NA&gt;    &lt;NA&gt;            &lt;NA&gt;
+## 4          &lt;NA&gt;                 &lt;NA&gt;              &lt;NA&gt;    &lt;NA&gt;            &lt;NA&gt;
+## 5          &lt;NA&gt;                 &lt;NA&gt;              &lt;NA&gt;    &lt;NA&gt;            &lt;NA&gt;
+## 6          &lt;NA&gt;                 &lt;NA&gt;              &lt;NA&gt;    &lt;NA&gt;            &lt;NA&gt;
+##   quant_stan_ref inhibition_method n1_sars_cov2_error n1_ntc_amplify
+## 1           &lt;NA&gt;              &lt;NA&gt;                 NA           &lt;NA&gt;
+## 2           &lt;NA&gt;              &lt;NA&gt;                 NA           &lt;NA&gt;
+## 3           &lt;NA&gt;              &lt;NA&gt;                 NA           &lt;NA&gt;
+## 4           &lt;NA&gt;              &lt;NA&gt;                 NA           &lt;NA&gt;
+## 5           &lt;NA&gt;              &lt;NA&gt;                 NA           &lt;NA&gt;
+## 6           &lt;NA&gt;              &lt;NA&gt;                 NA           &lt;NA&gt;
+##   n1_num_ntc_amplify n1_num_no_target_control n2_sars_cov2_error n2_ntc_amplify
+## 1                 NA                       NA                 NA           &lt;NA&gt;
+## 2                 NA                       NA                 NA           &lt;NA&gt;
+## 3                 NA                       NA                 NA           &lt;NA&gt;
+## 4                 NA                       NA                 NA           &lt;NA&gt;
+## 5                 NA                       NA                 NA           &lt;NA&gt;
+## 6                 NA                       NA                 NA           &lt;NA&gt;
+##   n2_num_ntc_amplify n2_num_no_target_control avg_sars_cov2_conc
+## 1                 NA                       NA                 NA
+## 2                 NA                       NA                 NA
+## 3                 NA                       NA                 NA
+## 4                 NA                       NA                 NA
+## 5                 NA                       NA                 NA
+## 6                 NA                       NA                 NA
+##   avg_sars_cov2_below_lod inhibition_detect inhibition_adjust
+## 1                      NA              &lt;NA&gt;              &lt;NA&gt;
+## 2                      NA              &lt;NA&gt;              &lt;NA&gt;
+## 3                      NA              &lt;NA&gt;              &lt;NA&gt;
+## 4                      NA              &lt;NA&gt;              &lt;NA&gt;
+## 5                      NA              &lt;NA&gt;              &lt;NA&gt;
+## 6                      NA              &lt;NA&gt;              &lt;NA&gt;
+##   analytical_comments sample_collect_time test_result_date equiv_sewage_amt
+## 1                &lt;NA&gt;                  NA             &lt;NA&gt;               NA
+## 2                &lt;NA&gt;                  NA             &lt;NA&gt;               NA
+## 3                &lt;NA&gt;                  NA             &lt;NA&gt;               NA
+## 4                &lt;NA&gt;                  NA             &lt;NA&gt;               NA
+## 5                &lt;NA&gt;                  NA             &lt;NA&gt;               NA
+## 6                &lt;NA&gt;                  NA             &lt;NA&gt;               NA
+</code></pre>
+<p>This data is our most used data that is used in multiple analyses. A couple of examples are below.
+<a href="https://github.com/AFIDSI/Covid19-Wastewater-Analysis/blob/main/conclusions/WPHA-Poster/WPHA-Poster.pdf">WPHA Poster</a>
+<a href="https://github.com/AFIDSI/Covid19-Wastewater-Analysis/blob/main/conclusions/SETAC-Poster/SETAC-Poster.pdf">SETAC Poster</a></p>
+</div>
+<div class="include-after">
+</div>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-core.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js" defer></script>
+</body>
+</html>

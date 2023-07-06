@@ -11,7 +11,7 @@ Move_struct_R <- function(start, end = "R", add_context = TRUE, end_in = NA){
       for(sub_folder in file_type){
         location = paste0(location, "--", sub_folder)
         if(sub_folder == "README"){
-          print(location)
+          #print(location)
           is_dead = TRUE
         }
         
@@ -19,7 +19,7 @@ Move_struct_R <- function(start, end = "R", add_context = TRUE, end_in = NA){
       if(!is_dead){
         file.copy(from = paste0(start,"/",file), to = location)
       }else{
-        print(location)
+        #print(location)
       }
     }else{
       if(!is.na(end_in)){
@@ -32,7 +32,7 @@ Move_struct_R <- function(start, end = "R", add_context = TRUE, end_in = NA){
       if(!is_dead){
         file.copy(from = paste0(start,"/",file), end)
       }else{
-        print(file)
+        #print(file)
       }
     }
   }
@@ -52,19 +52,21 @@ package_update <- function(path = ".", update_examples = F, update_test = F){
     unlink("vignettes", recursive = T, force = T)
     dir.create("vignettes")
     Move_struct_R("examples", "vignettes", add_context = FALSE, end_in = "Rmd")
+    build_vignettes(quiet = T)
+    unlink("docs/vignettes", recursive = T, force = T)
+    dir.create("docs/vignettes")
+    for(fileName in dir("doc")){
+      file.copy(paste0("doc/", fileName), paste0("docs/vignettes/", fileName), overwrite=TRUE)
+    }
     print("done update")
-    build_vignettes(quiet=FALSE)
-    unlink("inst", recursive = T, force = T)
-    dir.create("inst/doc", recursive = TRUE)
-    file.copy(dir("doc", full.names=TRUE), "inst/doc", overwrite=TRUE)
   }
   
   document()
-  build(path = ".", vignettes = FALSE)
+  build(path = ".", vignettes = F)
   #devtools::install_github("AFIDSI/DSIWastewater")
   
   if(update_examples){
-    unlink("inst", recursive = T, force = T)
+    unlink("doc", recursive = T, force = T)
   }
   
   if(update_test){

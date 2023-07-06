@@ -1,0 +1,30 @@
+---
+title: "misc_data"
+author: "Marlin"
+date: "2023-06-15"
+vignette: >
+  %\VignetteIndexEntry{misc data}
+  \usepackage[utf8]{inputenc}
+  %\VignetteEngine{knitr::rmarkdown}
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Data placeholder
+
+This vignette seeks to cover the columns and usability of the relevant data set
+
+```{r load and show data}
+
+```
+
+```{r explain all / most relavent columns}
+
+```
+
+
+```{r explain / show use case and link to other vignettes}
+```

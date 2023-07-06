@@ -1,0 +1,40 @@
+---
+title: "Calculated Info"
+author: "Marlin"
+date: "2023-06-15"
+vignette: >
+  %\VignetteIndexEntry{Calculated Info}
+  \usepackage[utf8]{inputenc}
+  %\VignetteEngine{knitr::rmarkdown}
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This package contains a couple tools to create useful views of the data not by default in the dataframe. These mostly come in the form of the default case and wastewater dataframe augment function.
+
+# Wastewater augmeanting function
+The wastewater function does three things. first it replaces Concentrations below the level of detection (LOD) with LOD / 2 which is considered best practice. Second it calculates a geometric average of the two gene concentrations. Finally it gets a flow and population normalized loged version of the data which previous work has shown the best results.
+
+```{r load and show data}
+library(DSIWastewater)
+data(WasteWater_data, package = "DSIWastewater")
+head(buildWasteAnalysisDF(WasteWater_data))
+```
+# Case augmeanting function
+The case function does two things. first it normalizes the data by population. Second it calculates a rolling sum and average of the data. This needs the population data contained in its own data frame.
+```{r explain all / most relavent functions}
+data(Case_data, package = "DSIWastewater")
+data("pop_data", package = "DSIWastewater")#need to fix pop_data
+#head(buildCaseAnalysisDF(left_join(Case_data, pop_data, by = "site")))
+
+```
+
+These functions are slightly out of date and not used in many new analysis projects
+```{r explain / show use case and link to other vignettes}
+#TODO work on comparing the output of these methods 
+```
