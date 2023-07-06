@@ -15,9 +15,9 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## placeholder
+## Random Linear Forest
+This part of the package creates a semi-novel 
 
-This vignette seeks to cover different methods for dhs analysis
 
 ```{r load and show data, include = FALSE}
 library(DSIWastewater)
@@ -56,11 +56,13 @@ model_data <- base_df%>%
 ```{r explain all / most relavent functions}
 form <- conf_case ~ N1 + N2 | . - N1 - N2
 
-#forest_model <- random_linear_forest(data = randomForest::na.roughfix(model_data),
-#                                     num_tree = 100, 
-#                                     model_formula = form,
-#                                     max_depth = Inf,
-#                                     verbose = TRUE)
+forest_model <- random_linear_forest(data = randomForest::na.roughfix(model_data),
+                                     num_tree = 20, 
+                                     model_formula = form,
+                                     max_depth = Inf,
+                                     verbose = FALSE)
+
+forest_model
 ```
 
 

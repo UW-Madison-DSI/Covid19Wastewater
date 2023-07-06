@@ -1,6 +1,7 @@
 ---
 title: "Example Data Vignette"
-output: rmarkdown::html_vignette
+output:
+  pdf_document: default
 vignette: >
   %\VignetteIndexEntry{Data Vignette}
   \usepackage[utf8]{inputenc}

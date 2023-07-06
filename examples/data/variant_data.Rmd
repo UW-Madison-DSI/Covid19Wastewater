@@ -1,6 +1,7 @@
 ---
 title: "Variant Data Vignette"
-output: rmarkdown::html_vignette
+output:
+  pdf_document: default
 vignette: >
   %\VignetteIndexEntry{Data Covariants Vignette}
   \usepackage[utf8]{inputenc}
