@@ -49,7 +49,7 @@ package_update <- function(path = ".", update_examples = F, update_test = F){
     unlink("vignettes", recursive = T, force = T)
     dir.create("vignettes")
     move_struct_R("examples", "vignettes", add_context = FALSE, end_in = "Rmd")
-    build_vignettes(quiet = T)
+    build_vignettes(quiet = F)
     unlink("docs/vignettes", recursive = T, force = T)
     dir.create("docs/vignettes")
     for(fileName in dir("doc")){

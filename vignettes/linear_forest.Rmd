@@ -19,14 +19,52 @@ knitr::opts_chunk$set(echo = TRUE)
 
 This vignette seeks to cover different methods for dhs analysis
 
-```{r load and show data}
+```{r load and show data, include = FALSE}
+#library(DSIWastewater)
+#data(WasteWater_data, package = "DSIWastewater")
+#data(Case_data, package = "DSIWastewater")
+#data(pop_data, package = "DSIWastewater")
+
+#base_df <- inner_join(Case_data, WasteWater_data, by = c("site", "date"))%>%
+#  left_join(pop_data)%>%
+#  group_by(site)%>%
+#  arrange(date)%>%
+#  mutate(conf_case = zoo::rollmean(conf_case, 7, align = "center", na.pad = TRUE))%>%
+#  ungroup()%>%
+#  select(conf_case, N1, N2,
+#         regions, date, pop,
+#         PMMoV, flow,
+#         conductivity, temperature, ph, tests)%>%
+#   mutate(regions = factor(regions), date = as.numeric(date),
+#         conf_case = log(conf_case),
+#         N1 = log(N1),
+#         N2 = log(N2),
+#         PMMoV = log(PMMoV))
+#conductivity, temperature, ph, tests
+
+#base_df%>%
+#  na.roughfix(base_df)%>%
+#  dplyr::summarise(across(everything(), function(x) sum(is.na(x))))
+
+#model_data <- base_df%>%
+#   na.roughfix()%>%
+#   filter(if_all(everything(), is.finite))
 
 ```
 
 ```{r explain all / most relavent functions}
+#form <- conf_case ~ N1 + N2 | . - N1 - N2
 
+#forest_model <- random_linear_forest(data = na.roughfix(train_df),
+#                                     num_tree = 100, 
+#                                     model_formula = form,
+#                                     max_depth = Inf,
+#                                     verbose = TRUE)
 ```
 
 
 ```{r explain / show use case and link to other vignettes}
 ```
+
+These functions are used in this analysis
+[Random Linear Forst](https://github.com/AFIDSI/Covid19-Wastewater-Analysis/blob/main/results/trend_analysis/rand_forest_comp.html)
