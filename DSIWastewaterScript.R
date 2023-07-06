@@ -53,7 +53,9 @@ package_update <- function(path = ".", update_examples = F, update_test = F){
     unlink("docs/vignettes", recursive = T, force = T)
     dir.create("docs/vignettes")
     for(fileName in dir("doc")){
-      file.copy(paste0("doc/", fileName), paste0("docs/vignettes/", fileName), overwrite=TRUE)
+      if(!mach_reg(fileName, "Rmd", "\\.") && !mach_reg(fileName, "R", "\\.")){
+        file.copy(paste0("doc/", fileName), paste0("docs/vignettes/", fileName), overwrite=TRUE)
+      }
     }
     print("done update")
   }
