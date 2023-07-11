@@ -4,7 +4,7 @@ The following are the analysis tools used in this package:
 ## Examples:
 
 ### 1) DHS Methods
-This code comes from our collaborators at the DHS and is an example of of their flagging method that is used on their dashboard (link to dashboard)
+This code comes from our collaborators at the DHS and is an example of of their flagging method that is used on their [dashboard](https://www.dhs.wisconsin.gov/covid-19/wastewater.htm)
 [DHS_methods.Rmd](../../docs/vignettes/DHS_methods.pdf)
 
 ### 2) Time Series Offset
