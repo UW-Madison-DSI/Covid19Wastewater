@@ -8,7 +8,6 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
 output:
   pdf_document: default
-  html_document: default
 ---
 
 ```{r setup, include=FALSE}

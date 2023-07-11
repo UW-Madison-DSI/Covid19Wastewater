@@ -29,7 +29,7 @@ data(WasteWater_data, package = "DSIWastewater")
 ```
 
 The data is broken down by site and data. Site is where it was collected from. The primary column's are N1 and N2 which are two different genes of Covid-19. 
-```{r explain all  most relavent columns, warning = FALSE}
+```{r explain most relavent columns, warning = FALSE}
 #could put in the work to explain all 62 columns but it should be fine for now
 WasteWater_data%>%
   filter(site == "Madison")%>%
@@ -40,7 +40,7 @@ WasteWater_data%>%
 ```
 
 
-```{r explain  show use case and link to other vignettes}
+```{r explain show use case and link to other vignettes}
 head(WasteWater_data)
 ```
 
