@@ -5,7 +5,7 @@ The following are the data preparation tools used in this package:
 
 ### 1) Outliers
 This vignette illustrates techniques for flagging outliers.
-[outliers.Rmd](outliers.pdf)
+[outliers.Rmd](../../docs/vignettes/outliers.pdf)
 
 ### 2) Smoothing
 
@@ -13,9 +13,9 @@ This vignette is an illustration of the smoothing techniques that are available 
 - Loess
 - Golay
 - Exponential
-[smoothing.Rmd](smoothing.pdf)
+[smoothing.Rmd](../../docs/vignettes/smoothing.pdf)
 
 ### 3) Calculated Info
 
 This vignette computed additiional auxilliary information (geometric means, population normalizing, case averaging).
-[calculated_info.Rmd](calculated_info.pdf)
+[calculated_info.Rmd](../../docs/vignettes/calculated_info.pdf)
