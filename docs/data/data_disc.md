@@ -35,4 +35,3 @@
 | Total_sequences | Total number of sequences detected in the time frame. Used to convert variant info into proportions |
 | week | What week it is |
 | Well | Largely redundant. It communicates which technical replicate it was but as there is no difference between being the first or third done it largely functions as an id.
-| ----------- | ----------- |  
