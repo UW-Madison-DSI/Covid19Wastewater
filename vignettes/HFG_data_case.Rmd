@@ -1,7 +1,6 @@
 ---
-title: "HFG case data"
-author: "Marlin"
-date: "2023-06-15"
+title: "High Frequency Case Data"
+author: "Marlin Lee"
 vignette: >
   %\VignetteIndexEntry{HFG data}
   \usepackage[utf8]{inputenc}
@@ -12,13 +11,14 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, Warning = FALSE, message = FALSE)
+knitr::opts_chunk$set(echo = TRUE, Warning = FALSE, message = FALSE, echo = FALSE)
 options(warn=-1)
 ```
 
-## Data placeholder
+## High Frequency Case Data
 
 This vignette covers the traditionally collected case data during the high frequency period. This case data has four different metrics of cases over a period of 55 weeks.
+
 ```{r load and show data}
 library(DSIWastewater)
 library(dplyr)
@@ -26,22 +26,27 @@ library(ggplot2)
 
 data(HFGCase_data, package = "DSIWastewater")
 ```
-The data is broken down by site and date. Site is where is was collected from a range of 10 locations. For each date and site there is four metrics of case data. These generally agree but have some slight variation. In this data a case number of less then 5 is repersented with -999.
+
+The data is broken down by site and date. Site is where the sample was collected from a range of 10 locations. For each date and site there are four metrics of case data. These generally agree but have some slight variation. In this data a case number of less then 5 is represented with -999 for privacy.
 
 ```{r catagorical variables, warning = FALSE}
 
 HFGCase_data%>%
   filter(!is.na(ReportedCases))%>%
-  ggplot(aes(x = date), size = .5)+
-  geom_point(aes(y = ReportedCases, color = "Reported Cases"))+
-  geom_point(aes(y = EpisodeCases, color = "Episode Cases"))+
-  geom_point(aes(y = CollectedCases, color = "Collected Cases"))+
-  geom_point(aes(y = ConfirmedCases, color = "Confirmed Cases"))+
+  ggplot(aes(x = date), size = .2)+
+  geom_point(aes(y = ReportedCases, color = "Reported"))+
+  geom_point(aes(y = EpisodeCases, color = "Episode"))+
+  geom_point(aes(y = CollectedCases, color = "Collected"))+
+  geom_point(aes(y = ConfirmedCases, color = "Confirmed"))+
   scale_y_log10()+
-  facet_wrap(~site)
+  facet_wrap(~site, scales = "free_y")+
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  labs(y = "Number of Cases Reported", color = "Case Collection method", title = "Diffrent High Frequency Cases", x = "Date")
 ```
 
-Otherwise the signals measured were N1 and N2, different genes of Covid-19, PMMOV, BCoV, HF183, and CrP, which are suppose to functions as normalizes. These signals can have a couple of different companion columns. The Ct version is what the machine measured which was the number of spins to detect the genes. This is an exponential decay transformation to the Base column. The other extra column is the LOD which says if the measurement was bellow the Labs level of detection. This might mean the exact number is less reliable.
+Below is the first 6 rows of the dataset
+
 ```{r explain / show use case and link to other vignettes}
 head(HFGCase_data)
 

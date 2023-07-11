@@ -1,13 +1,13 @@
 ---
 title: "Intercepter case data"
-author: "Marlin"
-date: "2023-06-15"
+author: "Marlin Lee"
 vignette: >
   %\VignetteIndexEntry{HFG data}
   \usepackage[utf8]{inputenc}
   %\VignetteEngine{knitr::rmarkdown}
 output:
   pdf_document: default
+urlcolor: blue
 ---
 
 ```{r setup, include=FALSE}
@@ -16,7 +16,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Interceptor data
 
-This vignette covers the traditionally collected case data for the Madison interceptors. This case data has three different metrics of cases over a period of 55 weeks. This dataframe is sufficently out of date it is recommended it is not used.
+This vignette covers the traditionally collected case data for the Madison interceptors. This case data has three different metrics of cases over a period of 55 weeks. This dataframe is sufficiently out of date it is recommended it is not used.
 ```{r load and show data}
 library(DSIWastewater)
 library(dplyr)

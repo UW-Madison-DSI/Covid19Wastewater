@@ -3,9 +3,9 @@ title: "Longitudinal Waste data"
 author: "Marlin"
 date: "2023-06-15"
 vignette: >
-  %\VignetteEngine{knitr::knitr}
   %\VignetteIndexEntry{Longitudinal Waste Data}
-  %\usepackage[utf8]{inputenc}
+  \usepackage[utf8]{inputenc}
+  %\VignetteEngine{knitr::rmarkdown}
 output:
   pdf_document: default
 urlcolor: blue

@@ -1,5 +1,6 @@
 ---
 title: "Variant Data Vignette"
+author: "Kyllan Wunder"
 output:
   pdf_document: default
 vignette: >
@@ -8,9 +9,15 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
 editor_options: 
   chunk_output_type: inline
+urlcolor: blue
 ---
 
-#Variant Data
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(Warning = FALSE, message = FALSE, echo = FALSE)
+options(warn=-1)
+```
+
+# Variant Data
 
 This data is from [https://github.com/hodcroftlab/covariants/tree/master](https://github.com/hodcroftlab/covariants/tree/master).
 It reports the proportion of cases that are each variant every 2 weeks for the state of Wisconsin. 
@@ -18,6 +25,15 @@ Below there are 2 methods the first shows the proportion of each variant all tog
 
 ```{r load packages}
 library(DSIWastewater)
+library(data.table)
+library(dplyr)
+library(ggplot2)
+data(Covariants_data, package = "DSIWastewater")
+
+Covariants_data$category <- row.names(Covariants_data)
+onlycovar <- Covariants_data[-c(1,2)]
+mdfr <- melt(onlycovar, id.vars = "category")
+
 ```
 
 ```{r Variant data, eval = FALSE}
@@ -25,19 +41,29 @@ head(Covariants_data)
 ```
 
 
+```{r Variant data 3, eval = TRUE}
+percentages <- mdfr %>%
+  group_by(category) %>%
+  mutate(sum = sum(value), percent = value/sum, majority = case_when(percent > .5 ~ paste(variable)))
 
-```{r Variant data 2, eval = FALSE}
-data(Covariants_data, package = "DSIWastewater")
+per <- percentages %>% 
+  tidyr::drop_na(majority)
 
-Covariants_data$category <- row.names(Covariants_data)
-onlycovar <- Covariants_data[-c(1,2)]
-mdfr <- melt(onlycovar, id.vars = "category")
+dates <- Covariants_data[c("week","category")]
 
+perDates <- merge(per,dates,by="category")
+```
+
+
+
+
+```{r Variant data 2, fig.height = 6, eval = TRUE}
 VariantPercentage <- ggplot(mdfr, aes(factor(category,levels = c(1:69)), value, fill = variable)) +
     geom_bar(position = "fill", stat = "identity") +
-    scale_y_continuous(labels = percent) +
+#    scale_y_continuous(labels = percent) +
     xlab("bi-weekly (2020-08-17 to 2022-12-05)") +
-    ylab("Covariant Percent")
+    ylab("Covariant Percent")+
+    theme(legend.position="bottom")
 
 VariantPercentage
 
@@ -45,24 +71,12 @@ VariantPercentage
 #ggplotly(VariantPercentage)
 ```
 
-
-```{r Variant data 3, eval = FALSE}
-percentages <- mdfr %>%
-  group_by(category) %>%
-  mutate(sum = sum(value), percent = value/sum, majority = case_when(percent > .5 ~ paste(variable)))
-
-per <- percentages %>% drop_na(majority)
-
-dates <- Covariants_data[c("week","category")]
-
-perDates <- merge(per,dates,by="category")
-  
-ggplot(perDates, aes(x=week, y=percent,color=majority)) +
-  geom_point() +
+```{r focused plot}
+ggplot(perDates, aes(x=week, y=percent,fill=majority)) +
+  geom_col() +
   xlab("bi-weekly") +
   ylab("Percent of total cases (above 50%)") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
-
-
 ```
+

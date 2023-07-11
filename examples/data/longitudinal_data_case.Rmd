@@ -2,9 +2,9 @@
 title: "Longitudinal Case data"
 author: "Marlin Lee"
 vignette: >
-  %\VignetteEngine{knitr::knitr}
   %\VignetteIndexEntry{Longitudinal Case Data}
-  %\usepackage[utf8]{inputenc}
+  \usepackage[utf8]{inputenc}
+  %\VignetteEngine{knitr::rmarkdown}
 output:
   pdf_document: default
 urlcolor: blue
