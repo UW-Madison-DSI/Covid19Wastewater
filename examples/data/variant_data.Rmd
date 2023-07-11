@@ -1,22 +1,16 @@
 ---
 title: "Variant Data Vignette"
 author: "Kyllan Wunder"
-output:
-  pdf_document: default
 vignette: >
-  %\VignetteIndexEntry{Data Covariants Vignette}
+  %\VignetteIndexEntry{Variant Data Vignette}
   \usepackage[utf8]{inputenc}
   %\VignetteEngine{knitr::rmarkdown}
-editor_options: 
-  chunk_output_type: inline
+output:
+  pdf_document: default
+  html_document: default
 urlcolor: blue
+
 ---
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(Warning = FALSE, message = FALSE, echo = FALSE)
-options(warn=-1)
-```
-
 # Variant Data
 
 This data is from [https://github.com/hodcroftlab/covariants/tree/master](https://github.com/hodcroftlab/covariants/tree/master).
@@ -36,12 +30,12 @@ mdfr <- melt(onlycovar, id.vars = "category")
 
 ```
 
-```{r Variant data, eval = FALSE}
+```{r Variant data head}
 head(Covariants_data)
 ```
 
 
-```{r Variant data 3, eval = TRUE}
+```{r Variant data percentages}
 percentages <- mdfr %>%
   group_by(category) %>%
   mutate(sum = sum(value), percent = value/sum, majority = case_when(percent > .5 ~ paste(variable)))
@@ -57,7 +51,7 @@ perDates <- merge(per,dates,by="category")
 
 
 
-```{r Variant data 2, fig.height = 6, eval = TRUE}
+```{r Variant data graph, fig.height = 6}
 VariantPercentage <- ggplot(mdfr, aes(factor(category,levels = c(1:69)), value, fill = variable)) +
     geom_bar(position = "fill", stat = "identity") +
 #    scale_y_continuous(labels = percent) +
@@ -71,7 +65,7 @@ VariantPercentage
 #ggplotly(VariantPercentage)
 ```
 
-```{r focused plot}
+```{r Variant data percentages graph}
 ggplot(perDates, aes(x=week, y=percent,fill=majority)) +
   geom_col() +
   xlab("bi-weekly") +
