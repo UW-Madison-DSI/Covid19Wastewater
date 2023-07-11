@@ -17,7 +17,7 @@
 | hf183 / HF183 | Hf183 is a sewage-associated marker used to normalize use |
 | lab_submitter | These datasets include samples from both the Wisconsin State lab of Hygiene(WSLH) and the Milwaukie lab. If not in included all the data is from the WSLH |
 | N1 / N2 | The two Covid-19 genes that are detected in the wastewater and reported. It is measured in gene copies per liter|
-| N1_lod / n1_loq / n1_sars_cov2_lod / N1LOD N2_lod / n2_loq / n2_sars_cov2_lod / N2LOD  | Level of detection (lod) and Level of quantification. Lod is the concentration at which the lab can not be sure the gene is there and loq is the point where they can’t be confident about the measured result. |
+| N1_lod / n1_loq / n1_sars_cov2_lod / N1LOD N2_lod / n2_loq / n2_sars_cov2_lod / N2LOD / Avg_sars_cov2_below_lod | Level of detection (lod) and Level of quantification. Lod is the concentration at which the lab can not be sure the gene is there and loq is the point where they can’t be confident about the measured result. |
 | n1_sars_cov2_error / n2_sars_cov2_error | For some samples they were measured three times and a standard error of the measurements was given. The data is not normally distributed so they need to be used with caution |
 | PMMoV / PMMOV | Concentration of Pepper mild mottle virus (PMMoV) is used as a measure of how many people are using the sewage system. |
 | ph | The pH of the sample. Could affect measuring ability. |
