@@ -47,8 +47,35 @@ WasteWater_data%>%
 Below is the first 6 rows of the dataset.
 
 ```{r explain show use case and link to other vignettes}
-WasteWater_data%>%
-  head()%>%
+Head_DF <- WasteWater_data%>%
+  head()
+
+Head_DF%>%
+  select(regions:pop)%>%
+  knitr::kable()
+
+Head_DF%>%
+  select(N1:ph)%>%
+  knitr::kable()
+
+Head_DF%>%
+  select(conductivity:n1_sars_cov2_lod)%>%
+  knitr::kable()
+
+Head_DF%>%
+  select(n2_sars_cov2_lod:n2_lod)%>%
+  knitr::kable()
+
+Head_DF%>%
+  select(n2_loq:quant_stan_ref)%>%
+  knitr::kable()
+
+Head_DF%>%
+  select(n2_num_ntc_amplify:inhibition_adjust)%>%
+  knitr::kable()
+
+Head_DF%>%
+  select(analytical_comments:equiv_sewage_amt)%>%
   knitr::kable()
 ```
 

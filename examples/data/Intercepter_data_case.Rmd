@@ -11,7 +11,7 @@ urlcolor: blue
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(echo = TRUE, Warning = FALSE, message = FALSE)
 ```
 
 ## Interceptor data
