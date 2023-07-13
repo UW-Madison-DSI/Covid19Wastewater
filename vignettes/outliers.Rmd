@@ -25,7 +25,7 @@ library(DSIWastewater)
 library(dplyr)
 library(ggplot2)
 
-data("Example_data", package = "DSIWastewater")
+data("example_data", package = "DSIWastewater")
 
 smoothing_df <- Example_data%>%
   select(site, date, N1, N2)%>%
@@ -44,6 +44,7 @@ base_plot <- smoothing_df%>%
 
 base_plot
 ```
+
 ## Adjacent outliers
 
 ```{r adjacent outlier}
@@ -65,7 +66,9 @@ classied_data%>%
        )
 #result_df <- removeOutliers(classied_data, Messure = N12_avg)
 ```
+
 ## Trend outlier
+
 Unlike the adjacency method The trend method does not come fully formed. It can use any trend method you give it.
 
 ```{r Trend outlier}
@@ -105,4 +108,4 @@ full_df%>%
        )
 ```
 
-We used these functions in some analysis [TODO](https://github.com/AFIDSI/Covid19-Wastewater-Analysis/tree/main/results/CoVariants)
+We used these functions in some analysis [Here](https://github.com/AFIDSI/Covid19-Wastewater-Analysis/tree/main/results/CoVariants)

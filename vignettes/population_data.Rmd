@@ -16,7 +16,8 @@ knitr::opts_chunk$set(echo = FALSE, Warning = FALSE, message = FALSE)
 options(warn=-1)
 ```
 
-#Population data
+# Population data
+
 Population Data for Wisconsin's Wastewater treatment plants(WWTP). For cities with more than one WWTP (Madison and Milwaukee) the population is for the whole city.
 
 ```{r load packages}
@@ -25,16 +26,17 @@ library(DSIWastewater)
 ```
 
 First column is the WWTP site and the next is the population
+
 ```{r Population data head} 
 data(pop_data, package = "DSIWastewater")
 pop_data%>%
   head()%>%
   knitr::kable()
 
-pop_data
 ```
 
 Sometimes we split sites by population size into 3 groups Small(below 10,000), Medium(between 10,000 and 100,000), and Large(Over 100,000)
+
 ```{r Splitting population data by size}
 population_split_by_size <- pop_data %>% 
   mutate(popgroup = case_when(pop >= 100000 ~ "Large",
@@ -47,6 +49,7 @@ population_split_by_size%>%
 
 
 To combine cities that have multiple WWTP you can use code similar to this.
+
 ```{r Grouping data by city}
 Madison_data <- pop_data %>% filter(grepl("Madison|MMSD", site))
 Madison_data%>%

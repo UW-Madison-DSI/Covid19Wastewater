@@ -1,7 +1,6 @@
 ---
 title: "Time Series"
 author: "Kyllan"
-date: "2023-06-15"
 vignette: >
   %\VignetteIndexEntry{Time Series}
   \usepackage[utf8]{inputenc}
@@ -9,6 +8,7 @@ vignette: >
 output:
   pdf_document: default
   html_document: default
+urlcolor: blue
 ---
 
 ```{r setup, include=FALSE}
