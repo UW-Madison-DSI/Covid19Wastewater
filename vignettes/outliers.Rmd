@@ -34,8 +34,13 @@ smoothing_df <- Example_data%>%
 
 base_plot <- smoothing_df%>%
   ggplot(aes(x = date))+
-  geom_point(aes(y = N12_avg, color = "N12_avg"))+
-  facet_wrap(~site)
+  geom_point(aes(y = N12_avg))+
+  facet_wrap(~site)+
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  labs(y = "Covid-19 Gene Concentration",
+       x = "Date"
+       )
 
 base_plot
 ```
@@ -51,7 +56,13 @@ classied_data <- flagOutliers(ranked_quantile_data, 9)%>%
 classied_data%>%
   ggplot(aes(x = date))+
   geom_point(aes(y = N12_avg, color = FlaggedOutlier))+
-  facet_wrap(~site)
+  facet_wrap(~site)+
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  labs(y = "Covid-19 Gene Concentration",
+       x = "Date",
+       color = "Flagged Outlier"
+       )
 #result_df <- removeOutliers(classied_data, Messure = N12_avg)
 ```
 ## Trend outlier
@@ -67,7 +78,13 @@ classied_data_trend <- df_data%>%
 classied_data_trend%>%
   ggplot(aes(x = date))+
   geom_point(aes(y = N12_avg, color = flagged_outlier))+
-  facet_wrap(~site)
+  facet_wrap(~site)+
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  labs(y = "Covid-19 Gene Concentration",
+       x = "Date",
+       color = "Flagged Outlier"
+       )
 ```
 
 ## compare
@@ -79,7 +96,13 @@ full_df%>%
   ggplot(aes(x = date))+
   geom_point(aes(y = N12_avg, color = flagged_outlier, fill = FlaggedOutlier), 
              shape = 21, size = 1.5, alpha = .5, stroke = 1.5)+
-  facet_wrap(~site)
+  facet_wrap(~site)+
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  labs(y = "Covid-19 Gene Concentration",
+       x = "Date",
+       color = "Flagged Outlier"
+       )
 ```
 
 We used these functions in some analysis [TODO](https://github.com/AFIDSI/Covid19-Wastewater-Analysis/tree/main/results/CoVariants)

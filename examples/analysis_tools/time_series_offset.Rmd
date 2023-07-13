@@ -49,7 +49,9 @@ offsetDF <- OffsetDFMaker(10,as.Date("2020-08-01"), as.Date("2023-01-01"), Case_
 OffsetDF_Plot(offsetDF, "All Wisconsin data over all time")
 
 
+
 heatmapcorfunc(Example_data)
+
 
 covarstarts <- c(as.Date("2020-08-17"),
                  as.Date("2021-03-29"),
@@ -74,7 +76,7 @@ covarnames <- c("Robin1",
                 "Omicron.22B")
 
 
-OffsetHeatmap("kendall_offset",2,WasteWater_data,Case_data,"pop",TRUE,TRUE)
+OffsetHeatmap("kendall_offset", 2, WasteWater_data, Case_data, "pop", TRUE, TRUE)
 ```
 
 
