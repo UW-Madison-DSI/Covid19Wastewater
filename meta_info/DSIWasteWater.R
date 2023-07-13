@@ -1,22 +1,17 @@
 #' DSIWastewater: A package for running Covid wastewater concentration analysis
 #'
-#' The DSIWastewater package provides three categories of important functions:
-#' DataTableGen, DataMod and Viz
+#' This is an R package of utilities to perform wastewater data analysis for pathogenic surveillance and monitoring. 
+#' This project is a collaboration between the University of Wiscosin's [Data Science Institute (DSI)](https://datascience.wisc.edu), the [Wisconsin Department of Health Services (DHS)](https://www.dhs.wisconsin.gov/covid-19/wastewater.htm), and the [State Lab of Hygiene (SLH)](http://www.slh.wisc.edu/environmental/covid-19-wastewater).
 #' 
-#' @section DataTableGen functions:
-#' This section list the functions used for running the DHS analysis
+#' View more in our github repo: [https://github.com/AFIDSI/DSIWastewater](https://github.com/AFIDSI/DSIWastewater)
 #' 
-#' buildRegressionEstimateTable - This function is the composition of the next two
+#' [Testing](.\package_data.R) 
 #' 
-#' runRegressionAnalysis
+#' @section Built in data:
 #' 
-#' classifyRegressionAnalysis
+#' @section Data Prep:
 #' 
-#' @section DataMod functions:
-#' buildWasteAnalysisDF
-#' 
-#' @section Viz functions:
-#' createRegressionAnalysis_Plot
+#' @section Analysis tools:
 #'
 #' @docType package
 #' @name DSIWastewater
