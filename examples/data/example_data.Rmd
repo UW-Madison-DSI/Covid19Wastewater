@@ -16,28 +16,45 @@ knitr::opts_chunk$set(Warning = FALSE, message = FALSE, echo = FALSE)
 options(warn=-1)
 ```
 
-#Example data
-This data is only meant to be used in vignettes or testing. To view the full data use: data(WasteWater_data, package = "DSIWastewater")
+# Example data
+This data is only meant to be used in vignettes or testing. To view the full data use: 
+```
+data(WasteWater_data, package = "DSIWastewater")
+```
 
-This data comes from our wastewater and case data merged together by site and date. Then filtered with by 3 sites; Green Bay, Janesville, and Mauston. Then a new column is added; geo_mean which is the geometric mean of N1 and N2. This gives roughly 500 rows to work with for examples across different sized sites over a large time frame.
+This data comes from our wastewater and case data merged together by site and date. 
+```
+merge(Case_data,WasteWater_data, by = c("date","site"))
+```
+The data is then filtered with by 3 sites; Green Bay, Janesville, and Mauston. 
+```
+filter(site=="Green Bay" | site =="Janesville"| site == "Mauston")
+```
+A new column is added: geo_mean which is the geometric mean of N1 and N2. 
+```
+mutate(geo_mean = exp((log(N1) + log(N2))/2))
+```
+This gives roughly 500 rows to work with for examples across different sized sites over a large time frame.
 
 ```{r load packages}
 library(DSIWastewater)
-library(dplyr)
 library(ggplot2)
+library(dplyr)
 ```
-
-This columns are all the same as the wastewater data. [https://github.com/AFIDSI/DSIWastewater/blob/main/docs/data/data_disc.md](https://github.com/AFIDSI/DSIWastewater/blob/main/docs/data/data_disc.md)
-
+These columns are all the same as the wastewater data explained here:  [https://github.com/AFIDSI/DSIWastewater/blob/main/docs/data/data_disc.md](https://github.com/AFIDSI/DSIWastewater/blob/main/docs/data/data_disc.md)
 ```{r Example Data head}
 data(Example_data, package = "DSIWastewater")
 head(Example_data)%>%
   head()%>%
   knitr::kable()
 ```
+Here is a simple plot of the geometric mean by site.
 
 ```{r plotting example data}
 ggplot(Example_data, aes(x=date, y=geo_mean, color = site)) +
-  geom_point()
+  geom_point() +
+  ylab("Geometric Mean of N1 and N2") +
+  xlab("Date")
+
 ```
 
