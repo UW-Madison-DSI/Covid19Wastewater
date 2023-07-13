@@ -1,0 +1,5 @@
+load("/Users/kyllan/Desktop/COVIDproject/DSIWastewater/data/pop_data.RData")
+head(pop_data)
+view(pop_data)
+View(pop_data)
+pop_data
