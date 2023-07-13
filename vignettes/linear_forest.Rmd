@@ -1,7 +1,6 @@
 ---
 title: "Linear Forest"
 author: "Marlin"
-date: "2023-06-15"
 vignette: >
   %\VignetteIndexEntry{Linear Forest}
   \usepackage[utf8]{inputenc}
@@ -9,6 +8,7 @@ vignette: >
 output:
   pdf_document: default
   html_document: default
+urlcolor: blue
 ---
 
 ```{r setup, include=FALSE}
@@ -59,7 +59,7 @@ form <- conf_case ~ N1 + N2 | . - N1 - N2
 forest_model <- random_linear_forest(data = randomForest::na.roughfix(model_data),
                                      num_tree = 20, 
                                      model_formula = form,
-                                     max_depth = Inf,
+                                     max_depth = 3,
                                      verbose = FALSE)
 
 forest_model

@@ -12,13 +12,14 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(Warning = FALSE, message = FALSE, echo = FALSE)
 library(DSIWastewater)
 library(dplyr)
 library(RcppRoll)
 library(anytime)
 library(tidyverse)
 ```
+
 
 ## Time Series and Offset Analysis
 

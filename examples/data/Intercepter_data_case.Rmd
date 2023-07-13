@@ -11,7 +11,7 @@ urlcolor: blue
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE)
 ```
 
 ## Interceptor data
@@ -23,7 +23,9 @@ library(dplyr)
 library(ggplot2)
 
 data(InterceptorCase_data, package = "DSIWastewater")
-head(InterceptorCase_data)
+head(InterceptorCase_data)%>%
+  head()%>%
+  knitr::kable()
 ```
 
 ```{r explain all / most relavent columns}

@@ -7,7 +7,7 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
 output:
   pdf_document: default
-  html_document: default
+urlcolor: blue
 ---
 
 ```{r setup, include=FALSE}
@@ -48,7 +48,9 @@ HFGCase_data%>%
 Below is the first 6 rows of the dataset
 
 ```{r explain / show use case and link to other vignettes}
-head(HFGCase_data)
+head(HFGCase_data)%>%
+  head()%>%
+  knitr::kable()
 
 ```
 

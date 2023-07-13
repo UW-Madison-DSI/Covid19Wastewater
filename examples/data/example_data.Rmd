@@ -11,6 +11,11 @@ output:
 urlcolor: blue
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(Warning = FALSE, message = FALSE, echo = FALSE)
+options(warn=-1)
+```
+
 #Example data
 This data is only meant to be used in vignettes or testing. To view the full data use: data(WasteWater_data, package = "DSIWastewater")
 
@@ -18,12 +23,17 @@ This data comes from our wastewater and case data merged together by site and da
 
 ```{r load packages}
 library(DSIWastewater)
+library(dplyr)
 library(ggplot2)
 ```
+
 This columns are all the same as the wastewater data. [https://github.com/AFIDSI/DSIWastewater/blob/main/docs/data/data_disc.md](https://github.com/AFIDSI/DSIWastewater/blob/main/docs/data/data_disc.md)
+
 ```{r Example Data head}
 data(Example_data, package = "DSIWastewater")
-head(Example_data)
+head(Example_data)%>%
+  head()%>%
+  knitr::kable()
 ```
 
 ```{r plotting example data}

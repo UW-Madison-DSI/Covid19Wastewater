@@ -1,18 +1,17 @@
 ---
 title: "Smoothing"
 author: "Marlin Lee"
-date: "2023-06-15"
 vignette: >
   %\VignetteIndexEntry{Smoothing}
   \usepackage[utf8]{inputenc}
   %\VignetteEngine{knitr::rmarkdown}
 output:
   pdf_document: default
-  html_document: default
+urlcolor: blue
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, Warning = FALSE, message = FALSE)
+knitr::opts_chunk$set(echo = FALSE, Warning = FALSE, message = FALSE)
 options(warn=-1)
 ```
 

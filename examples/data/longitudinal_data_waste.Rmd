@@ -1,7 +1,6 @@
 ---
 title: "Longitudinal Waste data"
 author: "Marlin"
-date: "2023-06-15"
 vignette: >
   %\VignetteIndexEntry{Longitudinal Waste Data}
   \usepackage[utf8]{inputenc}
@@ -48,7 +47,9 @@ WasteWater_data%>%
 Below is the first 6 rows of the dataset.
 
 ```{r explain show use case and link to other vignettes}
-head(WasteWater_data)
+WasteWater_data%>%
+  head()%>%
+  knitr::kable()
 ```
 
 This data is our most used data that is used in multiple analyses. A couple of examples are below.

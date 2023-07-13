@@ -1,31 +1,53 @@
 ---
 title: "Population Data Vignette"
-output:
-  pdf_document: default
+author: "Kyllan Wunder"
 vignette: >
-  %\VignetteIndexEntry{Data Vignette}
+  %\VignetteIndexEntry{Population Data Vignette}
   \usepackage[utf8]{inputenc}
   %\VignetteEngine{knitr::rmarkdown}
-editor_options: 
-  chunk_output_type: inline
+output:
+  pdf_document: default
+  html_document: default
+urlcolor: blue
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, Warning = FALSE, message = FALSE)
+options(warn=-1)
+```
+!!! Wausau is n/a , inconsistant data!!!
 #Population data
-Data for Wisconsin's WWTF/WWTP populations
+Population Data for Wisconsin's Wastewater treatment plants(WWTP). For cities with more than one WWTP (Madison and Milwaukee) the population is for the whole city.
 
 ```{r load packages}
+library(dplyr)
 library(DSIWastewater)
 ```
 
-```{r Population data} 
+First column is the WWTP site and the next is the population
+```{r Population data head} 
 data(pop_data, package = "DSIWastewater")
-head(pop_data)
+pop_data%>%
+  head()%>%
+  knitr::kable()
 ```
 
 Sometimes we split sites by population size into 3 groups Small(below 10,000), Medium(between 10,000 and 100,000), and Large(Over 100,000)
-```{r}
-populationtemp <- pop_data %>% mutate(popgroup = case_when(pop >= 100000 ~ "Large",
+```{r Splitting population data by size}
+population_split_by_size <- pop_data %>% mutate(popgroup = case_when(pop >= 100000 ~ "Large",
                                                          pop >= 10000  ~ "Medium",
                                                          .default = "Small"))
-head(populationtemp)
+population_split_by_size%>%
+  head()%>%
+  knitr::kable()
 ```
+
+
+To combine cities that have multiple WWTP you can use code similar to this.
+```{r Grouping data by city}
+Madison_data <- pop_data %>% filter(grepl("Madison|MMSD", site))
+Madison_data%>%
+  head()%>%
+  knitr::kable()
+```
+

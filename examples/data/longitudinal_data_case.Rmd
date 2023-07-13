@@ -44,7 +44,9 @@ main_plot
 
 Below is the first 6 rows of the dataset.
 ```{r link to other vignettes, echo = FALSE}
-head(Case_data)
+Case_data%>%
+  head()%>%
+  knitr::kable()
 ```
 
 

@@ -1,7 +1,6 @@
 ---
 title: "Calculated Info"
 author: "Marlin"
-date: "2023-06-15"
 vignette: >
   %\VignetteIndexEntry{Calculated Info}
   \usepackage[utf8]{inputenc}
@@ -12,7 +11,7 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(Warning = FALSE, message = FALSE, echo = FALSE)
 ```
 
 This package contains a couple tools to create useful views of the data not by default in the dataframe. These mostly come in the form of the default case and wastewater dataframe augment function.
@@ -22,15 +21,28 @@ The wastewater function does three things. first it replaces Concentrations belo
 
 ```{r load and show data}
 library(DSIWastewater)
+library(dplyr)
 data(WasteWater_data, package = "DSIWastewater")
-head(buildWasteAnalysisDF(WasteWater_data))
+
+WasteWater_data%>%
+  buildWasteAnalysisDF()%>%
+  head()%>%
+  knitr::kable()
 ```
 # Case augmeanting function
 The case function does two things. first it normalizes the data by population. Second it calculates a rolling sum and average of the data. This needs the population data contained in its own data frame.
 ```{r explain all / most relavent functions}
+
+
 data(Case_data, package = "DSIWastewater")
 data("pop_data", package = "DSIWastewater")#need to fix pop_data
-#head(buildCaseAnalysisDF(left_join(Case_data, pop_data, by = "site")))
+
+left_join(Case_data, pop_data)%>%
+  rename(population_served = pop)%>%
+  buildCaseAnalysisDF()%>%
+  head()%>%
+  knitr::kable()
+  
 
 ```
 

@@ -8,12 +8,12 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
 output:
   pdf_document: default
-  html_document: default
+urlcolor: blue
 ---
 This package contains two very different methods to remove outliers from the Time series data. The first method only uses the adjacent data points making it very functional for procedural use. The other method uses an estimated trend to get a more robust understanding of outliers. This is generally going to be less effective for production but should give a more accurate baseline for research. This vignette will have four sections, data, adjacent outlier detection, trend outlier detection, and finally comparing them.
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE, Warning = FALSE, message = FALSE)
 ```
 
 ## Data
