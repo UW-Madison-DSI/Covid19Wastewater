@@ -172,11 +172,11 @@ VariantPlot <- function(covar){
 #' 
 #' @examples
 #'  
-heatmapcorfunc <- function(cordata){
+heatmapcorfunc <- function(cordata,length=14){
   
   rsquareddf <- data.frame(matrix(ncol = 1, nrow = 0))
-  for(j in 0:14){
-    for(i in 0:14){
+  for(j in 0:length){
+    for(i in 0:length){
       wctemplm <- cordata %>% 
         mutate(tempsum = roll_sum(conf_case,i,align = "left",fill = NA) + 
                  roll_sum(conf_case,j,align = "right",fill = NA) + 

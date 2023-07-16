@@ -1,8 +1,8 @@
 ---
 title: "Time Series"
-author: "Kyllan"
+author: "Kyllan Wunder"
 vignette: >
-  %\VignetteIndexEntry{Time Series}
+  %\VignetteIndexEntry{Time Series Analysis Vignette}
   \usepackage[utf8]{inputenc}
   %\VignetteEngine{knitr::rmarkdown}
 output:
@@ -16,7 +16,6 @@ knitr::opts_chunk$set(Warning = FALSE, message = FALSE, echo = FALSE)
 library(DSIWastewater)
 library(dplyr)
 library(RcppRoll)
-library(anytime)
 library(tidyverse)
 ```
 
@@ -25,8 +24,6 @@ library(tidyverse)
 
 How to find the offset between waste and case data
 
-
-Pre merged waste and case data:
 ```{r load and show data}
 data(Case_data, package = "DSIWastewater")
 totalcases <- Case_data %>% 
@@ -51,7 +48,7 @@ OffsetDF_Plot(offsetDF, "All Wisconsin data over all time")
 
 
 heatmapcorfunc(Example_data)
-
+heatmapcorfunc(Example_data,10)
 
 covarstarts <- c(as.Date("2020-08-17"),
                  as.Date("2021-03-29"),
@@ -76,7 +73,7 @@ covarnames <- c("Robin1",
                 "Omicron.22B")
 
 
-OffsetHeatmap("kendall_offset", 2, WasteWater_data, Case_data, "pop", TRUE, TRUE)
+OffsetHeatmap("kendall_offset", 0, WasteWater_data, Case_data, "pop", TRUE, TRUE)
 ```
 
 
