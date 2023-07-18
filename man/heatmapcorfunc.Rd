@@ -6,7 +6,7 @@
 \title{Outputs a heatmap where the color is the r squared of wastewater data and center day + x many future days and y many past days
 Helps inform Offset Analysis}
 \usage{
-heatmapcorfunc(cordata)
+heatmapcorfunc(cordata, length = 14)
 }
 \arguments{
 \item{cordata}{DF with geo_mean and conf_case columns}
@@ -17,4 +17,8 @@ ggplot plot object (heatmap)
 \description{
 Outputs a heatmap where the color is the r squared of wastewater data and center day + x many future days and y many past days
 Helps inform Offset Analysis
+}
+\examples{
+ data(example_data, package = "DSIWastewater")
+ heatmapcorfunc(Example_data)
 }

@@ -171,7 +171,8 @@ VariantPlot <- function(covar){
 #' @export
 #' 
 #' @examples
-#'  
+#'  data(example_data, package = "DSIWastewater")
+#'  heatmapcorfunc(Example_data)
 heatmapcorfunc <- function(cordata,length=14){
   
   rsquareddf <- data.frame(matrix(ncol = 1, nrow = 0))
