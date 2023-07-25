@@ -140,8 +140,8 @@ orderAndZipListsOfPlots_Plot <- function(top_plot_list, bot_plot_list, ratA=3,
       botElement <- botElement + sideRemove
       compPlot <- (botElement | topElement)
     }
-    retPlot <- compPlot + plot_layout(heights = Height,
-                                           widths = Width)
+    retPlot <- compPlot + 
+      plot_layout(heights = Height, widths = Width)
     return(retPlot)
   }
   
@@ -186,9 +186,10 @@ orderAndZipListsOfPlots_Plot <- function(top_plot_list, bot_plot_list, ratA=3,
     RetList[[i]] <- compPlot + plot_layout(heights = Height,
                                    widths = Width)
   }
-  retPlot <- wrap_plots(RetList) + plot_layout(guide="collect", 
-                                               ncol = ncol,
-                                               nrow = nrow)
+  retPlot <- wrap_plots(RetList) +
+    plot_layout(guides = "collect",
+                ncol = ncol,
+                nrow = nrow)
   return(retPlot)
 }
 
@@ -216,10 +217,12 @@ orderAndZipListsOfPlots_Plot <- function(top_plot_list, bot_plot_list, ratA=3,
 #' CatagoryColors <- c("major decrease" = "#0571b0", 
 #'                     "no change" = "WHITE", "major increase" = "#ca0020")
 #'DSIWastewater:::CreateHeatMaps_Plot(plotDF, Method ~ site, "Catagory", CatagoryColors)
-CreateHeatMaps_Plot <- function(DF, FacGridFormula, FillFac, CatagoryColors){#, 
+CreateHeatMaps_Plot <- function(DF, FacGridFormula, FillFac, CatagoryColors, 
+                                days_elapsed = days_elapsed){
   BarGridSmoothRaw <- DF%>%
     ggplot()+
-    geom_rect(aes(xmin=date-days_elapsed/2,xmax=date+days_elapsed/2,
+    geom_rect(aes(xmin=date - {{days_elapsed}} / 2,
+                  xmax = date + {{days_elapsed}} / 2,
                   ymin=0,
                   ymax = 10,fill = !!sym(FillFac)),
               na.rm=TRUE)+

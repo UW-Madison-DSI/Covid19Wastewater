@@ -4,7 +4,13 @@
 \alias{CreateHeatMaps_Plot}
 \title{CreateHeatMaps_Plot}
 \usage{
-CreateHeatMaps_Plot(DF, FacGridFormula, FillFac, CatagoryColors)
+CreateHeatMaps_Plot(
+  DF,
+  FacGridFormula,
+  FillFac,
+  CatagoryColors,
+  days_elapsed = days_elapsed
+)
 }
 \arguments{
 \item{DF}{The DF used to create the Heatmap}

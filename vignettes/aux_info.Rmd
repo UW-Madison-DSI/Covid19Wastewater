@@ -1,8 +1,8 @@
 ---
-title: "Example Data Vignette"
+title: "Auxiliary Wastewater Data"
 author: "Kyllan Wunder"
 vignette: >
-  %\VignetteIndexEntry{Example Data Vignette}
+  %\VignetteIndexEntry{Auxiliary Wastewater Data}
   \usepackage[utf8]{inputenc}
   %\VignetteEngine{knitr::rmarkdown}
 output:
@@ -16,10 +16,7 @@ knitr::opts_chunk$set(Warning = FALSE, message = FALSE, echo = FALSE)
 options(warn=-1)
 ```
 
-#Example data
-This data is only meant to be used in vignettes or testing. To view the full data use: data(WasteWater_data, package = "DSIWastewater")
-
-This data comes from our wastewater and case data merged together by site and date. Then filtered with by 3 sites; Green Bay, Janesville, and Mauston. Then a new column is added; geo_mean which is the geometric mean of N1 and N2. This gives roughly 500 rows to work with for examples across different sized sites over a large time frame.
+#Auxiliary Wastewater data
 
 ```{r load packages}
 library(DSIWastewater)
@@ -53,10 +50,15 @@ aux_info%>%
   knitr::kable()
 ```
 
+
+# Missing Columns
+
+These rows have many missing values. For some columns over 90% of the rows are missing. Below is a table showing what percent of the data is missing for each column.
+
 ```{r all tables and Na%}
 library(dplyr)
 aux_info%>%
-  summarise(across(everything(), ~mean(is.na(.x))))%>%
+  summarise(across(everything(), ~100 * mean(is.na(.x))))%>%
   tidyr::pivot_longer(everything(), names_to = "column name", values_to = "na %")%>%
   knitr::kable()
 ```

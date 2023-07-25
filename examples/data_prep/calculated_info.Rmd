@@ -39,13 +39,25 @@ The case function does two things. first it normalizes the data by population. S
 data(Case_data, package = "DSIWastewater")
 data("pop_data", package = "DSIWastewater")#need to fix pop_data
 
-left_join(Case_data, pop_data)%>%
+case_df <- left_join(Case_data, pop_data)%>%
   rename(population_served = pop)%>%
   buildCaseAnalysisDF()%>%
-  head()%>%
+  head()#
+
+
+
+case_df%>%
+  select(site:regions)%>%
   knitr::kable()
   
+case_df%>%
+  select(county:FirstConfirmed.Per100K)%>%
+  knitr::kable()
 
+case_df%>%
+  select(pastwk.sum.casesperday.Per100K:pastwk.avg.casesperday.Per100K)%>%
+  knitr::kable()
+  
 ```
 
 These functions are slightly out of date and not used in many new analysis projects

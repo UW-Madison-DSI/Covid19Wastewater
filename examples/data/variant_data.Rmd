@@ -42,6 +42,7 @@ mdfr <- pivot_longer(onlycovar, cols = -category, names_to = 'variable', values_
 To see more about each variant look here [https://covariants.org/](https://covariants.org/). Category refers to the 2 week time period when the data was collected, total_sequences is the total of all variants for that time period, week is the start of the 2-week time period. 
 ```{r Variant data head}
 Covariants_data%>%
+  select(week:X20J..Gamma..V3.)%>%
   head()%>%
   knitr::kable()
 ```
@@ -71,7 +72,8 @@ VariantPercentage <- mdfr%>%
     labs(x = "bi-weekly (2020-08-17 to 2022-12-05)",
          y = "Covariant Percent",
          title = "All variants by percentage of cases reported")+
-    theme(legend.position="bottom")
+    theme(legend.position="bottom",
+          axis.text.x = element_text(angle = 90, hjust=1))
 
 
 VariantPercentage

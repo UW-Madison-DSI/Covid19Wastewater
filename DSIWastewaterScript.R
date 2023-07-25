@@ -35,6 +35,17 @@ move_struct_R <- function(start, end = "R", add_context = TRUE, end_in = NA){
   }
 }
 
+build_vignette_DSI <- function(){
+  build_vignettes(quiet = F)
+  unlink("docs/vignettes", recursive = T, force = T)
+  dir.create("docs/vignettes")
+  for(fileName in dir("doc")){
+    if(!mach_reg(fileName, "Rmd", "\\.") && !mach_reg(fileName, "R", "\\.")){
+      file.copy(paste0("doc/", fileName), paste0("docs/vignettes/", fileName), overwrite=TRUE)
+    }
+  }
+}
+
 package_update <- function(path = ".", update_examples = F, update_test = F){
   setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
   #setwd(path)
@@ -45,28 +56,16 @@ package_update <- function(path = ".", update_examples = F, update_test = F){
   move_struct_R("library", "R")
   move_struct_R("meta_info", "R", add_context = FALSE)
   
+  unlink("vignettes", recursive = T, force = T)
+  dir.create("vignettes")
+  move_struct_R("examples", "vignettes", add_context = FALSE, end_in = "Rmd")
   if(update_examples){#build vignette
-    unlink("vignettes", recursive = T, force = T)
-    dir.create("vignettes")
-    move_struct_R("examples", "vignettes", add_context = FALSE, end_in = "Rmd")
-    build_vignettes(quiet = F)
-    unlink("docs/vignettes", recursive = T, force = T)
-    dir.create("docs/vignettes")
-    for(fileName in dir("doc")){
-      if(!mach_reg(fileName, "Rmd", "\\.") && !mach_reg(fileName, "R", "\\.")){
-        file.copy(paste0("doc/", fileName), paste0("docs/vignettes/", fileName), overwrite=TRUE)
-      }
-    }
-    print("done update")
+    build_vignette_DSI()
   }
   
   document()
   build(path = ".", vignettes = F)
   #devtools::install_github("AFIDSI/DSIWastewater")
-  
-  if(update_examples){
-    unlink("doc", recursive = T, force = T)
-  }
   
   if(update_test){
     check(args = c("--no-tests"), vignettes = FALSE)
@@ -75,3 +74,5 @@ package_update <- function(path = ".", update_examples = F, update_test = F){
   install(quick=T, build = T, build_vignettes = F, force = T)
 }
 package_update(update_examples = T, update_test = F)
+#check(args = c("--resave-data"), vignettes = FALSE)
+1

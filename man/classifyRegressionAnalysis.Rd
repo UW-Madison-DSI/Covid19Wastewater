@@ -5,12 +5,22 @@
 \alias{classifyRegressionAnalysis}
 \title{classifyRegressionAnalysis}
 \usage{
-classifyRegressionAnalysis(DF, PSigTest = TRUE)
+classifyRegressionAnalysis(
+  DF,
+  PSigTest = TRUE,
+  modeled_percentchange = modeled_percentchange,
+  lmreg_sig = lmreg_sig
+)
 }
 \arguments{
 \item{DF}{dataframe that contains results of buildRegressionEstimateTable}
 
 \item{PSigTest}{Controls if we filter values with P-values>.3}
+
+\item{modeled_percentchange}{column name of estimated percent change of signal}
+
+\item{lmreg_sig}{column name of significance of linear model that generated 
+the percent change}
 }
 \value{
 DF with an extra column Catagory containing the results of the DHS binning

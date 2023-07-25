@@ -5,7 +5,12 @@
 \alias{classifyCaseRegression}
 \title{Create Case Flags based on regression slope}
 \usage{
-classifyCaseRegression(DF, slopeThreshold = 5, minSize = 200)
+classifyCaseRegression(
+  DF,
+  slopeThreshold = 5,
+  minSize = 200,
+  lmreg_slope = lmreg_slope
+)
 }
 \arguments{
 \item{DF}{dataframe that contains results of buildRegressionEstimateTable}
@@ -13,6 +18,9 @@ classifyCaseRegression(DF, slopeThreshold = 5, minSize = 200)
 \item{slopeThreshold}{number threshold for case_flag flagging}
 
 \item{minSize}{case threshold for case_flag_plus_comm.threshold flagging}
+
+\item{lmreg_slope}{column name of significance of linear model that generated 
+the percent change}
 }
 \value{
 DF with an three extra column Category containing the case flags

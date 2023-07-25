@@ -10,7 +10,7 @@ classifyQuantileFlagRegression(DF, Pval = 0.3)
 \arguments{
 \item{DF}{dataframe that contains results of buildRegressionEstimateTable and makeQuantileColumns}
 
-\item{Pval}{threashold needed for flag_ntile_Pval to flag}
+\item{Pval}{threshold needed for flag_ntile_Pval to flag}
 }
 \value{
 DF with three extra columns 

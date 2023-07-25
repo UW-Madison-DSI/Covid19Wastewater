@@ -2,7 +2,7 @@
 title: "High Frequency Case Data"
 author: "Marlin Lee"
 vignette: >
-  %\VignetteIndexEntry{HFG data}
+  %\VignetteIndexEntry{High Frequency Case Data}
   \usepackage[utf8]{inputenc}
   %\VignetteEngine{knitr::rmarkdown}
 output:
