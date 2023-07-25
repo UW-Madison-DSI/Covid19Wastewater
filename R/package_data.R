@@ -134,3 +134,17 @@
 #'
 #' @keywords datasets
 "Covariants_data"
+
+
+#' auxiliary data
+#'
+#' 
+#'
+#' @docType data
+#'
+#' @usage data("aux_info")
+#'
+#' @format Rows: 999   Columns: 17
+#'
+#' @keywords datasets
+"aux_info"

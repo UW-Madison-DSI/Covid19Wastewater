@@ -74,4 +74,4 @@ package_update <- function(path = ".", update_examples = F, update_test = F){
   }
   install(quick=T, build = T, build_vignettes = F, force = T)
 }
-package_update(update_examples = F, update_test = F)
+package_update(update_examples = T, update_test = F)

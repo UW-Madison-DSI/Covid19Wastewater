@@ -1,0 +1,55 @@
+---
+title: "Example Data Vignette"
+author: "Kyllan Wunder"
+vignette: >
+  %\VignetteIndexEntry{Example Data Vignette}
+  \usepackage[utf8]{inputenc}
+  %\VignetteEngine{knitr::rmarkdown}
+output:
+  pdf_document: default
+  html_document: default
+urlcolor: blue
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(Warning = FALSE, message = FALSE, echo = FALSE)
+options(warn=-1)
+```
+
+#Example data
+This data is only meant to be used in vignettes or testing. To view the full data use: data(WasteWater_data, package = "DSIWastewater")
+
+This data comes from our wastewater and case data merged together by site and date. Then filtered with by 3 sites; Green Bay, Janesville, and Mauston. Then a new column is added; geo_mean which is the geometric mean of N1 and N2. This gives roughly 500 rows to work with for examples across different sized sites over a large time frame.
+
+```{r load packages}
+library(DSIWastewater)
+library(dplyr)
+library(ggplot2)
+```
+
+This dataframe contains all columns dropped from the main wastewater dataframe. It is merged using [https://github.com/AFIDSI/DSIWastewater/blob/main/docs/data/data_disc.md](https://github.com/AFIDSI/DSIWastewater/blob/main/docs/data/data_disc.md)
+
+```{r Example Data head}
+data(aux_info, package = "DSIWastewater")
+aux_info%>%
+  select(sample_id:bcov_rec_rate)%>%
+  head()%>%
+  knitr::kable()
+
+
+aux_info%>%
+  select(sample_type:n2_num_ntc_amplify)%>%
+  head()%>%
+  knitr::kable()
+
+aux_info%>%
+  select(avg_sars_cov2_conc:analytical_comments)%>%
+  head()%>%
+  knitr::kable()
+
+aux_info%>%
+  select(inhibition_detect:equiv_sewage_amt)%>%
+  head()%>%
+  knitr::kable()
+```
+

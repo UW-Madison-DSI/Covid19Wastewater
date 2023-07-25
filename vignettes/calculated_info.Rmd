@@ -23,8 +23,10 @@ The wastewater function does three things. first it replaces Concentrations belo
 library(DSIWastewater)
 library(dplyr)
 data(WasteWater_data, package = "DSIWastewater")
+data(pop_data, package = "DSIWastewater")
 
 WasteWater_data%>%
+  left_join(pop_data)%>%
   buildWasteAnalysisDF()%>%
   head()%>%
   knitr::kable()

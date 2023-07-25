@@ -25,9 +25,11 @@ library(dplyr)
 data(WasteWater_data, package = "DSIWastewater")
 data(Case_data, package = "DSIWastewater")
 data(pop_data, package = "DSIWastewater")
+data(aux_info)
 
 base_df <- inner_join(Case_data, WasteWater_data, by = c("site", "date"))%>%
   left_join(pop_data)%>%
+  left_join(aux_info)%>%
   group_by(site)%>%
   arrange(date)%>%
   mutate(conf_case = zoo::rollmean(conf_case, 7, align = "center", na.pad = TRUE))%>%

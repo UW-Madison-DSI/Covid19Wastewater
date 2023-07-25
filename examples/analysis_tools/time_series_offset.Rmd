@@ -37,11 +37,15 @@ data(Covariants_data, package = "DSIWastewater")
 
 data(pop_data, package = "DSIWastewater")
 
+
+WasteWater_data <- WasteWater_data%>%
+  left_join(pop_data)
+
 data(example_data, package = "DSIWastewater")
 ```
 
 ```{r explain most relavent functions}
-offsetDF <- OffsetDFMaker(10,as.Date("2020-08-01"), as.Date("2023-01-01"), Case_data, WasteWater_data)
+offsetDF <- OffsetDFMaker(10, as.Date("2020-08-01"), as.Date("2023-01-01"), Case_data, WasteWater_data)
 
 OffsetDF_Plot(offsetDF, "All Wisconsin data over all time")
 
