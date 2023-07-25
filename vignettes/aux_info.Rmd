@@ -53,3 +53,10 @@ aux_info%>%
   knitr::kable()
 ```
 
+```{r all tables and Na%}
+library(dplyr)
+aux_info%>%
+  summarise(across(everything(), ~mean(is.na(.x))))%>%
+  tidyr::pivot_longer(everything(), names_to = "column name", values_to = "na %")%>%
+  knitr::kable()
+```
