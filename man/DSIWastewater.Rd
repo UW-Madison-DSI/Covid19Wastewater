@@ -5,17 +5,16 @@
 \alias{DSIWastewater}
 \title{DSIWastewater: A package for running Covid wastewater concentration analysis}
 \description{
-This is an R package of utilities to perform wastewater data analysis for pathogenic surveillance and monitoring. 
-This project is a collaboration between the University of Wiscosin's \href{https://datascience.wisc.edu}{Data Science Institute (DSI)}, the href{https://www.dhs.wisconsin.gov/covid-19/wastewater.htm}{Wisconsin Department of Health Services (DHS)}, and the \href{http://www.slh.wisc.edu/environmental/covid-19-wastewater}{State Lab of Hygiene (SLH)}.
+This is an R package of utilities to perform wastewater data analysis for pathogenic surveillance and monitoring.
 }
 \details{
-View more in our github repo: \href{https://github.com/AFIDSI/DSIWastewater}{Here}
+This project is a collaboration between the University of Wiscosin's \href{https://datascience.wisc.edu}{Data Science Institute (DSI)}, the \href{https://www.dhs.wisconsin.gov/covid-19/wastewater.htm}{Wisconsin Department of Health Services (DHS)}, and the \href{http://www.slh.wisc.edu/environmental/covid-19-wastewater}{State Lab of Hygiene (SLH)}.
 
-[Testing](link{package_data.R})
+View more in our github repo: \href{https://github.com/AFIDSI/DSIWastewater}{Here}
 }
 \section{Built in data}{
 
-temp
+\link{Data_Description}
 }
 
 \section{Data Prep}{

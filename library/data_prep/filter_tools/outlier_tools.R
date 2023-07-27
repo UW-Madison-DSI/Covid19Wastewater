@@ -1,9 +1,9 @@
 #' compute first difference Jumps for N1 and N2
 #'
 #' @param df DataFrame. needs Column n1_sars_cov2_conc, n2_sars_cov2_conc, site
-#' @param N1Quant N1 metric used in finding difference
-#' @param N2Quant N2 metric used in finding difference
-#' @param TSGrouping Grouping that makes each group a time series
+#' @param N1 N1 metric used in finding difference
+#' @param N2 N2 metric used in finding difference
+#' @param site Grouping that makes each group a time series
 #'
 #' @return dataframe with 4 columns appended: delta(n1), delta(n2) from left and right
 #' @export
@@ -12,23 +12,26 @@
 #' data(example_data, package = "DSIWastewater")
 #' example_data$site = "Madison"
 #' computeJumps(example_data)
-computeJumps <- function(df, N1Quant = "n1_sars_cov2_conc",
-                         N2Quant = "n2_sars_cov2_conc", TSGrouping = "site") {
+computeJumps <- function(df, 
+                         N1_column = N1,
+                         N2_column = N2, 
+                         site_column = site) {
+  N1 <- N2 <- site <- NA #default column for jump. Not evaluated as NA in dplyr context
   df <- df %>% 
-    group_by(!!sym("site"))%>% 
+    #group_by({{site_column}})%>% 
     mutate(
-      n1.before = lag(!!sym(N1Quant), order_by = site),
-      n1.after  = lead(!!sym(N1Quant), order_by = site),
-      n2.before = lag(!!sym(N2Quant), order_by = site),
-      n2.after  = lead(!!sym(N2Quant), order_by = site)
+      n1.before = lag({{N1_column}}, order_by = {{site_column}}),
+      n1.after  = lead({{N1_column}}, order_by = {{site_column}}),
+      n2.before = lag({{N2_column}}, order_by = {{site_column}}),
+      n2.after  = lead({{N2_column}}, order_by = {{site_column}})
     ) %>% 
     mutate(
-      n1.jumpFromLeft  = !!sym(N1Quant) - n1.before,
-      n1.jumpFromRight = !!sym(N1Quant) - n1.after,
-      n2.jumpFromLeft  = !!sym(N2Quant) - n2.before,
-      n2.jumpFromRight = !!sym(N2Quant) - n2.after
+      n1.jumpFromLeft  = !{{N1_column}} - .data$n1.before,
+      n1.jumpFromRight = {{N1_column}} - .data$n1.after,
+      n2.jumpFromLeft  = {{N2_column}} - .data$n2.before,
+      n2.jumpFromRight = {{N2_column}} - .data$n2.after
     ) %>% 
-    select(-c(n1.before,n1.after,n2.before,n2.after))
+    select(-c(.data$n1.before, .data$n1.after, .data$n2.before, .data$n2.after))
   return(df)
 }
 
@@ -51,17 +54,16 @@ computeJumps <- function(df, N1Quant = "n1_sars_cov2_conc",
 #' rankJumps(df_data)
 rankJumps <- function(df) {
   df <- df %>% 
-    group_by(site)   %>% 
-    mutate(rank.n1.jumpFromLeft = rank(-n1.jumpFromLeft),
-      rank.n1.jumpFromRight = rank(-n1.jumpFromRight),
-      rank.n2.jumpFromLeft = rank(-n2.jumpFromLeft), 
-      rank.n2.jumpFromRight = rank(-n2.jumpFromRight),
-      MessureRank = pmin(rank.n1.jumpFromLeft, rank.n1.jumpFromRight,
-                         rank.n2.jumpFromLeft, rank.n2.jumpFromRight)
+    group_by(.data$site)   %>% 
+    mutate(rank.n1.jumpFromLeft = rank(-.data$n1.jumpFromLeft),
+      rank.n1.jumpFromRight = rank(-.data$n1.jumpFromRight),
+      rank.n2.jumpFromLeft = rank(-.data$n2.jumpFromLeft), 
+      rank.n2.jumpFromRight = rank(-.data$n2.jumpFromRight),
+      MessureRank = pmin(.data$rank.n1.jumpFromLeft, .data$rank.n1.jumpFromRight,
+                         .data$rank.n2.jumpFromLeft, .data$rank.n2.jumpFromRight)
       ) %>% 
-
     ## sort by first jump ranks just to be definitive
-    arrange(site,rank.n1.jumpFromLeft) 
+    arrange(.data$site, .data$rank.n1.jumpFromLeft) 
   return(df)
 }
 
@@ -85,23 +87,26 @@ rankJumps <- function(df) {
 #' computeRankQuantiles(ranked_data)
 computeRankQuantiles <- function(df) {
   df <- df %>% 
-    group_by(site) %>% 
+    group_by(.data$site) %>% 
     mutate(numValues = n()) %>% 
     mutate(
-      n1.jumpFromLeft.quantile  = rank.n1.jumpFromLeft/numValues,
-      n1.jumpFromRight.quantile = rank.n1.jumpFromRight/numValues,
+      n1.jumpFromLeft.quantile  = .data$rank.n1.jumpFromLeft / .data$numValues,
+      n1.jumpFromRight.quantile = .data$rank.n1.jumpFromRight / .data$numValues,
 
-      n2.jumpFromLeft.quantile  = rank.n2.jumpFromLeft/numValues,
-      n2.jumpFromRight.quantile = rank.n2.jumpFromRight/numValues,
-      MessureRank.quantile = pmin(n1.jumpFromLeft.quantile, n1.jumpFromRight.quantile, n2.jumpFromLeft.quantile, n2.jumpFromRight.quantile)
+      n2.jumpFromLeft.quantile  = .data$rank.n2.jumpFromLeft / .data$numValues,
+      n2.jumpFromRight.quantile = .data$rank.n2.jumpFromRight / .data$numValues,
+      MessureRank.quantile = pmin(.data$n1.jumpFromLeft.quantile, 
+                                  .data$n1.jumpFromRight.quantile, 
+                                  .data$n2.jumpFromLeft.quantile, 
+                                  .data$n2.jumpFromRight.quantile)
     ) %>%
-    select(-numValues) %>%
+    select(-.data$numValues) %>%
     
     ## sort by first jump ranks just to be definitive
-    arrange(site,n1.jumpFromLeft.quantile)   
+    arrange(.data$site, .data$n1.jumpFromLeft.quantile)   
 }
 
-#' Create column with Boolean based on a threashold
+#' Create column with Boolean based on a threshold
 #'
 #' @param DF Dataframe containing Column column
 #'ranked_quantile_data @param threshold a numeric used to flag if its an outlier
@@ -117,10 +122,10 @@ computeRankQuantiles <- function(df) {
 #' df_data <- computeJumps(example_data)
 #' ranked_data <- rankJumps(df_data)
 #'  <- computeRankQuantiles(ranked_data)
-#' flagOutliers(ranked_quantile_data, 9)
-flagOutliers <- function(DF, threshold, col = MessureRank, outputColName = FlaggedOutlier){
+#' flagOutliers(ranked_quantile_data, 9, MessureRank, FlaggedOutlier)
+flagOutliers <- function(DF, threshold, col, FlaggedOutlier = FlaggedOutlier){
   RetDF <- DF%>%
-    mutate({{outputColName}} := {{col}} < threshold)
+    mutate({{FlaggedOutlier}} := {{col}} < threshold)
   return(RetDF)
 }
 
@@ -142,8 +147,8 @@ flagOutliers <- function(DF, threshold, col = MessureRank, outputColName = Flagg
 #' ranked_data <- rankJumps(df_data)
 #' ranked_quantile_data <- computeRankQuantiles(ranked_data)
 #' classied_data <- flagOutliers(ranked_quantile_data, 9)
-#' removeOutliers(classied_data)
-removeOutliers <- function(DF, Messure = sars_cov2_adj_load_log10, Filtcol = FlaggedOutlier, outputColName = sars_adj_log10_Filtered){
+#' removeOutliers(classied_data, sars_cov2_adj_load_log10, FlaggedOutlier, sars_adj_log10_Filtered)
+removeOutliers <- function(DF, Messure, Filtcol, outputColName){
   RetDF <- DF%>%
     mutate({{outputColName}} := ifelse({{Filtcol}}, NA, {{Messure}}))
   return(RetDF)

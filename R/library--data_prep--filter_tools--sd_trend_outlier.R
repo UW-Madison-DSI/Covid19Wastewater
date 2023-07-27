@@ -25,7 +25,7 @@ Flag_From_Trend <- function(DF, base_data, trend_data, sd_degree = 2.5){
   #should check if error is constant over scale
   return_df <- DF%>%
     mutate(detrended_data = abs({{base_data}} - {{trend_data}}),
-           flagged_outlier = detrended_data > sd_degree * sd(detrended_data))%>%
-    select(-detrended_data)
+           flagged_outlier = .data$detrended_data > sd_degree * sd(.data$detrended_data))%>%
+    select(-.data$detrended_data)
   return(return_df)
 }

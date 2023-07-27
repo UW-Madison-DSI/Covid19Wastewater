@@ -7,7 +7,7 @@
 \S4method{predict}{random_linear_forest}(object, new_data)
 }
 \arguments{
-\item{random_linear_forest}{}
+\item{random_linear_forest}{object with class random_linear_forest}
 }
 \value{
 vector of predictions for each row

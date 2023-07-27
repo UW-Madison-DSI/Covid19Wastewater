@@ -48,7 +48,7 @@ base_plot
 ## Adjacent outliers
 
 ```{r adjacent outlier}
-df_data <- computeJumps(smoothing_df, N1Quant = "N1", N2Quant = "N2")
+df_data <- computeJumps(smoothing_df)
 ranked_data <- rankJumps(df_data)
 ranked_quantile_data <- computeRankQuantiles(ranked_data)
 classied_data <- flagOutliers(ranked_quantile_data, 9)%>%

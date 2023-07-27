@@ -9,6 +9,7 @@
 #' @slot inbag_data list of data.frame each model trained on
 #' @slot oob_data list of data.frame containing info model not trained on 
 #' @slot oob_resid numeric vector of oob residuals
+#' @slot inc_mse \% increased mean squared error
 #'
 #' @return random_linear_forest object
 #' @export
@@ -40,6 +41,9 @@ setClass(
 #' @param model_formula an object of class "formula": a symbolic description of the model to be fitted. 
 #' @param num_features number of tree features in each tree. if left NULL rounded up square of the number of columns
 #' @param max_depth the max depth of each tree in the forest
+#' @param na.action passed to lmtree to handle missing data
+#' @param importance controls if the importance should be calculated and stored
+#' @param verbose If true it prints training progress
 #'
 #' @return random_linear_forest object trained using given data
 #' @export
@@ -71,7 +75,7 @@ random_linear_forest <- function(data,
   
   #create index for linking bagged data back together
   data$index <- 1:nrow(data)
-  data <- select(data, index, everything())
+  data <- select(data, .data$index, everything())
   
   #do the Bootstrap aggregating do improve error
   Boot_list_DF <- bagging(data, 
@@ -87,7 +91,7 @@ random_linear_forest <- function(data,
   #function used for each tree
   lmtree_func <- function(bag) {#glmtree
     mod_tree <- lmtree(formula = model_formula,
-                       data = select(data, -index),# family = gaussian,
+                       data = select(data, -.data$index),# family = gaussian,
                        na.action = na.action,
                        maxdepth = max_depth)
     if(verbose){

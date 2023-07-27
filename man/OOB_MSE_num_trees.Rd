@@ -7,7 +7,7 @@
 OOB_MSE_num_trees(tree_model)
 }
 \arguments{
-\item{tree_model}{}
+\item{tree_model}{random_linear_forest model to calculate the OOB mean squared error}
 }
 \value{
 get dataframe of number of trees and OOB MSE

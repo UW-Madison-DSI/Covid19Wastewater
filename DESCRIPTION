@@ -23,7 +23,14 @@ Imports:
   partykit,
   data.table,
   forecast,
-  gridExtra
+  gridExtra,
+  methods,
+  plotly,
+  grDevices,
+  RcppRoll,
+  reshape2,
+  tidyselect,
+  plyr
 Suggests: knitr, rmarkdown, testthat, digest, vdiffr
 VignetteBuilder: knitr
 Depends: 

@@ -16,7 +16,7 @@ setMethod(f = "show",
 
 #' summary method for linear forest class
 #'
-#' @param random_linear_forest 
+#' @param random_linear_forest object with class random_linear_forest
 #'
 #' @return summary.random_linear_forest object
 #' @export
@@ -30,7 +30,7 @@ setMethod(f = "summary",
           #currently just a list version of the show method
           #can be expanded to have more info in the future
           function(object){
-            dep_var <- forest_model@data[[forest_model@formula[[2]]]]
+            dep_var <- object@data[[object@formula[[2]]]]
             MSE <- mean((object@resid)**2, na.rm = TRUE)
             ans <- list()
             ans[[1]] <- object@formula
@@ -45,7 +45,7 @@ setMethod(f = "summary",
 
 #' predict new data from random_linear_forest models
 #'
-#' @param random_linear_forest 
+#' @param random_linear_forest object with class random_linear_forest
 #'
 #' @return vector of predictions for each row
 #' @export
@@ -56,7 +56,7 @@ setMethod(f = "summary",
 #' predict(model, example_data)
 setMethod(f = "predict",
           signature = "random_linear_forest",
-          function(object, new_data){
+          definition = function(object, new_data){
             #get each tree predictions
             tree_pred <- lapply(object@models, predict, newdata = new_data)
             #get it in the right shape

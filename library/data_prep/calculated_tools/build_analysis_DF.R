@@ -18,21 +18,19 @@ buildWasteAnalysisDF <- function(df){
   
   ### Note: Replacement small values with LOD/2 (as per 5/20/2022 discussion w/DHS)
   df <- df %>% 
-    mutate(N1 = ifelse(N1, 
-                                      as.numeric(n1_lod)/2, N1),
-           N2 = ifelse(N2, 
-                                      as.numeric(n2_lod)/2, N2))%>%
+    mutate(N1 = ifelse(.data$N1, as.numeric(.data$n1_lod)/2, .data$N1),
+           N2 = ifelse(.data$N2, as.numeric(.data$n2_lod)/2, .data$N2))%>%
     select(
-      site,date,pop,  ## site data
-      N1, N2,             ## N1, N2 measurement
-      flow                                 ## sample covariates
+      .data$site, .data$date, .data$pop,  ## site data
+      .data$N1, .data$N2,             ## N1, N2 measurement
+      .data$flow                                 ## sample covariates
     ) %>% 
-    filter(!is.na(flow))%>% 
-    mutate (geoMean = sqrt(N1*N2),
-            sars_cov2_adj_load_log10 = log10(geoMean*flow/pop))%>% 
-    group_by(site)%>% 
+    filter(!is.na(.data$flow))%>% 
+    mutate (geoMean = sqrt(.data$N1 * .data$N2),
+            sars_cov2_adj_load_log10 = log10(.data$geoMean * .data$flow / .data$pop))%>% 
+    group_by(.data$site)%>% 
     mutate(n = n())%>% 
-    arrange(date, .by_group = TRUE) %>% 
+    arrange(.data$date, .by_group = TRUE) %>% 
     ungroup()
   return(df)
 }
@@ -50,14 +48,13 @@ buildWasteAnalysisDF <- function(df){
 buildCaseAnalysisDF <- function(df){
   CaseProcess <- df%>%
     #sort data to make sure the rolling sum func does not fail to sum correctly
-    arrange(site, date)%>%
-    group_by(site)%>%
+    arrange(.data$site, .data$date)%>%
+    group_by(.data$site)%>%
     #Create case data norm by the population
-    mutate(FirstConfirmed.Per100K = (conf_case * 100000) / population_served,
+    mutate(FirstConfirmed.Per100K = (.data$conf_case * 100000) / .data$population_served,
     #get rolling sum of the last 7 days filling missing data with NAs
-            pastwk.sum.casesperday.Per100K = 
-                        rollsumr(conf_case, 7, fill=NA),
-            pastwk.avg.casesperday.Per100K = pastwk.sum.casesperday.Per100K / 7)%>%
+            pastwk.sum.casesperday.Per100K = rollsumr(.data$conf_case, 7, fill=NA),
+            pastwk.avg.casesperday.Per100K = .data$pastwk.sum.casesperday.Per100K / 7)%>%
     ungroup()
   
   return(CaseProcess)

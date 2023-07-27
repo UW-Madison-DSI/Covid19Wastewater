@@ -47,7 +47,7 @@ factorVecByVec <- function(FactorDF, OrderDF, FacVar, NumVar){
                     filter(!is.na(!!sym(FacVar)), !is.na(!!sym(NumVar)))%>%
                     group_by(!!sym(FacVar))%>%
                     summarise(level = mean(!!sym(NumVar) ,na.rm = TRUE))%>%
-                    arrange(desc(level))
+                    arrange(desc(.data$level))
                   )[[FacVar]]
   
   

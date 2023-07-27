@@ -46,6 +46,7 @@ build_vignette_DSI <- function(){
   }
 }
 
+
 package_update <- function(path = ".", update_examples = F, update_test = F){
   setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
   #setwd(path)
@@ -64,15 +65,16 @@ package_update <- function(path = ".", update_examples = F, update_test = F){
   }
   
   document()
-  build(path = ".", vignettes = F)
+  build(path = ".", vignettes = F, args = "--resave-data=best")
   #devtools::install_github("AFIDSI/DSIWastewater")
   
   if(update_test){
     check(args = c("--no-tests"), vignettes = FALSE)
     test()
   }
-  install(quick=T, build = T, build_vignettes = F, force = T)
+  #check(vignettes = FALSE)
+  install(quick=T, build = F, build_vignettes = F, force = F)
 }
-package_update(update_examples = T, update_test = F)
-#check(args = c("--resave-data"), vignettes = FALSE)
-1
+package_update(update_examples = F, update_test = F)
+3
+check(vignettes = FALSE)

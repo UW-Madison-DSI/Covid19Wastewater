@@ -52,32 +52,33 @@ OffsetDF_Plot(offsetDF, "All Wisconsin data over all time")
 
 
 heatmapcorfunc(Example_data)
-heatmapcorfunc(Example_data,10)
+heatmapcorfunc(Example_data, 10)
 
 covarstarts <- c(as.Date("2020-08-17"),
                  as.Date("2021-03-29"),
                  as.Date("2021-07-05"),
                  as.Date("2021-12-20"),
                  as.Date("2022-03-28"),
-                 as.Date("2022-05-23"),
+#                 as.Date("2022-05-23"),
                  as.Date("2022-07-04"))
 covarends <- c(as.Date("2021-01-18"),
                as.Date("2021-05-24"),
                as.Date("2021-12-06"),
                as.Date("2022-03-14"),
                as.Date("2022-05-09"),
-               as.Date("2022-06-06"),
+#               as.Date("2022-06-06"),
                as.Date("2022-11-07"))
 covarnames <- c("Robin1",
                 "Alpha.V1",
                 "Delta",
                 "Omicron.21K",
                 "Omicron.21L",
-                "Omicron.22C",
+#                "Omicron.22C",
                 "Omicron.22B")
 
+OffsetHeatmap("kendall_offset", 0, WasteWater_data, Case_data, pop_data,
+              covarstarts, covarends, covarnames, "region", TRUE, TRUE)
 
-OffsetHeatmap("kendall_offset", 0, WasteWater_data, Case_data, "pop", TRUE, TRUE)
 ```
 
 

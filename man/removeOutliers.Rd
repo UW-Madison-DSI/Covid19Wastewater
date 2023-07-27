@@ -5,12 +5,7 @@
 \alias{removeOutliers}
 \title{Add column with NA values where the data was flagged}
 \usage{
-removeOutliers(
-  DF,
-  Messure = sars_cov2_adj_load_log10,
-  Filtcol = FlaggedOutlier,
-  outputColName = sars_adj_log10_Filtered
-)
+removeOutliers(DF, Messure, Filtcol, outputColName)
 }
 \arguments{
 \item{DF}{DF containing the columns Measure and Filtcol}
@@ -34,5 +29,5 @@ df_data <- computeJumps(example_data)
 ranked_data <- rankJumps(df_data)
 ranked_quantile_data <- computeRankQuantiles(ranked_data)
 classied_data <- flagOutliers(ranked_quantile_data, 9)
-removeOutliers(classied_data)
+removeOutliers(classied_data, sars_cov2_adj_load_log10, FlaggedOutlier, sars_adj_log10_Filtered)
 }

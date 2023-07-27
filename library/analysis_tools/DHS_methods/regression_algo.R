@@ -28,7 +28,7 @@ buildRegressionEstimateTable <- function(DataMod,
                                          PSigTest=TRUE){
   reg_estimates = DataMod%>%
     pivot_longer(all_of(RunOn), names_to = "Method")%>%
-    filter(!is.na(value))%>%
+    filter(!is.na(.data$value))%>%
     group_by(across(all_of(c(SplitOn,"Method"))))%>%
     group_split()%>%
     lapply(runRegressionAnalysis, 
@@ -38,7 +38,7 @@ buildRegressionEstimateTable <- function(DataMod,
            verbose = verbose)%>%
     bind_rows()%>%
     classifyRegressionAnalysis(PSigTest=PSigTest)%>%
-    filter(!is.na(Catagory))
+    filter(!is.na(.data$Catagory))
   
   return(reg_estimates)
 }
@@ -150,7 +150,7 @@ regressionInnerLoop <- function(Formula, DF, Keep = NULL){
            
            lmreg_sig = lm_subset_sum$coefficients[2,4],
            
-           modeled_percentchange = ((10^(lmreg_slope*days_elapsed))-1)*100)
+           modeled_percentchange = ((10^(.data$lmreg_slope * .data$days_elapsed))-1)*100)
   
   return(ww_x_tobind)
 }

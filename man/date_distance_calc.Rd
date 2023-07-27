@@ -22,5 +22,5 @@ date_distance_calc
 }
 \examples{
 data("example_data", package = "DSIWastewater")
-date_distance_calc(example_data, "geoMean", "n")
+date_distance_calc(example_data, geoMean, n)
 }

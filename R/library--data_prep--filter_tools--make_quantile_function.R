@@ -40,7 +40,7 @@ windowingQuantFunc <- function(DF, column){
   
   #Merge DF to add rows for each date 
   RetDF <- DF%>%
-    left_join(dateTOMERGEVec, . , by = c("date"))%>%
+    left_join(dateTOMERGEVec, .data$. , by = c("date"))%>%
     #sort by date so the rolling functions work correctly
     arrange(date)%>%
     #add ntile column that is the window day Quant quantile of the column column
@@ -56,7 +56,7 @@ windowingQuantFunc <- function(DF, column){
                      #returns as a vector instead of a list
                      names = FALSE))%>%
     #removes all extra rows created that were used in rolling process
-    filter(!is.na(population_served))
+    filter(!is.na(.data$population_served))
     
   return(RetDF)
 }

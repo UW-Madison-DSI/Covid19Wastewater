@@ -59,6 +59,7 @@ gen_OOB_pred <- function(tree_model,
   oob_data_list <- tree_model@oob_data
   num_trees <- length(model_list)
   temp_pred <- list()
+  dep_var <- tree_model@formula
   for(i in 1:num_trees){
     pred_name <- as.name(paste0("pred_", i))
     assessment_DF <- oob_data_list[[i]]
@@ -69,11 +70,11 @@ gen_OOB_pred <- function(tree_model,
     pred_output <- mutate(assessment_DF, !!pred_name := predict(model_list[[i]],
                                                               newdata = assessment_DF))
     
-    temp_pred[[i]] <- select(pred_output, index, dep_var, !!pred_name)
+    temp_pred[[i]] <- select(pred_output, .data$index, .data$dep_var, !!pred_name)
   }
-  ret <- plyr::join_all(temp_pred, by = "index", type='full')
+  ret <- join_all(temp_pred, by = "index", type='full')
   if(resid){
-    ret_pred <- rowMeans(select(ret, -index, -dep_var), na.rm = TRUE)
+    ret_pred <- rowMeans(select(.data$ret, -.data$index, -.data$dep_var), na.rm = TRUE)
     return(ret[[dep_var]] - ret_pred)
   }else{
     return(ret)
@@ -127,7 +128,7 @@ gen_INCMSE <- function(tree_model){
 
 #' get OOB MSE vs number of forest in trees
 #'
-#' @param tree_model 
+#' @param tree_model random_linear_forest model to calculate the OOB mean squared error
 #'
 #' @return get dataframe of number of trees and OOB MSE
 #' @export
@@ -139,15 +140,16 @@ gen_INCMSE <- function(tree_model){
 OOB_MSE_num_trees <- function(tree_model){
   pred_DF = gen_OOB_pred(tree_model)
   OOB_MSE_TREE <- list()
+  dep_var <- tree_model@formula
   for(i in 1:length(tree_model@models)){
     OOB_MSE_TREE[[i]] <-
       mutate(
       summarise(
       mutate(pred_DF, 
              mean_pred = rowMeans(select(pred_DF,
-                                         pred_1:paste0("pred_",i)),
+                                         .data$pred_1:paste0("pred_",i)),
                                   na.rm = TRUE)),
-      model_MSE = mean((!!sym(dep_var) - mean_pred)**2, na.rm = TRUE)),
+      model_MSE = mean((!!sym(dep_var) - .data$mean_pred)**2, na.rm = TRUE)),
       num_tree = i)
   }
   return(bind_rows(OOB_MSE_TREE))

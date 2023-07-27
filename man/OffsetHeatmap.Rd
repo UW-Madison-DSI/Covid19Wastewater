@@ -3,38 +3,76 @@
 %   R/library--analysis_tools--time_offset--Offset_Analysis_Plot.R
 \name{OffsetHeatmap}
 \alias{OffsetHeatmap}
-\title{Outputs a heatmap of the offset for variant / time windows and population size / region
-Must have pop_data, covarstarts, covarends, covarnames loaded}
+\title{Outputs a heatmap of the offset for variant / time windows and population size / region}
 \usage{
-OffsetHeatmap(method, timePeriods, wasterv, caserv, list, lod = FALSE, week)
+OffsetHeatmap(
+  method,
+  timePeriods,
+  waste_df,
+  case_df,
+  pop_df,
+  covarstarts,
+  covarends,
+  covarnames,
+  list,
+  week,
+  lod = FALSE,
+  N1_column = N1,
+  N2_column = N2,
+  site_column = site,
+  date_column = date,
+  case_column = conf_case
+)
 }
 \arguments{
 \item{method}{Which analysis definds the offset (r squared, pearson, r squared offset, pearson offset, kendall offset, spearman offset)}
 
 \item{timePeriods}{Size of time windows in months (if 0 uses variants)}
 
-\item{wasterv}{DF of waste data must include: date, N1, N2}
+\item{waste_df}{DF of waste data must include: date, N1, N2}
 
-\item{caserv}{DF of case data must include: date, conf_case}
+\item{case_df}{DF of case data must include: date, conf_case}
+
+\item{pop_df}{dataframe where region and population info is stored}
+
+\item{covarstarts}{start of each split period}
+
+\item{covarends}{end of each split period}
+
+\item{covarnames}{name of each split group}
 
 \item{list}{y axis bins (population size or regions)}
 
+\item{week}{if true applies 7-day smoothing to case data}
+
 \item{lod}{if true removes all values below LOD (default false)}
 
-\item{week}{if true applies 7-day smoothing to case data}
+\item{N1_column}{name of N1 column}
+
+\item{N2_column}{name of N2 column}
+
+\item{site_column}{name of site column}
+
+\item{date_column}{name of date column}
+
+\item{case_column}{name of case column}
 }
 \value{
 ggplot plot object
 }
 \description{
 Outputs a heatmap of the offset for variant / time windows and population size / region
-Must have pop_data, covarstarts, covarends, covarnames loaded
 }
 \examples{
 data(WasteWater_data, package = "DSIWastewater")
 data("Case_data", package = "DSIWastewater")
 data(pop_data, package = "DSIWastewater")
-OffsetHeatmap("kendall_offset",0,waste,cases,"pop",TRUE,TRUE)
-OffsetHeatmap("kendall_offset",0,waste,cases,"pop",TRUE,TRUE)
-
+covarstarts <- c(as.Date("2020-08-17"),
+                 as.Date("2021-03-29"))
+covarends <- c(as.Date("2021-01-18"),
+               as.Date("2021-05-24"))
+covarnames <- c("Robin1",
+                "Alpha.V1")
+OffsetHeatmap("kendall_offset", 0, WasteWater_data, Case_data, pop_data,
+               covarstarts, covarends, covarnames, "pop", TRUE, TRUE)
 }

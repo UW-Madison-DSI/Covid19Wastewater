@@ -3,9 +3,18 @@
 %   R/library--analysis_tools--time_offset--Offset_Analysis.R
 \name{OffsetDFMaker}
 \alias{OffsetDFMaker}
-\title{Returns a df with the multiple ways to analyize how offset the wastewater is from cases data}
+\title{Returns a dataframe with the multiple ways to analyze how offset the Wastewater is from cases data}
 \usage{
-OffsetDFMaker(length, startdate, enddate, casesdf, wastedf)
+OffsetDFMaker(
+  length,
+  startdate,
+  enddate,
+  casesdf,
+  wastedf,
+  N1 = N1,
+  N2 = N2,
+  conf_case = conf_case
+)
 }
 \arguments{
 \item{length}{The length of the time window for the results / 2}
@@ -16,13 +25,19 @@ OffsetDFMaker(length, startdate, enddate, casesdf, wastedf)
 
 \item{casesdf}{DF with case data columns needed(data,conf_case)}
 
-\item{wastedf}{DF with wastewater data columns needed(date,N1,N2)}
+\item{wastedf}{DF with Wastewater data columns needed(date,N1,N2)}
+
+\item{N1}{First Wastewater gene}
+
+\item{N2}{Second Wastewater gene}
+
+\item{conf_case}{Classical Case metric}
 }
 \value{
 DF with the columns: number of days wastewater is offset, geo mean of(n1,n2) / confirmed cases,previous with rolling case average, MSE rolling average,Pearson correlation, Kendall correlation, Spearman correlation, R squared.
 }
 \description{
-Returns a df with the multiple ways to analyize how offset the wastewater is from cases data
+Returns a dataframe with the multiple ways to analyze how offset the Wastewater is from cases data
 }
 \examples{
 data(WasteWater_data, package = "DSIWastewater")

@@ -10,11 +10,11 @@
 #' @examples
 #' data("example_data", package = "DSIWastewater")
 #' example_data$flag = 1
-#' DF_date_vector(example_data, "date", "flag")
+#' DF_date_vector(example_data, date, flag)
 DF_date_vector <- function(DF, date_vec, flag_vecs){
   retDF <- DF%>%
-    mutate(across(all_of(flag_vecs), ~ifelse(.x==1, !!sym(date_vec), NA)))%>%
-    mutate(across(all_of(flag_vecs), ~as.Date(.x, origin = .Date(0))))
+    mutate(across(all_of({{flag_vecs}}), ~ifelse(.x == 1, {{date_vec}}, NA)))%>%
+    mutate(across(all_of({{flag_vecs}}), ~as.Date(.x, origin = .Date(0))))
   return(retDF)
 }
 
@@ -51,12 +51,12 @@ diffLookup <- function(DFCol, base_date_vec){
 #'
 #' @examples
 #' data("example_data", package = "DSIWastewater")
-#' date_distance_calc(example_data, "geoMean", "n")
+#' date_distance_calc(example_data, geoMean, n)
 date_distance_calc <- function(DF, base_date_vec, vecNames){
   RetDF <- DF%>%
-    group_by(site)%>%
-    mutate(across(all_of(vecNames), 
-                  ~diffLookup(.x, DF[[base_date_vec]])))
+    group_by(.data$site)%>%
+    mutate(across(all_of({{vecNames}}), 
+                  ~diffLookup(.x, {{base_date_vec}})))
   return(RetDF)
 }
 
@@ -72,12 +72,12 @@ date_distance_calc <- function(DF, base_date_vec, vecNames){
 #'
 #' @examples
 #' data("example_data", package = "DSIWastewater")
-#' df <- date_distance_calc(example_data, "geoMean", "n")
-#' date_distance_remove(df, "geoMean", 21)
+#' df <- date_distance_calc(example_data, geoMean, n)
+#' date_distance_remove(df, geoMean, 21)
 date_distance_clamp <- function(DF, vecNames, thresh){
   RetDF <- DF%>%
-    mutate(across(all_of(vecNames), 
-                  ~ifelse(abs(.x) > thresh, thresh*sign(.x), .x)))
+    mutate(across(all_of({{vecNames}}), 
+                  ~ifelse(abs(.x) > thresh, thresh * sign(.x), .x)))
   return(RetDF)
 }
 
@@ -92,11 +92,11 @@ date_distance_clamp <- function(DF, vecNames, thresh){
 #'
 #' @examples
 #' data("example_data", package = "DSIWastewater")
-#' df <- date_distance_calc(example_data, "geoMean", "n")
-#' date_distance_remove(df, "geoMean", 21)
+#' df <- date_distance_calc(example_data, geoMean, n)
+#' date_distance_remove(df, geoMean, 21)
 date_distance_remove <- function(DF, vecNames, thresh){
   RetDF <- DF%>%
-    mutate(across(all_of(vecNames), 
+    mutate(across(all_of({{vecNames}}), 
                   ~ifelse(abs(.x) > thresh, NA, .x)))
   return(RetDF)
 }

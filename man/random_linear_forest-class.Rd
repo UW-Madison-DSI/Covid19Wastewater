@@ -29,6 +29,8 @@ model class using a random forest of linear forest models
 \item{\code{oob_data}}{list of data.frame containing info model not trained on}
 
 \item{\code{oob_resid}}{numeric vector of oob residuals}
+
+\item{\code{inc_mse}}{\% increased mean squared error}
 }}
 
 \examples{

@@ -25,7 +25,13 @@ random_linear_forest(
 
 \item{num_features}{number of tree features in each tree. if left NULL rounded up square of the number of columns}
 
+\item{na.action}{passed to lmtree to handle missing data}
+
 \item{max_depth}{the max depth of each tree in the forest}
+
+\item{importance}{controls if the importance should be calculated and stored}
+
+\item{verbose}{If true it prints training progress}
 }
 \value{
 random_linear_forest object trained using given data

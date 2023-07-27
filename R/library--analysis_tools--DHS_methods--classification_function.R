@@ -23,11 +23,11 @@ classifyRegressionAnalysis <- function(DF, PSigTest = TRUE,
   RetDF <- DF%>%
     mutate(Catagory = cut({{modeled_percentchange}}, c(-Inf,-100,-10,10,100,Inf),
                           ordered_result=TRUE),
-           Catagory = as.numeric(Catagory))
+           Catagory = as.numeric(.data$Catagory))
   
   if(PSigTest){
     RetDF <- RetDF%>%
-      mutate(Catagory = ifelse({{lmreg_sig}} > .3, "no change", Catagory))
+      mutate(Catagory = ifelse({{lmreg_sig}} > .3, "no change", .data$Catagory))
     levl <- c(1,2,3,"no change",4,5)
     Catagorylabel = c("major decrease", "moderate decrease",
                       "fluctuating", "no change",
@@ -40,7 +40,7 @@ classifyRegressionAnalysis <- function(DF, PSigTest = TRUE,
   }
   
   RetDF <- RetDF%>%
-    mutate(Catagory = factor(Catagory, levels = levl, 
+    mutate(Catagory = factor(.data$Catagory, levels = levl, 
                              labels =  Catagorylabel))
   return(RetDF)
 }
@@ -65,20 +65,20 @@ classifyRegressionAnalysis <- function(DF, PSigTest = TRUE,
 classifyCaseRegression <- function(DF, slopeThreshold = 5, minSize = 200,
                                    lmreg_slope = lmreg_slope){
   RetDF <- DF%>%
-    group_by(site)%>%
+    group_by(.data$site)%>%
     mutate(
       #A flag when the slope for most recent week is greater than slopeThreshold/100k/day
       case_flag = case_when({{lmreg_slope}} > slopeThreshold ~ 1,
                             TRUE ~ 0),
       
       #A flag when the previous slope and the signal is above 200
-      case_flag_plus_comm.threshold = case_when(case_flag == 1 
-                                                & value > 200 ~ 1,
+      case_flag_plus_comm.threshold = case_when(.data$case_flag == 1 
+                                                & .data$value > 200 ~ 1,
                                                 TRUE ~ 0),
       
       #What about a case flag where slope shifts from <5 to >5
-      slope_switch_flag = case_when(lag(case_flag, 1) == 0 & 
-                                      case_flag == 1 ~ 1,
+      slope_switch_flag = case_when(lag(.data$case_flag, 1) == 0 & 
+                                      .data$case_flag == 1 ~ 1,
                                     TRUE ~ 0))
   return(RetDF)
 }
@@ -110,16 +110,16 @@ classifyQuantileFlagRegression <- function(DF, Pval = .3){
   #returned DF piped into four mutate calls to add three columns
   Ret_DF <- Classification_DF%>%
     #Convert the classification scheme from the cdc into a flag
-    mutate(cdc_flag = case_when(Catagory %in% c("major increase",
-                                                "moderate increase")~1,
+    mutate(cdc_flag = case_when(.data$Catagory %in% c("major increase",
+                                                        "moderate increase") ~ 1,
                                 TRUE ~ 0))%>%
     #select only the flags that are on days that are larger then quantile
     mutate(flag_ntile = case_when(
-             pastKavg.wwlog10 > ntile & cdc_flag ~ 1,
+             .data$pastKavg.wwlog10 > ntile & .data$cdc_flag ~ 1,
              TRUE ~ 0))%>%
     #further select so that the slope of the regression is less then Pval
     mutate(flag_ntile_Pval = case_when(
-             flag_ntile & {{lmreg_sig}} < Pval ~ 1,
+            .data$flag_ntile & {{lmreg_sig}} < Pval ~ 1,
              TRUE ~ 0))%>%
     #make NA into 0 or FALSE
     mutate(across(where(is.numeric), ~ ifelse(is.na(.x), 0, .x)))

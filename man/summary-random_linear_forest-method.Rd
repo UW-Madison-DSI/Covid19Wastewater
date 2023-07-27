@@ -7,7 +7,7 @@
 \S4method{summary}{random_linear_forest}(object)
 }
 \arguments{
-\item{random_linear_forest}{}
+\item{random_linear_forest}{object with class random_linear_forest}
 }
 \value{
 summary.random_linear_forest object
