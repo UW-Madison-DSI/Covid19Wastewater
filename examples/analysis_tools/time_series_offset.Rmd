@@ -52,7 +52,7 @@ OffsetDF_Plot(offsetDF, "All Wisconsin data over all time")
 
 
 heatmapcorfunc(Example_data)
-heatmapcorfunc(Example_data,10)
+#heatmapcorfunc(Example_data,10)
 
 covarstarts <- c(as.Date("2020-08-17"),
                  as.Date("2021-03-29"),
