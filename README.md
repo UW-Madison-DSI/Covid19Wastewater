@@ -8,7 +8,7 @@
 
 ![GitHub last commit](https://img.shields.io/github/last-commit/AFIDSI/DSIWastewater)
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/AFIDSI/DSIWastewater)](https://github.com/AFIDSI/DSIWastewater/pulls)
-[![License](https://img.shields.io/badge/license-Sustainable_Use_License-green)](./LICENSE.md)
+[![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE.md)
 [![contributors](https://img.shields.io/github/contributors/AFIDSI/DSIWastewater)](https://github.com/AFIDSI/DSIWastewater/graphs/contributors)
 ![codesize](https://img.shields.io/github/languages/code-size/AFIDSI/DSIWastewater) 
 ![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/AFIDSI/DSIWastewater?include_prereleases)
