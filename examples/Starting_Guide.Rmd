@@ -1,0 +1,20 @@
+---
+title: "Starting Guide"
+author: "Marlin"
+vignette: >
+  %\VignetteIndexEntry{Starting Guide}
+  \usepackage[utf8]{inputenc}
+  %\VignetteEngine{knitr::rmarkdown}
+output:
+  pdf_document: default
+  html_document: default
+urlcolor: blue
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load and show data, include = FALSE}
+
+```
