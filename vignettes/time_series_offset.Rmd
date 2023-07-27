@@ -45,55 +45,9 @@ WasteWater_data <- WasteWater_data%>%
 data(example_data, package = "DSIWastewater")
 ```
 
-**Output is not normal as only exmaple data is used**
----
-title: "Time Series"
-author: "Kyllan Wunder"
-vignette: >
-  %\VignetteIndexEntry{Time Series Analysis Vignette}
-  \usepackage[utf8]{inputenc}
-  %\VignetteEngine{knitr::rmarkdown}
-output:
-  pdf_document: default
-  html_document: default
-urlcolor: blue
----
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(Warning = FALSE, message = FALSE, echo = FALSE)
-library(DSIWastewater)
-library(dplyr)
-library(RcppRoll)
-library(tidyverse)
-```
+**Output is not normal as only example data is used**
 
 
-## Time Series and Offset Analysis
-
-How to find the offset between wastewater and case data. By offsetting the wastewater and case data 1 day at a time and then finding the highest correlation we can find the offset between the wastewater and case data.
-
-
-```{r load and show data}
-data(Case_data, package = "DSIWastewater")
-totalcases <- Case_data %>% 
-  group_by(date) %>% 
-  summarise(sum_case = sum(conf_case)) %>% 
-  mutate(conf_case = roll_sum(sum_case,10,align = "right", fill = NA))
-
-data(WasteWater_data, package = "DSIWastewater")
-
-data(Covariants_data, package = "DSIWastewater")
-
-data(pop_data, package = "DSIWastewater")
-
-
-WasteWater_data <- WasteWater_data%>%
-  left_join(pop_data)
-
-data(example_data, package = "DSIWastewater")
-```
-
-**Output is not normal as only exmaple data is used**
 
 One way of finding the offset.
 
@@ -120,6 +74,7 @@ covarstarts <- c(as.Date("2020-08-17"),
                  as.Date("2022-03-28"),
                  as.Date("2022-05-23"),
                  as.Date("2022-07-04"))
+
 covarends <- c(as.Date("2021-01-18"),
                as.Date("2021-05-24"),
                as.Date("2021-12-06"),
@@ -127,6 +82,7 @@ covarends <- c(as.Date("2021-01-18"),
                as.Date("2022-05-09"),
                as.Date("2022-06-06"),
                as.Date("2022-11-07"))
+
 covarnames <- c("Robin1",
                 "Alpha.V1",
                 "Delta",
@@ -139,10 +95,13 @@ covarnames <- c("Robin1",
 OffsetHeatmap("kendall_offset", 0, WasteWater_data, Case_data, pop_data,
               covarstarts, covarends, covarnames, "region", TRUE, TRUE)
 
+
 ```
 
 
 ```{r explain / show use case and link to other vignettes}
+  
+ 
 
 ```
 

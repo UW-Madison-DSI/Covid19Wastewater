@@ -4,10 +4,12 @@
 \alias{summary,random_linear_forest-method}
 \title{summary method for linear forest class}
 \usage{
-\S4method{summary}{random_linear_forest}(object)
+\S4method{summary}{random_linear_forest}(object, ...)
 }
 \arguments{
-\item{random_linear_forest}{object with class random_linear_forest}
+\item{object}{random_linear_forest being used}
+
+\item{...}{extra parameters ignored}
 }
 \value{
 summary.random_linear_forest object

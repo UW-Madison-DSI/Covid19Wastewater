@@ -1,4 +1,4 @@
-#' @importFrom stats as.formula stepfun ccf dgamma lm na.omit na.pass quantile sd weighted.mean cor var terms.formula time var
+#' @importFrom stats predict as.formula stepfun ccf dgamma lm na.omit na.pass quantile sd weighted.mean cor var terms.formula time var
 #' @importFrom dplyr count left_join full_join case_when %>% ungroup group_split n arrange desc bind_rows group_by sym summarise select mutate rename pull filter lead lag across
 #' @importFrom plyr join_all
 #' @importFrom tidyr pivot_wider pivot_longer all_of drop_na

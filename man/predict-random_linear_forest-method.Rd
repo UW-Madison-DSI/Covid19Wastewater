@@ -4,10 +4,14 @@
 \alias{predict,random_linear_forest-method}
 \title{predict new data from random_linear_forest models}
 \usage{
-\S4method{predict}{random_linear_forest}(object, new_data)
+\S4method{predict}{random_linear_forest}(object, new_data, ...)
 }
 \arguments{
-\item{random_linear_forest}{object with class random_linear_forest}
+\item{object}{random_linear_forest being used}
+
+\item{new_data}{data.frame.}
+
+\item{...}{extra parameters ignored}
 }
 \value{
 vector of predictions for each row

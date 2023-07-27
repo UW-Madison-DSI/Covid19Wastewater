@@ -36,7 +36,7 @@ OffsetDFMaker <- function(length, startdate, enddate, casesdf, wastedf,
     group_by({{date_column}})%>% 
     summarise(N1 = mean({{N1_column}}),
               N2 = mean({{N2_column}}))%>%
-    mutate(geo_mean = exp((.data$log(N1) + log(.data$N2))/2)) %>% 
+    mutate(geo_mean = exp((log(.data$N1) + log(.data$N2))/2)) %>% 
     drop_na(.data$geo_mean)
   
   casesdf <- casesdf %>%

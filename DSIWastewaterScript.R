@@ -52,6 +52,7 @@ package_update <- function(path = ".", update_examples = F, update_test = F){
   #setwd(path)
   #file.remove("DSIWastewater_0.5.1.tar.gz")
   #Delete R folder and all .R folders in it
+  file.remove("NAMESPACE")
   unlink("R", recursive = T, force = T)
   dir.create("R")
   move_struct_R("library", "R")
@@ -75,6 +76,6 @@ package_update <- function(path = ".", update_examples = F, update_test = F){
   #check(vignettes = FALSE)
   install(quick=T, build = F, build_vignettes = F, force = F)
 }
-package_update(update_examples = F, update_test = F)
+package_update(update_examples = T, update_test = F)
 3
-check(vignettes = FALSE)
+check(vignettes = T)

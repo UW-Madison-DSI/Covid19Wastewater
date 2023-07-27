@@ -7,7 +7,7 @@
 \S4method{show}{random_linear_forest}(object)
 }
 \arguments{
-\item{random_linear_forest}{object with class random_linear_forest}
+\item{object}{object with class random_linear_forest}
 }
 \description{
 display form for random_linear_forest class

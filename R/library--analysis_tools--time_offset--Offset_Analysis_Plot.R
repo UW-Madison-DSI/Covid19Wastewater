@@ -206,23 +206,25 @@ OffsetHeatmap <- function(method, timePeriods, waste_df, case_df, pop_df,
         drop_na(.data$geo_mean)
       
       caservtemp <- merge(tempregion, caservtemp, by = "site")
+      
       if(j != "all"){
         caservtemp <- caservtemp %>% 
           filter(.data$regions == j)
       } 
+
       caservtemp <- caservtemp %>%
-        group_by({{date}}) %>% 
-        summarise(conf_case = mean({{conf_case}})) 
+        group_by({{date_column}}) %>% 
+        summarise(conf_case = mean({{case_column}})) 
       
       if(week == TRUE){#If week is true we want the weekly average instead
         caservtemp <- caservtemp %>% 
           ungroup() %>%
-          mutate(conf_case = roll_mean({{conf_case}},7, align = "center", fill = NA))
+          mutate(conf_case = roll_mean({{case_column}},7, align = "center", fill = NA))
         wastervtemp <- wastervtemp %>% 
           mutate(geo_mean = roll_mean(.data$geo_mean, 7, align = "center", fill = NA))
       }
       
-      caservtemp <- caservtemp %>% 
+     caservtemp <- caservtemp %>% 
         ungroup() %>%
         mutate(roll_test = roll_sum(conf_case, 3, align = "center",fill = NA),
                rollingaverage = (roll_sum(conf_case,3, align = "center",fill = NA) / .data$roll_test)) %>%
