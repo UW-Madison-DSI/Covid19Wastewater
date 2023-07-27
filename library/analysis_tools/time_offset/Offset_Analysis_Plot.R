@@ -60,8 +60,7 @@ OffsetDF_Plot <- function(data,title){
     ggtitle("Spearman") +
     geom_text(data = data[which.max(data$corilationSpearman),], aes(wdateoffset,corilationSpearman, label = paste(" " ,wdateoffset,sep = "\n"))) 
   
-  gridOffsetPlots <- grid.arrange(wc,wcrolling,mse,pearson,kendall,spearman,ncol=2,bottom=title)
-  return(gridOffsetPlots)
+  return(grid.arrange(wc,wcrolling,mse,pearson,kendall,spearman,ncol=2,bottom=title))
 }
 ###### Variant plots?
 #' Shows each variant in proportion to the others in 2 week time periods

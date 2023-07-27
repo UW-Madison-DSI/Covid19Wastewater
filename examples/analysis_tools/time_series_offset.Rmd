@@ -22,7 +22,8 @@ library(tidyverse)
 
 ## Time Series and Offset Analysis
 
-How to find the offset between waste and case data
+How to find the offset between wastewater and case data. By offsetting the wastewater and case data 1 day at a time and then finding the highest correlation we can find the offset between the wastewater and case data.
+
 
 ```{r load and show data}
 data(Case_data, package = "DSIWastewater")
@@ -44,16 +45,26 @@ WasteWater_data <- WasteWater_data%>%
 data(example_data, package = "DSIWastewater")
 ```
 
-```{r explain most relavent functions}
+**Output is not normal as only exmaple data is used**
+
+One way of finding the offset.
+
+```{r finding offset}
 offsetDF <- OffsetDFMaker(10, as.Date("2020-08-01"), as.Date("2023-01-01"), Case_data, WasteWater_data)
 
 OffsetDF_Plot(offsetDF, "All Wisconsin data over all time")
+```
 
+Another way to find the offset.
 
-
+```{r heatmap correlation finding offset}
 heatmapcorfunc(Example_data)
-#heatmapcorfunc(Example_data,10)
+heatmapcorfunc(Example_data,10)
+```
 
+Using found offset can try to see how it changes over time and other factors.
+
+```{r using offset}
 covarstarts <- c(as.Date("2020-08-17"),
                  as.Date("2021-03-29"),
                  as.Date("2021-07-05"),
@@ -83,5 +94,11 @@ OffsetHeatmap("kendall_offset", 0, WasteWater_data, Case_data, "pop", TRUE, TRUE
 
 ```{r explain / show use case and link to other vignettes}
 
-
 ```
+
+These functions are used in this analysis:
+
+ - [WPHA Poster](https://github.com/UW-Madison-DSI/Covid19-Wastewater-Analysis/blob/main/conclusions/WPHA-Poster/WPHA-Poster.pdf)
+ 
+ - [NWSS-Data-Analysis-Presentation_5-2-2023](https://github.com/UW-Madison-DSI/Covid19-Wastewater-Analysis/blob/main/conclusions/NWSS-Data-Analysis-Presentation_5-2-2023/5-2_DHS-presentation.pdf)
+ 
