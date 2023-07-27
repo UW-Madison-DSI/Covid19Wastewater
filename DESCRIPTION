@@ -7,7 +7,7 @@ Author: Marlin R Lee <mrlee6@wisc.edu>, Kyllan Wunder <kwunder@wisc.edu>, Abe Me
 Maintainer: Marlin R Lee <mrlee6@wisc.edu>,  Kyllan Wunder <kwunder@wisc.edu>, Abe Megahed <amegahed@wisc.edu>
 Encoding: UTF-8
 RoxygenNote: 7.2.3
-License: Sustainable Use License
+License: MIT + file LICENSE.md
 biocViews:
 Imports:
   stats,

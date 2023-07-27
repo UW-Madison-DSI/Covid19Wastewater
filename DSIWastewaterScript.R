@@ -52,7 +52,7 @@ package_update <- function(path = ".", update_examples = F, update_test = F){
   #setwd(path)
   #file.remove("DSIWastewater_0.5.1.tar.gz")
   #Delete R folder and all .R folders in it
-  file.remove("NAMESPACE")
+  #file.remove("NAMESPACE")
   unlink("R", recursive = T, force = T)
   dir.create("R")
   move_struct_R("library", "R")
