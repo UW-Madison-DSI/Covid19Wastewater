@@ -5,9 +5,11 @@
 #' @param enddate Last day for both data sets
 #' @param casesdf DF with case data columns needed(data,conf_case)
 #' @param wastedf DF with Wastewater data columns needed(date,N1,N2)
-#' @param N1 First Wastewater gene
-#' @param N2 Second Wastewater gene
-#' @param conf_case Classical Case metric 
+#' @param N1_column name of N1 column
+#' @param N2_column name of N2 column
+#' @param site_column name of site column
+#' @param date_column name of date column
+#' @param case_column name of case column
 #'
 #' @return DF with the columns: number of days wastewater is offset, geo mean of(n1,n2) / confirmed cases,previous with rolling case average, MSE rolling average,Pearson correlation, Kendall correlation, Spearman correlation, R squared. 
 #' @export
@@ -17,23 +19,30 @@
 #' #Will output a df from -10 to +10 days using all of the data from 2020-08-01 to 2023-01-01
 #' OffsetDFMaker(10,as.Date("2020-08-01"), as.Date("2023-01-01"), Case_data, WasteWater_data)
 OffsetDFMaker <- function(length, startdate, enddate, casesdf, wastedf,
-                          N1 = N1, N2 = N2, conf_case = conf_case){
+                          N1_column = N1,
+                          N2_column = N2, 
+                          site_column = site,
+                          date_column = date, 
+                          case_column = conf_case){
+  
+  N1 <- N2 <- site <- date <- conf_case <- NA #default column for function. Not evaluated as NA in dplyr context
+  
   #Subset data based on given dates
   wastedf <- subset(wastedf, as.Date(date)> as.Date(startdate) & as.Date(date) < as.Date(enddate))
   casesdf <- subset(casesdf, as.Date(date)> as.Date(startdate) & as.Date(date) < as.Date(enddate))
   
   #Make columns needed
   wastedf <- wastedf%>% 
-    group_by(date)%>% 
-    summarise(N1 = mean({{N1}}),
-              N2 = mean({{N2}}))%>%
-    mutate(geo_mean = exp((log(N1) + log(N2))/2)) %>% 
+    group_by({{date_column}})%>% 
+    summarise(N1 = mean({{N1_column}}),
+              N2 = mean({{N2_column}}))%>%
+    mutate(geo_mean = exp((.data$log(N1) + log(.data$N2))/2)) %>% 
     drop_na(.data$geo_mean)
   
   casesdf <- casesdf %>%
     group_by(date) %>% 
-    summarise(conf_case = mean({{conf_case}})) %>%
-    mutate(rollingaverage = rollmean(conf_case, k=7, fill = NA)) %>%
+    summarise(conf_case = mean({{case_column}})) %>%
+    mutate(rollingaverage = rollmean(.data$conf_case, k=7, fill = NA)) %>%
     drop_na(.data$rollingaverage)
   
   offset_results <- data.frame(matrix(ncol = 8, nrow = 0))
@@ -80,7 +89,10 @@ OffsetDFMaker <- function(length, startdate, enddate, casesdf, wastedf,
 ###### Correlation Offset Heatmap
 #' Outputs a heatmap where the color is the r squared of wastewater data and center day + x many future days and y many past days
 #' Helps inform Offset Analysis
+#'
 #' @param cordata DF with geo_mean and conf_case columns 
+#' @param length the length of the time window for the results / 2
+#' @param case_column name of case column
 #'
 #' @return ggplot plot object (heatmap)
 #' @export
@@ -88,15 +100,16 @@ OffsetDFMaker <- function(length, startdate, enddate, casesdf, wastedf,
 #' @examples
 #'  data(example_data, package = "DSIWastewater")
 #'  heatmapcorfunc(Example_data)
-heatmapcorfunc <- function(cordata,length=14, conf_case = conf_case){
+heatmapcorfunc <- function(cordata,length=14, case_column = conf_case){
+  conf_case <- NA
   
   rsquareddf <- data.frame(matrix(ncol = 1, nrow = 0))
   for(j in 0:length){
     for(i in 0:length){
       wctemplm <- cordata %>% 
-        mutate(tempsum = roll_sum({{conf_case}},i,align = "left",fill = NA) + 
-                 roll_sum({{conf_case}},j,align = "right",fill = NA) + 
-                 roll_sum({{conf_case}},1,align = "center",fill = NA)) 
+        mutate(tempsum = roll_sum({{case_column}},i,align = "left",fill = NA) + 
+                 roll_sum({{case_column}},j,align = "right",fill = NA) + 
+                 roll_sum({{case_column}},1,align = "center",fill = NA)) 
       
       templm <- lm(log(tempsum+1) ~ log(geo_mean+1), data = wctemplm)
       new <- c(i,j,summary(templm)$r.squared)

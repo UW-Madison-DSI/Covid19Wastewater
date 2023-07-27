@@ -1,9 +1,9 @@
 #' compute first difference Jumps for N1 and N2
 #'
 #' @param df DataFrame. needs Column n1_sars_cov2_conc, n2_sars_cov2_conc, site
-#' @param N1 N1 metric used in finding difference
-#' @param N2 N2 metric used in finding difference
-#' @param site Grouping that makes each group a time series
+#' @param N1_column N1 metric used in finding difference
+#' @param N2_column N2 metric used in finding difference
+#' @param site_column Grouping that makes each group a time series
 #'
 #' @return dataframe with 4 columns appended: delta(n1), delta(n2) from left and right
 #' @export
@@ -111,7 +111,8 @@ computeRankQuantiles <- function(df) {
 #' @param DF Dataframe containing Column column
 #'ranked_quantile_data @param threshold a numeric used to flag if its an outlier
 #' @param col column being flagged based on threshold 
-#' @param outputColName name of flag column
+#' @param FlaggedOutlier name of flag column
+#' @param threshold Int threshold where being below it counts as an outlier
 #'
 #' @return DF Dataframe with the extra column of if its flagged an outlier
 #' @export

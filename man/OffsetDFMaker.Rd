@@ -11,9 +11,11 @@ OffsetDFMaker(
   enddate,
   casesdf,
   wastedf,
-  N1 = N1,
-  N2 = N2,
-  conf_case = conf_case
+  N1_column = N1,
+  N2_column = N2,
+  site_column = site,
+  date_column = date,
+  case_column = conf_case
 )
 }
 \arguments{
@@ -27,11 +29,15 @@ OffsetDFMaker(
 
 \item{wastedf}{DF with Wastewater data columns needed(date,N1,N2)}
 
-\item{N1}{First Wastewater gene}
+\item{N1_column}{name of N1 column}
 
-\item{N2}{Second Wastewater gene}
+\item{N2_column}{name of N2 column}
 
-\item{conf_case}{Classical Case metric}
+\item{site_column}{name of site column}
+
+\item{date_column}{name of date column}
+
+\item{case_column}{name of case column}
 }
 \value{
 DF with the columns: number of days wastewater is offset, geo mean of(n1,n2) / confirmed cases,previous with rolling case average, MSE rolling average,Pearson correlation, Kendall correlation, Spearman correlation, R squared.

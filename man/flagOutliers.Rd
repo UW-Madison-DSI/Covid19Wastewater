@@ -11,9 +11,11 @@ flagOutliers(DF, threshold, col, FlaggedOutlier = FlaggedOutlier)
 \item{DF}{Dataframe containing Column column
 ranked_quantile_data @param threshold a numeric used to flag if its an outlier}
 
+\item{threshold}{Int threshold where being below it counts as an outlier}
+
 \item{col}{column being flagged based on threshold}
 
-\item{outputColName}{name of flag column}
+\item{FlaggedOutlier}{name of flag column}
 }
 \value{
 DF Dataframe with the extra column of if its flagged an outlier

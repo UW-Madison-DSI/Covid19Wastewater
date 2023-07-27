@@ -10,11 +10,11 @@ computeJumps(df, N1_column = N1, N2_column = N2, site_column = site)
 \arguments{
 \item{df}{DataFrame. needs Column n1_sars_cov2_conc, n2_sars_cov2_conc, site}
 
-\item{N1}{N1 metric used in finding difference}
+\item{N1_column}{N1 metric used in finding difference}
 
-\item{N2}{N2 metric used in finding difference}
+\item{N2_column}{N2 metric used in finding difference}
 
-\item{site}{Grouping that makes each group a time series}
+\item{site_column}{Grouping that makes each group a time series}
 }
 \value{
 dataframe with 4 columns appended: delta(n1), delta(n2) from left and right
