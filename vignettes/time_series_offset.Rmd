@@ -16,7 +16,6 @@ knitr::opts_chunk$set(Warning = FALSE, message = FALSE, echo = FALSE)
 library(DSIWastewater)
 library(dplyr)
 library(RcppRoll)
-library(tidyverse)
 ```
 
 
@@ -42,7 +41,7 @@ data(pop_data, package = "DSIWastewater")
 WasteWater_data <- WasteWater_data%>%
   left_join(pop_data)
 
-data(example_data, package = "DSIWastewater")
+data(Example_data, package = "DSIWastewater")
 ```
 
 **Output is not normal as only example data is used**

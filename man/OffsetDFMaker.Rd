@@ -49,5 +49,5 @@ Returns a dataframe with the multiple ways to analyze how offset the Wastewater 
 data(WasteWater_data, package = "DSIWastewater")
 data("Case_data", package = "DSIWastewater")
 #Will output a df from -10 to +10 days using all of the data from 2020-08-01 to 2023-01-01
-OffsetDFMaker(10,as.Date("2020-08-01"), as.Date("2023-01-01"), Case_data, WasteWater_data)
+OffsetDFMaker(10,as.Date("2020-08-01"), as.Date("2023-01-01"), Case_data, WasteWater_data) 
 }

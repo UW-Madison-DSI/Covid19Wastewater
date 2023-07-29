@@ -22,6 +22,7 @@ options(warn=-1)
 library(DSIWastewater)
 library(dplyr)
 library(ggplot2)
+library(tidyr)
 ```
 
 This dataframe contains all columns dropped from the main wastewater dataframe. It is merged using [https://github.com/AFIDSI/DSIWastewater/blob/main/docs/data/data_disc.md](https://github.com/AFIDSI/DSIWastewater/blob/main/docs/data/data_disc.md)
@@ -56,9 +57,8 @@ aux_info%>%
 These rows have many missing values. For some columns over 90% of the rows are missing. Below is a table showing what percent of the data is missing for each column.
 
 ```{r all tables and Na%}
-library(dplyr)
 aux_info%>%
   summarise(across(everything(), ~100 * mean(is.na(.x))))%>%
-  tidyr::pivot_longer(everything(), names_to = "column name", values_to = "na %")%>%
+  pivot_longer(everything(), names_to = "column name", values_to = "na %")%>%
   knitr::kable()
 ```

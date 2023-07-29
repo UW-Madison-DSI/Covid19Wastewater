@@ -54,7 +54,7 @@ percentages <- mdfr %>%
   mutate(sum = sum(value), percent = value/sum, majority = case_when(percent > .5 ~ paste(variable)))
 
 per <- percentages %>% 
-  tidyr::drop_na(majority)
+  drop_na(majority)
 
 dates <- Covariants_data[c("week","category")]
 

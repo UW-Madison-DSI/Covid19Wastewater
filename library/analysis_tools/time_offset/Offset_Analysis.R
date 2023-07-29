@@ -16,7 +16,8 @@
 #' @examples
 #' data(WasteWater_data, package = "DSIWastewater")
 #' data("Case_data", package = "DSIWastewater")
-#' OffsetDFMaker(10,as.Date("2020-08-01"), as.Date("2023-01-01"), Case_data, WasteWater_data) #Will output a df from -10 to +10 days using all of the data from 2020-08-01 to 2023-01-01
+#' #Will output a df from -10 to +10 days using all of the data from 2020-08-01 to 2023-01-01
+#' OffsetDFMaker(10,as.Date("2020-08-01"), as.Date("2023-01-01"), Case_data, WasteWater_data) 
 OffsetDFMaker <- function(length, startdate, enddate, casesdf, wastedf,
                           N1_column = N1,
                           N2_column = N2, 

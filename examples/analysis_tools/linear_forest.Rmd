@@ -21,7 +21,9 @@ This part of the package creates a semi-novel
 
 ```{r load and show data, include = FALSE}
 library(DSIWastewater)
+library(zoo)
 library(dplyr)
+library(randomForest)
 data(WasteWater_data, package = "DSIWastewater")
 data(Case_data, package = "DSIWastewater")
 data(pop_data, package = "DSIWastewater")
@@ -32,7 +34,7 @@ base_df <- inner_join(Case_data, WasteWater_data, by = c("site", "date"))%>%
   left_join(aux_info)%>%
   group_by(site)%>%
   arrange(date)%>%
-  mutate(conf_case = zoo::rollmean(conf_case, 7, align = "center", na.pad = TRUE))%>%
+  mutate(conf_case = rollmean(conf_case, 7, align = "center", na.pad = TRUE))%>%
   ungroup()%>%
   select(conf_case, N1, N2,
          regions, date, pop,
@@ -46,11 +48,11 @@ base_df <- inner_join(Case_data, WasteWater_data, by = c("site", "date"))%>%
 #conductivity, temperature, ph, tests
 
 base_df%>%
-  randomForest::na.roughfix(base_df)%>%
-  dplyr::summarise(across(everything(), function(x) sum(is.na(x))))
+  na.roughfix(base_df)%>%
+  summarise(across(everything(), function(x) sum(is.na(x))))
 
 model_data <- base_df%>%
-   randomForest::na.roughfix()%>%
+   na.roughfix()%>%
    filter(if_all(everything(), is.finite))
 
 ```
@@ -58,7 +60,7 @@ model_data <- base_df%>%
 ```{r explain all / most relavent functions}
 form <- conf_case ~ N1 + N2 | . - N1 - N2
 
-forest_model <- random_linear_forest(data = randomForest::na.roughfix(model_data),
+forest_model <- random_linear_forest(data = na.roughfix(model_data),
                                      num_tree = 20, 
                                      model_formula = form,
                                      max_depth = 3,
