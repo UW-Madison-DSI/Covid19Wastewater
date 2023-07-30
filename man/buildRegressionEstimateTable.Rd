@@ -39,6 +39,9 @@ the results into 5 categories, "major decrease", "moderate decrease",
 If the model P-value if over .3 the category is replaced with "no change"
 }
 \examples{
-data(example_data, package = "DSIWastewater")
-buildRegressionEstimateTable(example_data, SplitOn = "WWTP")
+library(dplyr)
+data(Example_data, package = "DSIWastewater")
+Example_log_data <- mutate(Example_data, log_geo_mean = log10(geo_mean + 1))
+buildRegressionEstimateTable(Example_log_data, SplitOn = "site", 
+                                           RunOn = "log_geo_mean")
 }

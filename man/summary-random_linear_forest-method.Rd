@@ -18,7 +18,7 @@ summary.random_linear_forest object
 summary method for linear forest class
 }
 \examples{
-data("example_data", package = "DSIWastewater")
-model <- random_linear_forest(PMMoV ~ N1 + N2 | date + site)
+data(Example_data, package = "DSIWastewater")
+model <- random_linear_forest(Example_data, PMMoV ~ N1 + N2 | date + site)
 summary(model)
 }

@@ -18,10 +18,10 @@
 #' pastKavg.wwlog10: a mean of the last K days
 #' @keywords internal
 #' @examples 
-#' data("example_data", package = "DSIWastewater")
-#' example_data$window = 7
-#' example_data$quant = .8
-#' DSIWastewater:::windowingQuantFunc(example_data, "geoMean")
+#' data("Example_data", package = "DSIWastewater")
+#' Example_data$window = 7
+#' Example_data$quant = .8
+#' DSIWastewater:::windowingQuantFunc(Example_data, "geoMean")
 windowingQuantFunc <- function(DF, column){
   #get the start of the time series
   mindate <- min(DF$date, na.rm = TRUE)
@@ -56,7 +56,7 @@ windowingQuantFunc <- function(DF, column){
                      #returns as a vector instead of a list
                      names = FALSE))%>%
     #removes all extra rows created that were used in rolling process
-    filter(!is.na(.data$population_served))
+    filter(!is.na(.data$sample_id))
     
   return(RetDF)
 }
@@ -81,10 +81,10 @@ windowingQuantFunc <- function(DF, column){
 #' pastKavg.wwlog10: a mean of the last K days
 #' @export
 #' @examples
-#' data("example_data", package = "DSIWastewater")
-#' example_data$site = "madison"
-#' makeQuantileColumns(example_data, .5, 6, column = "geoMean")
-#' makeQuantileColumns(example_data, c(.5, .75), c(2,5), column = "geoMean")
+#' data("Example_data", package = "DSIWastewater")
+#' Example_data$site = "madison"
+#' makeQuantileColumns(Example_data, .5, 6, column = "geoMean")
+#' makeQuantileColumns(Example_data, c(.5, .75), c(2,5), column = "geoMean")
 makeQuantileColumns <- function(DF, quants, windows,
                                 column = "sars_cov2_adj_load_log10"){
   #create a DF with every combo of windows, quants, site

@@ -24,7 +24,7 @@ returns the predictions of each row of the input data
 using only trees not trained on the row
 }
 \examples{
-data("example_data", package = "DSIWastewater")
-model <- random_linear_forest(example_data, 2, PMMoV ~ N1 + N2 | date + site)
+data(Example_data, package = "DSIWastewater")
+model <- random_linear_forest(Example_data, 2, PMMoV ~ N1 + N2 | date + site)
 gen_OOB_pred(model, resid = TRUE)
 }

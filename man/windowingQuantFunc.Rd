@@ -28,9 +28,9 @@ Takes 1 time series dataframe and adds a some columns specifying the
 rolling quantile and rolling mean of the selected column.
 }
 \examples{
-data("example_data", package = "DSIWastewater")
-example_data$window = 7
-example_data$quant = .8
-DSIWastewater:::windowingQuantFunc(example_data, "geoMean")
+data("Example_data", package = "DSIWastewater")
+Example_data$window = 7
+Example_data$quant = .8
+DSIWastewater:::windowingQuantFunc(Example_data, "geoMean")
 }
 \keyword{internal}

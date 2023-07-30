@@ -34,6 +34,6 @@ model class using a random forest of linear forest models
 }}
 
 \examples{
-data("example_data", package = "DSIWastewater")
-random_linear_forest(example_data, 2, PMMoV ~ N1 + N2 | date + site)
+data("Example_data", package = "DSIWastewater")
+random_linear_forest(Example_data, 2, PMMoV ~ N1 + N2 | date + site)
 }

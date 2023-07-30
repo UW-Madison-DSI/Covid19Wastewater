@@ -5,12 +5,15 @@
 \alias{classifyQuantileFlagRegression}
 \title{Classify FlagRegression  with rolling Quantile info}
 \usage{
-classifyQuantileFlagRegression(DF, Pval = 0.3)
+classifyQuantileFlagRegression(DF, Pval = 0.3, model_sig_column = lmreg_sig)
 }
 \arguments{
 \item{DF}{dataframe that contains results of buildRegressionEstimateTable and makeQuantileColumns}
 
 \item{Pval}{threshold needed for flag_ntile_Pval to flag}
+
+\item{model_sig_column}{column name of significance of linear model that generated 
+the percent change}
 }
 \value{
 DF with three extra columns 
@@ -24,10 +27,10 @@ Create wastewater flags based on the CDC classification defined in
 classifyRegressionAnalysis and the quantile rank of the date.
 }
 \examples{
-data(example_data, package = "DSIWastewater")
-example_data$modeled_percentchange = 0
-example_data$lmreg_sig = .01
-example_data$pastKavg.wwlog10 = 5
-example_data$ntile = 8
-classifyQuantileFlagRegression(example_data)
+data(Example_data, package = "DSIWastewater")
+Example_data$modeled_percentchange = 0
+Example_data$lmreg_sig = .01
+Example_data$pastKavg.wwlog10 = 5
+Example_data$ntile = 8
+classifyQuantileFlagRegression(Example_data)
 }

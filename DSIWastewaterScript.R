@@ -78,4 +78,9 @@ package_update <- function(path = ".", update_examples = F, update_test = F){
 }
 package_update(update_examples = F, update_test = F)
 3
-check(vignettes = T)
+run_examples( fresh = T)
+#check(vignettes = T)
+
+data("WasteWater_data", package = "DSIWastewater")
+WasteWater_data <- WasteWater_data[WasteWater_data$site == "Waukesha",]
+DSIWastewater:::createWasteFlags(dplyr::left_join(WasteWater_data, pop_data))

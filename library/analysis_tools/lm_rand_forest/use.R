@@ -6,8 +6,8 @@
 #' @export
 #'
 #' @examples
-#' data("example_data", package = "DSIWastewater")
-#' random_linear_forest(PMMoV ~ N1 + N2 | date + site)
+#' data(Example_data, package = "DSIWastewater")
+#' random_linear_forest(Example_data, PMMoV ~ N1 + N2 | date + site)
 setMethod(f = "show",
           signature = "random_linear_forest",
           function(object){
@@ -23,8 +23,8 @@ setMethod(f = "show",
 #' @export
 #'
 #' @examples
-#' data("example_data", package = "DSIWastewater")
-#' model <- random_linear_forest(PMMoV ~ N1 + N2 | date + site)
+#' data(Example_data, package = "DSIWastewater")
+#' model <- random_linear_forest(Example_data, PMMoV ~ N1 + N2 | date + site)
 #' summary(model)
 setMethod(f = "summary",
           signature = "random_linear_forest",
@@ -56,9 +56,9 @@ setMethod(f = "summary",
 #' @export
 #'
 #' @examples
-#' data("example_data", package = "DSIWastewater")
-#' model <- random_linear_forest(PMMoV ~ N1 + N2 | date + site)
-#' predict(model, example_data)
+#' data(Example_data, package = "DSIWastewater")
+#' model <- random_linear_forest(Example_data, PMMoV ~ N1 + N2 | date + site)
+#' predict(model, Example_data)
 setMethod(f = "predict",
           signature = "random_linear_forest",
           definition = function(object, new_data, ...){

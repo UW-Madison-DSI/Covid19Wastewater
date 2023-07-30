@@ -15,8 +15,8 @@
 #' @export
 #'
 #' @examples
-#' data("example_data", package = "DSIWastewater")
-#' random_linear_forest(example_data, 2, PMMoV ~ N1 + N2 | date + site)
+#' data("Example_data", package = "DSIWastewater")
+#' random_linear_forest(Example_data, 2, PMMoV ~ N1 + N2 | date + site)
 setClass(
   "random_linear_forest",
   slots = list(formula = "formula",
@@ -49,8 +49,8 @@ setClass(
 #' @export
 #'
 #' @examples
-#' data("example_data", package = "DSIWastewater")
-#' random_linear_forest(PMMoV ~ N1 + N2 | date + site)
+#' data(Example_data, package = "DSIWastewater")
+#' random_linear_forest(Example_data, PMMoV ~ N1 + N2 | date + site)
 random_linear_forest <- function(data,
                                  num_tree,
                                  model_formula,

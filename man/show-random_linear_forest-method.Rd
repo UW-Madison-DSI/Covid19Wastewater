@@ -13,6 +13,6 @@
 display form for random_linear_forest class
 }
 \examples{
-data("example_data", package = "DSIWastewater")
-random_linear_forest(PMMoV ~ N1 + N2 | date + site)
+data(Example_data, package = "DSIWastewater")
+random_linear_forest(Example_data, PMMoV ~ N1 + N2 | date + site)
 }

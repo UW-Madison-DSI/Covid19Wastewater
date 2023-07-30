@@ -13,8 +13,9 @@
 #' @export
 #' @examples
 #' data(Case_data, package = "DSIWastewater")
-#' Case_data <- Case_data[Case_data$Site == 'Ashland Sewage Utility',]
-#' createCaseFlag(Case_data)
+#' data(pop_data, package = "DSIWastewater")
+#' Case_data <- Case_data[Case_data$site == 'Algoma',]
+#' createCaseFlag(left_join(Case_data, pop_data))
 createCaseFlag <- function(DF){
   
   #Prep case data into form for buildRegressionEstimateTable
@@ -62,8 +63,9 @@ createCaseFlag <- function(DF){
 #' @keywords internal
 #' @examples 
 #' data("WasteWater_data", package = "DSIWastewater")
-#' WasteWater_data <- WasteWater_data[WasteWater_data$wwtp_name == "Waukesha WWTP",]
-#' DSIWastewater:::createWasteFlags(WasteWater_data)
+#' data(pop_data, package = "DSIWastewater")
+#' WasteWater_data <- WasteWater_data[WasteWater_data$site == "Waukesha WWTP",]
+#' DSIWastewater:::createWasteFlags(dplyr::left_join(WasteWater_data, pop_data))
 createWasteFlags <- function(DF,
                              windows = c(14, 30, 60 , 90),
                              quants = c(5:9)/10){

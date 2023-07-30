@@ -24,9 +24,9 @@ DF Dataframe with the extra column of if its flagged an outlier
 Create column with Boolean based on a threshold
 }
 \examples{
-data(example_data, package = "DSIWastewater")
-example_data$site = "Madison"
-df_data <- computeJumps(example_data)
+data(Example_data, package = "DSIWastewater")
+Example_data$site = "Madison"
+df_data <- computeJumps(Example_data)
 ranked_data <- rankJumps(df_data)
  <- computeRankQuantiles(ranked_data)
 flagOutliers(ranked_quantile_data, 9, MessureRank, FlaggedOutlier)

@@ -23,6 +23,7 @@ Create case flags created by the DHS to warn of increasing cases
 }
 \examples{
 data(Case_data, package = "DSIWastewater")
-Case_data <- Case_data[Case_data$Site == 'Ashland Sewage Utility',]
-createCaseFlag(Case_data)
+data(pop_data, package = "DSIWastewater")
+Case_data <- Case_data[Case_data$site == 'Algoma',]
+createCaseFlag(left_join(Case_data, pop_data))
 }

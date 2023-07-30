@@ -20,7 +20,7 @@ vector of predictions for each row
 predict new data from random_linear_forest models
 }
 \examples{
-data("example_data", package = "DSIWastewater")
-model <- random_linear_forest(PMMoV ~ N1 + N2 | date + site)
-predict(model, example_data)
+data(Example_data, package = "DSIWastewater")
+model <- random_linear_forest(Example_data, PMMoV ~ N1 + N2 | date + site)
+predict(model, Example_data)
 }

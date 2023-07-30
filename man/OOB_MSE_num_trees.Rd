@@ -16,7 +16,7 @@ get dataframe of number of trees and OOB MSE
 get OOB MSE vs number of forest in trees
 }
 \examples{
-data("example_data", package = "DSIWastewater")
-model <- random_linear_forest(example_data, 2, PMMoV ~ N1 + N2 | date + site)
+data(Example_data, package = "DSIWastewater")
+model <- random_linear_forest(Example_data, 2, PMMoV ~ N1 + N2 | date + site)
 OOB_MSE_num_trees(model)
 }

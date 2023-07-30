@@ -23,9 +23,9 @@ DF with new column without the flagged values
 Add column with NA values where the data was flagged
 }
 \examples{
-data(example_data, package = "DSIWastewater")
-example_data$site = "Madison"
-df_data <- computeJumps(example_data)
+data(Example_data, package = "DSIWastewater")
+Example_data$site = "Madison"
+df_data <- computeJumps(Example_data)
 ranked_data <- rankJumps(df_data)
 ranked_quantile_data <- computeRankQuantiles(ranked_data)
 classied_data <- flagOutliers(ranked_quantile_data, 9)

@@ -18,14 +18,17 @@
 #' @export
 #'
 #' @examples
-#' data(example_data, package = "DSIWastewater")
-#' buildRegressionEstimateTable(example_data, SplitOn = "WWTP")
+#' library(dplyr)
+#' data(Example_data, package = "DSIWastewater")
+#' Example_log_data <- mutate(Example_data, log_geo_mean = log10(geo_mean + 1))
+#' buildRegressionEstimateTable(Example_log_data, SplitOn = "site", 
+#'                                            RunOn = "log_geo_mean")
 buildRegressionEstimateTable <- function(DataMod, 
                                          RunOn = "sars_cov2_adj_load_log10",
                                          SplitOn = "site",
                                          DaysRegressed = 5,
-                                         verbose=FALSE, 
-                                         PSigTest=TRUE){
+                                         verbose = FALSE, 
+                                         PSigTest = TRUE){
   reg_estimates = DataMod%>%
     pivot_longer(all_of(RunOn), names_to = "Method")%>%
     filter(!is.na(.data$value))%>%

@@ -12,7 +12,8 @@
 #'
 #' @examples
 #' data(WasteWater_data, package = "DSIWastewater")
-#' buildWasteAnalysisDF(WasteWater_data)
+#' data(pop_data, package = "DSIWastewater")
+#' buildWasteAnalysisDF(dplyr::left_join(WasteWater_data, pop_data))
 buildWasteAnalysisDF <- function(df){
   ## format data as DHS code expects
   
@@ -21,7 +22,7 @@ buildWasteAnalysisDF <- function(df){
     mutate(N1 = ifelse(.data$N1, as.numeric(.data$n1_lod)/2, .data$N1),
            N2 = ifelse(.data$N2, as.numeric(.data$n2_lod)/2, .data$N2))%>%
     select(
-      .data$site, .data$date, .data$pop,  ## site data
+      .data$sample_id, .data$site, .data$date, .data$pop,  ## site data
       .data$N1, .data$N2,             ## N1, N2 measurement
       .data$flow                                 ## sample covariates
     ) %>% 
@@ -37,23 +38,34 @@ buildWasteAnalysisDF <- function(df){
 
 #' Prep case data into right format
 #'
-#' @param df case dataframe have columns: Date, population_served, FirstConfirmed
+#' @param df case dataframe have columns: Date, pop, FirstConfirmed
+#' @param site_column name of site column
+#' @param date_column name of date column
+#' @param case_column name of case column
+#' @param pop_column name of pop column
 #'
 #' @return DF with a 7 day rolling sum and a population weighted case column
 #' @export
 #'
 #' @examples
 #' data(Case_data, package = "DSIWastewater")
-#' buildCaseAnalysisDF(Case_data)
-buildCaseAnalysisDF <- function(df){
+#' data(pop_data, package = "DSIWastewater")
+#' buildCaseAnalysisDF(dplyr::left_join(Case_data, pop_data))
+buildCaseAnalysisDF <- function(df,                          
+                                site_column = site,
+                                date_column = date, 
+                                case_column = conf_case,
+                                pop_column = pop){
+  site <- date <- conf_case <- pop <- NA #default column for function. Not evaluated as NA in dplyr context
+  
   CaseProcess <- df%>%
     #sort data to make sure the rolling sum func does not fail to sum correctly
-    arrange(.data$site, .data$date)%>%
-    group_by(.data$site)%>%
+    arrange({{site_column}}, {{date_column}})%>%
+    group_by({{site_column}})%>%
     #Create case data norm by the population
-    mutate(FirstConfirmed.Per100K = (.data$conf_case * 100000) / .data$population_served,
+    mutate(FirstConfirmed.Per100K = ({{case_column}} * 100000) / {{pop_column}},
     #get rolling sum of the last 7 days filling missing data with NAs
-            pastwk.sum.casesperday.Per100K = rollsumr(.data$conf_case, 7, fill=NA),
+            pastwk.sum.casesperday.Per100K = rollsumr({{case_column}}, 7, fill=NA),
             pastwk.avg.casesperday.Per100K = .data$pastwk.sum.casesperday.Per100K / 7)%>%
     ungroup()
   

@@ -9,7 +9,8 @@ classifyCaseRegression(
   DF,
   slopeThreshold = 5,
   minSize = 200,
-  lmreg_slope = lmreg_slope
+  per_changed_column = modeled_percentchange,
+  model_sig_column = lmreg_sig
 )
 }
 \arguments{
@@ -19,7 +20,9 @@ classifyCaseRegression(
 
 \item{minSize}{case threshold for case_flag_plus_comm.threshold flagging}
 
-\item{lmreg_slope}{column name of significance of linear model that generated 
+\item{per_changed_column}{column name of estimated percent change of signal}
+
+\item{model_sig_column}{column name of significance of linear model that generated 
 the percent change}
 }
 \value{

@@ -4,30 +4,31 @@
 #'
 #' @param DF dataframe that contains results of buildRegressionEstimateTable
 #' @param PSigTest Controls if we filter values with P-values>.3
-#' @param modeled_percentchange column name of estimated percent change of signal
-#' @param lmreg_sig column name of significance of linear model that generated 
+#' @param per_changed_column column name of estimated percent change of signal
+#' @param model_sig_column column name of significance of linear model that generated 
 #' the percent change
 #'
 #' @export
 #' @return DF with an extra column Catagory containing the results of the DHS binning
 #' @examples
-#' data(example_data, package = "DSIWastewater")
-#' example_data$modeled_percentchange = 0
-#' example_data$lmreg_sig = .01
-#' classifyRegressionAnalysis(example_data)
+#' data(Example_data, package = "DSIWastewater")
+#' Example_data$modeled_percentchange = 0
+#' Example_data$lmreg_sig = .01
+#' classifyRegressionAnalysis(Example_data)
 classifyRegressionAnalysis <- function(DF, PSigTest = TRUE, 
-                                modeled_percentchange = modeled_percentchange,
-                                lmreg_sig = lmreg_sig){
+                                per_changed_column = modeled_percentchange,
+                                model_sig_column = lmreg_sig){
+  lmreg_sig <- modeled_percentchange <- NA
 
   #split the % changed into catagorys based on DHS methods
   RetDF <- DF%>%
-    mutate(Catagory = cut({{modeled_percentchange}}, c(-Inf,-100,-10,10,100,Inf),
+    mutate(Catagory = cut({{per_changed_column}}, c(-Inf,-100,-10,10,100,Inf),
                           ordered_result=TRUE),
            Catagory = as.numeric(.data$Catagory))
   
   if(PSigTest){
     RetDF <- RetDF%>%
-      mutate(Catagory = ifelse({{lmreg_sig}} > .3, "no change", .data$Catagory))
+      mutate(Catagory = ifelse({{model_sig_column}} > .3, "no change", .data$Catagory))
     levl <- c(1,2,3,"no change",4,5)
     Catagorylabel = c("major decrease", "moderate decrease",
                       "fluctuating", "no change",
@@ -51,7 +52,8 @@ classifyRegressionAnalysis <- function(DF, PSigTest = TRUE,
 #' @param DF dataframe that contains results of buildRegressionEstimateTable
 #' @param slopeThreshold number threshold for case_flag flagging
 #' @param minSize case threshold for case_flag_plus_comm.threshold flagging
-#' @param lmreg_slope column name of significance of linear model that generated 
+#' @param per_changed_column column name of estimated percent change of signal
+#' @param model_sig_column column name of significance of linear model that generated 
 #' the percent change
 #' 
 #' @return DF with an three extra column Category containing the case flags
@@ -62,13 +64,15 @@ classifyRegressionAnalysis <- function(DF, PSigTest = TRUE,
 #' @examples 
 #' example_DF <- data.frame(site = "madison", lmreg_slope = 5, value = 300)
 #' classifyCaseRegression(example_DF)
-classifyCaseRegression <- function(DF, slopeThreshold = 5, minSize = 200,
-                                   lmreg_slope = lmreg_slope){
+classifyCaseRegression <- function(DF, slopeThreshold = 5, minSize = 200, 
+                                   per_changed_column = modeled_percentchange,
+                                   model_sig_column = lmreg_sig){
+  lmreg_sig <- modeled_percentchange <- NA
   RetDF <- DF%>%
     group_by(.data$site)%>%
     mutate(
       #A flag when the slope for most recent week is greater than slopeThreshold/100k/day
-      case_flag = case_when({{lmreg_slope}} > slopeThreshold ~ 1,
+      case_flag = case_when({{per_changed_column}} > slopeThreshold ~ 1,
                             TRUE ~ 0),
       
       #A flag when the previous slope and the signal is above 200
@@ -90,6 +94,8 @@ classifyCaseRegression <- function(DF, slopeThreshold = 5, minSize = 200,
 #'
 #' @param DF dataframe that contains results of buildRegressionEstimateTable and makeQuantileColumns
 #' @param Pval threshold needed for flag_ntile_Pval to flag 
+#' @param model_sig_column column name of significance of linear model that generated 
+#' the percent change
 #'
 #' @export
 #' @return DF with three extra columns 
@@ -98,15 +104,18 @@ classifyCaseRegression <- function(DF, slopeThreshold = 5, minSize = 200,
 #' flag_ntile_Pval: when the flag ntile and the regression slope is less
 #' than Pval
 #' @examples 
-#' data(example_data, package = "DSIWastewater")
-#' example_data$modeled_percentchange = 0
-#' example_data$lmreg_sig = .01
-#' example_data$pastKavg.wwlog10 = 5
-#' example_data$ntile = 8
-#' classifyQuantileFlagRegression(example_data)
-classifyQuantileFlagRegression <- function(DF, Pval = .3){
+#' data(Example_data, package = "DSIWastewater")
+#' Example_data$modeled_percentchange = 0
+#' Example_data$lmreg_sig = .01
+#' Example_data$pastKavg.wwlog10 = 5
+#' Example_data$ntile = 8
+#' classifyQuantileFlagRegression(Example_data)
+classifyQuantileFlagRegression <- function(DF, Pval = .3,
+                                           model_sig_column = lmreg_sig){
+  lmreg_sig <- NA
   #Get the DHS Classification scheme of wastewater concentration
-  Classification_DF <- classifyRegressionAnalysis(DF, PSigTest = FALSE)
+  Classification_DF <- classifyRegressionAnalysis(DF, 
+                                                  PSigTest = FALSE)
   #returned DF piped into four mutate calls to add three columns
   Ret_DF <- Classification_DF%>%
     #Convert the classification scheme from the cdc into a flag
@@ -119,7 +128,7 @@ classifyQuantileFlagRegression <- function(DF, Pval = .3){
              TRUE ~ 0))%>%
     #further select so that the slope of the regression is less then Pval
     mutate(flag_ntile_Pval = case_when(
-            .data$flag_ntile & {{lmreg_sig}} < Pval ~ 1,
+            .data$flag_ntile & {{model_sig_column}} < Pval ~ 1,
              TRUE ~ 0))%>%
     #make NA into 0 or FALSE
     mutate(across(where(is.numeric), ~ ifelse(is.na(.x), 0, .x)))

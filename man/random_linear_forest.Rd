@@ -42,6 +42,6 @@ to create linear random forests that work like a random forest but with
 the linear dynamics permuted with a linear method
 }
 \examples{
-data("example_data", package = "DSIWastewater")
-random_linear_forest(PMMoV ~ N1 + N2 | date + site)
+data(Example_data, package = "DSIWastewater")
+random_linear_forest(Example_data, PMMoV ~ N1 + N2 | date + site)
 }

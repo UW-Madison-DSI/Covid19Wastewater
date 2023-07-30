@@ -20,8 +20,8 @@ dataframe with 4 columns appended: ranks of each of the 4 jumps;
 Convert jumps from last step into a ordering
 }
 \examples{
-data(example_data, package = "DSIWastewater")
-example_data$site = "Madison"
-df_data <- computeJumps(example_data)
+data(Example_data, package = "DSIWastewater")
+Example_data$site = "Madison"
+df_data <- computeJumps(Example_data)
 rankJumps(df_data)
 }

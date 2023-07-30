@@ -3,15 +3,15 @@
 #' @param df DataFrame. needs Column n1_sars_cov2_conc, n2_sars_cov2_conc, site
 #' @param N1_column N1 metric used in finding difference
 #' @param N2_column N2 metric used in finding difference
-#' @param site_column Grouping that makes each group a time series
+#' @param site_column Grouping that makes each group a time seriecomputeJumpss
 #'
 #' @return dataframe with 4 columns appended: delta(n1), delta(n2) from left and right
 #' @export
 #'
 #' @examples
-#' data(example_data, package = "DSIWastewater")
-#' example_data$site = "Madison"
-#' computeJumps(example_data)
+#' data(Example_data, package = "DSIWastewater")
+#' Example_data$site = "Madison"
+#' computeJumps(Example_data)
 computeJumps <- function(df, 
                          N1_column = N1,
                          N2_column = N2, 
@@ -48,9 +48,9 @@ computeJumps <- function(df,
 #' @export
 #'
 #' @examples
-#' data(example_data, package = "DSIWastewater")
-#' example_data$site = "Madison"
-#' df_data <- computeJumps(example_data)
+#' data(Example_data, package = "DSIWastewater")
+#' Example_data$site = "Madison"
+#' df_data <- computeJumps(Example_data)
 #' rankJumps(df_data)
 rankJumps <- function(df) {
   df <- df %>% 
@@ -80,9 +80,9 @@ rankJumps <- function(df) {
 #' @export
 #'
 #' @examples
-#' data(example_data, package = "DSIWastewater")
-#' example_data$site = "Madison"
-#' df_data <- computeJumps(example_data)
+#' data(Example_data, package = "DSIWastewater")
+#' Example_data$site = "Madison"
+#' df_data <- computeJumps(Example_data)
 #' ranked_data <- rankJumps(df_data)
 #' computeRankQuantiles(ranked_data)
 computeRankQuantiles <- function(df) {
@@ -118,9 +118,9 @@ computeRankQuantiles <- function(df) {
 #' @export
 #'
 #' @examples
-#' data(example_data, package = "DSIWastewater")
-#' example_data$site = "Madison"
-#' df_data <- computeJumps(example_data)
+#' data(Example_data, package = "DSIWastewater")
+#' Example_data$site = "Madison"
+#' df_data <- computeJumps(Example_data)
 #' ranked_data <- rankJumps(df_data)
 #'  <- computeRankQuantiles(ranked_data)
 #' flagOutliers(ranked_quantile_data, 9, MessureRank, FlaggedOutlier)
@@ -142,9 +142,9 @@ flagOutliers <- function(DF, threshold, col, FlaggedOutlier = FlaggedOutlier){
 #' @export
 #'
 #' @examples
-#' data(example_data, package = "DSIWastewater")
-#' example_data$site = "Madison"
-#' df_data <- computeJumps(example_data)
+#' data(Example_data, package = "DSIWastewater")
+#' Example_data$site = "Madison"
+#' df_data <- computeJumps(Example_data)
 #' ranked_data <- rankJumps(df_data)
 #' ranked_quantile_data <- computeRankQuantiles(ranked_data)
 #' classied_data <- flagOutliers(ranked_quantile_data, 9)

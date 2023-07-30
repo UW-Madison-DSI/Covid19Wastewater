@@ -14,7 +14,7 @@ computeJumps(df, N1_column = N1, N2_column = N2, site_column = site)
 
 \item{N2_column}{N2 metric used in finding difference}
 
-\item{site_column}{Grouping that makes each group a time series}
+\item{site_column}{Grouping that makes each group a time seriecomputeJumpss}
 }
 \value{
 dataframe with 4 columns appended: delta(n1), delta(n2) from left and right
@@ -23,7 +23,7 @@ dataframe with 4 columns appended: delta(n1), delta(n2) from left and right
 compute first difference Jumps for N1 and N2
 }
 \examples{
-data(example_data, package = "DSIWastewater")
-example_data$site = "Madison"
-computeJumps(example_data)
+data(Example_data, package = "DSIWastewater")
+Example_data$site = "Madison"
+computeJumps(Example_data)
 }

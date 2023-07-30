@@ -8,8 +8,8 @@
 classifyRegressionAnalysis(
   DF,
   PSigTest = TRUE,
-  modeled_percentchange = modeled_percentchange,
-  lmreg_sig = lmreg_sig
+  per_changed_column = modeled_percentchange,
+  model_sig_column = lmreg_sig
 )
 }
 \arguments{
@@ -17,9 +17,9 @@ classifyRegressionAnalysis(
 
 \item{PSigTest}{Controls if we filter values with P-values>.3}
 
-\item{modeled_percentchange}{column name of estimated percent change of signal}
+\item{per_changed_column}{column name of estimated percent change of signal}
 
-\item{lmreg_sig}{column name of significance of linear model that generated 
+\item{model_sig_column}{column name of significance of linear model that generated 
 the percent change}
 }
 \value{
@@ -29,8 +29,8 @@ DF with an extra column Catagory containing the results of the DHS binning
 Adds the DHS Classification scheme to data created by runRegressionAnalysis
 }
 \examples{
-data(example_data, package = "DSIWastewater")
-example_data$modeled_percentchange = 0
-example_data$lmreg_sig = .01
-classifyRegressionAnalysis(example_data)
+data(Example_data, package = "DSIWastewater")
+Example_data$modeled_percentchange = 0
+Example_data$lmreg_sig = .01
+classifyRegressionAnalysis(Example_data)
 }

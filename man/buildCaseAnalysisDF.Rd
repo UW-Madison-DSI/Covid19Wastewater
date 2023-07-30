@@ -5,10 +5,24 @@
 \alias{buildCaseAnalysisDF}
 \title{Prep case data into right format}
 \usage{
-buildCaseAnalysisDF(df)
+buildCaseAnalysisDF(
+  df,
+  site_column = site,
+  date_column = date,
+  case_column = conf_case,
+  pop_column = pop
+)
 }
 \arguments{
-\item{df}{case dataframe have columns: Date, population_served, FirstConfirmed}
+\item{df}{case dataframe have columns: Date, pop, FirstConfirmed}
+
+\item{site_column}{name of site column}
+
+\item{date_column}{name of date column}
+
+\item{case_column}{name of case column}
+
+\item{pop_column}{name of pop column}
 }
 \value{
 DF with a 7 day rolling sum and a population weighted case column
@@ -18,5 +32,6 @@ Prep case data into right format
 }
 \examples{
 data(Case_data, package = "DSIWastewater")
-buildCaseAnalysisDF(Case_data)
+data(pop_data, package = "DSIWastewater")
+buildCaseAnalysisDF(dplyr::left_join(Case_data, pop_data))
 }
