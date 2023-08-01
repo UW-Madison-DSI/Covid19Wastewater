@@ -258,9 +258,6 @@ head(CaseAndPop_data)
     </div>
 </div>
 
-### Tips
-This is not the extent of merging that can be done with this package's data. Always make sure that when merging, the “by =” should always be able to identify the information you are merging uniquely. (i.e. don't merge waste and case data by data alone)
-
 ### 4.  Merging Wastewater and Confirmed Cases Data
 With the data now merged, we can perform many more analyses.  In the analysis below, we show the number of confirmed cases.
 
@@ -287,11 +284,14 @@ CaseAndPop_data %>% filter(site == "Madison") %>% ggplot(aes(x=date,y=(conf_case
 ```
 
 <div align="center">
-    <img src="../../docs/images/getting-started/confirmed-cases-per-person.png" alt="Wastewater and Confirmed Cases / Pop" style="width:75%">
+    <img src="../../docs/images/getting-started/confirmed-cases-per-person.png" alt="Wastewater and Confirmed Cases / Population" style="width:75%">
     <div>
-        <label>Wastewater and Confirmed Cases / Pop</label>
+        <label>Wastewater and Confirmed Cases / Population</label>
     </div>
 </div>
+
+### Tips
+Always make sure that when merging, the “by =” should always be able to identify the information you are merging uniquely. (i.e. don't merge waste and case data by data alone)
 
 # Data Preparation
 
