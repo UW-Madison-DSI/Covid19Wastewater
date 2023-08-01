@@ -90,6 +90,205 @@ Because of these various complicating factors and difficulty in performing waste
 
 # Loading and Viewing Data
 
+The data in this package is a combination of data provided to us from the following sources:
+- Wisconsin [Department of Health Services (DHS)](https://www.dhs.wisconsin.gov/covid-19/wastewater.htm)
+- Wisconsin [State Lab of Hygiene (SLH)](http://www.slh.wisc.edu/environmental/covid-19-wastewater)
+- Open-source data
+
+All data can be found in the /data directory as .RData objects. Alternatively, when our package is installed, these data sets can be loaded by using the command:
+
+```
+data(<name here>, package = "Covid19Wastewater")
+```
+
+where \<name here\> is replaced with one of the following:
+
+### Data List
+
+- Aux_info_data
+Extra data that can be merged with WasteWater_data
+
+- Case_data
+Case information for all of Wisconsin from 2020-01-22 to 2022-12-08
+
+- Covariants_data
+Statewide variant proportions
+
+- Example_data
+A merged and shortened version of Case_data and WasteWater_data from 3 sites
+
+- HFGCase_data
+High-frequency data from 6 weeks involving ten sites
+
+- HFGWaste_data
+High-frequency data from 6 weeks involving ten sites
+
+- InterceptorCase_data
+Madison specific data
+
+- Pop_data
+Population data along with region, county, and lab submitter
+
+- WasteWater_data
+Wastewater epidemiological data from across Wisconsin, can be merged with Aux_info_data
+
+Here is the key to all the column names in the data: https://github.com/UW-Madison-DSI/Covid19Wastewater/blob/main/docs/data/data_columns_discription.md
+
+### Examples
+
+The prevalence of covid is determined using the genome markers called "N1" and "N2".  A simple starting point is to load in the data and then graph N1 or N2 over time.
+
+```
+data("WasteWater_data", package = "Covid19Wastewater")
+
+WasteWater_data %>% ggplot(aes(x=date,y=N1)) +
+  geom_point()
+```
+
+<div align="center">
+    <img src="../../docs/images/getting-started/n1-n2-levels.png" alt="The Levels of Covid Makers N1 and N2 Over Time" style="width:75%">
+    <div>
+        <label>The Levels of Covid Markers N1 and N2 Over Time</label>
+    </div>
+</div>
+
+With a few extra lines of code, we can add some color coding in order to display  N1 and N2 in a more visually appealing way.
+
+```
+data("WasteWater_data", package = "Covid19Wastewater")
+
+WasteWater_data %>% ggplot() +
+  geom_point(aes(x=date,y=N2+1, color = "N2")) + #plus 1 to have a nice log
+  geom_point(aes(x=date,y=N1+1, color = "N1")) +
+  scale_y_log10() +
+  ylab("N1 and N2")
+```
+
+<div align="center">
+    <img src="../../docs/images/getting-started/n1-n2-levels-colored.png" alt="The Levels of Covid Makers N1 and N2 Over Time" style="width:75%">
+    <div>
+        <label>The Levels of Covid Markers N1 and N2 Over Time</label>
+    </div>
+</div>
+
+## Merging  Datasets
+
+Below, we show a set of examples of merging different datasets together.
+
+### 1. Merging Wastewater and Case Data
+
+When merging wastewater and case data, it is best to merge by site and data to identify each entry uniquely.
+
+```
+data("WasteWater_data", package = "Covid19Wastewater")
+data("Case_data", package = "Covid19Wastewater")
+
+WasteAndCaseMerged_data <- merge(Case_data,WasteWater_data, by = c("site","date"))
+head(WasteAndCaseMerged_data)
+```
+
+<div align="center">
+    <img src="../../docs/images/getting-started/wastewater-case-data.png" alt="Wastewater and Case Data" style="width:75%">
+    <div>
+        <label>Wastewater and Case Data</label>
+    </div>
+</div>
+
+### 2.  Merging High Frequency Wastewater and Case Data
+
+We include high frequency datasets for both waterwater and case data which can be merged as follows:
+
+```
+data("HFGWaste_data", package = "Covid19Wastewater")
+data("HFGCase_data", package = "Covid19Wastewater")
+
+HFGWasteAndCaseMerged_data <- merge(HFGCase_data,HFGWaste_data, by = c("site","date"))
+head(HFGWasteAndCaseMerged_data)
+```
+
+<div align="center">
+    <img src="../../docs/images/getting-started/hfg-wastewater-case-data.png" alt="High Frequency Wastewater and Case Data" style="width:75%">
+    <div>
+        <label>High Frequency Wastewater and Case Data</label>
+    </div>
+</div>
+
+### 3.  Merging Wastewater and Aux Data
+
+When merging the auxiliary information, it can only be done with sample_id (Aux_info_data can only be merged with WateWater_data)
+```
+data("WasteWater_data", package = "Covid19Wastewater")
+data("Aux_info_data", package = "Covid19Wastewater")
+
+WastewaterAndAuxInfo_data <- merge(WasteWater_data,Aux_info_data, by = "sample_id")
+head(WastewaterAndAuxInfo_data)
+```
+
+<div align="center">
+    <img src="../../docs/images/getting-started/wastewater-aux-data.png" alt="Wastewater and Aux Data" style="width:75%">
+    <div>
+        <label>Wastewater and Aux Data</label>
+    </div>
+</div>
+
+### 4.  Merging Wastewater and Population Data
+
+Population data can be merged with any dataframe that contains site data.
+
+```
+data("WasteWater_data", package = "CovidWastewater")
+data("pop_data", package = "Covid19Wastewater")
+data("Case_data", package = "Covid19Wastewater")
+
+WastewaterAndPop_data <- merge(WasteWater_data,pop_data, by = "site")
+head(WastewaterAndPop_data)
+
+CaseAndPop_data <- merge(Case_data,pop_data, by = "site")
+head(CaseAndPop_data)
+```
+
+<div align="center">
+    <img src="../../docs/images/getting-started/wastewater-pop-data.png" alt="Wastewater and Population Data" style="width:75%">
+    <div>
+        <label>Wastewater and Population Data</label>
+    </div>
+</div>
+
+### Tips
+This is not the extent of merging that can be done with this package's data. Always make sure that when merging, the “by =” should always be able to identify the information you are merging uniquely. (i.e. don't merge waste and case data by data alone)
+
+### 4.  Merging Wastewater and Confirmed Cases Data
+With the data now merged, we can perform many more analyses.  In the analysis below, we show the number of confirmed cases.
+
+```
+HFGWasteAndCaseMerged_data %>% ggplot() +
+  geom_point(aes(x=log(N1+1),y=log(ConfirmedCases+1),color="N1")) +
+  geom_point(aes(x=log(N2+1),y=log(ConfirmedCases+1),color="N2")) +
+  facet_wrap("site")
+```
+
+<div align="center">
+    <img src="../../docs/images/getting-started/wastewater-confirmed-cases.png" alt="Wastewater and Confirmed Cases" style="width:75%">
+    <div>
+        <label>Wastewater and Confirmed Cases</label>
+    </div>
+</div>
+
+### 4.  Normalizing by Population
+Below, we display the number of confirmed cases normalized by population as a function of time.
+
+```
+CaseAndPop_data %>% filter(site == "Madison") %>% ggplot(aes(x=date,y=(conf_case/pop)))+
+  geom_point()
+```
+
+<div align="center">
+    <img src="../../docs/images/getting-started/confirmed-cases-per-person.png" alt="Wastewater and Confirmed Cases / Pop" style="width:75%">
+    <div>
+        <label>Wastewater and Confirmed Cases / Pop</label>
+    </div>
+</div>
+
 # Data Preparation
 
 # Data Analysis
