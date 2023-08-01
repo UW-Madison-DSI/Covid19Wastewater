@@ -86,7 +86,7 @@ loessSmoothMod <- function(DF,InVar="sars_cov2_adj_load_log10",
 #' @export
 #' @examples
 #' data("WasteWater_data", package = "DSIWastewater")
-#' examp_DF <- examp_DF[examp_DF$site == 'Algoma WWTF",]
+#' examp_DF <- examp_DF[examp_DF$site == "Algoma WWTF",]
 #' DSIWastewater:::expSmoothMod(examp_DF, "n1_sars_cov2_conc", "expN1")
 expSmoothMod <- function(DF,InVar, OutVar,alpha="guess",beta="guess", Filter = NULL ){
   

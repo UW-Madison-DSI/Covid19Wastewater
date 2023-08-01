@@ -40,7 +40,7 @@ factorVecByNumPoints <- function(DF,FacVar, FiltVar = NA){
 #'
 #' @examples
 #' data(Example_data, package = "DSIWastewater")
-#' factorVecByVec(Example_data, example_data, "site", "N1")
+#' factorVecByVec(Example_data, Example_data, "site", "N1")
 factorVecByVec <- function(FactorDF, OrderDF, FacVar, NumVar){
 
   FactorOrder <- (OrderDF%>%

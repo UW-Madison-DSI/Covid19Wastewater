@@ -78,6 +78,6 @@ package_update <- function(path = ".", update_examples = F, update_test = F){
 }
 package_update(update_examples = F, update_test = F)
 3
-#load_all()
-#run_examples( fresh = F, start = "factorVecByNumPoints")#DF_date_vector, 
+load_all()
+run_examples( fresh = F, start = "factorVecByNumPoints")#DF_date_vector, 
 check(vignettes = F)

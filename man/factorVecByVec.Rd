@@ -24,5 +24,5 @@ Get ordering for ploting based on factoring vector
 }
 \examples{
 data(Example_data, package = "DSIWastewater")
-factorVecByVec(Example_data, example_data, "site", "N1")
+factorVecByVec(Example_data, Example_data, "site", "N1")
 }
