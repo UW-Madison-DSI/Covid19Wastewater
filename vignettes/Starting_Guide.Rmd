@@ -1,6 +1,6 @@
 ---
 title: "Starting Guide"
-author: "Marlin"
+author: "Marlin Lee"
 vignette: >
   %\VignetteIndexEntry{Starting Guide}
   \usepackage[utf8]{inputenc}

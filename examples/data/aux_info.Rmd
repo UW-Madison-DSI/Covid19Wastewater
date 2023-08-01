@@ -28,24 +28,24 @@ library(tidyr)
 This dataframe contains all columns dropped from the main wastewater dataframe. It is merged using [https://github.com/UW-Madison-DSI/Covid19Wastewater/blob/main/docs/data/data_disc.md](https://github.com/UW-Madison-DSI/Covid19Wastewater/blob/main/docs/data/data_disc.md)
 
 ```{r Example Data head}
-data(aux_info, package = "Covid19Wastewater")
-aux_info%>%
+data(Aux_info_data, package = "Covid19Wastewater")
+Aux_info_data%>%
   select(sample_id:bcov_rec_rate)%>%
   head()%>%
   knitr::kable()
 
 
-aux_info%>%
+Aux_info_data%>%
   select(sample_type:n2_num_ntc_amplify)%>%
   head()%>%
   knitr::kable()
 
-aux_info%>%
+Aux_info_data%>%
   select(avg_sars_cov2_conc:analytical_comments)%>%
   head()%>%
   knitr::kable()
 
-aux_info%>%
+Aux_info_data%>%
   select(inhibition_detect:equiv_sewage_amt)%>%
   head()%>%
   knitr::kable()
@@ -57,7 +57,7 @@ aux_info%>%
 These rows have many missing values. For some columns over 90% of the rows are missing. Below is a table showing what percent of the data is missing for each column.
 
 ```{r all tables and Na%}
-aux_info%>%
+Aux_info_data%>%
   summarise(across(everything(), ~100 * mean(is.na(.x))))%>%
   pivot_longer(everything(), names_to = "column name", values_to = "na %")%>%
   knitr::kable()
