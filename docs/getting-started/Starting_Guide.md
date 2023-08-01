@@ -134,7 +134,9 @@ Wastewater epidemiological data from across Wisconsin, can be merged with Aux_in
 
 Here is the key to all the column names in the data: https://github.com/UW-Madison-DSI/Covid19Wastewater/blob/main/docs/data/data_columns_discription.md
 
-### Examples
+## Examples
+
+### Viewing Gene Markers Over Time
 
 The prevalence of covid is determined using the genome markers called "N1" and "N2".  A simple starting point is to load in the data and then graph N1 or N2 over time.
 
@@ -151,6 +153,8 @@ WasteWater_data %>% ggplot(aes(x=date,y=N1)) +
         <label>The Levels of Covid Markers N1 and N2 Over Time</label>
     </div>
 </div>
+
+### Adding Color
 
 With a few extra lines of code, we can add some color coding in order to display  N1 and N2 in a more visually appealing way.
 
