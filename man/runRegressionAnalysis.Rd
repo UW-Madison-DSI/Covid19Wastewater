@@ -29,6 +29,6 @@ and returns a summary of the information
 }
 \examples{
 data(example_data, package = "DSIWastewater")
-DSIWastewater:::runRegressionAnalysis(example_data, Formula = geoMean~date)
+DSIWastewater:::runRegressionAnalysis(example_data, Formula = geoMean ~ date)
 }
 \keyword{internal}

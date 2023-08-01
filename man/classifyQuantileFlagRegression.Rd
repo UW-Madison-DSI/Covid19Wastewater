@@ -5,7 +5,12 @@
 \alias{classifyQuantileFlagRegression}
 \title{Classify FlagRegression  with rolling Quantile info}
 \usage{
-classifyQuantileFlagRegression(DF, Pval = 0.3, model_sig_column = lmreg_sig)
+classifyQuantileFlagRegression(
+  DF,
+  Pval = 0.3,
+  model_sig_column = lmreg_sig,
+  WW_column = pastKavg.wwlog10
+)
 }
 \arguments{
 \item{DF}{dataframe that contains results of buildRegressionEstimateTable and makeQuantileColumns}
@@ -14,6 +19,8 @@ classifyQuantileFlagRegression(DF, Pval = 0.3, model_sig_column = lmreg_sig)
 
 \item{model_sig_column}{column name of significance of linear model that generated 
 the percent change}
+
+\item{WW_column}{column containing ww data}
 }
 \value{
 DF with three extra columns 

@@ -25,5 +25,5 @@ gen a list of dataframes using row resampling and column downsizing
 }
 \examples{
 data(Example_data, package = "DSIWastewater")
-bagging(Example_data, 10, 5, 2)
+head(bagging(Example_data, 10, 5, 2))
 }

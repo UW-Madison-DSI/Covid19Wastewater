@@ -21,5 +21,5 @@ and filters rows where average_flow_rate is NA
 \examples{
 data(WasteWater_data, package = "DSIWastewater")
 data(pop_data, package = "DSIWastewater")
-buildWasteAnalysisDF(dplyr::left_join(WasteWater_data, pop_data))
+buildWasteAnalysisDF(dplyr::left_join(head(WasteWater_data), pop_data))
 }

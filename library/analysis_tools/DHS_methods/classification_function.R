@@ -96,6 +96,7 @@ classifyCaseRegression <- function(DF, slopeThreshold = 5, minSize = 200,
 #' @param Pval threshold needed for flag_ntile_Pval to flag 
 #' @param model_sig_column column name of significance of linear model that generated 
 #' the percent change
+#' @param WW_column column containing ww data
 #'
 #' @export
 #' @return DF with three extra columns 
@@ -111,8 +112,9 @@ classifyCaseRegression <- function(DF, slopeThreshold = 5, minSize = 200,
 #' Example_data$ntile = 8
 #' classifyQuantileFlagRegression(Example_data)
 classifyQuantileFlagRegression <- function(DF, Pval = .3,
-                                           model_sig_column = lmreg_sig){
-  lmreg_sig <- NA
+                                           model_sig_column = lmreg_sig,
+                                           WW_column = pastKavg.wwlog10){
+  lmreg_sig <- pastKavg.wwlog10 <- NA
   #Get the DHS Classification scheme of wastewater concentration
   Classification_DF <- classifyRegressionAnalysis(DF, 
                                                   PSigTest = FALSE)
@@ -124,7 +126,7 @@ classifyQuantileFlagRegression <- function(DF, Pval = .3,
                                 TRUE ~ 0))%>%
     #select only the flags that are on days that are larger then quantile
     mutate(flag_ntile = case_when(
-             .data$pastKavg.wwlog10 > ntile & .data$cdc_flag ~ 1,
+             {{WW_column}} > ntile & .data$cdc_flag ~ 1,
              TRUE ~ 0))%>%
     #further select so that the slope of the regression is less then Pval
     mutate(flag_ntile_Pval = case_when(

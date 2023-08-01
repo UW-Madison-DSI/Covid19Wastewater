@@ -21,8 +21,8 @@
 #' library(dplyr)
 #' data(Example_data, package = "DSIWastewater")
 #' Example_log_data <- mutate(Example_data, log_geo_mean = log10(geo_mean + 1))
-#' buildRegressionEstimateTable(Example_log_data, SplitOn = "site", 
-#'                                            RunOn = "log_geo_mean")
+#' head(buildRegressionEstimateTable(Example_log_data, SplitOn = "site", 
+#'                                            RunOn = "log_geo_mean"))
 buildRegressionEstimateTable <- function(DataMod, 
                                          RunOn = "sars_cov2_adj_load_log10",
                                          SplitOn = "site",
@@ -63,7 +63,7 @@ buildRegressionEstimateTable <- function(DataMod,
 #' and predicted percent change, and what linear model was used
 #' @examples 
 #' data(example_data, package = "DSIWastewater")
-#' DSIWastewater:::runRegressionAnalysis(example_data, Formula = geoMean~date)
+#' DSIWastewater:::runRegressionAnalysis(example_data, Formula = geoMean ~ date)
 runRegressionAnalysis <- function(DF, 
                                   Formula,
                                   Keep = NULL,

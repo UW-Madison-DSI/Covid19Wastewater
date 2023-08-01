@@ -13,7 +13,7 @@
 #' @examples
 #' data(WasteWater_data, package = "DSIWastewater")
 #' data(pop_data, package = "DSIWastewater")
-#' buildWasteAnalysisDF(dplyr::left_join(WasteWater_data, pop_data))
+#' buildWasteAnalysisDF(dplyr::left_join(head(WasteWater_data), pop_data))
 buildWasteAnalysisDF <- function(df){
   ## format data as DHS code expects
   
@@ -28,7 +28,7 @@ buildWasteAnalysisDF <- function(df){
     ) %>% 
     filter(!is.na(.data$flow))%>% 
     mutate (geoMean = sqrt(.data$N1 * .data$N2),
-            sars_cov2_adj_load_log10 = log10(.data$geoMean * .data$flow / .data$pop))%>% 
+            sars_cov2_adj_load_log10 = log10(1 + (.data$geoMean * .data$flow / .data$pop)))%>% 
     group_by(.data$site)%>% 
     mutate(n = n())%>% 
     arrange(.data$date, .by_group = TRUE) %>% 
@@ -50,7 +50,7 @@ buildWasteAnalysisDF <- function(df){
 #' @examples
 #' data(Case_data, package = "DSIWastewater")
 #' data(pop_data, package = "DSIWastewater")
-#' buildCaseAnalysisDF(dplyr::left_join(Case_data, pop_data))
+#' buildCaseAnalysisDF(dplyr::left_join(head(Case_data), pop_data))
 buildCaseAnalysisDF <- function(df,                          
                                 site_column = site,
                                 date_column = date, 

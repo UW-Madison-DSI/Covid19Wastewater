@@ -76,11 +76,8 @@ package_update <- function(path = ".", update_examples = F, update_test = F){
   #check(vignettes = FALSE)
   install(quick=T, build = F, build_vignettes = F, force = F)
 }
-package_update(update_examples = F, update_test = F)
+package_update(update_examples = T, update_test = F)
 3
-run_examples( fresh = T)
-#check(vignettes = T)
-
-data("WasteWater_data", package = "DSIWastewater")
-WasteWater_data <- WasteWater_data[WasteWater_data$site == "Waukesha",]
-DSIWastewater:::createWasteFlags(dplyr::left_join(WasteWater_data, pop_data))
+#load_all()
+#run_examples( fresh = F, start = "date_distance_remove.Rd")#date_distance_remove.Rd
+check(vignettes = T)

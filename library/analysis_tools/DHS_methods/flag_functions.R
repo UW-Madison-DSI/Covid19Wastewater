@@ -64,7 +64,7 @@ createCaseFlag <- function(DF){
 #' @examples 
 #' data("WasteWater_data", package = "DSIWastewater")
 #' data(pop_data, package = "DSIWastewater")
-#' WasteWater_data <- WasteWater_data[WasteWater_data$site == "Waukesha WWTP",]
+#' WasteWater_data <- WasteWater_data[WasteWater_data$site == "Waukesha",]
 #' DSIWastewater:::createWasteFlags(dplyr::left_join(WasteWater_data, pop_data))
 createWasteFlags <- function(DF,
                              windows = c(14, 30, 60 , 90),
@@ -86,7 +86,8 @@ createWasteFlags <- function(DF,
                                   by = c("site", "date"))
   
   #create flags described in @return
-  FULL_reg_DF <- classifyQuantileFlagRegression(FULL_reg_DF)
+  sars_cov2_adj_load_log10 <- NA
+  FULL_reg_DF <- classifyQuantileFlagRegression(FULL_reg_DF, WW_column = sars_cov2_adj_load_log10)
   
   #rename Madison name to make merging it with cases easier
   FULL_reg_DF$WWTP <- ifelse(FULL_reg_DF$site == "Madison MSD WWTF",

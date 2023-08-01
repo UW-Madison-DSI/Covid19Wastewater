@@ -33,5 +33,5 @@ Prep case data into right format
 \examples{
 data(Case_data, package = "DSIWastewater")
 data(pop_data, package = "DSIWastewater")
-buildCaseAnalysisDF(dplyr::left_join(Case_data, pop_data))
+buildCaseAnalysisDF(dplyr::left_join(head(Case_data), pop_data))
 }

@@ -19,7 +19,7 @@ difference between DFCol and the closest entry of base_date_vec
 lookup
 }
 \examples{
-data("example_data", package = "DSIWastewater")
-DSIWastewater:::diffLookup(example_data$geoMean, example_data$n)
+data("Example_data", package = "DSIWastewater")
+DSIWastewater:::diffLookup(Example_data$geoMean, Example_data$n)
 }
 \keyword{internal}

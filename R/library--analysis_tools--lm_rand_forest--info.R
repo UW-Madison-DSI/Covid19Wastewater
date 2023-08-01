@@ -11,7 +11,7 @@
 #'
 #' @examples
 #' data(Example_data, package = "DSIWastewater")
-#' bagging(Example_data, 10, 5, 2)
+#' head(bagging(Example_data, 10, 5, 2))
 bagging <- function(data, num_bags, num_features = NULL, include_first = 0){
   
   #if num_features not specified use default of sqrt(num cols)
