@@ -63,7 +63,7 @@ The advantages of wastewater based epidemiology compared with case based epidemi
 - Does not rely upon voluntary testing by individuals so it has the potential to be more consistent.
 
 <div align="center">
-    <img src="../../docs/images/getting-started/wastewater-offset.png" alt="Onset of Symptoms and Wastewater Detection" style="width:75%">
+    <img src="../../docs/images/getting-started/wastewater-offset.png" alt="Onset of Symptoms and Wastewater Detection" style="width:50%">
     <div>
         <label>Onset of Symptoms and Wastewater Detection</label>
     </div>
