@@ -53,6 +53,6 @@ Case_data%>%
 
 This data comes is our most used data that is used in many analysis. A couple of the most used ones are below.
 
-[WPHA Poster](https://github.com/AFIDSI/Covid19-Wastewater-Analysis/blob/main/conclusions/WPHA-Poster/WPHA-Poster.pdf)
+[WPHA Poster](https://github.com/UW-Madison-DSI/Covid19-Wastewater-Analysis/blob/main/conclusions/WPHA-Poster/WPHA-Poster.pdf)
 
-[SETAC Poster](https://github.com/AFIDSI/Covid19-Wastewater-Analysis/blob/main/conclusions/SETAC-Poster/SETAC-Poster.pdf)
+[SETAC Poster](https://github.com/UW-Madison-DSI/Covid19-Wastewater-Analysis/blob/main/conclusions/SETAC-Poster/SETAC-Poster.pdf)

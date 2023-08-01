@@ -25,7 +25,7 @@ library(ggplot2)
 library(tidyr)
 ```
 
-This dataframe contains all columns dropped from the main wastewater dataframe. It is merged using [https://github.com/AFIDSI/Covid19Wastewater/blob/main/docs/data/data_disc.md](https://github.com/AFIDSI/Covid19Wastewater/blob/main/docs/data/data_disc.md)
+This dataframe contains all columns dropped from the main wastewater dataframe. It is merged using [https://github.com/UW-Madison-DSI/Covid19Wastewater/blob/main/docs/data/data_disc.md](https://github.com/UW-Madison-DSI/Covid19Wastewater/blob/main/docs/data/data_disc.md)
 
 ```{r Example Data head}
 data(aux_info, package = "Covid19Wastewater")

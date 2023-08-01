@@ -55,4 +55,4 @@ head(HFGCase_data)%>%
 ```
 
 
-We used this data set in some analysis [here](https://github.com/AFIDSI/Covid19-Wastewater-Analysis/tree/main/results/CoVariants)
+We used this data set in some analysis [here](https://github.com/UW-Madison-DSI/Covid19-Wastewater-Analysis/tree/main/results/CoVariants)

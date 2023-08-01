@@ -66,6 +66,6 @@ Head_DF%>%
 
 This data is our most used data that is used in multiple analyses. A couple of examples are below.
 
-[WPHA Poster](https://github.com/AFIDSI/Covid19-Wastewater-Analysis/blob/main/conclusions/WPHA-Poster/WPHA-Poster.pdf)
+[WPHA Poster](https://github.com/UW-Madison-DSI/Covid19-Wastewater-Analysis/blob/main/conclusions/WPHA-Poster/WPHA-Poster.pdf)
 
-[SETAC Poster](https://github.com/AFIDSI/Covid19-Wastewater-Analysis/blob/main/conclusions/SETAC-Poster/SETAC-Poster.pdf)
+[SETAC Poster](https://github.com/UW-Madison-DSI/Covid19-Wastewater-Analysis/blob/main/conclusions/SETAC-Poster/SETAC-Poster.pdf)

@@ -74,4 +74,4 @@ forest_model
 ```
 
 These functions are used in this analysis
-[Random Linear Forst](https://github.com/AFIDSI/Covid19-Wastewater-Analysis/blob/main/results/trend_analysis/rand_forest_comp.html)
+[Random Linear Forst](https://github.com/UW-Madison-DSI/Covid19-Wastewater-Analysis/blob/main/results/trend_analysis/rand_forest_comp.html)

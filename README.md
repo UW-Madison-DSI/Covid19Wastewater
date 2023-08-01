@@ -6,12 +6,12 @@
 
 # Covid19 Wastewater Analysis Package
 
-![GitHub last commit](https://img.shields.io/github/last-commit/AFIDSI/Covid19Wastewater)
-[![GitHub pull requests](https://img.shields.io/github/issues-pr/AFIDSI/Covid19Wastewater)](https://github.com/AFIDSI/Covid19Wastewater/pulls)
+![GitHub last commit](https://img.shields.io/github/last-commit/UW-Madison-DSI/Covid19Wastewater)
+[![GitHub pull requests](https://img.shields.io/github/issues-pr/UW-Madison-DSI/Covid19Wastewater)](https://github.com/UW-Madison-DSI/Covid19Wastewater/pulls)
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE.md)
-[![contributors](https://img.shields.io/github/contributors/AFIDSI/Covid19Wastewater)](https://github.com/AFIDSI/Covid19Wastewater/graphs/contributors)
-![codesize](https://img.shields.io/github/languages/code-size/AFIDSI/Covid19Wastewater)
-![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/AFIDSI/Covid19Wastewater?include_prereleases)
+[![contributors](https://img.shields.io/github/contributors/UW-Madison-DSI/Covid19Wastewater)](https://github.com/UW-Madison-DSI/Covid19Wastewater/graphs/contributors)
+![codesize](https://img.shields.io/github/languages/code-size/UW-Madison-DSI/Covid19Wastewater)
+![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/UW-Madison-DSI/Covid19Wastewater?include_prereleases)
 
 This is an R package of utilities to perform wastewater data analysis for pathogenic surveillance and monitoring. 
 
@@ -21,7 +21,7 @@ This project is a collaboration between the University of Wiscosin's [Data Scien
 
 If you already have devtools installed you can install the package with
 ```
-devtools::install_github("AFIDSI/Covid19Wastewater")
+devtools::install_github("UW-Madison-DSI/Covid19Wastewater")
 ```
 Otherwise we have comprehensive instructions [here](./docs/Install.md).
 
@@ -45,7 +45,7 @@ help(package = "Covid19Wastewater")
 ```
 ## Package Application 
 
-We applied this package to Covid-19 data from Wisconsin in our analysis repository [here.](https://github.com/AFIDSI/Covid19-Wastewater-Analysis)
+We applied this package to Covid-19 data from Wisconsin in our analysis repository [here.](https://github.com/UW-Madison-DSI/Covid19-Wastewater-Analysis)
 
 <!-- LICENSE -->
 ## License
@@ -62,6 +62,6 @@ Email:
 - Kyllan Wunder - (mailto:kwunder@wisc.edu)
 
 Repos:
-- Package Link: [https://github.com/AFIDSI/Covid19Wastewater](https://github.com/AFIDSI/Covid19Wastewater)
+- Package Link: [https://github.com/UW-Madison-DSI/Covid19Wastewater](https://github.com/UW-Madison-DSI/Covid19Wastewater)
 
-- Analysis Link: [https://github.com/AFIDSI/Covid19-Wastewater-Analysis](https://github.com/AFIDSI/Covid19-Wastewater-Analysis)
+- Analysis Link: [https://github.com/UW-Madison-DSI/Covid19-Wastewater-Analysis](https://github.com/UW-Madison-DSI/Covid19-Wastewater-Analysis)

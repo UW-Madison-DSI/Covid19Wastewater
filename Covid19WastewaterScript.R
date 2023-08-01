@@ -67,7 +67,7 @@ package_update <- function(path = ".", update_examples = F, update_test = F){
   
   document()
   build(path = ".", vignettes = F, args = "--resave-data=best")
-  #devtools::install_github("AFIDSI/Covid19Wastewater")
+  #devtools::install_github("UW-Madison-DSI/Covid19Wastewater")
   
   if(update_test){
     check(args = c("--no-tests"), vignettes = FALSE)
