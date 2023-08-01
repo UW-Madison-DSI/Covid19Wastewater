@@ -62,8 +62,8 @@ buildRegressionEstimateTable <- function(DataMod,
 #' site, last date, timespan, number of rows, model slope and significance,
 #' and predicted percent change, and what linear model was used
 #' @examples 
-#' data(example_data, package = "DSIWastewater")
-#' DSIWastewater:::runRegressionAnalysis(example_data, Formula = geoMean ~ date)
+#' data(Example_data, package = "DSIWastewater")
+#' DSIWastewater:::runRegressionAnalysis(Example_data, Formula = geoMean ~ date)
 runRegressionAnalysis <- function(DF, 
                                   Formula,
                                   Keep = NULL,
@@ -166,8 +166,8 @@ regressionInnerLoop <- function(Formula, DF, Keep = NULL){
 #' @return a list of each unique col value
 #' @keywords internal
 #' @examples
-#' data(example_data, package = "DSIWastewater")
-#' DSIWastewater:::uniqueVal("WWTP",example_data)
+#' data(Example_data, package = "DSIWastewater")
+#' DSIWastewater:::uniqueVal("site", Example_data)
 uniqueVal <- function(Col,DF){
   return(unique(DF[[Col]]))
 }

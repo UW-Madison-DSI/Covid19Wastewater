@@ -122,7 +122,7 @@ computeRankQuantiles <- function(df) {
 #' Example_data$site = "Madison"
 #' df_data <- computeJumps(Example_data)
 #' ranked_data <- rankJumps(df_data)
-#'  <- computeRankQuantiles(ranked_data)
+#' ranked_quantile_data  <- computeRankQuantiles(ranked_data)
 #' flagOutliers(ranked_quantile_data, 9, MessureRank, FlaggedOutlier)
 flagOutliers <- function(DF, threshold, col, FlaggedOutlier = FlaggedOutlier){
   RetDF <- DF%>%

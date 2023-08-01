@@ -9,8 +9,8 @@
 #' @keywords internal
 #' 
 #' @examples
-#' data("example_data", package = "DSIWastewater")
-#' DSIWastewater:::factorVecByNumPoints(example_data, "WWTP")
+#' data("Example_data", package = "DSIWastewater")
+#' DSIWastewater:::factorVecByNumPoints(Example_data, "site")
 factorVecByNumPoints <- function(DF,FacVar, FiltVar = NA){
   if(is.na(FiltVar)){
     FiltVar <- FacVar
@@ -39,8 +39,8 @@ factorVecByNumPoints <- function(DF,FacVar, FiltVar = NA){
 #' @export
 #'
 #' @examples
-#' data("example_data", package = "DSIWastewater")
-#' factorVecByVec(example_data, example_data, "WWTP", "n1_sars_cov2_conc")
+#' data(Example_data, package = "DSIWastewater")
+#' factorVecByVec(Example_data, example_data, "site", "N1")
 factorVecByVec <- function(FactorDF, OrderDF, FacVar, NumVar){
 
   FactorOrder <- (OrderDF%>%

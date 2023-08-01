@@ -19,6 +19,6 @@ summary method for linear forest class
 }
 \examples{
 data(Example_data, package = "DSIWastewater")
-model <- random_linear_forest(Example_data, PMMoV ~ N1 + N2 | date + site)
+model <-  random_linear_forest(Example_data, 2, PMMoV ~ N1 + N2 | pcr_type)
 summary(model)
 }

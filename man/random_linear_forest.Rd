@@ -10,7 +10,7 @@ random_linear_forest(
   num_tree,
   model_formula,
   num_features = NULL,
-  na.action = na.pass,
+  na.action = na.roughfix,
   max_depth = 5,
   importance = FALSE,
   verbose = FALSE
@@ -43,5 +43,5 @@ the linear dynamics permuted with a linear method
 }
 \examples{
 data(Example_data, package = "DSIWastewater")
-random_linear_forest(Example_data, PMMoV ~ N1 + N2 | date + site)
+random_linear_forest(Example_data, 2, PMMoV ~ N1 + N2 | pcr_type)
 }

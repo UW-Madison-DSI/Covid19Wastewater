@@ -7,12 +7,13 @@
 #'
 #' @examples
 #' data(Example_data, package = "DSIWastewater")
-#' random_linear_forest(Example_data, PMMoV ~ N1 + N2 | date + site)
+#' random_linear_forest(Example_data, 2, PMMoV ~ N1 + N2 | pcr_type)
 setMethod(f = "show",
           signature = "random_linear_forest",
           function(object){
             print(summary(object))
           })
+
 
 #' summary method for linear forest class
 #'
@@ -24,7 +25,7 @@ setMethod(f = "show",
 #'
 #' @examples
 #' data(Example_data, package = "DSIWastewater")
-#' model <- random_linear_forest(Example_data, PMMoV ~ N1 + N2 | date + site)
+#' model <-  random_linear_forest(Example_data, 2, PMMoV ~ N1 + N2 | pcr_type)
 #' summary(model)
 setMethod(f = "summary",
           signature = "random_linear_forest",
@@ -57,7 +58,7 @@ setMethod(f = "summary",
 #'
 #' @examples
 #' data(Example_data, package = "DSIWastewater")
-#' model <- random_linear_forest(Example_data, PMMoV ~ N1 + N2 | date + site)
+#' model <- random_linear_forest(Example_data, 2, PMMoV ~ N1 + N2 | pcr_type)
 #' predict(model, Example_data)
 setMethod(f = "predict",
           signature = "random_linear_forest",

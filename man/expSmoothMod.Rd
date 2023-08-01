@@ -30,9 +30,3 @@ A DF with an extra col with a exp smoothed version of InVar
 expSmoothMod
 Add a column of the smoothed values using exponential smoothing
 }
-\examples{
-data("WasteWater_data", package = "DSIWastewater")
-examp_DF <- buildWasteAnalysisDF(WasteWater_data)
-examp_DF <- examp_DF[examp_DF$site == 'Algoma WWTF",]
-DSIWastewater:::expSmoothMod(examp_DF,"n1_sars_cov2_conc","expN1"'
-}

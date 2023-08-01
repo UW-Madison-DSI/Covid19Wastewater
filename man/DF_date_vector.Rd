@@ -23,5 +23,5 @@ DF_date_vector
 \examples{
 data("Example_data", package = "DSIWastewater")
 Example_data$flag = 1
-DF_date_vector(Example_data, date, flag)
+DF_date_vector(Example_data, date, "flag")
 }

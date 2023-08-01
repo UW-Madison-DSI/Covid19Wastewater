@@ -10,11 +10,19 @@
 #' @examples
 #' data("Example_data", package = "DSIWastewater")
 #' Example_data$flag = 1
-#'DF_date_vector(Example_data, date, flag)
+#' DF_date_vector(Example_data, date, "flag")
 DF_date_vector <- function(DF, date_vec, flag_vecs){
-  retDF <- DF%>%
-    mutate(across(all_of({{flag_vecs}}), ~ifelse(.x == 1, {{date_vec}}, NA)))%>%
-    mutate(across(all_of({{flag_vecs}}), ~as.Date(.x, origin = .Date(0))))
+  .x <- NA
+  if(is.vector(flag_vecs)){
+    retDF <- DF%>%
+      mutate(across(all_of({{flag_vecs}}), ~ifelse(.x == 1, {{date_vec}}, NA)))%>%
+      mutate(across(all_of({{flag_vecs}}), ~as.Date(.x, origin = .Date(0))))
+  }else{
+    retDF <- DF%>%
+      mutate(flag_vecs := ifelse({{flag_vecs}} == 1, {{date_vec}}, NA),
+             flag_vecs := as.Date(.x, origin = .Date(0)))
+  }
+
   return(retDF)
 }
 
@@ -51,7 +59,7 @@ diffLookup <- function(DFCol, base_date_vec){
 #'
 #' @examples
 #' data("Example_data", package = "DSIWastewater")
-#'date_distance_calc(Example_data, site, geoMean)
+#' date_distance_calc(Example_data, site, geoMean)
 date_distance_calc <- function(DF, base_date_vec, vecNames){
   RetDF <- DF%>%
     group_by(.data$site)%>%

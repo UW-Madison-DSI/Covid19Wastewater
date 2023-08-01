@@ -21,6 +21,6 @@ predict new data from random_linear_forest models
 }
 \examples{
 data(Example_data, package = "DSIWastewater")
-model <- random_linear_forest(Example_data, PMMoV ~ N1 + N2 | date + site)
+model <- random_linear_forest(Example_data, 2, PMMoV ~ N1 + N2 | pcr_type)
 predict(model, Example_data)
 }

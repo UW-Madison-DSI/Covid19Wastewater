@@ -22,7 +22,7 @@ DF with the FacVar column a factor
 convert column to factor based on amount of entries
 }
 \examples{
-data("example_data", package = "DSIWastewater")
-DSIWastewater:::factorVecByNumPoints(example_data, "WWTP")
+data("Example_data", package = "DSIWastewater")
+DSIWastewater:::factorVecByNumPoints(Example_data, "site")
 }
 \keyword{internal}

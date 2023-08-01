@@ -51,7 +51,7 @@ bagging <- function(data, num_bags, num_features = NULL, include_first = 0){
 #'
 #' @examples
 #' data(Example_data, package = "DSIWastewater")
-#' model <- random_linear_forest(Example_data, 2, PMMoV ~ N1 + N2 | date + site)
+#' model <- random_linear_forest(Example_data, 2, PMMoV ~ N1 + N2 | pcr_type)
 #' gen_OOB_pred(model, resid = TRUE)
 gen_OOB_pred <- function(tree_model, 
                          incMSE = NA, resid = FALSE){
@@ -92,7 +92,7 @@ gen_OOB_pred <- function(tree_model,
 #'
 #' @examples
 #' data(Example_data, package = "DSIWastewater")
-#' model <- random_linear_forest(Example_data, 2, PMMoV ~ N1 + N2 | date + site)
+#' model <- random_linear_forest(Example_data, 2, PMMoV ~ N1 + N2 | pcr_type)
 #' gen_INCMSE(model)
 gen_INCMSE <- function(tree_model){
   num_ignore = length(all.vars(tree_model@formula[[3]][[2]])) + 1
@@ -135,7 +135,7 @@ gen_INCMSE <- function(tree_model){
 #'
 #' @examples
 #' data(Example_data, package = "DSIWastewater")
-#' model <- random_linear_forest(Example_data, 2, PMMoV ~ N1 + N2 | date + site)
+#' model <- random_linear_forest(Example_data, 2, PMMoV ~ N1 + N2 | pcr_type)
 #' OOB_MSE_num_trees(model)
 OOB_MSE_num_trees <- function(tree_model){
   pred_DF = gen_OOB_pred(tree_model)

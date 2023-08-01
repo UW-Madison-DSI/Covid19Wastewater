@@ -16,7 +16,7 @@
 #'
 #' @examples
 #' data("Example_data", package = "DSIWastewater")
-#' random_linear_forest(Example_data, 2, PMMoV ~ N1 + N2 | date + site)
+#' random_linear_forest(Example_data, 2, PMMoV ~ N1 + N2 | pcr_type)
 setClass(
   "random_linear_forest",
   slots = list(formula = "formula",
@@ -50,15 +50,16 @@ setClass(
 #'
 #' @examples
 #' data(Example_data, package = "DSIWastewater")
-#' random_linear_forest(Example_data, PMMoV ~ N1 + N2 | date + site)
+#' random_linear_forest(Example_data, 2, PMMoV ~ N1 + N2 | pcr_type)
 random_linear_forest <- function(data,
                                  num_tree,
                                  model_formula,
                                  num_features = NULL,
-                                 na.action = na.pass,
+                                 na.action = na.roughfix,
                                  max_depth = 5,
                                  importance = FALSE,
                                  verbose = FALSE){
+  
   exp_formula <- expand_formula(model_formula, data)
   #move formula columns to front
   dep_term <- as.character(exp_formula[[2]])

@@ -17,6 +17,6 @@ get increased mean square error for each column
 }
 \examples{
 data(Example_data, package = "DSIWastewater")
-model <- random_linear_forest(Example_data, 2, PMMoV ~ N1 + N2 | date + site)
+model <- random_linear_forest(Example_data, 2, PMMoV ~ N1 + N2 | pcr_type)
 gen_INCMSE(model)
 }

@@ -19,7 +19,7 @@ a list of each unique col value
 Find all unique values in the column selected
 }
 \examples{
-data(example_data, package = "DSIWastewater")
-DSIWastewater:::uniqueVal("WWTP",example_data)
+data(Example_data, package = "DSIWastewater")
+DSIWastewater:::uniqueVal("site", Example_data)
 }
 \keyword{internal}

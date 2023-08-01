@@ -28,6 +28,6 @@ data(Example_data, package = "DSIWastewater")
 Example_data$site = "Madison"
 df_data <- computeJumps(Example_data)
 ranked_data <- rankJumps(df_data)
- <- computeRankQuantiles(ranked_data)
+ranked_quantile_data  <- computeRankQuantiles(ranked_data)
 flagOutliers(ranked_quantile_data, 9, MessureRank, FlaggedOutlier)
 }

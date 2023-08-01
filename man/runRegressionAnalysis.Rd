@@ -28,7 +28,7 @@ The DHS model system. runs a LM on each each set of n consecutive measurements
 and returns a summary of the information
 }
 \examples{
-data(example_data, package = "DSIWastewater")
-DSIWastewater:::runRegressionAnalysis(example_data, Formula = geoMean ~ date)
+data(Example_data, package = "DSIWastewater")
+DSIWastewater:::runRegressionAnalysis(Example_data, Formula = geoMean ~ date)
 }
 \keyword{internal}

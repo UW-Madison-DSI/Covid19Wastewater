@@ -86,9 +86,8 @@ loessSmoothMod <- function(DF,InVar="sars_cov2_adj_load_log10",
 #' @export
 #' @examples
 #' data("WasteWater_data", package = "DSIWastewater")
-#' examp_DF <- buildWasteAnalysisDF(WasteWater_data)
 #' examp_DF <- examp_DF[examp_DF$site == 'Algoma WWTF",]
-#' DSIWastewater:::expSmoothMod(examp_DF,"n1_sars_cov2_conc","expN1"'
+#' DSIWastewater:::expSmoothMod(examp_DF, "n1_sars_cov2_conc", "expN1")
 expSmoothMod <- function(DF,InVar, OutVar,alpha="guess",beta="guess", Filter = NULL ){
   
   if(alpha=="guess"){
@@ -164,7 +163,6 @@ nGuess <- function(DF,InVar, Base, min){
 #' @export
 #' @examples
 #' data(WasteWater_data, package = "DSIWastewater")
-#' WasteWater_data <- buildWasteAnalysisDF(WasteWater_data)
 #' DSIWastewater:::sgolaySmoothMod(WasteWater_data,"n1_sars_cov2_conc","sgolayN1")
 sgolaySmoothMod <- function(DF,InVar, OutVar,poly=5,n="guess", Filter = NULL){
   if(n=="guess"){
