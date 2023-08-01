@@ -1,40 +1,19 @@
----
-title: "Starting Guide"
-author: "Marlin Lee"
-vignette: >
-  %\VignetteIndexEntry{Starting Guide}
-  \usepackage[utf8]{inputenc}
-  %\VignetteEngine{knitr::rmarkdown}
-output:
-  pdf_document: default
-  html_document: default
-urlcolor: blue
----
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
-```{r load and show data, include = FALSE}
-
-```
-
 <div align="center">
-    <img src="../docs/images/covid-droplet.svg" alt="Logo" style="width:200px">
+    <img src="../../docs/images/covid-droplet.svg" alt="Logo" style="width:200px">
 </div>
 
 # Getting Started
 
 ## Overview
 
-This package is intended to make the process of analyzing epidemiological wastewater data easier and more insightful. It’s intended primarily for researchers and epidemiologists but could potentially be used by anyone with an interest in the topic who has a working knowledge of R programming, epidemiology, and statistics.
+This package is intended to make the process of analyzing epidemiological wastewater data easier and more insightful. It’s intended primarily for researchers and epidemiologists but could potentially be used by anyone with an interest in the topic who has a working knowledge of R programming, epidemiology, and statistics.   
 
 Requirements:
 - Knowledge of R programming
 - Familiarity with epidemiology
 - A base understanding of statistics
 
-This package provides a set of core utilities for preparing your data, analyzing your data, and visualizing the results.
+This package provides a set of core utilities for preparing your data, analyzing your data, and visualizing the results.  
 
 Features:
 - Outlier detection
@@ -53,7 +32,7 @@ Epidemiology is the process of investigating and monitoring the prevalence of di
 
 ## Problems with Traditional Case Based Epidemiology
 
-During the Covid-19 pandemic, many problems associated with the traditional case based epidemiology approach became evident.
+During the Covid-19 pandemic, many problems associated with the traditional case based epidemiology approach became evident.  
 
 - Variations in testing
 - Variations in reporting
@@ -68,7 +47,7 @@ To address these problems, attention has shifted to an alternate / complementary
 - Analysis results are communicated to the state health services agencies, where they are compared with reported case rates
 
 <div align="center">
-    <img src="../docs/images/getting-started/wastewater-process.png" alt="The Wastewater Epidemiology Process">
+    <img src="../../docs/images/getting-started/wastewater-process.png" alt="The Wastewater Epidemiology Process">
     <div>
         <label>The Wastewater Epidemiology Process</label>
     </div>
@@ -83,6 +62,13 @@ The advantages of wastewater based epidemiology compared with case based epidemi
 - Maintains the anonymity of individuals
 - Does not rely upon voluntary testing by individuals so it has the potential to be more consistent.
 
+<div align="center">
+    <img src="../../docs/images/getting-started/wastewater-offset.png" alt="Onset of Symptoms and Wastewater Detection">
+    <div>
+        <label>Onset of Symptoms and Wastewater Detection</label>
+    </div>
+</div>
+
 ## Challenges Associated with Wastewater Based Epidemiology
 
 Despite the very attractive characteristics and promising results of wastewater based testing, there are also a number of potential challenges associated with this approach which can make it difficult to implement:
@@ -93,14 +79,14 @@ Despite the very attractive characteristics and promising results of wastewater 
 - There are many cofactors related to wastewater collection and testing which can make interpretation of results difficult.
 
 <div align="center">
-    <img src="../docs/images/getting-started/sample-frequency.png" alt="Differences in Sampling Frequency">
+    <img src="../../docs/images/getting-started/sample-frequency.png" alt="Differences in Sampling Frequency">
     <div>
         <label>Differences in Sampling Frequency</label>
     </div>
 </div>
 
 ## The Role of This Software
-Because of these various complicating factors and difficulty in performing wastewater based analysis and interpreting results, software such as this can serve as a valuable aid in making the analysis and interpretation of this data easier and more reliable.
+Because of these various complicating factors and difficulty in performing wastewater based analysis and interpreting results, software such as this can serve as a valuable aid in making the analysis and interpretation of this data easier and more reliable. 
 
 # Loading and Viewing Data
 
@@ -120,3 +106,4 @@ You may also submit comments, feedback, feature requests, and bug reports throug
 # Acknowledgements
 
 This package was made possible through support from the University of Wisconsin Data Science Institute, in collaboration with the Wisconsin Department of Health Services (DHS), and the State Lab of Hygiene (SLH).
+
