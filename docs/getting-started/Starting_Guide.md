@@ -47,7 +47,7 @@ To address these problems, attention has shifted to an alternate / complementary
 - Analysis results are communicated to the state health services agencies, where they are compared with reported case rates
 
 <div align="center">
-    <img src="../../docs/images/getting-started/wastewater-process.png" alt="The Wastewater Epidemiology Process">
+    <img src="../../docs/images/getting-started/wastewater-process.png" alt="The Wastewater Epidemiology Process" style="width:75%">
     <div>
         <label>The Wastewater Epidemiology Process</label>
     </div>
@@ -63,7 +63,7 @@ The advantages of wastewater based epidemiology compared with case based epidemi
 - Does not rely upon voluntary testing by individuals so it has the potential to be more consistent.
 
 <div align="center">
-    <img src="../../docs/images/getting-started/wastewater-offset.png" alt="Onset of Symptoms and Wastewater Detection">
+    <img src="../../docs/images/getting-started/wastewater-offset.png" alt="Onset of Symptoms and Wastewater Detection" style="width:75%">
     <div>
         <label>Onset of Symptoms and Wastewater Detection</label>
     </div>
@@ -79,7 +79,7 @@ Despite the very attractive characteristics and promising results of wastewater 
 - There are many cofactors related to wastewater collection and testing which can make interpretation of results difficult.
 
 <div align="center">
-    <img src="../../docs/images/getting-started/sample-frequency.png" alt="Differences in Sampling Frequency">
+    <img src="../../docs/images/getting-started/sample-frequency.png" alt="Differences in Sampling Frequency" style="width:75%">
     <div>
         <label>Differences in Sampling Frequency</label>
     </div>
