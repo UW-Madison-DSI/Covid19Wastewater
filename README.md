@@ -23,7 +23,7 @@ If you already have devtools installed you can install the package with
 ```
 devtools::install_github("UW-Madison-DSI/Covid19Wastewater")
 ```
-Otherwise we have comprehensive instructions [here](./docs/Install.md).
+Otherwise we have comprehensive instructions [here](./docs/r-studio/installing-packages.md).
 
 ## Examples
 In order to make this package as easy as possible to learn and understand, we've included a set of [instructional examples](examples/README.md).
