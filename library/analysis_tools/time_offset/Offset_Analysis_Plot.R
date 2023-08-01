@@ -169,14 +169,14 @@ VariantPlot <- function(covar){
 #' @examples
 #' data(WasteWater_data, package = "Covid19Wastewater")
 #' data("Case_data", package = "Covid19Wastewater")
-#' data(pop_data, package = "Covid19Wastewater")
+#' data(Pop_data, package = "Covid19Wastewater")
 #' covarstarts <- c(as.Date("2020-08-17"),
 #'                  as.Date("2021-03-29"))
 #' covarends <- c(as.Date("2021-01-18"),
 #'                as.Date("2021-05-24"))
 #' covarnames <- c("Robin1",
 #'                 "Alpha.V1")
-#' OffsetHeatmap("kendall_offset", 0, WasteWater_data, Case_data, pop_data,
+#' OffsetHeatmap("kendall_offset", 0, WasteWater_data, Case_data, Pop_data,
 #'                covarstarts, covarends, covarnames, "pop", TRUE, TRUE)
 OffsetHeatmap <- function(method, timePeriods, waste_df, case_df, pop_df, 
                           covarstarts, covarends, covarnames,

@@ -32,6 +32,6 @@ Prep case data into right format
 }
 \examples{
 data(Case_data, package = "Covid19Wastewater")
-data(pop_data, package = "Covid19Wastewater")
-buildCaseAnalysisDF(dplyr::left_join(head(Case_data), pop_data))
+data(Pop_data, package = "Covid19Wastewater")
+buildCaseAnalysisDF(dplyr::left_join(head(Case_data), Pop_data))
 }

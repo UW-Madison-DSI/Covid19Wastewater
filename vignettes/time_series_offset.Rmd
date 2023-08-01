@@ -35,11 +35,11 @@ data(WasteWater_data, package = "Covid19Wastewater")
 
 data(Covariants_data, package = "Covid19Wastewater")
 
-data(pop_data, package = "Covid19Wastewater")
+data(Pop_data, package = "Covid19Wastewater")
 
 
 WasteWater_data <- WasteWater_data%>%
-  left_join(pop_data)
+  left_join(Pop_data)
 
 data(Example_data, package = "Covid19Wastewater")
 ```
@@ -91,7 +91,7 @@ covarnames <- c("Robin1",
                 "Omicron.22B")
 
 
-OffsetHeatmap("kendall_offset", 0, WasteWater_data, Case_data, pop_data,
+OffsetHeatmap("kendall_offset", 0, WasteWater_data, Case_data, Pop_data,
               covarstarts, covarends, covarnames, "region", TRUE, TRUE)
 
 

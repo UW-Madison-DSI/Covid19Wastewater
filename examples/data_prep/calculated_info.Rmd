@@ -23,10 +23,10 @@ The wastewater function does three things. first it replaces Concentrations belo
 library(Covid19Wastewater)
 library(dplyr)
 data(WasteWater_data, package = "Covid19Wastewater")
-data(pop_data, package = "Covid19Wastewater")
+data(Pop_data, package = "Covid19Wastewater")
 
 WasteWater_data%>%
-  left_join(pop_data)%>%
+  left_join(Pop_data)%>%
   buildWasteAnalysisDF()%>%
   head()%>%
   knitr::kable()
@@ -37,9 +37,9 @@ The case function does two things. first it normalizes the data by population. S
 
 
 data(Case_data, package = "Covid19Wastewater")
-data("pop_data", package = "Covid19Wastewater")#need to fix pop_data
+data("Pop_data", package = "Covid19Wastewater")#need to fix Pop_data
 
-case_df <- left_join(Case_data, pop_data)%>%
+case_df <- left_join(Case_data, Pop_data)%>%
   rename(population_served = pop)%>%
   buildCaseAnalysisDF()%>%
   head()#

@@ -28,8 +28,8 @@ library(dplyr)
 The first column three columns contain location information; the region the site is in(as defined by the DHS), the county the site is in, and the WWTP site name. Next is the lab submitter, which is the lab that processed the results which can be either the State Lab of Hygine (SLH) or University of Wisconsin Milwaukee (UMW). Finally is the population of the site.**Madison only data** has two entries for each site one with the total Madison population and the other with the specific population for that WWTP.
 
 ```{r Population data head} 
-data(pop_data, package = "Covid19Wastewater")
-pop_data %>% 
+data(Pop_data, package = "Covid19Wastewater")
+Pop_data %>%
   head()%>%
   knitr::kable()
 ```
@@ -42,7 +42,7 @@ Sometimes we split sites by population size into 3 groups:
 
 - Large(Over 100,000)
 ```{r Splitting population data by size}
-population_split_by_size <- pop_data %>% mutate(popgroup = case_when(pop >= 100000 ~ "Large",
+population_split_by_size <- Pop_data %>% mutate(popgroup = case_when(pop >= 100000 ~ "Large",
                                                          pop >= 10000  ~ "Medium",
                                                          .default = "Small"))
 population_split_by_size %>%
@@ -52,7 +52,7 @@ population_split_by_size %>%
 
 To combine cities that have multiple WWTPs, you can use code similar to this:
 ```{r Grouping data by city}
-Madison_data <- pop_data %>% filter(grepl("Madison|MMSD", site))
+Madison_data <- Pop_data %>% filter(grepl("Madison|MMSD", site))
 Madison_data %>%
   head()%>%
   knitr::kable()

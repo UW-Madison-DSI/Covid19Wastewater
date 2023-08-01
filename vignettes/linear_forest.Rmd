@@ -26,11 +26,11 @@ library(dplyr)
 library(randomForest)
 data(WasteWater_data, package = "Covid19Wastewater")
 data(Case_data, package = "Covid19Wastewater")
-data(pop_data, package = "Covid19Wastewater")
+data(Pop_data, package = "Covid19Wastewater")
 data(aux_info)
 
 base_df <- inner_join(Case_data, WasteWater_data, by = c("site", "date"))%>%
-  left_join(pop_data)%>%
+  left_join(Pop_data)%>%
   left_join(aux_info)%>%
   group_by(site)%>%
   arrange(date)%>%

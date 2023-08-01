@@ -116,7 +116,7 @@
 #' @format Rows: 89   Columns: 2
 #'
 #' @keywords datasets
-"pop_data"
+"Pop_data"
 
 
 #' Covariants data

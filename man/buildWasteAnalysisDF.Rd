@@ -20,6 +20,6 @@ and filters rows where average_flow_rate is NA
 }
 \examples{
 data(WasteWater_data, package = "Covid19Wastewater")
-data(pop_data, package = "Covid19Wastewater")
-buildWasteAnalysisDF(dplyr::left_join(head(WasteWater_data), pop_data))
+data(Pop_data, package = "Covid19Wastewater")
+buildWasteAnalysisDF(dplyr::left_join(head(WasteWater_data), Pop_data))
 }

@@ -23,7 +23,7 @@ Create case flags created by the DHS to warn of increasing cases
 }
 \examples{
 data(Case_data, package = "Covid19Wastewater")
-data(pop_data, package = "Covid19Wastewater")
+data(Pop_data, package = "Covid19Wastewater")
 Case_data <- Case_data[Case_data$site == 'Algoma',]
-createCaseFlag(dplyr::left_join(Case_data, pop_data))
+createCaseFlag(dplyr::left_join(Case_data, Pop_data))
 }

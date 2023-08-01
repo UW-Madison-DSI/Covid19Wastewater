@@ -53,7 +53,7 @@ load("HFGCase_data.RData")
 The package also provides additional information in the form of dataframes. The extra info datasets are as follows:  
 
 1) Population of each community in the dataset:
-[pop_data.RData](../../docs/vignettes/population_data.pdf)
+[Pop_data.RData](../../docs/vignettes/population_data.pdf)
 
 2) The percentage contribution of each variant in Wisconsin: 
 [Covariants_data.RData](../../docs/vignettes/variant_data.pdf)
@@ -62,7 +62,7 @@ To load the extra info datasets, use the following code:
 
 ```
 # Load the population data
-load("pop_data.RData")
+load("Pop_data.RData")
 
 # Load the covariants data
 load("Covariants_data.RData")
