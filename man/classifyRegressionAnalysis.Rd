@@ -29,7 +29,7 @@ DF with an extra column Catagory containing the results of the DHS binning
 Adds the DHS Classification scheme to data created by runRegressionAnalysis
 }
 \examples{
-data(Example_data, package = "DSIWastewater")
+data(Example_data, package = "Covid19Wastewater")
 Example_data$modeled_percentchange = 0
 Example_data$lmreg_sig = .01
 classifyRegressionAnalysis(Example_data)

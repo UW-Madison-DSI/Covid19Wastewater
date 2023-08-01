@@ -31,7 +31,7 @@ expSmoothMod
 Add a column of the smoothed values using exponential smoothing
 }
 \examples{
-data("Example_data", package = "DSIWastewater")
+data("Example_data", package = "Covid19Wastewater")
 Example_data <- Example_data[Example_data$site == "Green Bay",]
 expSmoothMod(Example_data, "N1", "expN1")
 }

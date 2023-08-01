@@ -23,6 +23,6 @@ Outputs a heatmap where the color is the r squared of wastewater data and center
 Helps inform Offset Analysis
 }
 \examples{
- data(Example_data, package = "DSIWastewater")
+ data(Example_data, package = "Covid19Wastewater")
  heatmapcorfunc(Example_data)
 }

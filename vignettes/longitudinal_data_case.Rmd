@@ -21,11 +21,11 @@ This vignette covers the Case data reported by the Wisconsin Department of Healt
 
 
 ```{r load and show data, include = FALSE}
-library(DSIWastewater)
+library(Covid19Wastewater)
 library(dplyr)
 library(ggplot2)
 
-data(Case_data, package = "DSIWastewater")
+data(Case_data, package = "Covid19Wastewater")
 ```
 
 ```{r explain most relavent columns, echo = FALSE}

@@ -26,7 +26,7 @@ This function can be done within group if the data fed into it was grouped
 }
 \examples{
 library(dplyr)
-data("Example_data", package = "DSIWastewater")
+data("Example_data", package = "Covid19Wastewater")
 smoothing_df <- Example_data\%>\%
     select(site, date, N1, N2)\%>\%
     filter(N1 != 0, N2 != 0)\%>\%

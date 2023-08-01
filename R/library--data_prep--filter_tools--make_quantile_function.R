@@ -18,10 +18,10 @@
 #' pastKavg.wwlog10: a mean of the last K days
 #' @keywords internal
 #' @examples 
-#' data("Example_data", package = "DSIWastewater")
+#' data("Example_data", package = "Covid19Wastewater")
 #' Example_data$window = 7
 #' Example_data$quant = .8
-#' head(DSIWastewater:::windowingQuantFunc(Example_data, "geo_mean"))
+#' head(Covid19Wastewater:::windowingQuantFunc(Example_data, "geo_mean"))
 windowingQuantFunc <- function(DF, column){
   #get the start of the time series
   mindate <- min(DF$date, na.rm = TRUE)
@@ -81,7 +81,7 @@ windowingQuantFunc <- function(DF, column){
 #' pastKavg.wwlog10: a mean of the last K days
 #' @export
 #' @examples
-#' data("Example_data", package = "DSIWastewater")
+#' data("Example_data", package = "Covid19Wastewater")
 #' Example_data$site = "madison"
 #' makeQuantileColumns(Example_data, .5, 6, column = "geo_mean")
 #' makeQuantileColumns(Example_data, c(.5, .75), c(2,5), column = "geo_mean")

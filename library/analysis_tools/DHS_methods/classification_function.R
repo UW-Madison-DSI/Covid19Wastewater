@@ -11,7 +11,7 @@
 #' @export
 #' @return DF with an extra column Catagory containing the results of the DHS binning
 #' @examples
-#' data(Example_data, package = "DSIWastewater")
+#' data(Example_data, package = "Covid19Wastewater")
 #' Example_data$modeled_percentchange = 0
 #' Example_data$lmreg_sig = .01
 #' classifyRegressionAnalysis(Example_data)
@@ -105,7 +105,7 @@ classifyCaseRegression <- function(DF, slopeThreshold = 5, minSize = 200,
 #' flag_ntile_Pval: when the flag ntile and the regression slope is less
 #' than Pval
 #' @examples 
-#' data(Example_data, package = "DSIWastewater")
+#' data(Example_data, package = "Covid19Wastewater")
 #' Example_data$modeled_percentchange = 0
 #' Example_data$lmreg_sig = .01
 #' Example_data$pastKavg.wwlog10 = 5

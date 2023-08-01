@@ -9,7 +9,7 @@
 #' @export
 #'
 #' @examples
-#' data(Example_data, package = "DSIWastewater")
+#' data(Example_data, package = "Covid19Wastewater")
 #' Example_data$site = "Madison"
 #' computeJumps(Example_data)
 computeJumps <- function(df, 
@@ -48,7 +48,7 @@ computeJumps <- function(df,
 #' @export
 #'
 #' @examples
-#' data(Example_data, package = "DSIWastewater")
+#' data(Example_data, package = "Covid19Wastewater")
 #' Example_data$site = "Madison"
 #' df_data <- computeJumps(Example_data)
 #' rankJumps(df_data)
@@ -80,7 +80,7 @@ rankJumps <- function(df) {
 #' @export
 #'
 #' @examples
-#' data(Example_data, package = "DSIWastewater")
+#' data(Example_data, package = "Covid19Wastewater")
 #' Example_data$site = "Madison"
 #' df_data <- computeJumps(Example_data)
 #' ranked_data <- rankJumps(df_data)
@@ -118,7 +118,7 @@ computeRankQuantiles <- function(df) {
 #' @export
 #'
 #' @examples
-#' data(Example_data, package = "DSIWastewater")
+#' data(Example_data, package = "Covid19Wastewater")
 #' Example_data$site = "Madison"
 #' df_data <- computeJumps(Example_data)
 #' ranked_data <- rankJumps(df_data)
@@ -142,7 +142,7 @@ flagOutliers <- function(DF, threshold, col, FlaggedOutlier = FlaggedOutlier){
 #' @export
 #'
 #' @examples
-#' data(Example_data, package = "DSIWastewater")
+#' data(Example_data, package = "Covid19Wastewater")
 #' Example_data$site = "Madison"
 #' df_data <- computeJumps(Example_data)
 #' ranked_data <- rankJumps(df_data)

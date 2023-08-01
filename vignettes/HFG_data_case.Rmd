@@ -20,11 +20,11 @@ options(warn=-1)
 This vignette covers the traditionally collected case data during the high frequency period. This case data has four different metrics of cases over a period of 55 weeks.
 
 ```{r load and show data}
-library(DSIWastewater)
+library(Covid19Wastewater)
 library(dplyr)
 library(ggplot2)
 
-data(HFGCase_data, package = "DSIWastewater")
+data(HFGCase_data, package = "Covid19Wastewater")
 ```
 
 The data is broken down by site and date. Site is where the sample was collected from a range of 10 locations. For each date and site there are four metrics of case data. These generally agree but have some slight variation. In this data a case number of less then 5 is represented with -999 for privacy.

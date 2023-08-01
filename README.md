@@ -6,12 +6,12 @@
 
 # AFIDSI Wastewater Analysis Package
 
-![GitHub last commit](https://img.shields.io/github/last-commit/AFIDSI/DSIWastewater)
-[![GitHub pull requests](https://img.shields.io/github/issues-pr/AFIDSI/DSIWastewater)](https://github.com/AFIDSI/DSIWastewater/pulls)
+![GitHub last commit](https://img.shields.io/github/last-commit/AFIDSI/Covid19Wastewater)
+[![GitHub pull requests](https://img.shields.io/github/issues-pr/AFIDSI/Covid19Wastewater)](https://github.com/AFIDSI/Covid19Wastewater/pulls)
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE.md)
-[![contributors](https://img.shields.io/github/contributors/AFIDSI/DSIWastewater)](https://github.com/AFIDSI/DSIWastewater/graphs/contributors)
-![codesize](https://img.shields.io/github/languages/code-size/AFIDSI/DSIWastewater) 
-![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/AFIDSI/DSIWastewater?include_prereleases)
+[![contributors](https://img.shields.io/github/contributors/AFIDSI/Covid19Wastewater)](https://github.com/AFIDSI/Covid19Wastewater/graphs/contributors)
+![codesize](https://img.shields.io/github/languages/code-size/AFIDSI/Covid19Wastewater)
+![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/AFIDSI/Covid19Wastewater?include_prereleases)
 
 This is an R package of utilities to perform wastewater data analysis for pathogenic surveillance and monitoring. 
 
@@ -21,7 +21,7 @@ This project is a collaboration between the University of Wiscosin's [Data Scien
 
 If you already have devtools installed you can install the package with
 ```
-devtools::install_github("AFIDSI/DSIWastewater")
+devtools::install_github("AFIDSI/Covid19Wastewater")
 ```
 Otherwise we have comprehensive instructions [here](./docs/Install.md).
 
@@ -35,13 +35,13 @@ View the [API Reference](./docs/api/api.md).
 - View the package vignettes with:
 
 ```
-vignette(package = "DSIWastewater")
+vignette(package = "Covid19Wastewater")
 ```
 
 - Look at all package functionality with:
 
 ```
-help(package = "DSIWastewater")
+help(package = "Covid19Wastewater")
 ```
 ## Package Application 
 
@@ -62,6 +62,6 @@ Email:
 - Kyllan Wunder - (mailto:kwunder@wisc.edu)
 
 Repos:
-- Package Link: [https://github.com/AFIDSI/DSIWastewater](https://github.com/AFIDSI/DSIWastewater)
+- Package Link: [https://github.com/AFIDSI/Covid19Wastewater](https://github.com/AFIDSI/Covid19Wastewater)
 
 - Analysis Link: [https://github.com/AFIDSI/Covid19-Wastewater-Analysis](https://github.com/AFIDSI/Covid19-Wastewater-Analysis)

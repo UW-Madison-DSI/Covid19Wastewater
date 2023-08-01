@@ -40,7 +40,7 @@ If the model P-value if over .3 the category is replaced with "no change"
 }
 \examples{
 library(dplyr)
-data(Example_data, package = "DSIWastewater")
+data(Example_data, package = "Covid19Wastewater")
 Example_log_data <- mutate(Example_data, log_geo_mean = log10(geo_mean + 1))
 head(buildRegressionEstimateTable(Example_log_data, SplitOn = "site", 
                                            RunOn = "log_geo_mean"))

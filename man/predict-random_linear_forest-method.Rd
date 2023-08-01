@@ -20,7 +20,7 @@ vector of predictions for each row
 predict new data from random_linear_forest models
 }
 \examples{
-data(Example_data, package = "DSIWastewater")
+data(Example_data, package = "Covid19Wastewater")
 model <- random_linear_forest(Example_data, 2, PMMoV ~ N1 + N2 | pcr_type)
 predict(model, Example_data)
 }

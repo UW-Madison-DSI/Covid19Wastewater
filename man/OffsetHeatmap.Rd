@@ -67,9 +67,9 @@ ggplot plot object
 Outputs a heatmap of the offset for variant / time windows and population size / region
 }
 \examples{
-data(WasteWater_data, package = "DSIWastewater")
-data("Case_data", package = "DSIWastewater")
-data(pop_data, package = "DSIWastewater")
+data(WasteWater_data, package = "Covid19Wastewater")
+data("Case_data", package = "Covid19Wastewater")
+data(pop_data, package = "Covid19Wastewater")
 covarstarts <- c(as.Date("2020-08-17"),
                  as.Date("2021-03-29"))
 covarends <- c(as.Date("2021-01-18"),

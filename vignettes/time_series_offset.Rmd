@@ -13,7 +13,7 @@ urlcolor: blue
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(Warning = FALSE, message = FALSE, echo = FALSE)
-library(DSIWastewater)
+library(Covid19Wastewater)
 library(dplyr)
 library(RcppRoll)
 ```
@@ -25,23 +25,23 @@ How to find the offset between wastewater and case data. By offsetting the waste
 
 
 ```{r load and show data}
-data(Case_data, package = "DSIWastewater")
+data(Case_data, package = "Covid19Wastewater")
 totalcases <- Case_data %>% 
   group_by(date) %>% 
   summarise(sum_case = sum(conf_case)) %>% 
   mutate(conf_case = roll_sum(sum_case,10,align = "right", fill = NA))
 
-data(WasteWater_data, package = "DSIWastewater")
+data(WasteWater_data, package = "Covid19Wastewater")
 
-data(Covariants_data, package = "DSIWastewater")
+data(Covariants_data, package = "Covid19Wastewater")
 
-data(pop_data, package = "DSIWastewater")
+data(pop_data, package = "Covid19Wastewater")
 
 
 WasteWater_data <- WasteWater_data%>%
   left_join(pop_data)
 
-data(Example_data, package = "DSIWastewater")
+data(Example_data, package = "Covid19Wastewater")
 ```
 
 **Output is not normal as only example data is used**

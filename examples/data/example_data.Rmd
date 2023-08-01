@@ -17,12 +17,12 @@ options(warn=-1)
 ```
 
 #Example data
-This data is only meant to be used in vignettes or testing. To view the full data use: data(WasteWater_data, package = "DSIWastewater")
+This data is only meant to be used in vignettes or testing. To view the full data use: data(WasteWater_data, package = "Covid19Wastewater")
 
 This data comes from our wastewater and case data merged together by site and date. Then filtered with by 3 sites; Green Bay, Janesville, and Mauston. Then a new column is added; geo_mean which is the geometric mean of N1 and N2. This gives roughly 500 rows to work with for examples across different sized sites over a large time frame.
 
 ```{r load packages}
-library(DSIWastewater)
+library(Covid19Wastewater)
 library(dplyr)
 library(ggplot2)
 ```
@@ -30,7 +30,7 @@ library(ggplot2)
 This columns are all the same as the wastewater data. [https://github.com/UW-Madison-DSI/Covid19Wastewater/blob/main/docs/data/data_columns_discription.md](https://github.com/UW-Madison-DSI/Covid19Wastewater/blob/main/docs/data/data_columns_discription.md)
 
 ```{r Example Data head}
-data(Example_data, package = "DSIWastewater")
+data(Example_data, package = "Covid19Wastewater")
 head(Example_data)%>%
   head()%>%
   knitr::kable()

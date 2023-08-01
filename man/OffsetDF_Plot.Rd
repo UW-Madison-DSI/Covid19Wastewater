@@ -19,8 +19,8 @@ ggplot plot object
 Given output from OffsetDFMaker returns a 2x3 grid of all the plots with highlighted values
 }
 \examples{
-data(WasteWater_data, package = "DSIWastewater")
-data("Case_data", package = "DSIWastewater")
+data(WasteWater_data, package = "Covid19Wastewater")
+data("Case_data", package = "Covid19Wastewater")
 OffsetDFMaker_Output <- OffsetDFMaker(10, as.Date("2020-08-01"),
                        as.Date("2023-01-01"),
                         Case_data, WasteWater_data)

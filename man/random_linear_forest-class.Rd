@@ -34,6 +34,6 @@ model class using a random forest of linear forest models
 }}
 
 \examples{
-data("Example_data", package = "DSIWastewater")
+data("Example_data", package = "Covid19Wastewater")
 random_linear_forest(Example_data, 2, PMMoV ~ N1 + N2 | pcr_type)
 }

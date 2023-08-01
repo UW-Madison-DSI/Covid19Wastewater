@@ -17,6 +17,6 @@ ggplotly object
 Shows each variant in proportion to the others in 2 week time periods
 }
 \examples{
-data(Covariants_data, package = "DSIWastewater")
+data(Covariants_data, package = "Covid19Wastewater")
 VariantPlot(Covariants_data)
 }

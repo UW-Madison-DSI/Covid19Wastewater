@@ -26,12 +26,12 @@ It reports the proportion of cases that are each variant every 2 weeks for the s
 Below there are 2 methods the first shows the proportion of each variant all together and the second shows only variants that are over 50% (i.e. the dominant variants)
 
 ```{r load packages}
-library(DSIWastewater)
+library(Covid19Wastewater)
 library(data.table)
 library(dplyr)
 library(ggplot2)
 library(tidyr)
-data(Covariants_data, package = "DSIWastewater")
+data(Covariants_data, package = "Covid19Wastewater")
 
 Covariants_data$category <- row.names(Covariants_data)
 onlycovar <- Covariants_data[-c(1,2)]

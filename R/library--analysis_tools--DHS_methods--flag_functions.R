@@ -12,8 +12,8 @@
 #' slope_switch_flag: the first case flags in consecutive case flags
 #' @export
 #' @examples
-#' data(Case_data, package = "DSIWastewater")
-#' data(pop_data, package = "DSIWastewater")
+#' data(Case_data, package = "Covid19Wastewater")
+#' data(pop_data, package = "Covid19Wastewater")
 #' Case_data <- Case_data[Case_data$site == 'Algoma',]
 #' createCaseFlag(dplyr::left_join(Case_data, pop_data))
 createCaseFlag <- function(DF){
@@ -62,10 +62,10 @@ createCaseFlag <- function(DF){
 #'      is less then .3
 #' @keywords internal
 #' @examples 
-#' data("WasteWater_data", package = "DSIWastewater")
-#' data(pop_data, package = "DSIWastewater")
+#' data("WasteWater_data", package = "Covid19Wastewater")
+#' data(pop_data, package = "Covid19Wastewater")
 #' WasteWater_data <- WasteWater_data[WasteWater_data$site == "Waukesha",]
-#' DSIWastewater:::createWasteFlags(dplyr::left_join(WasteWater_data, pop_data))
+#' Covid19Wastewater:::createWasteFlags(dplyr::left_join(WasteWater_data, pop_data))
 createWasteFlags <- function(DF,
                              windows = c(14, 30, 60 , 90),
                              quants = c(5:9)/10){

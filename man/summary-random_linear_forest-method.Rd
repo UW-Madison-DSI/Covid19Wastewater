@@ -18,7 +18,7 @@ summary.random_linear_forest object
 summary method for linear forest class
 }
 \examples{
-data(Example_data, package = "DSIWastewater")
+data(Example_data, package = "Covid19Wastewater")
 model <-  random_linear_forest(Example_data, 2, PMMoV ~ N1 + N2 | pcr_type)
 summary(model)
 }

@@ -33,7 +33,7 @@ Add many combo of rolling quantile columns to dataframe
 have info for each quant window combo
 }
 \examples{
-data("Example_data", package = "DSIWastewater")
+data("Example_data", package = "Covid19Wastewater")
 Example_data$site = "madison"
 makeQuantileColumns(Example_data, .5, 6, column = "geo_mean")
 makeQuantileColumns(Example_data, c(.5, .75), c(2,5), column = "geo_mean")

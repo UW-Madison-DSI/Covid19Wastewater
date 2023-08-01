@@ -10,7 +10,7 @@
 #' @export
 #' 
 #' @examples
-#'  data(Example_data, package = "DSIWastewater")
+#'  data(Example_data, package = "Covid19Wastewater")
 #'  heatmapcorfunc(Example_data)
 heatmapcorfunc <- function(cordata,length=14, case_column = conf_case){
   conf_case <- NA
@@ -51,8 +51,8 @@ heatmapcorfunc <- function(cordata,length=14, case_column = conf_case){
 #' @return ggplot plot object
 #' @export
 #' @examples
-#' data(WasteWater_data, package = "DSIWastewater")
-#' data("Case_data", package = "DSIWastewater")
+#' data(WasteWater_data, package = "Covid19Wastewater")
+#' data("Case_data", package = "Covid19Wastewater")
 #' OffsetDFMaker_Output <- OffsetDFMaker(10, as.Date("2020-08-01"),
 #'                        as.Date("2023-01-01"),
 #'                         Case_data, WasteWater_data)
@@ -126,7 +126,7 @@ OffsetDF_Plot <- function(data, title){
 #' @return ggplotly object
 #' @export
 #' @examples
-#' data(Covariants_data, package = "DSIWastewater")
+#' data(Covariants_data, package = "Covid19Wastewater")
 #' VariantPlot(Covariants_data)
 VariantPlot <- function(covar){
   covar$category <- row.names(covar)
@@ -167,9 +167,9 @@ VariantPlot <- function(covar){
 #' @return ggplot plot object 
 #' @export
 #' @examples
-#' data(WasteWater_data, package = "DSIWastewater")
-#' data("Case_data", package = "DSIWastewater")
-#' data(pop_data, package = "DSIWastewater")
+#' data(WasteWater_data, package = "Covid19Wastewater")
+#' data("Case_data", package = "Covid19Wastewater")
+#' data(pop_data, package = "Covid19Wastewater")
 #' covarstarts <- c(as.Date("2020-08-17"),
 #'                  as.Date("2021-03-29"))
 #' covarends <- c(as.Date("2021-01-18"),

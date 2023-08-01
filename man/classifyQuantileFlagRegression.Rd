@@ -34,7 +34,7 @@ Create wastewater flags based on the CDC classification defined in
 classifyRegressionAnalysis and the quantile rank of the date.
 }
 \examples{
-data(Example_data, package = "DSIWastewater")
+data(Example_data, package = "Covid19Wastewater")
 Example_data$modeled_percentchange = 0
 Example_data$lmreg_sig = .01
 Example_data$pastKavg.wwlog10 = 5

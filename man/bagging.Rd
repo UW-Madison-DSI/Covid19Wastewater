@@ -24,6 +24,6 @@ Bootstrap aggregating of dataset
 gen a list of dataframes using row resampling and column downsizing
 }
 \examples{
-data(Example_data, package = "DSIWastewater")
+data(Example_data, package = "Covid19Wastewater")
 head(bagging(Example_data, 10, 5, 2))
 }

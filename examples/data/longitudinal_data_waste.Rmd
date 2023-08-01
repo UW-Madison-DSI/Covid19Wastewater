@@ -22,11 +22,11 @@ This vignette covers the wastewater data collected by the Wisconsin State Lab of
 
 ```{r load and show data}
 #add start and end date?
-library(DSIWastewater)
+library(Covid19Wastewater)
 library(dplyr)
 library(ggplot2)
 
-data(WasteWater_data, package = "DSIWastewater")
+data(WasteWater_data, package = "Covid19Wastewater")
 ```
 
 

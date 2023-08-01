@@ -50,7 +50,7 @@ build_vignette_DSI <- function(){
 package_update <- function(path = ".", update_examples = F, update_test = F){
   setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
   #setwd(path)
-  #file.remove("DSIWastewater_0.5.1.tar.gz")
+  #file.remove("Covid19Wastewater_0.5.1.tar.gz")
   #Delete R folder and all .R folders in it
   #file.remove("NAMESPACE")
   unlink("R", recursive = T, force = T)
@@ -67,7 +67,7 @@ package_update <- function(path = ".", update_examples = F, update_test = F){
   
   document()
   build(path = ".", vignettes = F, args = "--resave-data=best")
-  #devtools::install_github("AFIDSI/DSIWastewater")
+  #devtools::install_github("AFIDSI/Covid19Wastewater")
   
   if(update_test){
     check(args = c("--no-tests"), vignettes = FALSE)

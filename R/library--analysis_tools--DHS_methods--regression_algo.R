@@ -19,7 +19,7 @@
 #'
 #' @examples
 #' library(dplyr)
-#' data(Example_data, package = "DSIWastewater")
+#' data(Example_data, package = "Covid19Wastewater")
 #' Example_log_data <- mutate(Example_data, log_geo_mean = log10(geo_mean + 1))
 #' head(buildRegressionEstimateTable(Example_log_data, SplitOn = "site", 
 #'                                            RunOn = "log_geo_mean"))
@@ -62,8 +62,8 @@ buildRegressionEstimateTable <- function(DataMod,
 #' site, last date, timespan, number of rows, model slope and significance,
 #' and predicted percent change, and what linear model was used
 #' @examples 
-#' data(Example_data, package = "DSIWastewater")
-#' DSIWastewater:::runRegressionAnalysis(Example_data, Formula = geo_mean ~ date)
+#' data(Example_data, package = "Covid19Wastewater")
+#' Covid19Wastewater:::runRegressionAnalysis(Example_data, Formula = geo_mean ~ date)
 runRegressionAnalysis <- function(DF, 
                                   Formula,
                                   Keep = NULL,
@@ -166,8 +166,8 @@ regressionInnerLoop <- function(Formula, DF, Keep = NULL){
 #' @return a list of each unique col value
 #' @keywords internal
 #' @examples
-#' data(Example_data, package = "DSIWastewater")
-#' DSIWastewater:::uniqueVal("site", Example_data)
+#' data(Example_data, package = "Covid19Wastewater")
+#' Covid19Wastewater:::uniqueVal("site", Example_data)
 uniqueVal <- function(Col,DF){
   return(unique(DF[[Col]]))
 }

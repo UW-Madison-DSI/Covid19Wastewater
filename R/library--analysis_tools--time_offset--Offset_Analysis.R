@@ -14,8 +14,8 @@
 #' @return DF with the columns: number of days wastewater is offset, geo mean of(n1,n2) / confirmed cases,previous with rolling case average, MSE rolling average,Pearson correlation, Kendall correlation, Spearman correlation, R squared. 
 #' @export
 #' @examples
-#' data(WasteWater_data, package = "DSIWastewater")
-#' data("Case_data", package = "DSIWastewater")
+#' data(WasteWater_data, package = "Covid19Wastewater")
+#' data("Case_data", package = "Covid19Wastewater")
 #' #Will output a df from -10 to +10 days using all of the data from 2020-08-01 to 2023-01-01
 #' OffsetDFMaker(10,as.Date("2020-08-01"), as.Date("2023-01-01"), Case_data, WasteWater_data) 
 OffsetDFMaker <- function(length, startdate, enddate, casesdf, wastedf,

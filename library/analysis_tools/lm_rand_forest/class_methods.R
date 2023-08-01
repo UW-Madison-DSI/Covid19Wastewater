@@ -15,7 +15,7 @@
 #' @export
 #'
 #' @examples
-#' data("Example_data", package = "DSIWastewater")
+#' data("Example_data", package = "Covid19Wastewater")
 #' random_linear_forest(Example_data, 2, PMMoV ~ N1 + N2 | pcr_type)
 setClass(
   "random_linear_forest",
@@ -49,7 +49,7 @@ setClass(
 #' @export
 #'
 #' @examples
-#' data(Example_data, package = "DSIWastewater")
+#' data(Example_data, package = "Covid19Wastewater")
 #' random_linear_forest(Example_data, 2, PMMoV ~ N1 + N2 | pcr_type)
 random_linear_forest <- function(data,
                                  num_tree,

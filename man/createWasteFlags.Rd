@@ -32,9 +32,9 @@ flag_ntile_pval: if there is a flag_ntile and the p value of the regression
 Create waste flags created by the DHS and the CDC to warn of increasing cases
 }
 \examples{
-data("WasteWater_data", package = "DSIWastewater")
-data(pop_data, package = "DSIWastewater")
+data("WasteWater_data", package = "Covid19Wastewater")
+data(pop_data, package = "Covid19Wastewater")
 WasteWater_data <- WasteWater_data[WasteWater_data$site == "Waukesha",]
-DSIWastewater:::createWasteFlags(dplyr::left_join(WasteWater_data, pop_data))
+Covid19Wastewater:::createWasteFlags(dplyr::left_join(WasteWater_data, pop_data))
 }
 \keyword{internal}

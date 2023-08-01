@@ -31,7 +31,7 @@ DF with a 7 day rolling sum and a population weighted case column
 Prep case data into right format
 }
 \examples{
-data(Case_data, package = "DSIWastewater")
-data(pop_data, package = "DSIWastewater")
+data(Case_data, package = "Covid19Wastewater")
+data(pop_data, package = "Covid19Wastewater")
 buildCaseAnalysisDF(dplyr::left_join(head(Case_data), pop_data))
 }

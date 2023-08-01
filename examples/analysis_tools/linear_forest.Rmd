@@ -20,13 +20,13 @@ This part of the package creates a semi-novel
 
 
 ```{r load and show data, include = FALSE}
-library(DSIWastewater)
+library(Covid19Wastewater)
 library(zoo)
 library(dplyr)
 library(randomForest)
-data(WasteWater_data, package = "DSIWastewater")
-data(Case_data, package = "DSIWastewater")
-data(pop_data, package = "DSIWastewater")
+data(WasteWater_data, package = "Covid19Wastewater")
+data(Case_data, package = "Covid19Wastewater")
+data(pop_data, package = "Covid19Wastewater")
 data(aux_info)
 
 base_df <- inner_join(Case_data, WasteWater_data, by = c("site", "date"))%>%

@@ -23,7 +23,7 @@ DF with new column without the flagged values
 Add column with NA values where the data was flagged
 }
 \examples{
-data(Example_data, package = "DSIWastewater")
+data(Example_data, package = "Covid19Wastewater")
 Example_data$site = "Madison"
 df_data <- computeJumps(Example_data)
 ranked_data <- rankJumps(df_data)

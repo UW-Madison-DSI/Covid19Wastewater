@@ -6,7 +6,7 @@
 #' @export
 #'
 #' @examples
-#' data(Example_data, package = "DSIWastewater")
+#' data(Example_data, package = "Covid19Wastewater")
 #' random_linear_forest(Example_data, 2, PMMoV ~ N1 + N2 | pcr_type)
 setMethod(f = "show",
           signature = "random_linear_forest",
@@ -24,7 +24,7 @@ setMethod(f = "show",
 #' @export
 #'
 #' @examples
-#' data(Example_data, package = "DSIWastewater")
+#' data(Example_data, package = "Covid19Wastewater")
 #' model <-  random_linear_forest(Example_data, 2, PMMoV ~ N1 + N2 | pcr_type)
 #' summary(model)
 setMethod(f = "summary",
@@ -57,7 +57,7 @@ setMethod(f = "summary",
 #' @export
 #'
 #' @examples
-#' data(Example_data, package = "DSIWastewater")
+#' data(Example_data, package = "Covid19Wastewater")
 #' model <- random_linear_forest(Example_data, 2, PMMoV ~ N1 + N2 | pcr_type)
 #' predict(model, Example_data)
 setMethod(f = "predict",

@@ -11,8 +11,8 @@
 #' @export
 #'
 #' @examples
-#' data(WasteWater_data, package = "DSIWastewater")
-#' data(pop_data, package = "DSIWastewater")
+#' data(WasteWater_data, package = "Covid19Wastewater")
+#' data(pop_data, package = "Covid19Wastewater")
 #' buildWasteAnalysisDF(dplyr::left_join(head(WasteWater_data), pop_data))
 buildWasteAnalysisDF <- function(df){
   ## format data as DHS code expects
@@ -48,8 +48,8 @@ buildWasteAnalysisDF <- function(df){
 #' @export
 #'
 #' @examples
-#' data(Case_data, package = "DSIWastewater")
-#' data(pop_data, package = "DSIWastewater")
+#' data(Case_data, package = "Covid19Wastewater")
+#' data(pop_data, package = "Covid19Wastewater")
 #' buildCaseAnalysisDF(dplyr::left_join(head(Case_data), pop_data))
 buildCaseAnalysisDF <- function(df,                          
                                 site_column = site,

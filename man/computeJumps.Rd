@@ -23,7 +23,7 @@ dataframe with 4 columns appended: delta(n1), delta(n2) from left and right
 compute first difference Jumps for N1 and N2
 }
 \examples{
-data(Example_data, package = "DSIWastewater")
+data(Example_data, package = "Covid19Wastewater")
 Example_data$site = "Madison"
 computeJumps(Example_data)
 }

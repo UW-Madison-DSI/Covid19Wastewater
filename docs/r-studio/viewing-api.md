@@ -3,7 +3,7 @@
 R Studio allows the ability to view documention through the use of "vignettes".  To view the API documentation, first run the vignette by running the following command in the R Studio console:
 
 ```
-vignette(package = "DSIWastewater")
+vignette(package = "Covid19Wastewater")
 ```
 
 Next, to view the API documentation for a particular function, follow these steps:

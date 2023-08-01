@@ -20,6 +20,6 @@ Takes a data frame with grouping columns and numeric flag DF where 1 means
 a flag
 }
 \examples{
-data(Example_data, package = "DSIWastewater")
+data(Example_data, package = "Covid19Wastewater")
 countFlags(Example_data, group = c("site"))
 }

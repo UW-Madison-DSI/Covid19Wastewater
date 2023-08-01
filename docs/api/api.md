@@ -141,5 +141,5 @@ In order to view more detail about each of these API methods, you can [view the 
   
 ## Packages
 
-- ### DSIWastewater
+- ### Covid19Wastewater
   A package for running Covid wastewater concentration analysis.

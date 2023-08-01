@@ -19,16 +19,16 @@ options(warn=-1)
 #Auxiliary Wastewater data
 
 ```{r load packages}
-library(DSIWastewater)
+library(Covid19Wastewater)
 library(dplyr)
 library(ggplot2)
 library(tidyr)
 ```
 
-This dataframe contains all columns dropped from the main wastewater dataframe. It is merged using [https://github.com/AFIDSI/DSIWastewater/blob/main/docs/data/data_disc.md](https://github.com/AFIDSI/DSIWastewater/blob/main/docs/data/data_disc.md)
+This dataframe contains all columns dropped from the main wastewater dataframe. It is merged using [https://github.com/AFIDSI/Covid19Wastewater/blob/main/docs/data/data_disc.md](https://github.com/AFIDSI/Covid19Wastewater/blob/main/docs/data/data_disc.md)
 
 ```{r Example Data head}
-data(aux_info, package = "DSIWastewater")
+data(aux_info, package = "Covid19Wastewater")
 aux_info%>%
   select(sample_id:bcov_rec_rate)%>%
   head()%>%

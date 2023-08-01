@@ -10,7 +10,7 @@
 #' @export
 #'
 #' @examples
-#' data(Example_data, package = "DSIWastewater")
+#' data(Example_data, package = "Covid19Wastewater")
 #' head(bagging(Example_data, 10, 5, 2))
 bagging <- function(data, num_bags, num_features = NULL, include_first = 0){
   
@@ -50,7 +50,7 @@ bagging <- function(data, num_bags, num_features = NULL, include_first = 0){
 #' @export
 #'
 #' @examples
-#' data(Example_data, package = "DSIWastewater")
+#' data(Example_data, package = "Covid19Wastewater")
 #' model <- random_linear_forest(Example_data, 2, PMMoV ~ N1 + N2 | pcr_type)
 #' gen_OOB_pred(model, resid = TRUE)
 gen_OOB_pred <- function(tree_model, 
@@ -91,7 +91,7 @@ gen_OOB_pred <- function(tree_model,
 #' @export
 #'
 #' @examples
-#' data(Example_data, package = "DSIWastewater")
+#' data(Example_data, package = "Covid19Wastewater")
 #' model <- random_linear_forest(Example_data, 2, PMMoV ~ N1 + N2 | pcr_type)
 #' gen_INCMSE(model)
 gen_INCMSE <- function(tree_model){
@@ -134,7 +134,7 @@ gen_INCMSE <- function(tree_model){
 #' @export
 #'
 #' @examples
-#' data(Example_data, package = "DSIWastewater")
+#' data(Example_data, package = "Covid19Wastewater")
 #' model <- random_linear_forest(Example_data, 2, PMMoV ~ N1 + N2 | pcr_type)
 #' OOB_MSE_num_trees(model)
 OOB_MSE_num_trees <- function(tree_model){

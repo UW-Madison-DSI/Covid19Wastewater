@@ -19,7 +19,7 @@ calculates sars_cov2_adj_load_log10 column,
 and filters rows where average_flow_rate is NA
 }
 \examples{
-data(WasteWater_data, package = "DSIWastewater")
-data(pop_data, package = "DSIWastewater")
+data(WasteWater_data, package = "Covid19Wastewater")
+data(pop_data, package = "Covid19Wastewater")
 buildWasteAnalysisDF(dplyr::left_join(head(WasteWater_data), pop_data))
 }

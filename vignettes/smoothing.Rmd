@@ -18,17 +18,17 @@ options(warn=-1)
 # Introduction ---------------------------------------------------------------
 
 ## Overview of Smoothing
-In this vignette, we will explore the smoothing techniques supported in the DSIWastewater package. Smoothing is a widely used technique in data analysis and visualization that helps reduce noise, reveal underlying trends, and highlight important patterns in the data. DSIWastewater provides several powerful functions to perform smoothing operations, and this vignette will guide you through their usage and showcase their capabilities.
+In this vignette, we will explore the smoothing techniques supported in the Covid19Wastewater package. Smoothing is a widely used technique in data analysis and visualization that helps reduce noise, reveal underlying trends, and highlight important patterns in the data. Covid19Wastewater provides several powerful functions to perform smoothing operations, and this vignette will guide you through their usage and showcase their capabilities.
 
 ## Data
 We will be using the long range Madison Covid data in the vignettes with the occasional use of other data to show a more complete picture of the different smoothing options.This data set has a clear trend but a ton of noise.
 
 ```{r load data}
-library(DSIWastewater)
+library(Covid19Wastewater)
 library(dplyr)
 library(ggplot2)
 
-data("Example_data", package = "DSIWastewater")
+data("Example_data", package = "Covid19Wastewater")
 
 smoothing_df <- Example_data%>%
   select(site, date, N1, N2)%>%
@@ -54,21 +54,21 @@ Each smoothing function shares the same framework. The first three arguments are
 
 
 ## Savitzky-Golay Filter
-The Savitzky-Golay filter is a widely used smoothing technique that performs local polynomial regression on the data. It provides excellent noise reduction while preserving important features such as peaks and valleys. The DSIWastewater package includes the sgolaySmoothMod() function, which allows you to apply this filter to your data. sgolaySmoothMod() has 2 parameters. "poly" controls the degree of the polynomial fit on the local data whereas "n" control the number of points considered "local". by default its set to "guess" which uses the density of the data to make guesses about the ideal n.
+The Savitzky-Golay filter is a widely used smoothing technique that performs local polynomial regression on the data. It provides excellent noise reduction while preserving important features such as peaks and valleys. The Covid19Wastewater package includes the sgolaySmoothMod() function, which allows you to apply this filter to your data. sgolaySmoothMod() has 2 parameters. "poly" controls the degree of the polynomial fit on the local data whereas "n" control the number of points considered "local". by default its set to "guess" which uses the density of the data to make guesses about the ideal n.
 ```{r sgolaySmoothMod}
 # Example code demonstrating sgolaySmoothMod() function
-sgolay_smooth <- DSIWastewater:::sgolaySmoothMod(smoothing_df, "N1", "N1_sgolay", poly=5,n="guess", Filter = NULL)
+sgolay_smooth <- Covid19Wastewater:::sgolaySmoothMod(smoothing_df, "N1", "N1_sgolay", poly=5,n="guess", Filter = NULL)
 
 sgolay_plot <- base_plot + 
   geom_line(aes(y = N1_sgolay, color = "Default Savitzky-Golay Filter"), data = sgolay_smooth, linewidth = 1.25)
 
-param_sgolay_smooth <- DSIWastewater:::sgolaySmoothMod(sgolay_smooth, "N1", "N1_sgolay_2", poly=2, n = "guess", Filter = NULL)
+param_sgolay_smooth <- Covid19Wastewater:::sgolaySmoothMod(sgolay_smooth, "N1", "N1_sgolay_2", poly=2, n = "guess", Filter = NULL)
 
 alt_plot <- sgolay_plot + 
   geom_line(aes(y = N1_sgolay_2, color = "Polynomial 1"), data = param_sgolay_smooth, linewidth = 1.25)
 
 
-param_sgolay_smooth_2 <- DSIWastewater:::sgolaySmoothMod(sgolay_smooth, "N1", "N1_sgolay_3", poly = 5, n = 31, Filter = NULL)
+param_sgolay_smooth_2 <- Covid19Wastewater:::sgolaySmoothMod(sgolay_smooth, "N1", "N1_sgolay_3", poly = 5, n = 31, Filter = NULL)
 
 
 show_plot <- alt_plot + 
@@ -85,7 +85,7 @@ show_plot+
 ```
 
 ## Loess Smoothing
-Loess (locally estimated scatterplot smoothing) is a non-parametric regression technique that fits a smooth curve to the data by locally weighted polynomial regression. It is particularly useful when dealing with complex or nonlinear relationships. The DSIWastewater package provides the loessSmoothMod() function to perform loess smoothing on your data. The only parameter is "span" which controls what portion of the data is looked at. This is set to "guess" by default where the package picks what it thinks is optimal based on data density.
+Loess (locally estimated scatterplot smoothing) is a non-parametric regression technique that fits a smooth curve to the data by locally weighted polynomial regression. It is particularly useful when dealing with complex or nonlinear relationships. The Covid19Wastewater package provides the loessSmoothMod() function to perform loess smoothing on your data. The only parameter is "span" which controls what portion of the data is looked at. This is set to "guess" by default where the package picks what it thinks is optimal based on data density.
 
 ```{r loessSmoothMod}
 # Example code demonstrating loessSmoothMod() function
@@ -122,7 +122,7 @@ Exponential smoothing is a technique used to smooth time series data by assignin
 
 ```{r expsmoothMod, include = FALSE}
 # Example code demonstrating expSmoothMod() function
-exp_smooth <- DSIWastewater:::expSmoothMod(loess_smooth, "N1", "N1_exp", Filter = NULL)
+exp_smooth <- Covid19Wastewater:::expSmoothMod(loess_smooth, "N1", "N1_exp", Filter = NULL)
 
 all_smooth_plot <- all_smooth_plot + 
   geom_line(aes(y = N1_exp, color = "Default Exponential"), data = exp_smooth, size = 1.25)
@@ -130,12 +130,12 @@ all_smooth_plot <- all_smooth_plot +
 exp_plot <- base_plot + 
   geom_line(aes(y = N1_exp, color = "Default Exponential"), data = exp_smooth, size = 1.25)
 
-param_exp_smooth <- DSIWastewater:::expSmoothMod(exp_smooth, "N1", "N1_exp_2", alpha = .3, Filter = NULL)
+param_exp_smooth <- Covid19Wastewater:::expSmoothMod(exp_smooth, "N1", "N1_exp_2", alpha = .3, Filter = NULL)
 
 alt_plot <- exp_plot + geom_line(aes(y = N1_exp_2, color = "Alpha .3"), data = param_exp_smooth, size = 1.25)
 
 
-param_exp_smooth_2 <- DSIWastewater:::expSmoothMod(exp_smooth, "N1", "N1_exp_3", beta = .05, Filter = NULL)
+param_exp_smooth_2 <- Covid19Wastewater:::expSmoothMod(exp_smooth, "N1", "N1_exp_3", beta = .05, Filter = NULL)
 
 
 show_plot <- alt_plot + geom_line(aes(y = N1_exp_3, color = "Beta .05"), data = param_exp_smooth_2, size = 1.25)

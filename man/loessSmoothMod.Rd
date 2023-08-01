@@ -34,6 +34,6 @@ loessSmoothMod
 Add a column of the smoothed values using Loess
 }
 \examples{
-data(Example_data, package = "DSIWastewater")
+data(Example_data, package = "Covid19Wastewater")
 head(loessSmoothMod(Example_data))
 }

@@ -23,6 +23,6 @@ FactorDF with FacVar being a factor ordered by NumVar
 Get ordering for ploting based on factoring vector
 }
 \examples{
-data(Example_data, package = "DSIWastewater")
+data(Example_data, package = "Covid19Wastewater")
 head(factorVecByVec(Example_data, Example_data, "site", "N1"))
 }

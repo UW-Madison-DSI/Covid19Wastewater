@@ -42,6 +42,6 @@ to create linear random forests that work like a random forest but with
 the linear dynamics permuted with a linear method
 }
 \examples{
-data(Example_data, package = "DSIWastewater")
+data(Example_data, package = "Covid19Wastewater")
 random_linear_forest(Example_data, 2, PMMoV ~ N1 + N2 | pcr_type)
 }
