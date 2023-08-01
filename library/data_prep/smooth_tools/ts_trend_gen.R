@@ -11,8 +11,8 @@
 #' @return a number between 0 and max
 #' @keywords internal
 #' @examples
-#' data(example_data, package = "DSIWastewater")
-#' DSIWastewater:::parameterGuess(example_data,"geoMean", 17.8, .6)
+#' data(Example_data, package = "DSIWastewater")
+#' DSIWastewater:::parameterGuess(Example_data,"geo_mean", 17.8, .6)
 parameterGuess <- function(DF,InVar, Base, max){
   temp <- DF%>%
     filter(!is.na((!!sym(InVar))))%>%
@@ -36,9 +36,9 @@ parameterGuess <- function(DF,InVar, Base, max){
 #' @export
 #'
 #' @examples
-#' data(example_data, package = "DSIWastewater")
-#' loessSmoothMod(example_data)
-loessSmoothMod <- function(DF,InVar="sars_cov2_adj_load_log10",
+#' data(Example_data, package = "DSIWastewater")
+#' head(loessSmoothMod(Example_data))
+loessSmoothMod <- function(DF,InVar="N1",
                            OutVar="Loess", span="guess", Filter = NULL){
   if(span=="guess"){
     span <- parameterGuess(DF,InVar, 17.8, .6)
@@ -85,10 +85,10 @@ loessSmoothMod <- function(DF,InVar="sars_cov2_adj_load_log10",
 #' @return A DF with an extra col with a exp smoothed version of InVar
 #' @export
 #' @examples
-#' data("WasteWater_data", package = "DSIWastewater")
-#' examp_DF <- examp_DF[examp_DF$site == "Algoma WWTF",]
-#' DSIWastewater:::expSmoothMod(examp_DF, "n1_sars_cov2_conc", "expN1")
-expSmoothMod <- function(DF,InVar, OutVar,alpha="guess",beta="guess", Filter = NULL ){
+#' data("Example_data", package = "DSIWastewater")
+#' Example_data <- Example_data[Example_data$site == "Green Bay",]
+#' expSmoothMod(Example_data, "N1", "expN1")
+expSmoothMod <- function(DF, InVar, OutVar, alpha="guess",beta="guess", Filter = NULL ){
   
   if(alpha=="guess"){
     alpha <- parameterGuess(DF,InVar, 35.6, .4)
@@ -138,8 +138,8 @@ expSmoothMod <- function(DF,InVar, OutVar,alpha="guess",beta="guess", Filter = N
 #' @return a number greater or equal to min
 #' @keywords internal
 #' @examples
-#' data(example_data, package = "DSIWastewater")
-#' DSIWastewater:::nGuess(example_data, "geoMean", 50/178, 7)
+#' data(Example_data, package = "DSIWastewater")
+#' DSIWastewater:::nGuess(Example_data, "geo_mean", 50/178, 7)
 nGuess <- function(DF,InVar, Base, min){
   temp <- DF%>%
     filter(!is.na((!!sym(InVar))))%>%
@@ -163,7 +163,7 @@ nGuess <- function(DF,InVar, Base, min){
 #' @export
 #' @examples
 #' data(WasteWater_data, package = "DSIWastewater")
-#' DSIWastewater:::sgolaySmoothMod(WasteWater_data,"n1_sars_cov2_conc","sgolayN1")
+#' DSIWastewater:::sgolaySmoothMod(WasteWater_data,"N1","sgolayN1")
 sgolaySmoothMod <- function(DF,InVar, OutVar,poly=5,n="guess", Filter = NULL){
   if(n=="guess"){
     n <- nGuess(DF, InVar,50/178, 7)

@@ -1,3 +1,48 @@
+###### Correlation Offset Heatmap
+#' Outputs a heatmap where the color is the r squared of wastewater data and center day + x many future days and y many past days
+#' Helps inform Offset Analysis
+#'
+#' @param cordata DF with geo_mean and conf_case columns 
+#' @param length the length of the time window for the results / 2
+#' @param case_column name of case column
+#'
+#' @return ggplot plot object (heatmap)
+#' @export
+#' 
+#' @examples
+#'  data(Example_data, package = "DSIWastewater")
+#'  heatmapcorfunc(Example_data)
+heatmapcorfunc <- function(cordata,length=14, case_column = conf_case){
+  conf_case <- NA
+  
+  rsquareddf <- data.frame(matrix(ncol = 1, nrow = 0))
+  for(j in 0:length){
+    for(i in 0:length){
+      wctemplm <- cordata %>% 
+        mutate(tempsum = roll_sum({{case_column}},i,align = "left",fill = NA) + 
+                 roll_sum({{case_column}},j,align = "right",fill = NA) + 
+                 roll_sum({{case_column}},1,align = "center",fill = NA)) 
+      
+      templm <- lm(log(tempsum+1) ~ log(geo_mean+1), data = wctemplm)
+      new <- c(i,j,summary(templm)$r.squared)
+      rsquareddf = rbind(rsquareddf,new)
+    }
+  }
+  
+  names(rsquareddf)[1]="left" #(future)
+  names(rsquareddf)[2]="right" #(past)
+  names(rsquareddf)[3]="rsquared"
+  heatmapcor <- rsquareddf %>% 
+    ggplot(aes(x = .data$left, y = .data$right, fill = .data$rsquared))+
+    geom_tile() + 
+    scale_fill_gradientn(colours=rainbow(7)) + 
+    xlab("Future Days") + 
+    ylab("Past Days") + 
+    ggtitle("Correlation of past and future days of N1 and N2 to current day cases")
+  
+  return(heatmapcor)
+}
+
 #' Given output from OffsetDFMaker returns a 2x3 grid of all the plots with highlighted values
 #'
 #' @param data Output from OffsetDFMaker
@@ -90,7 +135,7 @@ VariantPlot <- function(covar){
   
   p <- ggplot(mdfr, aes(factor(.data$category, levels = c(1:69)), .data$value, fill = .data$variable)) +
     geom_bar(position = "fill", stat = "identity") +
-    scale_y_continuous(labels = .data$percent) +
+    scale_y_continuous(labels = label_percent()) +
     xlab("Week") +
     ylab("Covariant Percent")
   
@@ -117,6 +162,7 @@ VariantPlot <- function(covar){
 #' @param site_column name of site column
 #' @param date_column name of date column
 #' @param case_column name of case column
+#' @param pop_column name of pop column
 #' 
 #' @return ggplot plot object 
 #' @export
@@ -139,8 +185,9 @@ OffsetHeatmap <- function(method, timePeriods, waste_df, case_df, pop_df,
                           N2_column = N2, 
                           site_column = site,
                           date_column = date, 
-                          case_column = conf_case){
-  N1 <- N2 <- site <- date <- conf_case <- NA #default column for function. Not evaluated as NA in dplyr context
+                          case_column = conf_case,
+                          pop_column = pop){
+  N1 <- N2 <- site <- date <- pop <- conf_case <- NA #default column for function. Not evaluated as NA in dplyr context
   
   merged_waste_df <- waste_df%>%
     left_join(pop_df)
@@ -152,8 +199,8 @@ OffsetHeatmap <- function(method, timePeriods, waste_df, case_df, pop_df,
     regionslist <- c("all", unique(waste_df$regions))
   } else {#pop
     merged_waste_df <- merged_waste_df %>% 
-      mutate(regions = case_when({{pop}} >= 100000 ~ "Large",
-                                  {{pop}} >= 10000  ~ "Medium",
+      mutate(regions = case_when({{pop_column}} >= 100000 ~ "Large",
+                                  {{pop_column}} >= 10000  ~ "Medium",
                                   .default = "Small"))
     
     regionslist <- c("all", unique(merged_waste_df$regions))#

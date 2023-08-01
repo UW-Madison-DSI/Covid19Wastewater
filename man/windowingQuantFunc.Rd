@@ -31,6 +31,6 @@ rolling quantile and rolling mean of the selected column.
 data("Example_data", package = "DSIWastewater")
 Example_data$window = 7
 Example_data$quant = .8
-DSIWastewater:::windowingQuantFunc(Example_data, "geoMean")
+head(DSIWastewater:::windowingQuantFunc(Example_data, "geo_mean"))
 }
 \keyword{internal}

@@ -25,7 +25,7 @@ a number greater or equal to min
 nGuess for sgolaySmoothMod number of points per polynomial
 }
 \examples{
-data(example_data, package = "DSIWastewater")
-DSIWastewater:::nGuess(example_data, "geoMean", 50/178, 7)
+data(Example_data, package = "DSIWastewater")
+DSIWastewater:::nGuess(Example_data, "geo_mean", 50/178, 7)
 }
 \keyword{internal}

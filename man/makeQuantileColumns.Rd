@@ -6,7 +6,7 @@
 \title{Add many combo of rolling quantile columns to dataframe
 have info for each quant window combo}
 \usage{
-makeQuantileColumns(DF, quants, windows, column = "sars_cov2_adj_load_log10")
+makeQuantileColumns(DF, quants, windows, column = "N1")
 }
 \arguments{
 \item{DF}{Dataframe containing columns:
@@ -35,6 +35,6 @@ have info for each quant window combo
 \examples{
 data("Example_data", package = "DSIWastewater")
 Example_data$site = "madison"
-makeQuantileColumns(Example_data, .5, 6, column = "geoMean")
-makeQuantileColumns(Example_data, c(.5, .75), c(2,5), column = "geoMean")
+makeQuantileColumns(Example_data, .5, 6, column = "geo_mean")
+makeQuantileColumns(Example_data, c(.5, .75), c(2,5), column = "geo_mean")
 }

@@ -31,7 +31,8 @@ Imports:
   reshape2,
   tidyselect,
   plyr,
-  randomForest
+  randomForest,
+  scales
 Suggests: knitr, rmarkdown, testthat, digest, vdiffr
 VignetteBuilder: knitr
 Depends: 

@@ -21,7 +21,7 @@
 #' data("Example_data", package = "DSIWastewater")
 #' Example_data$window = 7
 #' Example_data$quant = .8
-#' DSIWastewater:::windowingQuantFunc(Example_data, "geoMean")
+#' head(DSIWastewater:::windowingQuantFunc(Example_data, "geo_mean"))
 windowingQuantFunc <- function(DF, column){
   #get the start of the time series
   mindate <- min(DF$date, na.rm = TRUE)
@@ -83,10 +83,10 @@ windowingQuantFunc <- function(DF, column){
 #' @examples
 #' data("Example_data", package = "DSIWastewater")
 #' Example_data$site = "madison"
-#' makeQuantileColumns(Example_data, .5, 6, column = "geoMean")
-#' makeQuantileColumns(Example_data, c(.5, .75), c(2,5), column = "geoMean")
+#' makeQuantileColumns(Example_data, .5, 6, column = "geo_mean")
+#' makeQuantileColumns(Example_data, c(.5, .75), c(2,5), column = "geo_mean")
 makeQuantileColumns <- function(DF, quants, windows,
-                                column = "sars_cov2_adj_load_log10"){
+                                column = "N1"){
   #create a DF with every combo of windows, quants, site
   #Used to merge with DF to get a DF length(quants)*length(windows) times longer
   Method_DF <- expand.grid(windows, 

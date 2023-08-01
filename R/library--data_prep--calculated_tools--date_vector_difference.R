@@ -10,20 +10,20 @@
 #' @examples
 #' data("Example_data", package = "DSIWastewater")
 #' Example_data$flag = 1
-#' DF_date_vector(Example_data, date, "flag")
+#' head(DF_date_vector(Example_data, "date", "flag"))
 DF_date_vector <- function(DF, date_vec, flag_vecs){
   .x <- NA
-  if(is.vector(flag_vecs)){
-    retDF <- DF%>%
+  if(length(flag_vecs) > 1){
+    RetDF <- DF%>%
       mutate(across(all_of({{flag_vecs}}), ~ifelse(.x == 1, {{date_vec}}, NA)))%>%
       mutate(across(all_of({{flag_vecs}}), ~as.Date(.x, origin = .Date(0))))
   }else{
-    retDF <- DF%>%
-      mutate(flag_vecs := ifelse({{flag_vecs}} == 1, {{date_vec}}, NA),
-             flag_vecs := as.Date(.x, origin = .Date(0)))
+    RetDF <- DF%>%
+      mutate(!!sym(flag_vecs) := ifelse(!!sym(flag_vecs) == 1, !!sym(date_vec), NA),
+             !!sym(flag_vecs) := as.Date(.x, origin = .Date(0)))
   }
 
-  return(retDF)
+  return(RetDF)
 }
 
 #' lookup
@@ -36,7 +36,9 @@ DF_date_vector <- function(DF, date_vec, flag_vecs){
 #' 
 #'@examples
 #' data("Example_data", package = "DSIWastewater")
-#'DSIWastewater:::diffLookup(Example_data$geoMean, Example_data$n)
+#' Example_data$Late_date <- sample(Example_data$date)
+#' Example_data$Late_date[sample(1:length(Example_data), length(Example_data) / 3)] <- NA
+#' head(DSIWastewater:::diffLookup(Example_data$date, Example_data$Late_date))
 diffLookup <- function(DFCol, base_date_vec){
   sorted_base_vec <- sort(base_date_vec)
   sorted_base_Lookup <- stepfun(sorted_base_vec, 0:length(sorted_base_vec))
@@ -59,12 +61,21 @@ diffLookup <- function(DFCol, base_date_vec){
 #'
 #' @examples
 #' data("Example_data", package = "DSIWastewater")
-#' date_distance_calc(Example_data, site, geoMean)
+#' Example_data$Late_date <- sample(Example_data$date)
+#' Example_data$Late_date[sample(1:length(Example_data), length(Example_data) / 3)] <- NA
+#' head(date_distance_calc(Example_data, "date", "Late_date"))
 date_distance_calc <- function(DF, base_date_vec, vecNames){
-  RetDF <- DF%>%
-    group_by(.data$site)%>%
-    mutate(across(all_of({{vecNames}}), 
-                  ~diffLookup(.x, {{base_date_vec}})))
+  .x <- NA
+  if(length(vecNames) > 1){
+    RetDF <- DF%>%
+      group_by(.data$site)%>%
+      mutate(across(all_of({{vecNames}}), 
+                    ~diffLookup(.x, {{base_date_vec}})))
+  }else{
+    RetDF <- DF%>%
+      group_by(.data$site)%>%
+      mutate(!!sym(vecNames) := diffLookup(!!sym(vecNames), !!sym(base_date_vec)))
+  }
   return(RetDF)
 }
 
@@ -80,12 +91,21 @@ date_distance_calc <- function(DF, base_date_vec, vecNames){
 #'
 #' @examples
 #' data("Example_data", package = "DSIWastewater")
-#'df <- date_distance_calc(Example_data, geoMean, site)
-#'date_distance_remove(df, geoMean, 21)
+#' Example_data$Late_date <- sample(Example_data$date)
+#' Example_data$Late_date[sample(1:length(Example_data), length(Example_data) / 3)] <- NA
+#' df <- date_distance_calc(Example_data, "date", "Late_date")
 date_distance_clamp <- function(DF, vecNames, thresh){
-  RetDF <- DF%>%
-    mutate(across(all_of({{vecNames}}), 
-                  ~ifelse(abs(.x) > thresh, thresh * sign(.x), .x)))
+
+  .x <- NA
+  if(length(vecNames) > 1){
+    RetDF <- DF%>%
+      mutate(across(all_of({{vecNames}}), 
+                    ~ifelse(abs(.x) > thresh, thresh * sign(.x), .x)))
+  }else{
+    RetDF <- DF%>%
+      mutate(!!sym(vecNames) := ifelse(abs(!!sym(vecNames)) > thresh, 
+                                thresh * sign(!!sym(vecNames)), !!sym(vecNames)))
+  }
   return(RetDF)
 }
 
@@ -100,12 +120,21 @@ date_distance_clamp <- function(DF, vecNames, thresh){
 #'
 #' @examples
 #'data("Example_data", package = "DSIWastewater")
-#'df <- date_distance_calc(Example_data, geoMean, n)
-#'date_distance_remove(df, geoMean, 21)
+#' Example_data$Late_date <- sample(Example_data$date)
+#' Example_data$Late_date[sample(1:length(Example_data), length(Example_data) / 3)] <- NA
+#'df <- date_distance_calc(Example_data, "date", "Late_date")
+#'date_distance_remove(df, "Late_date", 21)
 date_distance_remove <- function(DF, vecNames, thresh){
-  RetDF <- DF%>%
-    mutate(across(all_of({{vecNames}}), 
-                  ~ifelse(abs(.x) > thresh, NA, .x)))
+
+  .x <- NA
+  if(length(vecNames) > 1){
+    RetDF <- DF%>%
+      mutate(across(all_of({{vecNames}}), 
+                    ~ifelse(abs(.x) > thresh, NA, .x)))
+  }else{
+    RetDF <- DF%>%
+      mutate(!!sym(vecNames) := ifelse(abs(!!sym(vecNames)) > thresh, NA, !!sym(vecNames)))
+  }
   return(RetDF)
 }
 

@@ -22,6 +22,7 @@ remove distances above threshold
 }
 \examples{
 data("Example_data", package = "DSIWastewater")
-df <- date_distance_calc(Example_data, geoMean, site)
-date_distance_remove(df, geoMean, 21)
+Example_data$Late_date <- sample(Example_data$date)
+Example_data$Late_date[sample(1:length(Example_data), length(Example_data) / 3)] <- NA
+df <- date_distance_calc(Example_data, "date", "Late_date")
 }

@@ -15,7 +15,7 @@
 #' data(Case_data, package = "DSIWastewater")
 #' data(pop_data, package = "DSIWastewater")
 #' Case_data <- Case_data[Case_data$site == 'Algoma',]
-#' createCaseFlag(left_join(Case_data, pop_data))
+#' createCaseFlag(dplyr::left_join(Case_data, pop_data))
 createCaseFlag <- function(DF){
   
   #Prep case data into form for buildRegressionEstimateTable

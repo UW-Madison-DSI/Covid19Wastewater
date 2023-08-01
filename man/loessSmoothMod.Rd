@@ -8,7 +8,7 @@ Add a column of the smoothed values using Loess}
 \usage{
 loessSmoothMod(
   DF,
-  InVar = "sars_cov2_adj_load_log10",
+  InVar = "N1",
   OutVar = "Loess",
   span = "guess",
   Filter = NULL
@@ -34,6 +34,6 @@ loessSmoothMod
 Add a column of the smoothed values using Loess
 }
 \examples{
-data(example_data, package = "DSIWastewater")
-loessSmoothMod(example_data)
+data(Example_data, package = "DSIWastewater")
+head(loessSmoothMod(Example_data))
 }

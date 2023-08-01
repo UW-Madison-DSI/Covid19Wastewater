@@ -20,6 +20,8 @@ lookup
 }
 \examples{
 data("Example_data", package = "DSIWastewater")
-DSIWastewater:::diffLookup(Example_data$geoMean, Example_data$n)
+Example_data$Late_date <- sample(Example_data$date)
+Example_data$Late_date[sample(1:length(Example_data), length(Example_data) / 3)] <- NA
+head(DSIWastewater:::diffLookup(Example_data$date, Example_data$Late_date))
 }
 \keyword{internal}

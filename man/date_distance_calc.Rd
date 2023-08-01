@@ -22,5 +22,7 @@ date_distance_calc
 }
 \examples{
 data("Example_data", package = "DSIWastewater")
-date_distance_calc(Example_data, site, geoMean)
+Example_data$Late_date <- sample(Example_data$date)
+Example_data$Late_date[sample(1:length(Example_data), length(Example_data) / 3)] <- NA
+head(date_distance_calc(Example_data, "date", "Late_date"))
 }

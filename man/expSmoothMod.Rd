@@ -31,7 +31,7 @@ expSmoothMod
 Add a column of the smoothed values using exponential smoothing
 }
 \examples{
-data("WasteWater_data", package = "DSIWastewater")
-examp_DF <- examp_DF[examp_DF$site == "Algoma WWTF",]
-DSIWastewater:::expSmoothMod(examp_DF, "n1_sars_cov2_conc", "expN1")
+data("Example_data", package = "DSIWastewater")
+Example_data <- Example_data[Example_data$site == "Green Bay",]
+expSmoothMod(Example_data, "N1", "expN1")
 }

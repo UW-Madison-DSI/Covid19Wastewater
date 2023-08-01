@@ -21,7 +21,8 @@ OffsetHeatmap(
   N2_column = N2,
   site_column = site,
   date_column = date,
-  case_column = conf_case
+  case_column = conf_case,
+  pop_column = pop
 )
 }
 \arguments{
@@ -56,6 +57,8 @@ OffsetHeatmap(
 \item{date_column}{name of date column}
 
 \item{case_column}{name of case column}
+
+\item{pop_column}{name of pop column}
 }
 \value{
 ggplot plot object

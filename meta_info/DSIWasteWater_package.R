@@ -19,4 +19,5 @@
 #' @importFrom reshape2 melt
 #' @importFrom tidyselect where any_of starts_with everything
 #' @importFrom randomForest na.roughfix
+#' @importFrom scales label_percent 
 NULL

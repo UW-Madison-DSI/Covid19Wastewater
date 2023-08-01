@@ -23,6 +23,6 @@ convert column to factor based on amount of entries
 }
 \examples{
 data("Example_data", package = "DSIWastewater")
-DSIWastewater:::factorVecByNumPoints(Example_data, "site")
+head(DSIWastewater:::factorVecByNumPoints(Example_data, "site"))
 }
 \keyword{internal}

@@ -63,7 +63,7 @@ buildRegressionEstimateTable <- function(DataMod,
 #' and predicted percent change, and what linear model was used
 #' @examples 
 #' data(Example_data, package = "DSIWastewater")
-#' DSIWastewater:::runRegressionAnalysis(Example_data, Formula = geoMean ~ date)
+#' DSIWastewater:::runRegressionAnalysis(Example_data, Formula = geo_mean ~ date)
 runRegressionAnalysis <- function(DF, 
                                   Formula,
                                   Keep = NULL,
