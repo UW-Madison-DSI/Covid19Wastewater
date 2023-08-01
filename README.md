@@ -4,7 +4,7 @@
 	</div>
 </p>
 
-# AFIDSI Wastewater Analysis Package
+# Covid19 Wastewater Analysis Package
 
 ![GitHub last commit](https://img.shields.io/github/last-commit/AFIDSI/Covid19Wastewater)
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/AFIDSI/Covid19Wastewater)](https://github.com/AFIDSI/Covid19Wastewater/pulls)
