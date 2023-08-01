@@ -27,7 +27,7 @@ library(dplyr)
 library(ggplot2)
 ```
 
-This columns are all the same as the wastewater data. [https://github.com/AFIDSI/DSIWastewater/blob/main/docs/data/data_disc.md](https://github.com/AFIDSI/DSIWastewater/blob/main/docs/data/data_disc.md)
+This columns are all the same as the wastewater data. [https://github.com/UW-Madison-DSI/Covid19Wastewater/blob/main/docs/data/data_columns_discription.md](https://github.com/UW-Madison-DSI/Covid19Wastewater/blob/main/docs/data/data_columns_discription.md)
 
 ```{r Example Data head}
 data(Example_data, package = "DSIWastewater")
