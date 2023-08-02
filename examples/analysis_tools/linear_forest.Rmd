@@ -1,6 +1,6 @@
 ---
 title: "Linear Forest"
-author: "Marlin"
+author: "Marlin Lee"
 vignette: >
   %\VignetteIndexEntry{Linear Forest}
   \usepackage[utf8]{inputenc}
@@ -27,11 +27,11 @@ library(randomForest)
 data(WasteWater_data, package = "Covid19Wastewater")
 data(Case_data, package = "Covid19Wastewater")
 data(Pop_data, package = "Covid19Wastewater")
-data(aux_info)
+data(Aux_info_data)
 
 base_df <- inner_join(Case_data, WasteWater_data, by = c("site", "date"))%>%
   left_join(Pop_data)%>%
-  left_join(aux_info)%>%
+  left_join(Aux_info_data)%>%
   group_by(site)%>%
   arrange(date)%>%
   mutate(conf_case = rollmean(conf_case, 7, align = "center", na.pad = TRUE))%>%

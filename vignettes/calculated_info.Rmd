@@ -1,6 +1,6 @@
 ---
 title: "Calculated Info"
-author: "Marlin"
+author: "Marlin Lee"
 vignette: >
   %\VignetteIndexEntry{Calculated Info}
   \usepackage[utf8]{inputenc}

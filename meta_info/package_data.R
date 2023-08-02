@@ -142,9 +142,9 @@
 #'
 #' @docType data
 #'
-#' @usage data("aux_info")
+#' @usage data("Aux_info_data")
 #'
 #' @format Rows: 999   Columns: 17
 #'
 #' @keywords datasets
-"aux_info"
+"Aux_info_data"
