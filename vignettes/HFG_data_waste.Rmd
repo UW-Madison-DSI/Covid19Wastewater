@@ -1,6 +1,5 @@
 ---
 title: "High Frequency Wastewater Data"
-author: "Marlin Lee"
 vignette: >
   %\VignetteIndexEntry{High Frequency Wastewater Data}
   \usepackage[utf8]{inputenc}

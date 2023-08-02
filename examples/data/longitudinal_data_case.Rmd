@@ -1,6 +1,5 @@
 ---
 title: "Longitudinal Case data"
-author: "Marlin Lee"
 vignette: >
   %\VignetteIndexEntry{Longitudinal Case Data}
   \usepackage[utf8]{inputenc}

@@ -1,6 +1,5 @@
 ---
 title: "Intercepter case data"
-author: "Marlin Lee"
 vignette: >
   %\VignetteIndexEntry{HFG data}
   \usepackage[utf8]{inputenc}

@@ -1,6 +1,5 @@
 ---
 title: "Time Series"
-author: "Kyllan Wunder"
 vignette: >
   %\VignetteIndexEntry{Time Series Analysis Vignette}
   \usepackage[utf8]{inputenc}

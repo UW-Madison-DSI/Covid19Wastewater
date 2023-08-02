@@ -1,6 +1,5 @@
 ---
 title: "Auxiliary Wastewater Data"
-author: "Kyllan Wunder"
 vignette: >
   %\VignetteIndexEntry{Auxiliary Wastewater Data}
   \usepackage[utf8]{inputenc}

@@ -1,6 +1,5 @@
 ---
 title: "High Frequency Case Data"
-author: "Marlin Lee"
 vignette: >
   %\VignetteIndexEntry{High Frequency Case Data}
   \usepackage[utf8]{inputenc}

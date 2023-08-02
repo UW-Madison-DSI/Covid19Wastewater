@@ -1,6 +1,5 @@
 ---
 title: "Example Data Vignette"
-author: "Kyllan Wunder"
 vignette: >
   %\VignetteIndexEntry{Example Data Vignette}
   \usepackage[utf8]{inputenc}

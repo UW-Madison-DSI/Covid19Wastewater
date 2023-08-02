@@ -1,6 +1,5 @@
 ---
 title: "Population Data Vignette"
-author: "Kyllan Wunder"
 vignette: >
   %\VignetteIndexEntry{Population Data Vignette}
   \usepackage[utf8]{inputenc}

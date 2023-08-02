@@ -1,6 +1,5 @@
 ---
 title: "Variant Data Vignette"
-author: "Kyllan Wunder"
 vignette: >
   %\VignetteIndexEntry{Variant Data Vignette}
   \usepackage[utf8]{inputenc}

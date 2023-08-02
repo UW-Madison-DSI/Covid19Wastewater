@@ -1,6 +1,5 @@
 ---
 title: "Linear Forest"
-author: "Marlin Lee"
 vignette: >
   %\VignetteIndexEntry{Linear Forest}
   \usepackage[utf8]{inputenc}

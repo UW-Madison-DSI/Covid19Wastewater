@@ -1,6 +1,5 @@
 ---
 title: "Smoothing"
-author: "Marlin Lee"
 vignette: >
   %\VignetteIndexEntry{Smoothing}
   \usepackage[utf8]{inputenc}

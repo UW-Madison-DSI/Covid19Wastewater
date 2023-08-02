@@ -1,40 +1,44 @@
 Package: Covid19Wastewater
+Title: DSI Wastewater Analysis Code
 Version: 0.6.1
 Date: 2023-07-18
-Title: DSI Wastewater Analysis Code
+Author: Marlin R Lee <mrlee6@wisc.edu>, Kyllan Wunder <kwunder@wisc.edu>,
+    Abe Megahed <amegahed@wisc.edu>
+Maintainer: Marlin R Lee <mrlee6@wisc.edu>
 Description: Code created to analyse wastewater covid signals.
-Author: Marlin R Lee <mrlee6@wisc.edu>, Kyllan Wunder <kwunder@wisc.edu>, Abe Megahed <amegahed@wisc.edu>
-Maintainer: Marlin R Lee <mrlee6@wisc.edu>,  Kyllan Wunder <kwunder@wisc.edu>, Abe Megahed <amegahed@wisc.edu>
-Encoding: UTF-8
-RoxygenNote: 7.2.3
 License: MIT + file LICENSE
-biocViews:
-Imports:
-  stats,
-  rlang,
-  ggplot2,
-  dplyr,
-  tidyr, 
-  zoo,
-  patchwork,
-  signal,
-  limma,
-  rsample,
-  partykit,
-  data.table,
-  forecast,
-  gridExtra,
-  methods,
-  plotly,
-  grDevices,
-  RcppRoll,
-  reshape2,
-  tidyselect,
-  plyr,
-  randomForest,
-  scales
-Suggests: knitr, rmarkdown, testthat, digest, vdiffr
-VignetteBuilder: knitr
 Depends: 
     R (>= 3.50)
+Imports:
+    data.table,
+    dplyr,
+    forecast,
+    ggplot2,
+    grDevices,
+    gridExtra,
+    limma,
+    methods,
+    partykit,
+    patchwork,
+    plotly,
+    plyr,
+    randomForest,
+    RcppRoll,
+    reshape2,
+    rlang,
+    rsample,
+    scales,
+    signal,
+    stats,
+    tidyr,
+    tidyselect,
+    zoo
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: 
+    knitr
+biocViews:
+Encoding: UTF-8
 LazyData: true
+RoxygenNote: 7.2.3

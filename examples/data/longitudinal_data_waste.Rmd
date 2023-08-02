@@ -1,6 +1,5 @@
 ---
 title: "Longitudinal Waste data"
-author: "Marlin Lee"
 vignette: >
   %\VignetteIndexEntry{Longitudinal Waste Data}
   \usepackage[utf8]{inputenc}
