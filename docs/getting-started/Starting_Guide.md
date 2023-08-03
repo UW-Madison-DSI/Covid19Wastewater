@@ -291,7 +291,7 @@ CaseAndPop_data %>% filter(site == "Madison") %>% ggplot(aes(x=date,y=(conf_case
 </div>
 
 ### Tips
-Always make sure that when merging, the “by =” should always be able to identify the information you are merging uniquely. (i.e. don't merge waste and case data by data alone)
+Always make sure that when merging, the “by =” should always be able to identify the information you are merging uniquely. (i.e. don't merge waste and case data by date alone)
 
 # Data Preparation
 
@@ -338,6 +338,27 @@ geom_line(aes(y = N1_loess, color = "N1 Loess"))+
 
 
 # Data Analysis
+
+## Time Series Analysis
+Shedding is an ongoing process from the first day of infection to days or even weeks after symptoms subside. Thus it is hard to know exactly how many individuals in the community are infected at any given time just using wastewater data. Since we have mostly reliable case data, if we can find the offset that best correlates with the 2 data sets, we can work backward from only wastewater data in the future. 
+
+<div align="center">
+    <img src="../../docs/images/getting-started/heatmap.png" alt="Heatmap of waste to case correlation" style="width:75%">
+    <div>
+        <label>Heatmap of waste to case correlation</label>
+    </div>
+</div>
+
+This analysis was done by finding the R-squared correlation between the wastewater data of the current day Z and the combined case data from past Y many days and X number of future days. Thus we can find which moving window of days best represents the wastewater data for the next analysis. 
+
+<div align="center">
+    <img src="../../docs/images/getting-started/offset-analysis.png" alt="Offset analysis" style="width:75%">
+    <div>
+        <label>Offset analysis</label>
+    </div>
+</div>
+
+Using the window of case data days that best correlates to the wastewater data, we can find the offset that best corresponds to the time between shedding at its peak and when the individual got tested. 
 
 # Conclusion
 
