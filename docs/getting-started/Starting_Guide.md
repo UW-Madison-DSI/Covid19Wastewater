@@ -97,7 +97,7 @@ The data in this package is a combination of data provided to us from the follow
 
 All data can be found in the /data directory as .RData objects. Alternatively, when our package is installed, these data sets can be loaded by using the command:
 
-```
+```{r}
 data(<name here>, package = "Covid19Wastewater")
 ```
 
@@ -140,7 +140,7 @@ Here is the key to all the column names in the data: https://github.com/UW-Madis
 
 The prevalence of covid is determined using the genome markers called "N1" and "N2".  A simple starting point is to load in the data and then graph N1 or N2 over time.
 
-```
+```{r}
 data("WasteWater_data", package = "Covid19Wastewater")
 
 WasteWater_data %>% ggplot(aes(x=date,y=N1)) +
@@ -158,7 +158,7 @@ WasteWater_data %>% ggplot(aes(x=date,y=N1)) +
 
 With a few extra lines of code, we can add some color coding in order to display  N1 and N2 in a more visually appealing way.
 
-```
+```{r}
 data("WasteWater_data", package = "Covid19Wastewater")
 
 WasteWater_data %>% ggplot() +
@@ -183,7 +183,7 @@ Below, we show a set of examples of merging different datasets together.
 
 When merging wastewater and case data, it is best to merge by site and data to identify each entry uniquely.
 
-```
+```{r}
 data("WasteWater_data", package = "Covid19Wastewater")
 data("Case_data", package = "Covid19Wastewater")
 
@@ -202,7 +202,7 @@ head(WasteAndCaseMerged_data)
 
 We include high frequency datasets for both waterwater and case data which can be merged as follows:
 
-```
+```{r}
 data("HFGWaste_data", package = "Covid19Wastewater")
 data("HFGCase_data", package = "Covid19Wastewater")
 
@@ -220,7 +220,7 @@ head(HFGWasteAndCaseMerged_data)
 ### 3.  Merging Wastewater and Aux Data
 
 When merging the auxiliary information, it can only be done with sample_id (Aux_info_data can only be merged with WateWater_data)
-```
+```{r}
 data("WasteWater_data", package = "Covid19Wastewater")
 data("Aux_info_data", package = "Covid19Wastewater")
 
@@ -239,7 +239,7 @@ head(WastewaterAndAuxInfo_data)
 
 Population data can be merged with any dataframe that contains site data.
 
-```
+```{r}
 data("WasteWater_data", package = "CovidWastewater")
 data("pop_data", package = "Covid19Wastewater")
 data("Case_data", package = "Covid19Wastewater")
@@ -261,7 +261,7 @@ head(CaseAndPop_data)
 ### 4.  Merging Wastewater and Confirmed Cases Data
 With the data now merged, we can perform many more analyses.  In the analysis below, we show the number of confirmed cases.
 
-```
+```{r}
 HFGWasteAndCaseMerged_data %>% ggplot() +
   geom_point(aes(x=log(N1+1),y=log(ConfirmedCases+1),color="N1")) +
   geom_point(aes(x=log(N2+1),y=log(ConfirmedCases+1),color="N2")) +
@@ -278,7 +278,7 @@ HFGWasteAndCaseMerged_data %>% ggplot() +
 ### 4.  Normalizing by Population
 Below, we display the number of confirmed cases normalized by population as a function of time.
 
-```
+```{r}
 CaseAndPop_data %>% filter(site == "Madison") %>% ggplot(aes(x=date,y=(conf_case/pop)))+
   geom_point()
 ```
@@ -314,7 +314,7 @@ There are two main ways to detect outliers in this package.
 - Unusual spikes from adjacent values
 ### Deviance from the trend
 This process has two steps. First you need a trend. This can normally be done with the smoothing in the previous section. Then the trend can be used to find points sufficiently greater than it. This is normally set to 2.5 standard deviations.
-```
+```{r}
 data("WasteWater_data", package = "Covid19Wastewater")
 WasteWater_data  <- filter(WasteWater_data, site == "Janesville")
 WasteWater_data <- mutate(WasteWater_data, N1 = log(N1 + 1))
