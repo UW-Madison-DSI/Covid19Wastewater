@@ -79,7 +79,6 @@ date_distance_calc <- function(DF, base_date_vec, vecNames){
   return(RetDF)
 }
 
-
 #' remove distances above threshold
 #'
 #' @param thresh max distance not reduced to thresh from data
@@ -125,7 +124,6 @@ date_distance_clamp <- function(DF, vecNames, thresh){
 #'df <- date_distance_calc(Example_data, "date", "Late_date")
 #'date_distance_remove(df, "Late_date", 21)
 date_distance_remove <- function(DF, vecNames, thresh){
-
   .x <- NA
   if(length(vecNames) > 1){
     RetDF <- DF%>%
@@ -137,4 +135,3 @@ date_distance_remove <- function(DF, vecNames, thresh){
   }
   return(RetDF)
 }
-

@@ -52,7 +52,6 @@ buildRegressionEstimateTable <- function(DataMod,
 #' The DHS model system. runs a LM on each each set of n consecutive measurements
 #' and returns a summary of the information
 #'
-#'
 #' @param DF Contains TS data should only contain one site
 #' @param Formula LM model to be fit on a subsection of the data
 #' @param n number of rows to be in each LM regression

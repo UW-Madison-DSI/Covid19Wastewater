@@ -142,7 +142,6 @@ VariantPlot <- function(covar){
   return(ggplotly(p))
 }
 
-
 ###### Offset Heatmap
 #' Outputs a heatmap of the offset for variant / time windows and population size / region
 #'
@@ -194,7 +193,6 @@ OffsetHeatmap <- function(method, timePeriods, waste_df, case_df, pop_df,
   
   outputrvt <- data.frame(matrix(ncol = 1, nrow = 0))
   
-
   if(list == "region"){
     regionslist <- c("all", unique(waste_df$regions))
   } else {#pop
@@ -212,7 +210,7 @@ OffsetHeatmap <- function(method, timePeriods, waste_df, case_df, pop_df,
   
   firstday <- as.numeric(as.Date("2020-08-01"))
   endday <- as.numeric(as.Date("2022-12-01"))
-  
+  #split by time period or variants
   if(timePeriods == 0){
     start <- covarstarts
     end <- covarends
@@ -228,7 +226,6 @@ OffsetHeatmap <- function(method, timePeriods, waste_df, case_df, pop_df,
     }
     start <- as.Date(start)
     end <- as.Date(end)
-    
   }
   
   for(j in regionslist){
@@ -308,7 +305,7 @@ OffsetHeatmap <- function(method, timePeriods, waste_df, case_df, pop_df,
   }
   
   names(outputrvt)[1:4] = c("time", "region", "output", "rcor")
-
+  #renaming and making graph look pretty
   outputrvt$output <- as.numeric(outputrvt$output)
   outputrvt$time <- as.numeric(outputrvt$time)
   newend <- as.numeric(end) - as.numeric(start[1])

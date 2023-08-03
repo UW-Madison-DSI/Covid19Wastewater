@@ -38,11 +38,9 @@ createCaseFlag <- function(DF){
   return(CaseFlags)
 }
 
-
 #' Create waste flags
 #' 
 #'Create waste flags created by the DHS and the CDC to warn of increasing cases
-#' 
 #'
 #' @param DF Input data frame
 #' @param windows what windows for the rolling quantile to use

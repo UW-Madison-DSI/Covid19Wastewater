@@ -18,7 +18,7 @@ bagging <- function(data, num_bags, num_features = NULL, include_first = 0){
   if(is.null(num_features)){
     num_features = ceiling(sqrt(length(data) - include_first))
   }
-  #####
+
   data_list <- bootstraps(data, times = num_bags)$splits
   base_names <- names(data)
   ret_IB <- list()
@@ -35,8 +35,6 @@ bagging <- function(data, num_bags, num_features = NULL, include_first = 0){
   }
   return(list(ret_IB, ret_OOB))
 }
-
-
 
 #' get OOB predictions of the training dataset
 #' returns the predictions of each row of the input data
@@ -81,8 +79,6 @@ gen_OOB_pred <- function(tree_model,
   }
 }
 
-
-
 #' get increased mean square error for each column
 #'
 #' @param tree_model random_linear_forest object you want the MSE of
@@ -124,7 +120,6 @@ gen_INCMSE <- function(tree_model){
   ret <- bind_rows(ret_DF_list)
   return(ret)
 }
-
 
 #' get OOB MSE vs number of forest in trees
 #'

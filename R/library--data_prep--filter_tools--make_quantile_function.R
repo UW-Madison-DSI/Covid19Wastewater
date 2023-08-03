@@ -96,7 +96,6 @@ makeQuantileColumns <- function(DF, quants, windows,
   #rename columns of merging DF to help the full joing function
   colnames(Method_DF) <- c("window", "quant", "site")
   
-  
   Quantiles_DF <- DF%>%
     #merge with Method_DF to get the right number of rows for incoming split
     full_join(Method_DF, by = c("site"))%>%

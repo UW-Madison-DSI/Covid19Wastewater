@@ -14,7 +14,6 @@ setMethod(f = "show",
             print(summary(object))
           })
 
-
 #' summary method for linear forest class
 #'
 #' @param object random_linear_forest being used
@@ -44,8 +43,6 @@ setMethod(f = "summary",
             class(ans) <- "summary.random_linear_forest"
             return(ans)
           })
-
-
 
 #' predict new data from random_linear_forest models
 #'

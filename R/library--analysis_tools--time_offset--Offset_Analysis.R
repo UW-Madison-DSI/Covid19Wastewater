@@ -84,4 +84,3 @@ OffsetDFMaker <- function(length, startdate, enddate, casesdf, wastedf,
   }
   return(offset_results)
 }
-

@@ -27,8 +27,7 @@ setClass(
                oob_data = "list",
                oob_resid = "numeric",
                inc_mse = "data.frame")
-)
-
+  )
 
 #' Fitting linear random forest
 #' 
@@ -66,13 +65,11 @@ random_linear_forest <- function(data,
   lm_pred_term <- all.vars(exp_formula[[3]][[2]])
   tree_pred_term <- all.vars(exp_formula[[3]][[3]])
   data <- select(data, all_of(c(dep_term, lm_pred_term, tree_pred_term)))
-  ####
   
   #create random_linear_forest class object the function returns
   linear_forest <- new("random_linear_forest",
                        formula = exp_formula,
                        data = data)
-  
   
   #create index for linking bagged data back together
   data$index <- 1:nrow(data)
@@ -106,14 +103,11 @@ random_linear_forest <- function(data,
   linear_forest@models <- lapply(linear_forest@inbag_data,
                                  lmtree_func)
   
-  
-  
   #save residuals
   linear_forest@resid <- data[[dep_term]] - predict(linear_forest, data)
   
   #save out of bag residuals
-  #linear_forest@oob_resid <- gen_OOB_pred(linear_forest,
-  #                                        resid = TRUE)
+  #linear_forest@oob_resid <- gen_OOB_pred(linear_forest, resid = TRUE)
   
   return(linear_forest)
 }

@@ -21,7 +21,6 @@ parameterGuess <- function(DF,InVar, Base, max){
   return(span)
 }
 
-
 #' loessSmoothMod
 #' Add a column of the smoothed values using Loess
 #'
@@ -67,8 +66,6 @@ loessSmoothMod <- function(DF, InVar = "N1",
   
   return(DF)
 }
-
-
 
 #' expSmoothMod
 #' Add a column of the smoothed values using exponential smoothing
@@ -125,7 +122,6 @@ expSmoothMod <- function(DF, InVar, OutVar, alpha="guess",beta="guess", Filter =
   return(DF)
 }
 
-
 #' nGuess for sgolaySmoothMod number of points per polynomial
 #'
 #' @param DF The DF to fit the sgolayfilt curve on. should only
@@ -147,7 +143,6 @@ nGuess <- function(DF,InVar, Base, min){
   N <- max(c(floor(Base*temp$n), min))#More can be done here
   return(N + 1 - N%%2)
 }
-
 
 #' sgolaySmoothMod
 #' Add a column of the smoothed values using sgolayfilt
@@ -198,5 +193,3 @@ sgolaySmoothMod <- function(DF,InVar, OutVar,poly=5,n="guess", Filter = NULL){
   
   return(RetDF)
 }
-
-

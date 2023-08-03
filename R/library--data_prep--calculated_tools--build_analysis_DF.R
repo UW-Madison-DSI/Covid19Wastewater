@@ -4,7 +4,6 @@
 #' calculates sars_cov2_adj_load_log10 column, 
 #' and filters rows where average_flow_rate is NA
 #' 
-#'
 #' @param df data frame object from data/wastewater_data.rda 
 #'
 #' @return data frame
@@ -15,9 +14,8 @@
 #' data(Pop_data, package = "Covid19Wastewater")
 #' buildWasteAnalysisDF(dplyr::left_join(head(WasteWater_data), Pop_data))
 buildWasteAnalysisDF <- function(df){
-  ## format data as DHS code expects
-  
-  ### Note: Replacement small values with LOD/2 (as per 5/20/2022 discussion w/DHS)
+  # format data as DHS code expects
+  # Note: Replacement small values with LOD/2 (as per 5/20/2022 discussion w/DHS)
   df <- df %>% 
     mutate(N1 = ifelse(.data$N1, as.numeric(.data$n1_lod)/2, .data$N1),
            N2 = ifelse(.data$N2, as.numeric(.data$n2_lod)/2, .data$N2))%>%

@@ -130,7 +130,6 @@ flagOutliers <- function(DF, threshold, col, FlaggedOutlier = FlaggedOutlier){
   return(RetDF)
 }
 
-
 #' Add column with NA values where the data was flagged
 #'
 #' @param DF DF containing the columns Measure and Filtcol
@@ -154,4 +153,3 @@ removeOutliers <- function(DF, Messure, Filtcol, outputColName){
     mutate({{outputColName}} := ifelse({{Filtcol}}, NA, {{Messure}}))
   return(RetDF)
 }
-

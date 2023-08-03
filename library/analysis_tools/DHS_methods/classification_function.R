@@ -46,7 +46,6 @@ classifyRegressionAnalysis <- function(DF, PSigTest = TRUE,
   return(RetDF)
 }
 
-
 #' Create Case Flags based on regression slope
 #'
 #' @param DF dataframe that contains results of buildRegressionEstimateTable
