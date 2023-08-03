@@ -295,6 +295,48 @@ Always make sure that when merging, the “by =” should always be able to iden
 
 # Data Preparation
 
+
+
+The data preparation takes two main forms:
+- Outlier detection and Removal
+- Smoothing methods
+
+## Smoothing methods
+There are three smoothing methods available to get a more stable  Wastewater measurement
+- loessSmoothMod
+- expSmoothMod
+- sgolaySmoothMod
+Each one can generate a consistent signal from weekly data. A comprehensive Guide on the methods is available [here](https://github.com/UW-Madison-DSI/Covid19Wastewater/blob/main/docs/vignettes/smoothing.pdf)
+
+## Outlier detection
+There are two main ways to detect outliers in this package.
+- Deviance from the trend
+- Unusual spikes from adjacent values
+### Deviance from the trend
+This process has two steps. First you need a trend. This can normally be done with the smoothing in the previous section. Then the trend can be used to find points sufficiently greater than it. This is normally set to 2.5 standard deviations.
+```
+data("WasteWater_data", package = "Covid19Wastewater")
+WasteWater_data  <- filter(WasteWater_data, site == "Janesville")
+WasteWater_data <- mutate(WasteWater_data, N1 = log(N1 + 1))
+WasteWater_data <- loessSmoothMod(WasteWater_data , "N1", "N1_loess")
+WasteWater_data <- Flag_From_Trend(WasteWater_data,  N1, N1_loess)
+
+WasteWater_data %>%
+  ggplot(aes(x = date))+
+  geom_point(aes(y = N1, color = flagged_outlier))+
+geom_line(aes(y = N1_loess, color = "N1 Loess"))+
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  labs(y = "Covid-19 Gene Concentration",
+       x = "Date",
+       color = "Flagged Outlier"
+       )
+```
+
+### Unusual spikes from adjacent values
+
+
+
 # Data Analysis
 
 # Conclusion
