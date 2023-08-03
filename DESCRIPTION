@@ -1,8 +1,8 @@
 Package: Covid19Wastewater
-Version: 0.6.1
+Version: 1.0.0
 Date: 2023-07-18
-Title: DSI Wastewater Analysis Code
-Description: Code created to analyse wastewater covid signals.
+Title: UW Madison DSI COVID19 Wastewater Analysis Code
+Description: Code created to analyze wastewater covid signals.
 Author: Marlin R Lee <mrlee6@wisc.edu>, Kyllan Wunder <kwunder@wisc.edu>, Abe Megahed <amegahed@wisc.edu>
 Maintainer: Marlin R Lee <mrlee6@wisc.edu>,  Kyllan Wunder <kwunder@wisc.edu>, Abe Megahed <amegahed@wisc.edu>
 Encoding: UTF-8
