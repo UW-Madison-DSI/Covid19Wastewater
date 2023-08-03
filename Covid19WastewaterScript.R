@@ -76,8 +76,8 @@ package_update <- function(path = ".", update_examples = F, update_test = F){
   #check(vignettes = FALSE)
   install(quick=T, build = F, build_vignettes = F, force = F)
 }
-package_update(update_examples = F, update_test = F)
+package_update(update_examples = T, update_test = F)
 3
 #load_all()
 #run_examples( fresh = F)#, start = "factorVecByNumPoints")#DF_date_vector, 
-check(vignettes = F)
+#check(vignettes = F)
