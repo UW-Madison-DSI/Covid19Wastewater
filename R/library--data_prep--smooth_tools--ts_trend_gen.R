@@ -28,7 +28,7 @@ parameterGuess <- function(DF,InVar, Base, max){
 #' @param DF DF we are adding the loess smooth col to
 #' @param InVar The column to be smoothed
 #' @param OutVar The name of the new column
-#' @param span The span fed into loess smoothing. if it equals "guess" then it
+#' @param Span The span fed into loess smoothing. if it equals "guess" then it
 #' if found using parameterGuess 
 #' @param Filter Prefilter using the value of a Filter col
 #'
@@ -38,10 +38,10 @@ parameterGuess <- function(DF,InVar, Base, max){
 #' @examples
 #' data(Example_data, package = "Covid19Wastewater")
 #' head(loessSmoothMod(Example_data))
-loessSmoothMod <- function(DF,InVar="N1",
-                           OutVar="Loess", span="guess", Filter = NULL){
-  if(span=="guess"){
-    span <- parameterGuess(DF,InVar, 17.8, .6)
+loessSmoothMod <- function(DF, InVar = "N1",
+                           OutVar = "Loess", Span = "guess", Filter = NULL){
+  if(Span == "guess"){
+    Span <- parameterGuess(DF,InVar, 17.8, .6)
   }
   if(!is.null(Filter)){
     OutDF <- DF%>%
@@ -52,13 +52,13 @@ loessSmoothMod <- function(DF,InVar="N1",
       filter(!(!!sym(Filter)))
   }
   
-  DF <- DF%>%
-    arrange(date)
-  
-  DF[[OutVar]] <- loessFit(y=(DF[[InVar]]), 
-                            x=DF$date, #create loess fit of the data
-                            span=span, 
-                            iterations=2)$fitted#2 iterations remove some bad patterns
+  #DF <- DF%>%
+  #  arrange(date)%>%
+  #  filter(is.finite(!!sym(InVar)), is.finite(.data$date))
+  #print(span)
+  #return(DF)
+  loess_model <- loess(DF[[InVar]] ~ as.numeric(DF$date), span = Span, na.action = na.exclude)
+  DF[[OutVar]] <- predict(loess_model, as.numeric(DF$date))
   
   if(!is.null(Filter)){
     DF <- DF%>%
@@ -162,12 +162,13 @@ nGuess <- function(DF,InVar, Base, min){
 #' @return DF with an extra col with a sgolayfilt smoothed version of InVar
 #' @export
 #' @examples
-#' data(WasteWater_data, package = "Covid19Wastewater")
+#' data(Example_data, package = "Covid19Wastewater")
 #' Covid19Wastewater:::sgolaySmoothMod(WasteWater_data,"N1","sgolayN1")
 sgolaySmoothMod <- function(DF,InVar, OutVar,poly=5,n="guess", Filter = NULL){
   if(n=="guess"){
     n <- nGuess(DF, InVar,50/178, 7)
   }
+  
   if(!is.null(Filter)){
     OutDF <- DF%>%
       filter((!!sym(Filter)) | is.na(!!sym(InVar)))%>%

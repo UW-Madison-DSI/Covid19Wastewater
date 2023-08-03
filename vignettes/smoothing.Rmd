@@ -56,7 +56,7 @@ Each smoothing function shares the same framework. The first three arguments are
 The Savitzky-Golay filter is a widely used smoothing technique that performs local polynomial regression on the data. It provides excellent noise reduction while preserving important features such as peaks and valleys. The Covid19Wastewater package includes the sgolaySmoothMod() function, which allows you to apply this filter to your data. sgolaySmoothMod() has 2 parameters. "poly" controls the degree of the polynomial fit on the local data whereas "n" control the number of points considered "local". by default its set to "guess" which uses the density of the data to make guesses about the ideal n.
 ```{r sgolaySmoothMod}
 # Example code demonstrating sgolaySmoothMod() function
-sgolay_smooth <- Covid19Wastewater:::sgolaySmoothMod(smoothing_df, "N1", "N1_sgolay", poly=5,n="guess", Filter = NULL)
+sgolay_smooth <- sgolaySmoothMod(smoothing_df, "N1", "N1_sgolay", poly=5,n="guess", Filter = NULL)
 
 sgolay_plot <- base_plot + 
   geom_line(aes(y = N1_sgolay, color = "Default Savitzky-Golay Filter"), data = sgolay_smooth, linewidth = 1.25)
@@ -88,18 +88,23 @@ Loess (locally estimated scatterplot smoothing) is a non-parametric regression t
 
 ```{r loessSmoothMod}
 # Example code demonstrating loessSmoothMod() function
-loess_smooth <- loessSmoothMod(sgolay_smooth, "N1", "N1_loess", span="guess", Filter = NULL)
+#sgolay_smooth <- mutate(sgolay_smooth, N1 = exp(N1))
+loess_smooth <- loessSmoothMod(DF = sgolay_smooth,
+                               InVar = "N1",
+                               OutVar ="N1_loess",
+                               Span = "guess",
+                               Filter = NULL)
 
 all_smooth_plot <- sgolay_plot + geom_line(aes(y = N1_loess, color = "Default Loess"), data = loess_smooth, size = 1.25)
 
 loess_plot <- base_plot + geom_line(aes(y = N1_loess, color = "Default Loess"), data = loess_smooth, size = 1.25)
 
-param_loess_smooth <- loessSmoothMod(loess_smooth, "N1", "N1_loess_2", span = .1, Filter = NULL)
+param_loess_smooth <- loessSmoothMod(loess_smooth, "N1", "N1_loess_2", Span = .1, Filter = NULL)
 
 alt_plot <- loess_plot + geom_line(aes(y = N1_loess_2, color = "Span .1 Loess"), data = param_loess_smooth, size = 1.25)
 
 
-param_loess_smooth_2 <- loessSmoothMod(loess_smooth, "N1", "N1_loess_3", span= .2, Filter = NULL)
+param_loess_smooth_2 <- loessSmoothMod(loess_smooth, "N1", "N1_loess_3", Span= .2, Filter = NULL)
 
 
 show_plot <- alt_plot + geom_line(aes(y = N1_loess_3, color = "Span .2 Loess"), data = param_loess_smooth_2, size = 1.25)
@@ -112,6 +117,10 @@ show_plot+
        title = "Loess Smoothing With Diffrent Parameters",
        color = "Smoothing Parameter"
        )
+
+
+sgolay_smooth
+
 ```
 
 

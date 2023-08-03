@@ -10,7 +10,7 @@ loessSmoothMod(
   DF,
   InVar = "N1",
   OutVar = "Loess",
-  span = "guess",
+  Span = "guess",
   Filter = NULL
 )
 }
@@ -21,7 +21,7 @@ loessSmoothMod(
 
 \item{OutVar}{The name of the new column}
 
-\item{span}{The span fed into loess smoothing. if it equals "guess" then it
+\item{Span}{The span fed into loess smoothing. if it equals "guess" then it
 if found using parameterGuess}
 
 \item{Filter}{Prefilter using the value of a Filter col}

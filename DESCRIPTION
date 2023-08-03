@@ -1,11 +1,11 @@
 Package: Covid19Wastewater
-Title: DSI Wastewater Analysis Code
+Title: Covid19 Wastewater Analysis Code
 Version: 0.6.1
 Date: 2023-07-18
 Author: Marlin R Lee <mrlee6@wisc.edu>, Kyllan Wunder <kwunder@wisc.edu>,
     Abe Megahed <amegahed@wisc.edu>
 Maintainer: Marlin R Lee <mrlee6@wisc.edu>
-Description: Code created to analyse wastewater covid signals.
+Description: Code created to analyse Wastewater Covid signals.
 License: MIT + file LICENSE
 Depends: 
     R (>= 3.50)
@@ -16,7 +16,6 @@ Imports:
     ggplot2,
     grDevices,
     gridExtra,
-    limma,
     methods,
     partykit,
     patchwork,

@@ -12,10 +12,10 @@
 #' slope_switch_flag: the first case flags in consecutive case flags
 #' @export
 #' @examples
-#' data(Case_data, package = "Covid19Wastewater")
+#' data(Example_data, package = "Covid19Wastewater")
 #' data(Pop_data, package = "Covid19Wastewater")
-#' Case_data <- Case_data[Case_data$site == 'Algoma',]
-#' createCaseFlag(dplyr::left_join(Case_data, Pop_data))
+#' Example_data <- Example_data[Example_data$site == 'Janesville',]
+#' createCaseFlag(dplyr::left_join(Example_data, Pop_data))
 createCaseFlag <- function(DF){
   
   #Prep case data into form for buildRegressionEstimateTable
