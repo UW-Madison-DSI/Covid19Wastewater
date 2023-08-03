@@ -29,9 +29,11 @@ Otherwise we have comprehensive instructions [here](./docs/r-studio/installing-p
 In order to make this package as easy as possible to learn and understand, we've included a set of [instructional examples](examples/README.md).
 
 ## Documentation
-
-View the [API Reference](./docs/api/api.md).
  
+- View the [Getting Started Guide](./docs/getting-started/Starting_Guide.md).
+
+- View the [API Reference](./docs/api/api.md).
+
 - View the package vignettes with:
 
 ```
@@ -43,6 +45,7 @@ vignette(package = "Covid19Wastewater")
 ```
 help(package = "Covid19Wastewater")
 ```
+
 ## Package Application 
 
 We applied this package to Covid-19 data from Wisconsin in our analysis repository [here.](https://github.com/UW-Madison-DSI/Covid19-Wastewater-Analysis)
