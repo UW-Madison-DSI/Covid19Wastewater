@@ -343,7 +343,7 @@ geom_line(aes(y = N1_loess, color = "N1 Loess"))+
 Shedding is an ongoing process from the first day of infection to days or even weeks after symptoms subside. Thus it is hard to know exactly how many individuals in the community are infected at any given time just using wastewater data. Since we have mostly reliable case data, if we can find the offset that best correlates with the 2 data sets, we can work backward from only wastewater data in the future. 
 
 <div align="center">
-    <img src="../../docs/images/getting-started/heatmap.png" alt="Heatmap of waste to case correlation" style="width:75%">
+    <img src="../../docs/images/getting-started/time-series-analysis.png" alt="Heatmap of waste to case correlation" style="width:75%">
     <div>
         <label>Heatmap of waste to case correlation</label>
     </div>
