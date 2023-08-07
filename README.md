@@ -19,7 +19,7 @@ This project is a collaboration between the University of Wisconsin-Madison [Dat
 
 ## Getting started
 
-View our [getting started guide](./docs/getting-started/Starting_Guide.md) to learn more about this R package, or follow the steps below to install, view examples, and get help inside your favorite R interpreter. 
+View our [getting started guide](https://github.com/UW-Madison-DSI/Covid19Wastewater/blob/main/docs/getting-started/Starting_Guide.md) to learn more about this R package, or follow the steps below to install, view examples, and get help inside your favorite R interpreter. 
 
 ### Installation
 
@@ -27,7 +27,7 @@ If you already have devtools installed, you can install the package with
 ```
 devtools::install_github("UW-Madison-DSI/Covid19Wastewater")
 ```
-Otherwise, we have comprehensive instructions [here](./docs/r-studio/installing-packages.md).
+Otherwise, we have comprehensive instructions [here](https://github.com/UW-Madison-DSI/Covid19Wastewater/blob/main/docs/r-studio/installing-packages.md).
 
 After installation, view our vignettes 
 ```
@@ -41,13 +41,13 @@ help(package = "Covid19Wastewater")
 
 
 ### Examples
-We've included a set of [instructional examples](examples/README.md) to make this package easy to learn and understand.
+We've included a set of [instructional examples](https://github.com/UW-Madison-DSI/Covid19Wastewater/blob/main/examples/README.md) to make this package easy to learn and understand.
 
 ## Documentation
  
-- View the [Getting Started Guide](./docs/getting-started/Starting_Guide.md).
+- View the [Getting Started Guide](https://github.com/UW-Madison-DSI/Covid19Wastewater/blob/main/docs/getting-started/Starting_Guide.md).
 
-- View the [API Reference](./docs/api/api.md).
+- View the [API Reference](https://github.com/UW-Madison-DSI/Covid19Wastewater/blob/main/docs/api/api.md).
 
 - View the package vignettes with:
 
@@ -68,7 +68,7 @@ We applied this package to Covid-19 data from Wisconsin in our analysis reposito
 <!-- LICENSE -->
 ## License
 
-Distributed under the MIT License. See the [license](./LICENSE) for more information.
+Distributed under the MIT License. See the [license](https://github.com/UW-Madison-DSI/Covid19Wastewater/blob/main/LICENSE) for more information.
 
 <!-- Contact -->
 ## Team
