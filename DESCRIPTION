@@ -3,7 +3,7 @@ Title: Prepare, Analyze, and Visualize Covid-19 Wastewater Data
 Version: 1.0.0
 Date: 2023-08-7
 Authors@R: c(
-            person("Marlin", "Lee", email = "mrlee6@wisc.edu", role = c("aut", "cre"), comment = c(ORCID = "0009-0000-0448-9585"))), 
+            person("Marlin", "Lee", email = "mrlee6@wisc.edu", role = c("aut", "cre"), comment = c(ORCID = "0009-0000-0448-9585")), 
             person("Kyllan", "Wunder", email = "kwunder@wisc.edu", role = "aut", comment = c(ORCID = "0009-0008-8587-0967")), 
             person("Abe", "Megahed", email = "amegahed@wisc.edu", role = "aut", comment = c(ORCID = "0009-0000-0890-2656")))
 Description: ‘Covid19Wastewater’ is intended to make the process of
