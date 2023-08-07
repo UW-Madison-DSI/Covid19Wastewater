@@ -175,6 +175,20 @@ WasteWater_data %>% ggplot() +
     </div>
 </div>
 
+Taking a similar approach to case data we can make a similar graph for comparing probable cases, confirmed cases, and tests
+
+```{r}
+data("Case_data", package = "Covid19Wastewater")Case_data %>% ggplot() +  geom_point(aes(x=date,y=tests+1, color = "Tests")) + #plus 1 to have a nice log  geom_point(aes(x=date,y=conf_case+1, color = "Confirmed Cases")) +  geom_point(aes(x=date,y=prob_case+1, color = "Probable Cases")) +  scale_y_log10() +  ylab("Cases and Tests")
+```
+
+<div align="center">
+    <img src="../../docs/images/getting-started/cases_and_tests.png" alt="Comparing Cases and Tests" style="width:75%">
+    <div>
+        <label>Comparing Cases and Tests</label>
+    </div>
+</div>
+
+
 ## Merging  Datasets
 
 Below, we show a set of examples of merging different datasets.
