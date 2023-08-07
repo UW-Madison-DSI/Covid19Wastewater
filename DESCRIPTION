@@ -4,9 +4,9 @@ Date: 2023-07-18
 Title: UW Madison DSI COVID19 Wastewater Analysis Code
 Description: ‘Covid19Wastewater’ is intended to make the process of analyzing epidemiological wastewater data easier and more insightful. It includes tools for preparing, analyzing, and visualizing data. It additionally includes Wisconsin's Covid19 data.
 Authors@R: 
-    c(person("Marlin", "Lee", "R", "mrlee6@wisc.edu", c("cre", "aut")), 
-    person("Kyllan", "Wunder", NULL, "kwunder@wisc.edu", "aut"),
-    person("Abe", "Megahed", NULL, "amegahed@wisc.edu", "aut"))
+    c(person(given = "Marlin", family = "Lee", email = "mrlee6@wisc.edu", role = c("cre", "aut")), 
+    person(given = "Kyllan", family = "Wunder", email = "kwunder@wisc.edu", role = "aut"), 
+    person(given = "Abe", family = "Megahed", email = "amegahed@wisc.edu", role = "aut"), 
 Maintainer: Marlin R Lee <mrlee6@wisc.edu>
 Encoding: UTF-8
 RoxygenNote: 7.2.3

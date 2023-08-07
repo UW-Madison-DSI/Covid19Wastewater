@@ -118,9 +118,6 @@ show_plot+
        color = "Smoothing Parameter"
        )
 
-
-sgolay_smooth
-
 ```
 
 

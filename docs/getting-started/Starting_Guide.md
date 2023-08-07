@@ -244,10 +244,10 @@ data("WasteWater_data", package = "CovidWastewater")
 data("pop_data", package = "Covid19Wastewater")
 data("Case_data", package = "Covid19Wastewater")
 
-WastewaterAndPop_data <- merge(WasteWater_data,pop_data, by = "site")
+WastewaterAndPop_data <- merge(WasteWater_data, pop_data, by = "site")
 head(WastewaterAndPop_data)
 
-CaseAndPop_data <- merge(Case_data,pop_data, by = "site")
+CaseAndPop_data <- merge(Case_data, pop_data, by = "site")
 head(CaseAndPop_data)
 ```
 
@@ -262,7 +262,8 @@ head(CaseAndPop_data)
 With the data now merged, we can perform many more analyses.  In the analysis below, we show the number of confirmed cases.
 
 ```{r}
-HFGWasteAndCaseMerged_data %>% ggplot() +
+HFGWasteAndCaseMerged_data %>% 
+  ggplot() +
   geom_point(aes(x=log(N1+1),y=log(ConfirmedCases+1),color="N1")) +
   geom_point(aes(x=log(N2+1),y=log(ConfirmedCases+1),color="N2")) +
   facet_wrap("site")
@@ -279,8 +280,10 @@ HFGWasteAndCaseMerged_data %>% ggplot() +
 Below, we display the number of confirmed cases normalized by population as a function of time.
 
 ```{r}
-CaseAndPop_data %>% filter(site == "Madison") %>% ggplot(aes(x=date,y=(conf_case/pop)))+
-  geom_point()
+CaseAndPop_data %>% 
+    filter(site == "Madison") %>% 
+    ggplot(aes(x=date,y=(conf_case/pop)))+
+    geom_point()
 ```
 
 <div align="center">
@@ -302,24 +305,34 @@ The data preparation takes two main forms:
 - Smoothing methods
 
 ## Smoothing methods
-There are three smoothing methods available to get a more stable  Wastewater measurement
+There are three smoothing methods available to get a more stable  Wastewater measurement.
 - loessSmoothMod
 - expSmoothMod
 - sgolaySmoothMod
-Each one can generate a consistent signal from weekly data. A comprehensive Guide on the methods is available [here](https://github.com/UW-Madison-DSI/Covid19Wastewater/blob/main/docs/vignettes/smoothing.pdf)
+Each one can generate a consistent signal from weekly data. A comprehensive Guide on the methods is available [here.](https://github.com/UW-Madison-DSI/Covid19Wastewater/blob/main/docs/vignettes/smoothing.pdf) Bellow is the smoothing methods applied with there default values to three Citys in the Wastewater dataset.
+
+<div align="center">
+    <img src="../../docs/images/getting-started/Smoothings.JPG" alt="Log Wastewater" style="width:75%">
+    <div>
+        <label>Wastewater and Confirmed Cases / Population</label>
+    </div>
+</div>
+
+
 
 ## Outlier detection
 There are two main ways to detect outliers in this package.
 - Deviance from the trend
 - Unusual spikes from adjacent values
 ### Deviance from the trend
-This process has two steps. First you need a trend. This can normally be done with the smoothing in the previous section. Then the trend can be used to find points sufficiently greater than it. This is normally set to 2.5 standard deviations.
+This process has two steps. First you need a trend. This can normally be done with the smoothing in the previous section. Then the trend can be used to find points sufficiently greater than it. This is normally set to 2.5 standard deviations. This example of this method with all the default values applied to Janesville.
 ```{r}
-data("WasteWater_data", package = "Covid19Wastewater")
-WasteWater_data  <- filter(WasteWater_data, site == "Janesville")
-WasteWater_data <- mutate(WasteWater_data, N1 = log(N1 + 1))
-WasteWater_data <- loessSmoothMod(WasteWater_data , "N1", "N1_loess")
-WasteWater_data <- Flag_From_Trend(WasteWater_data,  N1, N1_loess)
+WasteWater_data  <- WasteWater_data%>%
+    filter(site == "Janesville")%>%
+    mutate(N1 = log(N1 + 1))%>%
+    select(site, date, N1)%>%
+    loessSmoothMod("N1", "N1_loess")%>%
+    Flag_From_Trend(N1, N1_loess)
 
 WasteWater_data %>%
   ggplot(aes(x = date))+
@@ -332,6 +345,14 @@ geom_line(aes(y = N1_loess, color = "N1 Loess"))+
        color = "Flagged Outlier"
        )
 ```
+
+<div align="center">
+    <img src="../../docs/images/getting-started/outliers.png" alt="Log Wastewater" style="width:75%">
+    <div>
+        <label>Wastewater and Confirmed Cases / Population</label>
+    </div>
+</div>
+
 
 ### Unusual spikes from adjacent values
 
