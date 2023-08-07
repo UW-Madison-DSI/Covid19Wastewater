@@ -108,11 +108,10 @@ computeRankQuantiles <- function(df) {
 
 #' Create column with Boolean based on a threshold
 #'
-#' @param DF Dataframe containing Column column
-#'ranked_quantile_data @param threshold a numeric used to flag if its an outlier
+#' @param DF Dataframe containing Column column ranked_quantile_data 
+#' @param threshold a numeric used to flag if its an outlier
 #' @param col column being flagged based on threshold 
 #' @param FlaggedOutlier name of flag column
-#' @param threshold Int threshold where being below it counts as an outlier
 #'
 #' @return DF Dataframe with the extra column of if its flagged an outlier
 #' @export

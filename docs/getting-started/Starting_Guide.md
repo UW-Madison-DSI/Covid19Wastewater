@@ -324,17 +324,21 @@ Each one can generate a consistent signal from weekly data. A comprehensive Guid
 There are two main ways to detect outliers in this package.
 - Deviance from the trend
 - Unusual spikes from adjacent values
+Bellow is a quick disctiption of these methods but a more comprehensive document can be found [here.](https://github.com/UW-Madison-DSI/Covid19Wastewater/blob/main/docs/vignettes/outliers.pdf)
+
 ### Deviance from the trend
-This process has two steps. First you need a trend. This can normally be done with the smoothing in the previous section. Then the trend can be used to find points sufficiently greater than it. This is normally set to 2.5 standard deviations. This example of this method with all the default values applied to Janesville.
+
+This process has two steps. First you need a trend. This can normally be done with the smoothing in the previous section. Then the trend can be used to find points sufficiently greater than it. This is normally set to 2.5 standard deviations. This example of this method with all the default values applied to Janesville. This method has a ton of flexibility and offers the most accuracy when the trend is accurate. The main issue with this method is that it normally will not work on recent data. Most trend methods do not capture the true trend on the edges of the data effects.
+
 ```{r}
-WasteWater_data  <- WasteWater_data%>%
+WasteWater_flag  <- WasteWater_data%>%
     filter(site == "Janesville")%>%
     mutate(N1 = log(N1 + 1))%>%
     select(site, date, N1)%>%
     loessSmoothMod("N1", "N1_loess")%>%
     Flag_From_Trend(N1, N1_loess)
 
-WasteWater_data %>%
+WasteWater_flag %>%
   ggplot(aes(x = date))+
   geom_point(aes(y = N1, color = flagged_outlier))+
 geom_line(aes(y = N1_loess, color = "N1 Loess"))+
@@ -347,7 +351,7 @@ geom_line(aes(y = N1_loess, color = "N1 Loess"))+
 ```
 
 <div align="center">
-    <img src="../../docs/images/getting-started/outliers.png" alt="Log Wastewater" style="width:75%">
+    <img src="../../docs/images/getting-started/Trend_Outlier.png" alt="Log Wastewater" style="width:75%">
     <div>
         <label>Wastewater and Confirmed Cases / Population</label>
     </div>
@@ -356,6 +360,35 @@ geom_line(aes(y = N1_loess, color = "N1 Loess"))+
 
 ### Unusual spikes from adjacent values
 
+This method involves calculating the difference between two adjacent data points and subsequently assessing the extent to which this difference deviates from the distribution of all other such differences. By focusing on the relative size of the jumps it requires very little prediction of the trend and future movement. This means it can function with only one extra data point after the measurement. This leads to an answer that can be less precise but captures the worst outliers and is more applicable for long term trends.
+```{r}
+WasteWater_data <- WasteWater_data%>%
+  select(site, date, N1, N2)%>%
+  filter(N1 != 0, N2 != 0)%>%
+  mutate(N1 = log(N1), N2 = log(N2), 
+    N12_avg = (N1 + N2) / 2)
+df_data <- computeJumps(WasteWater_data)
+ranked_data <- rankJumps(df_data)
+classied_data <- flagOutliers(ranked_quantile_data, 9, MessureRank)%>%
+  select(site, date, N12_avg, MessureRank, FlaggedOutlier)
+
+classied_data%>%
+  ggplot(aes(x = date))+
+  geom_point(aes(y = N12_avg, color = FlaggedOutlier))+
+  facet_wrap(~site)+
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  labs(y = "Covid-19 Gene Concentration",
+       x = "Date",
+       color = "Flagged Outlier"
+       )
+```
+<div align="center">
+    <img src="../../docs/images/getting-started/Adjacent_Outlier.png" alt="Log Wastewater" style="width:75%">
+    <div>
+        <label>Wastewater and Confirmed Cases / Population</label>
+    </div>
+</div>
 
 
 # Data Analysis
