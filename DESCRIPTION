@@ -1,13 +1,12 @@
 Package: Covid19Wastewater
+Title: UW Madison DSI COVID19 Wastewater Analysis Code
 Version: 1.0.0
 Date: 2023-07-18
-Title: UW Madison DSI COVID19 Wastewater Analysis Code
-Description: ‘Covid19Wastewater’ is intended to make the process of analyzing epidemiological wastewater data easier and more insightful. It includes tools for preparing, analyzing, and visualizing data. It additionally includes Wisconsin's Covid19 data.
-Authors@R: 
-    c(person(given = "Marlin", family = "Lee", email = "mrlee6@wisc.edu", role = c("cre", "aut")), person(given = "Kyllan", family = "Wunder", email = "kwunder@wisc.edu", role = "aut"), person(given = "Abe", family = "Megahed", email = "amegahed@wisc.edu", role = "aut")) 
-Maintainer: Marlin R Lee <mrlee6@wisc.edu>
-Encoding: UTF-8
-RoxygenNote: 7.2.3
+Authors@R: c(person(given = "Marlin", family = "Lee", email = "mrlee6@wisc.edu", role = c("cre", "aut")), person(given = "Kyllan", family = "Wunder", email = "kwunder@wisc.edu", role = "aut"), person(given = "Abe", family = "Megahed", email = "amegahed@wisc.edu", role = "aut"))
+Description: ‘Covid19Wastewater’ is intended to make the process of
+    analyzing epidemiological wastewater data easier and more insightful.
+    It includes tools for preparing, analyzing, and visualizing data. It
+    additionally includes Wisconsin's Covid19 data.
 License: MIT + file LICENSE
 Depends: 
     R (>= 3.50)
@@ -39,4 +38,6 @@ Suggests:
     rmarkdown
 VignetteBuilder: 
     knitr
+Encoding: UTF-8
 LazyData: true
+RoxygenNote: 7.2.3

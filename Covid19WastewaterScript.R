@@ -83,3 +83,4 @@ package_update(update_examples = T, update_test = F)
 check(vignettes = T)
 
 #install(quick=T, build = T, build_vignettes = T, force = F)
+devtools::check_rhub()

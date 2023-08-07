@@ -30,6 +30,7 @@ and returns a summary of the information
 \examples{
 data(Example_data, package = "Covid19Wastewater")
 Example_data <- Example_data[Example_data$site == 'Janesville',]
+Example_data <- Example_data[Example_data$date > as.Date("2021-10-24"),]
 Covid19Wastewater:::runRegressionAnalysis(Example_data, Formula = geo_mean ~ date)
 }
 \keyword{internal}

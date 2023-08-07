@@ -158,6 +158,7 @@ nGuess <- function(DF,InVar, Base, min){
 #' @export
 #' @examples
 #' data(Example_data, package = "Covid19Wastewater")
+#' Example_data <- Example_data[Example_data$site == "Green Bay",]
 #' Covid19Wastewater:::sgolaySmoothMod(WasteWater_data,"N1","sgolayN1")
 sgolaySmoothMod <- function(DF,InVar, OutVar,poly=5,n="guess", Filter = NULL){
   if(n=="guess"){
