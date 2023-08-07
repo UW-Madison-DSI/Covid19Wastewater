@@ -1,9 +1,11 @@
 Package: Covid19Wastewater
-Title: UW Madison DSI COVID19 Wastewater Analysis Code
+Title: Prepare, Analyze, and Visualize Covid-19 Wastewater Data 
 Version: 1.0.0
-Date: 2023-07-18
-Author: Marlin R Lee <mrlee6@wisc.edu>, Kyllan Wunder <kwunder@wisc.edu>, Abe Megahed <amegahed@wisc.edu>
-Maintainer: Marlin R Lee <mrlee6@wisc.edu>
+Date: 2023-08-7
+Authors@R: c(
+            person("Marlin", "Lee", email = "mrlee6@wisc.edu", role = c("aut", "cre"), comment = c(ORCID = "0009-0000-0448-9585"))), 
+            person("Kyllan", "Wunder", email = "kwunder@wisc.edu", role = "aut", comment = c(ORCID = "0009-0008-8587-0967")), 
+            person("Abe", "Megahed", email = "amegahed@wisc.edu", role = "aut", comment = c(ORCID = "0009-0000-0890-2656")))
 Description: ‘Covid19Wastewater’ is intended to make the process of
     analyzing epidemiological wastewater data easier and more insightful.
     It includes tools for preparing, analyzing, and visualizing data. It
