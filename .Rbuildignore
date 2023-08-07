@@ -13,3 +13,4 @@
 ^\.jupyter$
 ^\.DS_Store$
 ^\.lintr$
+^CRAN-SUBMISSION$

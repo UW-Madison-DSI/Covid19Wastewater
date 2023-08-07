@@ -82,6 +82,6 @@ package_update(update_examples = T, update_test = F)
 #run_examples( fresh = F)#, start = "factorVecByNumPoints")#DF_date_vector, 
 check(vignettes = T)
 
-#install(quick=T, build = T, build_vignettes = T, force = F)
-#devtools::check_rhub()
+install(quick=T, build = T, build_vignettes = T, force = F)
+devtools::check_rhub()
   
