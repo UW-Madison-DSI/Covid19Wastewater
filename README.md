@@ -15,18 +15,33 @@
 
 This is an R package of utilities to perform wastewater data analysis for pathogenic surveillance and monitoring. 
 
-This project is a collaboration between the University of Wiscosin's [Data Science Institute (DSI)](https://datascience.wisc.edu), the [Wisconsin Department of Health Services (DHS)](https://www.dhs.wisconsin.gov/covid-19/wastewater.htm), and the [State Lab of Hygiene (SLH)](https://www.slh.wisc.edu/environmental/covid-19-wastewater/).
+This project is a collaboration between the University of Wisconsin-Madison [Data Science Institute (DSI)](https://datascience.wisc.edu), the [Wisconsin Department of Health Services (DHS)](https://www.dhs.wisconsin.gov/covid-19/wastewater.htm), and the [State Lab of Hygiene (SLH)](https://www.slh.wisc.edu/environmental/covid-19-wastewater/).
 
-## Installation
+## Getting started
 
-If you already have devtools installed you can install the package with
+View our [getting started guide](./docs/getting-started/Starting_Guide.md) to learn more about this R package, or follow the steps below to install, view examples, and get help inside your favorite R interpreter. 
+
+### Installation
+
+If you already have devtools installed, you can install the package with
 ```
 devtools::install_github("UW-Madison-DSI/Covid19Wastewater")
 ```
-Otherwise we have comprehensive instructions [here](./docs/r-studio/installing-packages.md).
+Otherwise, we have comprehensive instructions [here](./docs/r-studio/installing-packages.md).
 
-## Examples
-In order to make this package as easy as possible to learn and understand, we've included a set of [instructional examples](examples/README.md).
+After installation, view our vignettes 
+```
+vignette(package = "Covid19Wastewater")
+```
+
+or get help.
+```
+help(package = "Covid19Wastewater")
+```
+
+
+### Examples
+We've included a set of [instructional examples](examples/README.md) to make this package easy to learn and understand.
 
 ## Documentation
  
@@ -53,16 +68,16 @@ We applied this package to Covid-19 data from Wisconsin in our analysis reposito
 <!-- LICENSE -->
 ## License
 
-Distributed under the Sustainable Use License. See the [license](./LICENSE.md) for more information.
+Distributed under the MIT License. See the [license](./LICENSE.md) for more information.
 
 <!-- Contact -->
 ## Team
 Email:
-- Marlin Lee - (mailto:mrlee6@wisc.edu)
+- Marlin Lee - (~~mailto:mrlee6@wisc.edu~~)
 
 - Abe Megahed - (mailto:amegahed@wisc.edu)
 
-- Kyllan Wunder - (mailto:kwunder@wisc.edu)
+- Kyllan Wunder - (~~mailto:kwunder@wisc.edu~~)
 
 Repos:
 - Package Link: [https://github.com/UW-Madison-DSI/Covid19Wastewater](https://github.com/UW-Madison-DSI/Covid19Wastewater)
