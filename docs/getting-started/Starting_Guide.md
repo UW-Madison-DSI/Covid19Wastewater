@@ -414,6 +414,19 @@ This analysis was done by finding the R-squared correlation between the wastewat
 
 Using the window of case data days that best correlates to the wastewater data, we can find the offset that best corresponds to the time between shedding at its peak and when the individual got tested. 
 
+
+# Random Linear Forests
+
+We introduce a powerful tool called "random_linear_forest" that offers a unique approach to generating linear relationships between two variables while accounting for the influence of covariates. This innovative method combines the principles of random forests with linear tree modeling, resulting in a versatile and robust framework for understanding the intricate interplay between variables and their covariates. Bellow is the result of using this model on the Longtudinal data done [here.](https://github.com/UW-Madison-DSI/Covid19-Wastewater-Analysis/blob/main/results/trend_analysis/Random%20Forest/rand_forest_comp.html)
+
+<div align="center">
+    <img src="../../docs/images/getting-started/Random_Forest.png" alt="Tree error" style="width:75%">
+    <div>
+        <label>Tree Importance</label>
+    </div>
+</div>
+
+
 # Conclusion
 
 We hope that you have had a successful and enjoyable experience using this software package.   If you would like to share your results and/or feedback with the package authors, contact information is listed below:

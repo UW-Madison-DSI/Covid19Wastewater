@@ -14,9 +14,25 @@ urlcolor: blue
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Random Linear Forest
-This part of the package creates a semi-novel 
+# Generating Linear Relationships with Random Linear Forests
 
+In our package, we introduce a powerful tool called "random_linear_forest" that offers a unique approach to generating linear relationships between two variables while accounting for the influence of covariates. This innovative method combines the principles of random forests with linear tree modeling, resulting in a versatile and robust framework for understanding the intricate interplay between variables and their covariates.
+
+## Understanding the Concept:
+
+At its core, the "random_linear_forest" algorithm leverages the strength of ensemble learning techniques seen in random forests, while focusing on modeling linear relationships. It builds on the existing Linear tree methods by capturing a more nuanced effects of covariates without overfitting.
+
+## Key Features:
+
+Ensemble of Linear Tree Models: The algorithm creates an ensemble of linear tree models, each trained on a random subset of the dataset. By combining the predictions from multiple models, we gain a more stable and accurate representation of the linear relationships, reducing the risk of overfitting.
+
+Covariate Integration: The inclusion of covariates is a distinguishing feature of our "random_linear_forest" package. Covariates play a crucial role in real-world scenarios, affecting the strength and nature of the linear relationship. Our algorithm takes these covariates into account, enabling a more comprehensive analysis that better reflects the underlying data dynamics.
+
+Nonlinear Effects: Despite the emphasis on linear relationships, the ensemble nature of the algorithm can capture certain nonlinear effects that might be missed by traditional linear models. This additional flexibility enhances our ability to unveil hidden relationships within the data.
+
+## Applications:
+
+The main use we found for this tecnique is estimating the impacts certain covariate factors have on the linear relationship Log Cases and Log concentration tend to have. We found that the generic factors (population, location, ect) and true covariates (Flow, PMMoV, BCov) can effect the relationship.
 
 ```{r load and show data, include = FALSE}
 library(Covid19Wastewater)
@@ -68,9 +84,6 @@ forest_model <- random_linear_forest(data = na.roughfix(model_data),
 forest_model
 ```
 
-
-```{r explain / show use case and link to other vignettes}
-```
 
 These functions are used in this analysis
 [Random Linear Forst](https://github.com/UW-Madison-DSI/Covid19-Wastewater-Analysis/blob/main/results/trend_analysis/rand_forest_comp.html)
