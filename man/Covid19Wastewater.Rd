@@ -10,12 +10,12 @@ This is an R package of utilities to perform wastewater data analysis for pathog
 \details{
 This project is a collaboration between the University of Wiscosin's \href{https://datascience.wisc.edu}{Data Science Institute (DSI)}, the \href{https://www.dhs.wisconsin.gov/covid-19/wastewater.htm}{Wisconsin Department of Health Services (DHS)}, and the \href{https://www.slh.wisc.edu/environmental/covid-19-wastewater/}{State Lab of Hygiene (SLH)}.
 
-If you need help getting started view our \href{getting started guide}{https://github.com/UW-Madison-DSI/Covid19Wastewater/blob/main/docs/getting-started/Starting_Guide.md}
+If you need help getting started view our \href{https://github.com/UW-Madison-DSI/Covid19Wastewater/blob/main/docs/getting-started/Starting_Guide.md}{getting started guide}
 }
 \section{Built in data}{
 
 View our data vignette to learn more about our built in data.
-To view what each column name means view our \href{Data_Description}{https://github.com/UW-Madison-DSI/Covid19Wastewater/blob/main/docs/data/data_columns_discription.md}
+To view what each column name means view our \href{https://github.com/UW-Madison-DSI/Covid19Wastewater/blob/main/docs/data/data_columns_discription.md}{Data_Description}
 vignette(HFG_data_case)
 vignette(longitudinal_data_case)
 vignette(variant_data)

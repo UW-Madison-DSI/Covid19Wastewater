@@ -68,7 +68,7 @@ We applied this package to Covid-19 data from Wisconsin in our analysis reposito
 <!-- LICENSE -->
 ## License
 
-Distributed under the MIT License. See the [license](./LICENSE.md) for more information.
+Distributed under the MIT License. See the [license](./LICENSE) for more information.
 
 <!-- Contact -->
 ## Team
