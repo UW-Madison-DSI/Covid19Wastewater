@@ -8,3 +8,8 @@
 ^dev$
 ^LICENSE\.md$
 ^cran-comments\.md$
+^\.ipynb_checkpoints$
+^\.Rhistory$
+^\.jupyter$
+^\.DS_Store$
+^\.lintr$
