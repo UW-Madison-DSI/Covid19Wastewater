@@ -13,6 +13,8 @@ This package contains two very different methods to remove outliers from the Tim
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, Warning = FALSE, message = FALSE)
+
+
 ```
 
 ## Data
@@ -51,9 +53,8 @@ base_plot
 ```{r adjacent outlier}
 df_data <- computeJumps(smoothing_df)
 ranked_data <- rankJumps(df_data)
-ranked_quantile_data <- computeRankQuantiles(ranked_data)
-classied_data <- flagOutliers(ranked_quantile_data, 9)%>%
-  select(site, date, N12_avg, FlaggedOutlier)
+classied_data <- flagOutliers(ranked_data, 9, MessureRank)%>%
+  select(site, date, N12_avg, MessureRank, FlaggedOutlier)
 
 classied_data%>%
   ggplot(aes(x = date))+

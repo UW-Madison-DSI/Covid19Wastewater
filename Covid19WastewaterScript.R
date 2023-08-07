@@ -66,7 +66,7 @@ package_update <- function(path = ".", update_examples = F, update_test = F){
   }
   
   document()
-  build(path = ".", vignettes = T)
+  build(path = ".", vignettes = update_examples)
   #devtools::install_github("UW-Madison-DSI/Covid19Wastewater")
   
   if(update_test){
@@ -74,12 +74,12 @@ package_update <- function(path = ".", update_examples = F, update_test = F){
     test()
   }
   #check(vignettes = FALSE)
-  install(quick=T, build = T, build_vignettes = F, force = F)
+  install(quick=T, build = T, build_vignettes = update_examples, force = F)
 }
-package_update(update_examples = F, update_test = F)
+package_update(update_examples = T, update_test = F)
 3
 #load_all()
 #run_examples( fresh = F)#, start = "factorVecByNumPoints")#DF_date_vector, 
-check(vignettes = F)
+check(vignettes = T)
 
 #install(quick=T, build = T, build_vignettes = T, force = F)
