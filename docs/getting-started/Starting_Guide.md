@@ -187,7 +187,7 @@ When merging wastewater and case data, it is best to merge by site and data to i
 data("WasteWater_data", package = "Covid19Wastewater")
 data("Case_data", package = "Covid19Wastewater")
 
-WasteAndCaseMerged_data <- merge(Case_data,WasteWater_data, by = c("site","date"))
+WasteAndCaseMerged_data <- merge(Case_data, WasteWater_data, by = c("site","date"))
 head(WasteAndCaseMerged_data)
 ```
 
