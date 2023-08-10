@@ -18,8 +18,4 @@ a list of each unique col value
 \description{
 Find all unique values in the column selected
 }
-\examples{
-data(Example_data, package = "Covid19Wastewater")
-Covid19Wastewater::uniqueVal("site", Example_data)
-}
 \keyword{internal}

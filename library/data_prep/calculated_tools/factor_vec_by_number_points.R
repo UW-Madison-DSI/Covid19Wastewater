@@ -7,10 +7,6 @@
 #'
 #' @return DF with the FacVar column a factor
 #' @keywords internal
-#' 
-#' @examples
-#' data("Example_data", package = "Covid19Wastewater")
-#' head(Covid19Wastewater::factorVecByNumPoints(Example_data, "site"))
 factorVecByNumPoints <- function(DF,FacVar, FiltVar = NA){
   if(is.na(FiltVar)){
     FiltVar <- FacVar

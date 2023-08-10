@@ -2,7 +2,8 @@
 #'
 #' @param object object with class random_linear_forest
 #'
-#' @return No return value
+#' @return Prints to output a summary of the model
+#' 
 #' @export
 #'
 #' @examples

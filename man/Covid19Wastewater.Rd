@@ -29,6 +29,7 @@ vignette(population_data)
 
 \section{Data Prep}{
 
+Learn how to prep our data here for analysis
 vignette(calculated_info)
 vignette(outliers)
 vignette(smoothing)
@@ -36,6 +37,7 @@ vignette(smoothing)
 
 \section{Analysis tools}{
 
+Learn how to analize using our methods or create your own.
 vignette(time_series_offset)
 vignette(linear_forest)
 

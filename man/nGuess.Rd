@@ -24,8 +24,4 @@ a number greater or equal to min
 \description{
 nGuess for sgolaySmoothMod number of points per polynomial
 }
-\examples{
-data(Example_data, package = "Covid19Wastewater")
-Covid19Wastewater::nGuess(Example_data, "geo_mean", 50/178, 7)
-}
 \keyword{internal}

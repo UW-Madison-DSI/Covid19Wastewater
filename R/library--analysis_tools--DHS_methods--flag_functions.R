@@ -59,11 +59,6 @@ createCaseFlag <- function(DF){
 #' flag_ntile_pval: if there is a flag_ntile and the p value of the regression
 #'      is less then .3
 #' @keywords internal
-#' @examples 
-#' data("WasteWater_data", package = "Covid19Wastewater")
-#' data(Pop_data, package = "Covid19Wastewater")
-#' WasteWater_data <- WasteWater_data[WasteWater_data$site == "Waukesha",]
-#' Covid19Wastewater::createWasteFlags(dplyr::left_join(WasteWater_data, Pop_data))
 createWasteFlags <- function(DF,
                              windows = c(14, 30, 60 , 90),
                              quants = c(5:9)/10){

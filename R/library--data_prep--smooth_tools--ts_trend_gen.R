@@ -10,9 +10,6 @@
 #'
 #' @return a number between 0 and max
 #' @keywords internal
-#' @examples
-#' data(Example_data, package = "Covid19Wastewater")
-#' Covid19Wastewater::parameterGuess(Example_data,"geo_mean", 17.8, .6)
 parameterGuess <- function(DF,InVar, Base, max){
   temp <- DF%>%
     filter(!is.na((!!sym(InVar))))%>%
@@ -133,9 +130,6 @@ expSmoothMod <- function(DF, InVar, OutVar, alpha="guess",beta="guess", Filter =
 #'
 #' @return a number greater or equal to min
 #' @keywords internal
-#' @examples
-#' data(Example_data, package = "Covid19Wastewater")
-#' Covid19Wastewater::nGuess(Example_data, "geo_mean", 50/178, 7)
 nGuess <- function(DF,InVar, Base, min){
   temp <- DF%>%
     filter(!is.na((!!sym(InVar))))%>%
