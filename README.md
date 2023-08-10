@@ -68,7 +68,7 @@ We applied this package to Covid-19 data from Wisconsin in our analysis reposito
 <!-- LICENSE -->
 ## License
 
-Distributed under the MIT License. See the [license](https://github.com/UW-Madison-DSI/Covid19Wastewater/blob/main/LICENSE) for more information.
+Distributed under the MIT License. See the [license](https://github.com/UW-Madison-DSI/Covid19Wastewater/blob/main/LICENSE.md) for more information.
 
 <!-- Contact -->
 ## Team

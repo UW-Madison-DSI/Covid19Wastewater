@@ -6,9 +6,9 @@ Authors@R: c(
             person("Marlin", "Lee", email = "mrlee6@wisc.edu", role = c("aut", "cre"), comment = c(ORCID = "0009-0000-0448-9585")), 
             person("Kyllan", "Wunder", email = "kwunder@wisc.edu", role = "aut", comment = c(ORCID = "0009-0008-8587-0967")), 
             person("Abe", "Megahed", email = "amegahed@wisc.edu", role = "aut", comment = c(ORCID = "0009-0000-0890-2656")))
-Description: Covid19Wastewater is intended to make the process of
+Description: Intended to make the process of
     analyzing epidemiological wastewater data easier and more insightful.
-    It includes tools for preparing, analyzing, and visualizing data. It
+    Includes tools for preparing, analyzing, and visualizing data. It
     additionally includes Wisconsin's Covid19 data.
 License: MIT + file LICENSE
 Depends: 
