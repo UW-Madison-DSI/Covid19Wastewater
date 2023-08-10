@@ -31,6 +31,6 @@ rolling quantile and rolling mean of the selected column.
 data("Example_data", package = "Covid19Wastewater")
 Example_data$window = 7
 Example_data$quant = .8
-head(Covid19Wastewater:::windowingQuantFunc(Example_data, "geo_mean"))
+head(Covid19Wastewater::windowingQuantFunc(Example_data, "geo_mean"))
 }
 \keyword{internal}

@@ -22,6 +22,6 @@ lookup
 data("Example_data", package = "Covid19Wastewater")
 Example_data$Late_date <- sample(Example_data$date)
 Example_data$Late_date[sample(1:length(Example_data), length(Example_data) / 3)] <- NA
-head(Covid19Wastewater:::diffLookup(Example_data$date, Example_data$Late_date))
+head(Covid19Wastewater::diffLookup(Example_data$date, Example_data$Late_date))
 }
 \keyword{internal}

@@ -12,7 +12,7 @@
 #' @keywords internal
 #' @examples
 #' data(Example_data, package = "Covid19Wastewater")
-#' Covid19Wastewater:::parameterGuess(Example_data,"geo_mean", 17.8, .6)
+#' Covid19Wastewater::parameterGuess(Example_data,"geo_mean", 17.8, .6)
 parameterGuess <- function(DF,InVar, Base, max){
   temp <- DF%>%
     filter(!is.na((!!sym(InVar))))%>%
@@ -135,7 +135,7 @@ expSmoothMod <- function(DF, InVar, OutVar, alpha="guess",beta="guess", Filter =
 #' @keywords internal
 #' @examples
 #' data(Example_data, package = "Covid19Wastewater")
-#' Covid19Wastewater:::nGuess(Example_data, "geo_mean", 50/178, 7)
+#' Covid19Wastewater::nGuess(Example_data, "geo_mean", 50/178, 7)
 nGuess <- function(DF,InVar, Base, min){
   temp <- DF%>%
     filter(!is.na((!!sym(InVar))))%>%
@@ -159,7 +159,7 @@ nGuess <- function(DF,InVar, Base, min){
 #' @examples
 #' data(Example_data, package = "Covid19Wastewater")
 #' Example_data <- Example_data[Example_data$site == "Green Bay",]
-#' Covid19Wastewater:::sgolaySmoothMod(WasteWater_data,"N1","sgolayN1")
+#' Covid19Wastewater::sgolaySmoothMod(WasteWater_data,"N1","sgolayN1")
 sgolaySmoothMod <- function(DF,InVar, OutVar,poly=5,n="guess", Filter = NULL){
   if(n=="guess"){
     n <- nGuess(DF, InVar,50/178, 7)

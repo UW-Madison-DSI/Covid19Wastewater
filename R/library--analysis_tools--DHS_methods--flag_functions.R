@@ -63,7 +63,7 @@ createCaseFlag <- function(DF){
 #' data("WasteWater_data", package = "Covid19Wastewater")
 #' data(Pop_data, package = "Covid19Wastewater")
 #' WasteWater_data <- WasteWater_data[WasteWater_data$site == "Waukesha",]
-#' Covid19Wastewater:::createWasteFlags(dplyr::left_join(WasteWater_data, Pop_data))
+#' Covid19Wastewater::createWasteFlags(dplyr::left_join(WasteWater_data, Pop_data))
 createWasteFlags <- function(DF,
                              windows = c(14, 30, 60 , 90),
                              quants = c(5:9)/10){

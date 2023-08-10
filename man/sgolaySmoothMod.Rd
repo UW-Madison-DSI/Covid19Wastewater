@@ -32,5 +32,5 @@ Add a column of the smoothed values using sgolayfilt
 \examples{
 data(Example_data, package = "Covid19Wastewater")
 Example_data <- Example_data[Example_data$site == "Green Bay",]
-Covid19Wastewater:::sgolaySmoothMod(WasteWater_data,"N1","sgolayN1")
+Covid19Wastewater::sgolaySmoothMod(WasteWater_data,"N1","sgolayN1")
 }

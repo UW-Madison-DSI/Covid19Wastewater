@@ -10,7 +10,7 @@
 #' 
 #' @examples
 #' data("Example_data", package = "Covid19Wastewater")
-#' head(Covid19Wastewater:::factorVecByNumPoints(Example_data, "site"))
+#' head(Covid19Wastewater::factorVecByNumPoints(Example_data, "site"))
 factorVecByNumPoints <- function(DF,FacVar, FiltVar = NA){
   if(is.na(FiltVar)){
     FiltVar <- FacVar

@@ -35,6 +35,6 @@ Create waste flags created by the DHS and the CDC to warn of increasing cases
 data("WasteWater_data", package = "Covid19Wastewater")
 data(Pop_data, package = "Covid19Wastewater")
 WasteWater_data <- WasteWater_data[WasteWater_data$site == "Waukesha",]
-Covid19Wastewater:::createWasteFlags(dplyr::left_join(WasteWater_data, Pop_data))
+Covid19Wastewater::createWasteFlags(dplyr::left_join(WasteWater_data, Pop_data))
 }
 \keyword{internal}

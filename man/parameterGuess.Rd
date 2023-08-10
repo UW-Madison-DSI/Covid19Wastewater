@@ -26,6 +26,6 @@ Get a fitting parameter for the model
 }
 \examples{
 data(Example_data, package = "Covid19Wastewater")
-Covid19Wastewater:::parameterGuess(Example_data,"geo_mean", 17.8, .6)
+Covid19Wastewater::parameterGuess(Example_data,"geo_mean", 17.8, .6)
 }
 \keyword{internal}

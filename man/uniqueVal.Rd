@@ -20,6 +20,6 @@ Find all unique values in the column selected
 }
 \examples{
 data(Example_data, package = "Covid19Wastewater")
-Covid19Wastewater:::uniqueVal("site", Example_data)
+Covid19Wastewater::uniqueVal("site", Example_data)
 }
 \keyword{internal}

@@ -65,7 +65,7 @@ buildRegressionEstimateTable <- function(DataMod,
 #' data(Example_data, package = "Covid19Wastewater")
 #' Example_data <- Example_data[Example_data$site == 'Janesville',]
 #' Example_data <- Example_data[Example_data$date > as.Date("2021-10-24"),]
-#' Covid19Wastewater:::runRegressionAnalysis(Example_data, Formula = geo_mean ~ date)
+#' Covid19Wastewater::runRegressionAnalysis(Example_data, Formula = geo_mean ~ date)
 runRegressionAnalysis <- function(DF, 
                                   Formula,
                                   Keep = NULL,
@@ -169,7 +169,7 @@ regressionInnerLoop <- function(Formula, DF, Keep = NULL){
 #' @keywords internal
 #' @examples
 #' data(Example_data, package = "Covid19Wastewater")
-#' Covid19Wastewater:::uniqueVal("site", Example_data)
+#' Covid19Wastewater::uniqueVal("site", Example_data)
 uniqueVal <- function(Col,DF){
   return(unique(DF[[Col]]))
 }

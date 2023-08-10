@@ -11,7 +11,6 @@ urlcolor: blue
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, Warning = FALSE, message = FALSE)
-options(warn=-1)
 ```
 
 # Introduction ---------------------------------------------------------------
@@ -61,13 +60,13 @@ sgolay_smooth <- sgolaySmoothMod(smoothing_df, "N1", "N1_sgolay", poly=5,n="gues
 sgolay_plot <- base_plot + 
   geom_line(aes(y = N1_sgolay, color = "Default Savitzky-Golay Filter"), data = sgolay_smooth, linewidth = 1.25)
 
-param_sgolay_smooth <- Covid19Wastewater:::sgolaySmoothMod(sgolay_smooth, "N1", "N1_sgolay_2", poly=2, n = "guess", Filter = NULL)
+param_sgolay_smooth <- Covid19Wastewater::sgolaySmoothMod(sgolay_smooth, "N1", "N1_sgolay_2", poly=2, n = "guess", Filter = NULL)
 
 alt_plot <- sgolay_plot + 
   geom_line(aes(y = N1_sgolay_2, color = "Polynomial 1"), data = param_sgolay_smooth, linewidth = 1.25)
 
 
-param_sgolay_smooth_2 <- Covid19Wastewater:::sgolaySmoothMod(sgolay_smooth, "N1", "N1_sgolay_3", poly = 5, n = 31, Filter = NULL)
+param_sgolay_smooth_2 <- Covid19Wastewater::sgolaySmoothMod(sgolay_smooth, "N1", "N1_sgolay_3", poly = 5, n = 31, Filter = NULL)
 
 
 show_plot <- alt_plot + 
@@ -127,7 +126,7 @@ Exponential smoothing is a technique used to smooth time series data by assignin
 
 ```{r expsmoothMod, include = FALSE}
 # Example code demonstrating expSmoothMod() function
-exp_smooth <- Covid19Wastewater:::expSmoothMod(loess_smooth, "N1", "N1_exp", Filter = NULL)
+exp_smooth <- Covid19Wastewater::expSmoothMod(loess_smooth, "N1", "N1_exp", Filter = NULL)
 
 all_smooth_plot <- all_smooth_plot + 
   geom_line(aes(y = N1_exp, color = "Default Exponential"), data = exp_smooth, size = 1.25)
@@ -135,12 +134,12 @@ all_smooth_plot <- all_smooth_plot +
 exp_plot <- base_plot + 
   geom_line(aes(y = N1_exp, color = "Default Exponential"), data = exp_smooth, size = 1.25)
 
-param_exp_smooth <- Covid19Wastewater:::expSmoothMod(exp_smooth, "N1", "N1_exp_2", alpha = .3, Filter = NULL)
+param_exp_smooth <- Covid19Wastewater::expSmoothMod(exp_smooth, "N1", "N1_exp_2", alpha = .3, Filter = NULL)
 
 alt_plot <- exp_plot + geom_line(aes(y = N1_exp_2, color = "Alpha .3"), data = param_exp_smooth, size = 1.25)
 
 
-param_exp_smooth_2 <- Covid19Wastewater:::expSmoothMod(exp_smooth, "N1", "N1_exp_3", beta = .05, Filter = NULL)
+param_exp_smooth_2 <- Covid19Wastewater::expSmoothMod(exp_smooth, "N1", "N1_exp_3", beta = .05, Filter = NULL)
 
 
 show_plot <- alt_plot + geom_line(aes(y = N1_exp_3, color = "Beta .05"), data = param_exp_smooth_2, size = 1.25)

@@ -23,6 +23,6 @@ convert column to factor based on amount of entries
 }
 \examples{
 data("Example_data", package = "Covid19Wastewater")
-head(Covid19Wastewater:::factorVecByNumPoints(Example_data, "site"))
+head(Covid19Wastewater::factorVecByNumPoints(Example_data, "site"))
 }
 \keyword{internal}
