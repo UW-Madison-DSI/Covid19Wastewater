@@ -9,6 +9,9 @@
 \arguments{
 \item{object}{object with class random_linear_forest}
 }
+\value{
+No return value
+}
 \description{
 display form for random_linear_forest class
 }

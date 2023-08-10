@@ -2,7 +2,7 @@
 #'
 #' @param object object with class random_linear_forest
 #'
-#' @return NULL
+#' @return No return value
 #' @export
 #'
 #' @examples
