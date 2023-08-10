@@ -11,7 +11,6 @@ urlcolor: blue
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, Warning = FALSE, message = FALSE)
-options(warn=-1)
 ```
 
 ## Longitudinal data source

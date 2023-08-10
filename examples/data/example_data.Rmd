@@ -12,7 +12,6 @@ urlcolor: blue
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(Warning = FALSE, message = FALSE, echo = FALSE)
-options(warn=-1)
 ```
 
 #Example data
