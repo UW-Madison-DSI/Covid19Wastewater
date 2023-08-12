@@ -8,7 +8,7 @@
 
 ![GitHub last commit](https://img.shields.io/github/last-commit/UW-Madison-DSI/Covid19Wastewater)
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/UW-Madison-DSI/Covid19Wastewater)](https://github.com/UW-Madison-DSI/Covid19Wastewater/pulls)
-[![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE.md)
+[![License](https://img.shields.io/badge/license-MIT-green)](https://github.com/UW-Madison-DSI/Covid19Wastewater/blob/main/LICENSE.md)
 [![contributors](https://img.shields.io/github/contributors/UW-Madison-DSI/Covid19Wastewater)](https://github.com/UW-Madison-DSI/Covid19Wastewater/graphs/contributors)
 ![codesize](https://img.shields.io/github/languages/code-size/UW-Madison-DSI/Covid19Wastewater)
 ![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/UW-Madison-DSI/Covid19Wastewater?include_prereleases)
