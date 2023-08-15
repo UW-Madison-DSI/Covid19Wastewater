@@ -8,7 +8,7 @@ To install a package using R Studio, follow these steps:
 <img src="../../docs/images/r-studio/tools-menu.png" style="width:300px">
 </div>
 
-- Step 2: On the install package dialog, click "Browse" to select the tar file:
+- Step 2: On the install package dialog, click under install from and choose the CRAN option. Then start typing "Covid19Wastewater" and select.
 
 <div align="center">
 <img src="../../docs/images/r-studio/install-packages-dialog.png" style="width:400px">
@@ -18,25 +18,11 @@ To install a package using R Studio, follow these steps:
   You should see the following command executed in the R Studio console pane:
 
 ```
-install.packages("~/Downloads/Covid19Wastewater_0.2.01.tar.gz", repos = NULL, type = "source")
+install.packages("Covid19Wastewater")
 ```
 
----
-**Tip:**
+In the console, choose the yes option to install when prompted with questions, such as installing from the source form or any dependent packages.
 
-If you see the following command followed by an error, then it is likely because the file that you are installing is not a '.tar.gz' file.   
-
-```
-install.packages("~/Downloads/Covid19Wastewater_0.2.01.tar", repos = NULL)
-```
-
-If the tar file has been unzipped, make sure to rezip it using the following command and repeat the installation process.
-
-```
-gzip ~/Downloads/Covid19Wastewater_0.2.01.tar
-```
-
----
 </p>
 </div>
 
