@@ -1,6 +1,6 @@
 <p align="center">
 	<div align="center">
-		<img src="./docs/images/covid-droplet.svg" alt="Logo" style="width:33%">
+		<img src="https://github.com/UW-Madison-DSI/Covid19Wastewater/blob/main/docs/images/covid-droplet.svg" alt="Logo" style="width:33%">
 	</div>
 </p>
 
