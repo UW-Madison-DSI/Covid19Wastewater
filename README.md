@@ -23,9 +23,9 @@ View our [getting started guide](https://github.com/UW-Madison-DSI/Covid19Wastew
 
 ### Installation
 
-If you already have devtools installed, you can install the package with
+Install from CRAN using this command
 ```
-devtools::install_github("UW-Madison-DSI/Covid19Wastewater")
+install.packages("Covid19Wastewater")
 ```
 Otherwise, we have comprehensive instructions [here](https://github.com/UW-Madison-DSI/Covid19Wastewater/blob/main/docs/r-studio/installing-packages.md).
 
