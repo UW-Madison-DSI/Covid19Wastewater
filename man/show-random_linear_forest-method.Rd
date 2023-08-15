@@ -10,7 +10,7 @@
 \item{object}{object with class random_linear_forest}
 }
 \value{
-No return value
+Prints to output a summary of the model
 }
 \description{
 display form for random_linear_forest class
