@@ -10,6 +10,7 @@ Description: Intended to make the process of
     analyzing epidemiological wastewater data easier and more insightful.
     Includes tools for preparing, analyzing, and visualizing data. It
     additionally includes Wisconsin's Covid19 data.
+URL: https://github.com/UW-Madison-DSI/Covid19Wastewater
 License: MIT + file LICENSE
 Depends: 
     R (>= 3.50)
