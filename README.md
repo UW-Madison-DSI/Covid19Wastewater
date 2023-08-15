@@ -76,7 +76,7 @@ Distributed under the MIT License. See the [license](https://github.com/UW-Madis
 Email:
 - Marlin Lee - (~~mailto:mrlee6@wisc.edu~~)
 
-- Abe Megahed - (~~mailto:amegahed@wisc.edu~~)
+- Abe Megahed - (mailto:amegahed@wisc.edu)
 
 - Kyllan Wunder - (~~mailto:kwunder@wisc.edu~~)
 
