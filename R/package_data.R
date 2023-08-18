@@ -123,7 +123,7 @@
 #'
 #' dataframe containing info about the proportion of each COVID-19 variant
 #' every 2 weeks. This data is from 
-#' https://github.com/hodcroftlab/covariants/tree/master
+#' [https://github.com/hodcroftlab/covariants/tree/master](https://github.com/hodcroftlab/covariants/tree/master)
 #' 
 #'
 #' @docType data
@@ -136,9 +136,10 @@
 "Covariants_data"
 
 
-#' auxiliary data
+#' Auxiliary data
 #'
-#' 
+#' Auxiliary data from WasteWater_data (can be recombined)
+#' (Warning: mostly NA values)
 #'
 #' @docType data
 #'
