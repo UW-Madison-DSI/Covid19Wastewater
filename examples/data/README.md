@@ -1,5 +1,5 @@
 # Data
-This package includes traditional (case based) and wastewater based data about Wisconsin communities.
+This package includes traditional (case-based) and wastewater-based data about Wisconsin communities.
 
 ## 1) Longitudinal Data
 This dataset includes longitudinal wastewater data collected 1-6 times per week from 2019 to 2023. It is accompanied by case data. The dataset files are:  
@@ -13,25 +13,12 @@ This dataset includes longitudinal wastewater data collected 1-6 times per week 
 To access the longitudinal data, load the datasets using the following code:
 ```
 # Load the longitudinal wastewater data
-load("Was# Analysis Tools
-The following are the analysis tools used in this package:
-
-## Examples:
-
-### DHS method
-This code comes from our collaborators at the DHS and is an example of of their flagging method that is used on their dashboard (link to dashboard)
-
-### Time series offset
-This vignette demonstrates how to use the offset analysis tools to find the temporal offset in days between wastewater and case measurements.
-
-### Linear forest
-This package contains a Linear Forest modeling tool for finding an optimal breakdown of linear components. This is most useful for looking for cofactors to the N1 vs case data.
-teWater_data.RData")
+load("WasteWater_data.RData")
 
 # Load the corresponding case data
 load("Case_data.RData")
 ```
-## 2) High Frequency Data
+## 2) High-Frequency Data
 This dataset contains high-frequency testing data collected over a 7-day testing period. It includes 9 samples reported per day and is accompanied by corresponding case data. The dataset files are:  
 
 1) High-frequency wastewater data:
