@@ -9,11 +9,10 @@ This vignette illustrates techniques for flagging outliers.
 
 ### 2) Smoothing
 
-This vignette is an illustration of the smoothing techniques that are available in this package.
+This vignette is an illustration of the smoothing techniques that are available in this package. [smoothing.Rmd](../../docs/vignettes/smoothing.pdf)
 - Loess
 - Golay
 - Exponential
-[smoothing.Rmd](../../docs/vignettes/smoothing.pdf)
 
 ### 3) Calculated Info
 
