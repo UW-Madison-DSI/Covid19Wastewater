@@ -3,7 +3,7 @@
 \docType{data}
 \name{Aux_info_data}
 \alias{Aux_info_data}
-\title{auxiliary data}
+\title{Auxiliary data}
 \format{
 Rows: 999   Columns: 17
 }
@@ -11,6 +11,7 @@ Rows: 999   Columns: 17
 data("Aux_info_data")
 }
 \description{
-auxiliary data
+auxiliary information that has been split from the WasteWater_data. Can be 
+re-merged using merge(WasteWater_data, Aux_info_data, by="sample_id")
 }
 \keyword{datasets}

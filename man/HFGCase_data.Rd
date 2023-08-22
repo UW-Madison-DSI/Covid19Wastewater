@@ -13,8 +13,4 @@ data("HFGCase_data")
 \description{
 Data from the DHS of positive covid tests for HFG data
 }
-\details{
-Raw file 'HighFreq_CaseData_2021-05-07.csv'
-From Nathan on 5/26/2021
-}
 \keyword{datasets}

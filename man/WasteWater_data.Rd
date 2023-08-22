@@ -3,7 +3,7 @@
 \docType{data}
 \name{WasteWater_data}
 \alias{WasteWater_data}
-\title{Wastewater data set cleaned from the surveillance branch}
+\title{Wastewater data set}
 \format{
 Rows: 11,084 Columns: 62
 }
@@ -12,9 +12,5 @@ data("WasteWater_data")
 }
 \description{
 Data from the DHS of wastewater prevalence in Wisconsin cites
-}
-\details{
-Raw file 'Shareable_Data_wastewater.csv'
-From zip file attached to 4/21/2022 email from Matthew Schinwald
 }
 \keyword{datasets}

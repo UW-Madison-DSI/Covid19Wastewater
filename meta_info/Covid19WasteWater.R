@@ -2,14 +2,14 @@
 #'
 #' This is an R package of utilities to perform wastewater data analysis for pathogenic surveillance and monitoring. 
 #' 
-#' This project is a collaboration between the University of Wiscosin's \href{https://datascience.wisc.edu}{Data Science Institute (DSI)}, the \href{https://www.dhs.wisconsin.gov/covid-19/wastewater.htm}{Wisconsin Department of Health Services (DHS)}, and the \href{https://www.slh.wisc.edu/environmental/covid-19-wastewater/}{State Lab of Hygiene (SLH)}.
+#' This project is a collaboration between the University of Wiscosin's [Data Science Institute (DSI)](https://datascience.wisc.edu), the [Wisconsin Department of Health Services (DHS)]()https://www.dhs.wisconsin.gov/covid-19/wastewater.htm), and the [Wisconsin State Lab of Hygiene (SLH)](https://www.slh.wisc.edu/environmental/covid-19-wastewater/).
 #' 
-#' If you need help getting started view our \href{https://github.com/UW-Madison-DSI/Covid19Wastewater/blob/main/docs/getting-started/Starting_Guide.md}{getting started guide}
+#' If you need help getting started view our [getting started guide](https://github.com/UW-Madison-DSI/Covid19Wastewater/blob/main/docs/getting-started/Starting_Guide.md)
 #' 
 #' 
 #' @section Built in data:
 #' View our data vignettes to learn more about our built in data.
-#' To view what each column name means view our \href{https://github.com/UW-Madison-DSI/Covid19Wastewater/blob/main/docs/data/data_columns_discription.md}{Data_Description}
+#' To view what each column name means view our [Data_Description](https://github.com/UW-Madison-DSI/Covid19Wastewater/blob/main/docs/data/data_columns_discription.md)
 #' 
 #' This package includes traditional (case-based) and wastewater-based data about Wisconsin communities.
 #' 

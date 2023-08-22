@@ -3,7 +3,7 @@
 \docType{data}
 \name{Example_data}
 \alias{Example_data}
-\title{Toy example of full data contains 3 sites and roughly 500 entries (waste and case merged together)}
+\title{Example data}
 \format{
 Rows: 500 Columns: 69
 }
@@ -11,6 +11,7 @@ Rows: 500 Columns: 69
 data("Example_data")
 }
 \description{
-Toy example of full data contains 3 sites and roughly 500 entries (waste and case merged together)
+Toy example of full data contains 3 sites and roughly 500 entries 
+(waste and case merged together)
 }
 \keyword{datasets}

@@ -13,8 +13,4 @@ data("HFGWaste_data")
 \description{
 Data from the DHS of  HFG covid wastewater concentration
 }
-\details{
-Raw file 'HFG_data_corrected_w_HF183&CrP_011422.xlsx'
-Dagmara email Fri 2/25/2022 6:15 PM
-}
 \keyword{datasets}

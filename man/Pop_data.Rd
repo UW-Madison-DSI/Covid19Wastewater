@@ -3,14 +3,14 @@
 \docType{data}
 \name{Pop_data}
 \alias{Pop_data}
-\title{City Population data}
+\title{Sewer shed population data}
 \format{
 Rows: 89   Columns: 2
 }
 \usage{
-data("HFGCase_data")
+data("Pop_data")
 }
 \description{
-dataframe containing info about each Wisconsin population info
+dataframe containing population information about each sewer shed in Wisconsin
 }
 \keyword{datasets}

@@ -3,7 +3,7 @@
 \docType{data}
 \name{Case_data}
 \alias{Case_data}
-\title{Case data set from the DHS on 4/21/2022}
+\title{Case data}
 \format{
 Rows: 33103  Columns: 4
 }
@@ -12,9 +12,5 @@ data("Case_data")
 }
 \description{
 Data from the DHS of positive covid tests in Wisconsin cites
-}
-\details{
-Raw file 'Shareable_Data_cases.csv'
-From zip file attached to 4/21/2022 email from Matthew Schinwald
 }
 \keyword{datasets}

@@ -3,8 +3,8 @@
 \name{Data_Description}
 \alias{Data_Description}
 \title{Data Description
-This package contains a lot of data}
+This package contains a lot of data with many column names, here is a list of them all: [https://github.com/UW-Madison-DSI/Covid19Wastewater/blob/main/docs/data/data_columns_discription.md](https://github.com/UW-Madison-DSI/Covid19Wastewater/blob/main/docs/data/data_columns_discription.md)}
 \description{
 Data Description
-This package contains a lot of data
+This package contains a lot of data with many column names, here is a list of them all: [https://github.com/UW-Madison-DSI/Covid19Wastewater/blob/main/docs/data/data_columns_discription.md](https://github.com/UW-Madison-DSI/Covid19Wastewater/blob/main/docs/data/data_columns_discription.md)
 }

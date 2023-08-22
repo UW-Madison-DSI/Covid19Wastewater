@@ -3,7 +3,7 @@
 \docType{data}
 \name{InterceptorCase_data}
 \alias{InterceptorCase_data}
-\title{Madison interceptor Case data set}
+\title{Madison interceptor case data}
 \format{
 Rows: 3288   Columns: 5
 }
@@ -12,9 +12,5 @@ data("InterceptorCase_data")
 }
 \description{
 Data from the DHS of positive covid tests for Madison interceptors
-}
-\details{
-Raw file 'MSN_Interceptor_Cases.csv'
-From email Nathan on 2/4/2022
 }
 \keyword{datasets}
