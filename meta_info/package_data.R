@@ -1,9 +1,6 @@
-#' Wastewater data set cleaned from the surveillance branch
+#' Wastewater data set
 #'
 #' Data from the DHS of wastewater prevalence in Wisconsin cites
-#' 
-#' Raw file 'Shareable_Data_wastewater.csv'
-#' From zip file attached to 4/21/2022 email from Matthew Schinwald
 #'
 #' @docType data
 #'
@@ -15,9 +12,11 @@
 "WasteWater_data"
 
 
-#' Toy example of full data contains 3 sites and roughly 500 entries (waste and case merged together)
+#' Example data
 #' 
-#'
+#' Toy example of full data contains 3 sites and roughly 500 entries 
+#' (waste and case merged together)
+#' 
 #' @docType data
 #'
 #' @usage data("Example_data")
@@ -28,13 +27,9 @@
 "Example_data"
 
 
-#' Case data set from the DHS on 4/21/2022
+#' Case data
 #'
 #' Data from the DHS of positive covid tests in Wisconsin cites
-#' 
-#' Raw file 'Shareable_Data_cases.csv'
-#' From zip file attached to 4/21/2022 email from Matthew Schinwald
-#' 
 #'
 #' @docType data
 #'
@@ -46,14 +41,9 @@
 "Case_data"
 
 
-
-#' Madison interceptor Case data set
+#' Madison interceptor case data
 #'
 #' Data from the DHS of positive covid tests for Madison interceptors
-#' 
-#' Raw file 'MSN_Interceptor_Cases.csv'
-#' From email Nathan on 2/4/2022
-#' 
 #'
 #' @docType data
 #'
@@ -65,14 +55,9 @@
 "InterceptorCase_data"
 
 
-
 #' High frequency Waste data
 #'
 #' Data from the DHS of  HFG covid wastewater concentration
-#' 
-#' Raw file 'HFG_data_corrected_w_HF183&CrP_011422.xlsx'
-#' Dagmara email Fri 2/25/2022 6:15 PM
-#' 
 #'
 #' @docType data
 #'
@@ -84,14 +69,9 @@
 "HFGWaste_data"
 
 
-
 #' High frequency case data
 #'
 #' Data from the DHS of positive covid tests for HFG data
-#' 
-#' Raw file 'HighFreq_CaseData_2021-05-07.csv'
-#' From Nathan on 5/26/2021
-#' 
 #'
 #' @docType data
 #'
@@ -103,15 +83,13 @@
 "HFGCase_data"
 
 
-#' City Population data
+#' Sewer shed population data
 #'
-#' dataframe containing info about each Wisconsin population info
-#'
-#' 
+#' dataframe containing population information about each sewer shed in Wisconsin
 #'
 #' @docType data
 #'
-#' @usage data("HFGCase_data")
+#' @usage data("Pop_data")
 #'
 #' @format Rows: 89   Columns: 2
 #'
@@ -123,8 +101,7 @@
 #'
 #' dataframe containing info about the proportion of each COVID-19 variant
 #' every 2 weeks. This data is from 
-#' https://github.com/hodcroftlab/covariants/tree/master
-#' 
+#' [https://github.com/hodcroftlab/covariants/tree/master](https://github.com/hodcroftlab/covariants/tree/master)
 #'
 #' @docType data
 #'
@@ -136,9 +113,10 @@
 "Covariants_data"
 
 
-#' auxiliary data
+#' Auxiliary data
 #'
-#' 
+#' auxiliary information that has been split from the WasteWater_data. Can be 
+#' re-merged using merge(WasteWater_data, Aux_info_data, by="sample_id")
 #'
 #' @docType data
 #'
