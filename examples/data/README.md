@@ -45,6 +45,15 @@ The package also provides additional information in the form of dataframes. The 
 2) The percentage contribution of each variant in Wisconsin: 
 [Covariants_data.RData](../../docs/vignettes/variant_data.pdf)
 
+3) Auxillary information from longitudinal wastewater data:
+[Aux_info_data.RData](../../docs/vignettes/Aux_info_data.pdf)
+
+4) Example data to test with (longitudinal wastewater and case data merged):
+[example_data.RData](../../docs/vignettes/example_data.pdf)
+
+5) Traditionally collected case data for the Madison interceptors:
+[Intercepter_data_case.RData](../../docs/vignettes/Intercepter_data_case.pdf)
+
 To load the extra info datasets, use the following code:  
 
 ```
@@ -53,4 +62,13 @@ load("Pop_data.RData")
 
 # Load the covariants data
 load("Covariants_data.RData")
+
+# Load the auxiliary data
+load("Aux_info_data.RData")
+
+# Load the example data
+load("example_data.RData")
+
+# Load the intercepter data
+load("Intercepter_data_case.RData")
 ```
