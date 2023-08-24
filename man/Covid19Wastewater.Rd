@@ -3,6 +3,7 @@
 \docType{package}
 \name{Covid19Wastewater}
 \alias{Covid19Wastewater}
+\alias{Covid19Wastewater-package}
 \title{Covid19Wastewater: A package for running Covid19 wastewater concentration analysis}
 \description{
 This is an R package of utilities to perform wastewater data analysis for pathogenic surveillance and monitoring.

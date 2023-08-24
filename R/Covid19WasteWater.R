@@ -46,4 +46,5 @@
 #'
 #' @docType package
 #' @name Covid19Wastewater
+#' @aliases Covid19Wastewater-package
 NULL
