@@ -13,7 +13,7 @@ Description: Intended to make the process of
 URL: https://github.com/UW-Madison-DSI/Covid19Wastewater
 License: MIT + file LICENSE
 Depends: 
-    R (>= 3.50)
+    R (>= 4.30)
 Imports:
     data.table,
     dplyr,
